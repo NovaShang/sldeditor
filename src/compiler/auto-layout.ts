@@ -1,12 +1,16 @@
 /**
  * Best-effort placement for elements lacking a `Placement` in the diagram.
  *
- * Strategy (v1, hierarchy-aware):
- *   1. Identify "linkers" — elements tapped to ≥2 distinct buses (typically
- *      transformers). They imply a bus hierarchy.
+ * Strategy (hierarchy-aware):
+ *   1. Identify "linkers" — elements connecting ≥2 distinct buses. We use two
+ *      passes: (a) a strict check on direct `<bus>.tap` membership, and (b) a
+ *      transitive BFS for category='transformer' elements that wire to one
+ *      bus directly and another through a chain of switches/breakers (the
+ *      common substation pattern).
  *   2. Topologically order buses: BFS from source-tapped buses → tier 0 down,
- *      with disconnected buses appended. The Y gap between two adjacent buses
- *      is sized to fit the pin-Y span of any linker between them.
+ *      with disconnected buses appended. The Y gap between two linker-bridged
+ *      buses equals the linker's pin Y-span exactly so its terminals land on
+ *      both bars; otherwise a default minimum is used.
  *   3. Place each linker between its bus pair: pinUpper lands on the upper
  *      bus, pinLower on the lower. Rotation flips (0 ↔ 180) when the local
  *      pin order is upside-down relative to the world bus order.
@@ -14,8 +18,10 @@
  *      above-bus / below-bus groups by their local pin Y (so sources don't
  *      crowd the X axis used by loads), with each slot sized to the element's
  *      library width (with a min spacing).
- *   5. BFS through `connections` for any other reachable element. New
- *      placements are nudged in 10px steps along the exit direction until
+ *   5. BFS through `connections` for any other reachable element. The
+ *      downstream is rotated so its connecting pin faces the upstream's exit
+ *      direction (otherwise the body extends back across the wire path).
+ *      Placements are nudged in 10px steps along the exit direction until
  *      they no longer overlap a previously placed bbox.
  *   6. Anything still unplaced falls back to a grid in the lower-right.
  *
@@ -23,9 +29,40 @@
  * drags don't introduce sub-grid jitter.
  */
 
-import type { Connection, Element, ElementId, LibraryEntry, TerminalRef } from '../model';
+import type {
+  Connection,
+  Element,
+  ElementId,
+  LibraryEntry,
+  Orientation,
+  TerminalRef,
+} from '../model';
 import type { ResolvedPlacement } from './internal-model';
 import { orientationVec, transformOrientation, transformPoint } from './transforms';
+
+const ORIENT_CYCLE: readonly Orientation[] = ['n', 'e', 's', 'w'];
+const OPPOSITE_ORIENT: Record<Orientation, Orientation> = {
+  n: 's',
+  s: 'n',
+  e: 'w',
+  w: 'e',
+};
+
+/**
+ * Pick rot ∈ {0, 90, 180, 270} so a local-frame pin oriented `localO` ends up
+ * pointing `worldO` after placement. Used to flip downstream chain elements so
+ * their connecting pin faces the upstream wire (otherwise body extends into
+ * the path and looks reversed).
+ */
+function rotationToAlignOrient(
+  localO: Orientation,
+  worldO: Orientation,
+): 0 | 90 | 180 | 270 {
+  const li = ORIENT_CYCLE.indexOf(localO);
+  const wi = ORIENT_CYCLE.indexOf(worldO);
+  const steps = ((wi - li) % 4 + 4) % 4;
+  return [0, 90, 180, 270][steps] as 0 | 90 | 180 | 270;
+}
 
 interface AutoLayoutInput {
   elements: Element[];
@@ -40,7 +77,6 @@ const MIN_BUS_GAP_Y = 260;
 const DEFAULT_BUS_SPAN = 720;
 const CHAIN_GAP = 60;
 const MIN_TAP_SPACING = 80;
-const LINKER_PIN_Y_PADDING = 80;
 const GRID = 10;
 const COLLISION_SAFETY_STEPS = 20;
 const FALLBACK_GRID_X0 = 60;
@@ -138,6 +174,106 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     }
   }
 
+  // ---- 1b. Transitive linker detection for transformer-family elements ---
+  // The strict tapsByElement check above only catches elements that are
+  // *directly* in two `<bus>.tap` groups. Most fixtures actually wire
+  // transformers through a chain of switches/breakers (T1.t1 → QF → QS →
+  // B1.tap), which leaves `T1` looking like a single-bus device.
+  //
+  // We rebuild a per-terminal connection graph, BFS from each terminal of a
+  // candidate transformer (forbidding its own *other* terminals), and check
+  // if at least two distinct buses are reachable. This recovers the linker
+  // semantics without flooding every chained switch into the linker set —
+  // we only consider category 'transformer'.
+  const allGroups: TerminalRef[][] = [];
+  for (const c of connections) {
+    const ts = Array.isArray(c) ? c : c.terminals;
+    if (ts.length >= 2) allGroups.push(ts);
+  }
+  for (const bus of buses) {
+    const refs = effectiveTaps.get(bus.id);
+    if (!refs || refs.length === 0) continue;
+    allGroups.push([`${bus.id}.tap` as TerminalRef, ...refs]);
+  }
+  const refAdj = new Map<TerminalRef, Set<TerminalRef>>();
+  const addRefEdge = (a: TerminalRef, b: TerminalRef) => {
+    if (a === b) return;
+    if (!refAdj.has(a)) refAdj.set(a, new Set());
+    if (!refAdj.has(b)) refAdj.set(b, new Set());
+    refAdj.get(a)!.add(b);
+    refAdj.get(b)!.add(a);
+  };
+  for (const group of allGroups) {
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) {
+        addRefEdge(group[i], group[j]);
+      }
+    }
+  }
+  // Treat each non-bus element as a passthrough between its terminals so BFS
+  // can walk QF.t1 → QF.t2 (different connection groups but same physical
+  // device) on its way to the next bus.
+  for (const el of elements) {
+    if (el.kind === 'busbar') continue;
+    const lib = library.get(el.kind);
+    if (!lib || lib.terminals.length < 2) continue;
+    const refs = lib.terminals.map(
+      (t) => `${el.id}.${t.id}` as TerminalRef,
+    );
+    for (let i = 0; i < refs.length; i++) {
+      for (let j = i + 1; j < refs.length; j++) {
+        addRefEdge(refs[i], refs[j]);
+      }
+    }
+  }
+
+  for (const el of elements) {
+    if (el.kind === 'busbar') continue;
+    if (linkerIds.has(el.id)) continue;
+    const lib = library.get(el.kind);
+    if (!lib || lib.category !== 'transformer') continue;
+    if (lib.terminals.length < 2) continue;
+
+    const myRefs = lib.terminals.map(
+      (t) => `${el.id}.${t.id}` as TerminalRef,
+    );
+    const busPerPin = new Map<string, ElementId>();
+    for (const startRef of myRefs) {
+      const startPin = startRef.slice(el.id.length + 1);
+      const forbidden = new Set(myRefs.filter((r) => r !== startRef));
+      const visited = new Set<TerminalRef>([startRef]);
+      const queue: TerminalRef[] = [startRef];
+      while (queue.length > 0) {
+        const cur = queue.shift()!;
+        const dot = cur.indexOf('.');
+        if (dot > 0) {
+          const elemId = cur.slice(0, dot);
+          const pinName = cur.slice(dot + 1);
+          if (busIds.has(elemId) && pinName === 'tap') {
+            busPerPin.set(startPin, elemId);
+            break;
+          }
+        }
+        const neighbors = refAdj.get(cur);
+        if (!neighbors) continue;
+        for (const nb of neighbors) {
+          if (visited.has(nb) || forbidden.has(nb)) continue;
+          visited.add(nb);
+          queue.push(nb);
+        }
+      }
+    }
+    const distinctBuses = new Set(busPerPin.values());
+    if (distinctBuses.size >= 2) {
+      const attachments: BusAttachment[] = [];
+      for (const [pin, busId] of busPerPin) {
+        attachments.push({ busId, pin });
+      }
+      linkers.push({ elementId: el.id, attachments });
+      linkerIds.add(el.id);
+    }
+  }
+
   // ---- 2. Topo-order buses ----------------------------------------------
   // Adjacency: bus → map of (otherBus → linker that connects them).
   const busLinks = new Map<ElementId, Map<ElementId, LinkerInfo>>();
@@ -193,7 +329,11 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
 
   // ---- 3. Place buses with dynamic Y gap ---------------------------------
-  // Gap between two adjacent buses = max(MIN_BUS_GAP_Y, |pinUpper.y - pinLower.y|).
+  // No linker between two buses → use the default minimum spacing. With a
+  // linker, the spacing is dictated *exactly* by the linker's pin span so its
+  // terminals land on both buses (no floating wire stub). The linker body
+  // sits flush between the bars, which matches how real one-line diagrams
+  // render transformers.
   const gapBetween = (idA: ElementId, idB: ElementId): number => {
     const link = busLinks.get(idA)?.get(idB);
     if (!link) return MIN_BUS_GAP_Y;
@@ -205,10 +345,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const pinA = linkerLib.terminals.find((t) => t.id === pinAName);
     const pinB = linkerLib.terminals.find((t) => t.id === pinBName);
     if (!pinA || !pinB) return MIN_BUS_GAP_Y;
-    return Math.max(
-      MIN_BUS_GAP_Y,
-      Math.abs(pinB.y - pinA.y) + LINKER_PIN_Y_PADDING,
-    );
+    return Math.abs(pinB.y - pinA.y);
   };
 
   let curY = BUS_Y0;
@@ -413,11 +550,27 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
           upstreamWorld[0] + exit[0] * CHAIN_GAP,
           upstreamWorld[1] + exit[1] * CHAIN_GAP,
         ];
+        // Rotate the downstream so its connecting pin faces the upstream
+        // (i.e., world orientation = opposite of `exit`). Without this, an
+        // element whose pin sits in the "wrong" local quadrant for the
+        // chain direction (e.g., inverter t_ac at (-20, 0, 's') reached from
+        // a south-facing breaker) ends up with its body straddling the wire
+        // path — visually as if the symbol were upside-down.
+        const desiredDownOrient = OPPOSITE_ORIENT[upstreamOrient];
+        const rot = rotationToAlignOrient(
+          downLocal.orientation,
+          desiredDownOrient,
+        );
+        const rotatedPin = transformPoint([downLocal.x, downLocal.y], {
+          at: [0, 0],
+          rot,
+          mirror: false,
+        });
         let at: [number, number] = [
-          snap(targetWorld[0] - downLocal.x),
-          snap(targetWorld[1] - downLocal.y),
+          snap(targetWorld[0] - rotatedPin[0]),
+          snap(targetWorld[1] - rotatedPin[1]),
         ];
-        let placement: ResolvedPlacement = { at, rot: 0, mirror: false };
+        let placement: ResolvedPlacement = { at, rot, mirror: false };
         let bbox = approxBbox(placement, downLib);
         let safety = COLLISION_SAFETY_STEPS;
         while (
@@ -425,7 +578,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
           safety-- > 0
         ) {
           at = [snap(at[0] + exit[0] * GRID), snap(at[1] + exit[1] * GRID)];
-          placement = { at, rot: 0, mirror: false };
+          placement = { at, rot, mirror: false };
           bbox = approxBbox(placement, downLib);
         }
         layout.set(downId, placement);
