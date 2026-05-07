@@ -55,3 +55,8 @@ export type { EditorState } from './store';
 // with their own i18n system.
 export { useLocale } from './i18n';
 export type { Locale } from './i18n';
+
+// Optional toolbar widgets — file ops + image export. For embedding apps that
+// want a "local file" mode without their own persistence layer.
+export { FileMenu } from './components/FileMenu';
+export { ExportMenu } from './components/ExportMenu';
