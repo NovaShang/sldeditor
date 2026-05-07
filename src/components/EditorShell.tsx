@@ -6,6 +6,7 @@ import { ContextualToolbar } from './ContextualToolbar';
 import { FloatingToolbar } from './FloatingToolbar';
 import { LeftPanel } from './LeftPanel';
 import { LibraryPopover } from './LibraryPopover';
+import { OnboardingCard } from './OnboardingCard';
 import { RightPanel } from './RightPanel';
 import { ViewToolbar } from './ViewToolbar';
 
@@ -77,6 +78,7 @@ export function EditorShell() {
         <ViewToolbar />
         <ContextualToolbar />
         <LibraryPopover />
+        <OnboardingCard />
         <ElementHoverLabel />
       </div>
     </ContextMenuHost>
