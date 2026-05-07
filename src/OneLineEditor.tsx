@@ -1,11 +1,24 @@
+import { useEffect } from 'react';
+import { EditorShell } from '@/components/EditorShell';
+import type { DiagramFile } from '@/model';
+import { useEditorStore } from '@/store';
+
 export interface OneLineEditorProps {
   className?: string;
+  /** Initial DiagramFile to render. Re-renders when this reference changes. */
+  diagram?: DiagramFile;
 }
 
-export function OneLineEditor({ className }: OneLineEditorProps) {
+export function OneLineEditor({ className, diagram }: OneLineEditorProps) {
+  const setDiagram = useEditorStore((s) => s.setDiagram);
+
+  useEffect(() => {
+    if (diagram) setDiagram(diagram);
+  }, [diagram, setDiagram]);
+
   return (
-    <div className={className ?? 'flex h-full w-full items-center justify-center'}>
-      <div className="text-sm text-muted-foreground">OneLineEditor (scaffold)</div>
+    <div className={className ?? 'h-full w-full'}>
+      <EditorShell />
     </div>
   );
 }

@@ -88,3 +88,45 @@
 .ole-canvas-root {
   --canvas-scale: 1;
 }
+
+/* Glass panel — used by floating chrome (top bar, toolbars). */
+.ole-glass {
+  background-color: color-mix(in oklch, var(--card) 80%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Canvas SVG. The grid lives in <pattern>; this just paints the canvas surface. */
+.ole-canvas-svg {
+  background-color: var(--canvas-bg);
+  touch-action: none;
+}
+
+/* Terminals — hidden by default. A future "wire" tool will set
+   `.tool-wire` on `.ole-canvas-root` to reveal all terminals. */
+.ole-terminal {
+  display: none;
+  fill: var(--canvas-bg);
+  stroke: var(--foreground);
+  stroke-width: calc(1 / var(--canvas-scale, 1));
+  pointer-events: none;
+}
+.ole-terminal[data-connected='true'] {
+  fill: var(--foreground);
+}
+.ole-canvas-root.tool-wire .ole-terminal {
+  display: inline;
+}
+
+/* Wires. `pointer-events: stroke` so they're hoverable but the body of the
+   wire's bounding box doesn't swallow clicks meant for elements behind it. */
+.ole-wire {
+  pointer-events: stroke;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Element strokes look the same at every zoom level — strokes don't grow when
+   zooming in. The library SVG fragments use stroke-width="1" by convention. */
+.ole-element [stroke] {
+  vector-effect: non-scaling-stroke;
+}
