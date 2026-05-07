@@ -1,0 +1,47 @@
+<definition version="0.100.0" type="element" link_type="simple" width="110" height="190" hotspot_x="86" hotspot_y="172">
+    <uuid uuid="{bb94a968-16c6-779b-56bd-b45c96fe120d}"/>
+    <names>
+        <name lang="ca">Transformador trifàsic, connexió estrella-estrella-triangle</name>
+        <name lang="cs">Trojfázový transformátor
+ve spojení hvězda-hvězda-trojúhelník</name>
+        <name lang="de">Drehstromtransformator,
+Stern/Stern/Dreieckschaltung</name>
+        <name lang="en">Three-phase transformer, connection star-star-delta</name>
+        <name lang="fr">Transformateur triphasé, couplage étoile-étoile-
+triangle</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <ellipse x="-39" y="-80" width="60" height="60" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="2" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{f62aba6a-6b96-4425-bfbe-9acbd37c8e6e}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-9" y1="-20" x2="-9" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-60" y="-120" width="60" height="60" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-150" x2="-30" y2="-120" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-19" y1="0" x2="1" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="Form 1 / Forme 1" x="-74" y="-160" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <line x1="-19" y1="5" x2="1" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-80" y="-80" width="60" height="60" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-50" y1="-20" x2="-50" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-130" x2="-20" y2="-140" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-135" x2="-20" y2="-145" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-60" y1="0" x2="-40" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-60" y1="5" x2="-40" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-125" x2="-20" y2="-135" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-60" y1="-5" x2="-40" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-5" x2="0" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-10" y1="-35" x2="10" y2="-35" x3="0" y3="-55" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-55" y1="-30" x2="-55" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-55" y1="-40" x2="-45" y2="-45" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-55" y1="-40" x2="-65" y2="-45" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-80" x2="-30" y2="-90" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-90" x2="-20" y2="-95" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-90" x2="-40" y2="-95" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{48f7eca4-88e9-4bff-92ec-99f685d2418e}" name="" x="-50" y="10" orientation="s" type="Generic"/>
+        <terminal uuid="{5fbd7f86-c53b-4418-8a82-25c49df020aa}" name="" x="-30" y="-150" orientation="n" type="Generic"/>
+        <terminal uuid="{f500ba4d-eeb8-4ff2-929e-c2b77fab76d4}" name="" x="-9" y="10" orientation="s" type="Generic"/>
+    </description>
+</definition>

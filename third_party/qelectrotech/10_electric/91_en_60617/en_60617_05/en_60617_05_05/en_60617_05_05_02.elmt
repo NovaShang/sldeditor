@@ -1,0 +1,27 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="35" hotspot_y="45">
+    <uuid uuid="{221decc5-d677-ea78-4f8b-1b6d7f0a7188}"/>
+    <names>
+        <name lang="ca">Transistor NPN amb col·lector connectat a l'embolcall</name>
+        <name lang="cs">NPN-Tranzistor, kolektor spojený s pouzdrem</name>
+        <name lang="de">NPN-Transistor, Kollektor mit dem Gehäuse
+verbunden</name>
+        <name lang="en">NPN transistor with collector connected to the envelope</name>
+        <name lang="fr">Transistor NPN, avec collecteur relié à
+l'enveloppe</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{c20d23cb-bea3-4f8c-8be4-3ac594aaf4f5}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-10" y1="-30" x2="-10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-15" x2="10" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-20" x2="-30" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="10" y1="-40" x2="-10" y2="-25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-5" y1="-31" x2="-7" y2="-27" x3="-3" y3="-28" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <ellipse x="-30" y="-40" width="40" height="40" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="1" y="-7" width="4" height="4" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+    </description>
+</definition>

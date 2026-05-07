@@ -1,0 +1,29 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="30" hotspot_x="35" hotspot_y="15">
+    <uuid uuid="{b3415113-6e3f-16e0-6f94-2aab33c98d9b}"/>
+    <names>
+        <name lang="ca">Dispositiu d'acoblament unidireccional per a la rotació</name>
+        <name lang="cs">Mechanické spojení, zapnuto</name>
+        <name lang="de">Kupplung, gekuppelt</name>
+        <name lang="en">Unidirectional coupling device for rotation</name>
+        <name lang="es">Dispositivo de acoplamiento unidireccional</name>
+        <name lang="fr">Accouplement mécanique embrayé</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <arc x="-22" y="-10" width="12" height="20" start="280" angle="150" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="8" y="-10" width="12" height="20" start="270" angle="175" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <dynamic_text x="5" y="2.5" z="3" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{db1eb0b6-3dae-48b5-bdea-7898066a5535}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-30" y1="0" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-13" y1="-10" x2="-16" y2="-10" x3="-14" y3="-8" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <polygon x1="17" y1="-10" x2="14" y2="-10" x3="16" y3="-8" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <line x1="0" y1="0" x2="0" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="7" y1="0" x2="7" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="7" y1="0" x2="30" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-3" y1="-2" x2="-3" y2="-5" x3="10" y3="-5" x4="10" y4="-2" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <polygon x1="-14" y1="8" x2="-16" y2="10" x3="-13" y3="10" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+    </description>
+</definition>

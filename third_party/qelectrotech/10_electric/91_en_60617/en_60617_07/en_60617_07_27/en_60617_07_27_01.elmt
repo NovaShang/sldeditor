@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="70" hotspot_x="25" hotspot_y="35">
+    <uuid uuid="{160d12cc-9a98-02b8-5300-0a2bbd16b79c}"/>
+    <names>
+        <name lang="ca">Dispositiu d'acoblament amb separació elèctrica</name>
+        <name lang="cs">Vazební člen s elektrickým oddělením</name>
+        <name lang="de">Koppler mit galvanischer Trennung</name>
+        <name lang="en">Coupling device with electrical separation</name>
+        <name lang="fr">Coupleur à séparation électrique</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="20" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{5817cae3-9613-499b-bd2c-9ab32cb90c92}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-30" width="40" height="60" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-15" y1="0" x2="14" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-15" y1="10" x2="14" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-10" x2="5" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-5" y1="-10" x2="0" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="10" y1="2" x2="10" y2="-2" x3="15" y3="0" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <polygon x1="10" y1="12" x2="10" y2="8" x3="15" y3="10" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+    </description>
+</definition>

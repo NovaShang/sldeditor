@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="45" hotspot_y="45">
+    <uuid uuid="{dc0cecd3-ed9f-c0a6-592e-cf237a9ddf4b}"/>
+    <names>
+        <name lang="ca">Rectificador en connexió d'ona completa (pont).</name>
+        <name lang="cs">Usměrňovač v celovlnném (můstkovém) zapojení</name>
+        <name lang="de">Gleichrichter in Brückenschaltung</name>
+        <name lang="en">Rectifier in full wave (bridge) connection</name>
+        <name lang="fr">Redresseur en couplage à double voie (en
+pont)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="22.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{673b79ae-3082-46cd-8233-523e7a8ae3b3}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <polygon x1="-20" y1="0" x2="-40" y2="-20" x3="-20" y3="-40" x4="0" y4="-20" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-20" y1="-30" x2="-20" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-25" y1="-15" x2="-15" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-25" y1="-25" x2="-15" y2="-25" x3="-20" y3="-15" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

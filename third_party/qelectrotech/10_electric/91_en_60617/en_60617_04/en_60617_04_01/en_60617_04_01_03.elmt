@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="30" hotspot_x="30" hotspot_y="16">
+    <uuid uuid="{c63d9b43-61a9-3d2d-2a43-d2f3eaca282c}"/>
+    <names>
+        <name lang="ca">Resistència, ajustable</name>
+        <name lang="cs">Nastavitelný rezistor</name>
+        <name lang="de">Widerstand, veränderbar</name>
+        <name lang="en">Resistor, adjustable</name>
+        <name lang="fr">Résistance réglable</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{1dd63b8f-1a70-4367-942e-3aa0b510e352}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-20" y1="0" x2="-10" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-10" y="-5" width="30" height="10" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="20" y1="0" x2="30" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-5" y1="10" x2="15" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="16" y1="-9" x2="14" y2="-11" x3="18" y3="-13" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <terminal uuid="{aa266ff3-cd7d-47d2-9363-2538b93acab6}" name="" x="-20" y="0" orientation="w" type="Generic"/>
+        <terminal uuid="{3c1746c4-1e37-4e86-9ff2-3e57bf2f9930}" name="" x="30" y="0" orientation="e" type="Generic"/>
+    </description>
+</definition>

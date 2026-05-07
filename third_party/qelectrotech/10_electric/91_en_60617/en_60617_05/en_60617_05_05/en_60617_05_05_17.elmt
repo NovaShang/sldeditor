@@ -1,0 +1,28 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="60" hotspot_x="25" hotspot_y="30">
+    <uuid uuid="{aeef5c00-ece7-f7dd-4b68-738ceae6d8f8}"/>
+    <names>
+        <name lang="ca">Transistor d'efecte de camp de porta aïllada IGFET, tipus d'esgotament, dues portes, tipus P</name>
+        <name lang="cs">IGFET-Tranzistor, ochuzovací typ, dvě hradla,
+kanál N,s odděleně připojenou podložkou</name>
+        <name lang="de">IGFET-Transistor, Verarmungstyp, zwei Gates,
+N-Kanal mit Substratanschluß</name>
+        <name lang="en">Insulated gate field effect transistor IGFET, depletion type, two gates, P-type</name>
+        <name lang="fr">Transistor IGFET à déplétion à deux grilles,
+canal N, avec substrat connecté séparément</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="0" y1="25" x2="0" y2="-25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="32.5" z="2" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{a24bf5e7-ee45-4ff5-9dc9-a9d12b98b0d3}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <polygon x1="-20" y1="20" x2="-5" y2="20" x3="-5" y3="5" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="0" y1="-20" x2="20" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="20" x2="20" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="20" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="11" y1="-4" x2="4" y2="0" x3="11" y3="4" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <polygon x1="-20" y1="0" x2="-5" y2="0" x3="-5" y3="-15" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

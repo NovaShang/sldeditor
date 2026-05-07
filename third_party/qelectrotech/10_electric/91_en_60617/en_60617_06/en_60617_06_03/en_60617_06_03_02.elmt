@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="40" height="10" hotspot_x="35" hotspot_y="7">
+    <uuid uuid="{61d0301d-b288-b21e-603a-19b81f127d5d}"/>
+    <names>
+        <name lang="ca">Bobinatge de la màquina (funcions diferents: bobinatge en sèrie)</name>
+        <name lang="cs">Sériové vinutí</name>
+        <name lang="de">Reihenschlußwicklung</name>
+        <name lang="en">Winding of machine (different functions: series winding)</name>
+        <name lang="fr">Enroulement série</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{663abf79-4ab6-43f0-8f70-36306187ae67}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <arc x="-30" y="-5" width="10" height="10" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="-20" y="-5" width="10" height="10" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="-10" y="-5" width="10" height="10" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+    </description>
+</definition>

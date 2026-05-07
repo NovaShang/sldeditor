@@ -1,0 +1,35 @@
+<definition version="0.100.0" type="element" link_type="simple" width="60" height="100" hotspot_x="30" hotspot_y="50">
+    <uuid uuid="{95e4efdd-2953-0f30-783e-87098f3a612d}"/>
+    <names>
+        <name lang="ar">محوّل ثلاثي الأوجه</name>
+        <name lang="ca">Transductor trifàsic</name>
+        <name lang="cs">Transformátor se třemi vinutími</name>
+        <name lang="de">Transformator Drehstrom</name>
+        <name lang="el">Τριφασικός μετασχηματιστής</name>
+        <name lang="en">Three-phase transducer</name>
+        <name lang="es">Transformador trifásico</name>
+        <name lang="fr">Transformateur triphasé</name>
+        <name lang="it">Trasformatore trifase</name>
+        <name lang="nl">driefasen transformator</name>
+        <name lang="pl">Transformator trójfazowy</name>
+        <name lang="pt">Transformador trifásico</name>
+        <name lang="ru">Трёхфазный трансформатор</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <ellipse x="-25" y="-5" width="30" height="30" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <ellipse x="-15" y="-25" width="30" height="30" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <ellipse x="-5" y="-5" width="30" height="30" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="10" y1="40" x2="10" y2="25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="25" x2="-10" y2="40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-40" x2="0" y2="-25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="27" y="-12.5" z="7" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{e02e8914-b0a6-421a-a539-a0b7a4508b64}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <terminal uuid="{d442cc5d-ce30-4813-a143-e2b4e6abc894}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{aeeba04e-3164-407b-bfab-bd942dfae46d}" name="" x="-10" y="40" orientation="s" type="Generic"/>
+        <terminal uuid="{3026cc6b-abfa-4cb8-9105-95717e4f5924}" name="" x="10" y="40" orientation="s" type="Generic"/>
+    </description>
+</definition>

@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="30" hotspot_x="25" hotspot_y="15">
+    <uuid uuid="{fd96383c-2333-9916-e5f8-192f8fbbff4d}"/>
+    <names>
+        <name lang="ca">Material, aïllant</name>
+        <name lang="cs">Materiál izolační</name>
+        <name lang="de">Isolierstoff oder Dielektrikum</name>
+        <name lang="en">Material, insulating</name>
+        <name lang="es">Aislador o dieléctrico</name>
+        <name lang="fr">Isolant ou diélectrique</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{2b1db7a1-97c4-49d0-8e7d-1f9dc8f6a6b8}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-10" width="40" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:bdiag;color:black" antialias="false"/>
+    </description>
+</definition>

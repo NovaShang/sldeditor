@@ -1,0 +1,26 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="40" hotspot_x="15" hotspot_y="20">
+    <uuid uuid="{a5a9e2f0-098c-06b3-fd21-86576b6b7ad3}"/>
+    <names>
+        <name lang="ca">Protecció contra contacte directe no intencionat, símbol general</name>
+        <name lang="cs">Ochrana proti neúmyslnému přímému dotyku</name>
+        <name lang="de">Schutz gegen direkten Kontakt, nicht beabsichtigt</name>
+        <name lang="en">Protection against unintentional direct contact, general symbol</name>
+        <name lang="es">Protección contra el contacto directo no intencional</name>
+        <name lang="fr">Protection contre le contact direct non intentionnel</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{84a05a38-2966-45c9-9105-3160382f6f91}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-4" y1="-16" x2="-10" y2="-16" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-16" x2="-10" y2="16" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="16" x2="-4" y2="16" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="4" y1="16" x2="10" y2="16" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="10" y1="16" x2="10" y2="-16" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="10" y1="-16" x2="4" y2="-16" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="0" y1="-4" x2="-1" y2="-2" x3="-3" y3="-1" x4="-1" y4="0" x5="-2" y5="2" x6="0" y6="1" x7="2" y7="2" x8="1" y8="0" x9="3" y9="-1" x10="1" y10="-2" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+    </description>
+</definition>

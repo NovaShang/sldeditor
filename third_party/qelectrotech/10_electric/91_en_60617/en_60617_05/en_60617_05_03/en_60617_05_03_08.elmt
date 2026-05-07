@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="60" hotspot_x="15" hotspot_y="50">
+    <uuid uuid="{6378678c-96b7-4939-9bec-12867bfe17c0}"/>
+    <names>
+        <name lang="ca">Díode cap enrere (díode unitúnel)</name>
+        <name lang="cs">Inverzní dioda( jednotunelová)</name>
+        <name lang="de">Unitunnel-Diode</name>
+        <name lang="en">Backward diode (unitunnel diode)</name>
+        <name lang="fr">Diode unitunnel</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{be67879a-a951-4f67-a457-977776aae98d}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-40" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-10" x2="10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-10" y1="-30" x2="10" y2="-30" x3="0" y3="-10" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-10" y1="-15" x2="-10" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="10" y1="-15" x2="10" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{0c4f4a1c-bde9-4373-9b11-83bcad09c8a2}" name="" x="0" y="0" orientation="s" type="Generic"/>
+        <terminal uuid="{18fe690c-1906-4e5d-a880-b8e94527d795}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+    </description>
+</definition>

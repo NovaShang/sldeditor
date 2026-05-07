@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="30" hotspot_x="25" hotspot_y="15">
+    <uuid uuid="{6da1ee1e-0dc8-1efe-420f-0da4ee9c5a2d}"/>
+    <names>
+        <name lang="ca">Impressió, pàgina</name>
+        <name lang="cs">Tisk stránky</name>
+        <name lang="de">Drucken auf Blatt</name>
+        <name lang="en">Printing, page</name>
+        <name lang="es">Imprimir en la página</name>
+        <name lang="fr">Impression sur page</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{3a341ac5-14d3-4a26-8a11-9b27c069f182}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-10" width="40" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

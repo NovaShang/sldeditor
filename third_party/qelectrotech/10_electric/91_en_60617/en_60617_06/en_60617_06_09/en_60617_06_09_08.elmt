@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="90" height="130" hotspot_x="86" hotspot_y="104">
+    <uuid uuid="{58bc3be4-fa81-0a30-3b7b-9fa76eb704d0}"/>
+    <names>
+        <name lang="ca">sufocar;</name>
+        <name lang="cs">Tlumivka
+Reaktor</name>
+        <name lang="de">Drossel</name>
+        <name lang="en">Choke; Reactor, general symbol</name>
+        <name lang="fr">Inductance</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{be8d602e-ff09-485a-bb82-81d1610f3418}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <text text="Form 1 / Forme 1" x="-74" y="-90" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <line x1="-30" y1="0" x2="-30" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-60" y="-60" width="60" height="60" start="270" angle="270" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-30" y1="-80" x2="-30" y2="-30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-60" y1="-30" x2="-30" y2="-30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{76b22cf1-a112-4021-a2d6-369b8773c9bf}" name="" x="-30" y="-80" orientation="n" type="Generic"/>
+    </description>
+</definition>

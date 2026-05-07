@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="70" hotspot_x="15" hotspot_y="65">
+    <uuid uuid="{395f55d8-1c7d-10fd-9ad1-33d04a7468fe}"/>
+    <names>
+        <name lang="ca">càtode fred;</name>
+        <name lang="cs">Studená katoda,
+Katoda žhavená ionty</name>
+        <name lang="de">kalte Kathode
+ionenbeheizte Kathode</name>
+        <name lang="en">Cold cathode; Ionically heated cathode</name>
+        <name lang="fr">Cathode froide
+Cathode chauffée ioniquement</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{4e5ee6ae-bd56-4eb9-9ad6-305fbdd6f071}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-40" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-10" y="-60" width="20" height="20" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

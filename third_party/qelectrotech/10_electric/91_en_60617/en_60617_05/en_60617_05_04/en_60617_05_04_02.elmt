@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="60" hotspot_x="15" hotspot_y="50">
+    <uuid uuid="{c686646a-7050-9c5d-a465-36b92aa6e499}"/>
+    <names>
+        <name lang="ca">Tiristor de díode de conducció inversa</name>
+        <name lang="cs">Diodový zpětně propustný tyristor</name>
+        <name lang="de">Thyristordiode, rückwärts leitend</name>
+        <name lang="en">Reverse conducting diode thyristor</name>
+        <name lang="fr">Thyristor diode passant en inverse</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{4eb57b6d-0d2d-4ae8-82db-d690b5938bab}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-40" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-10" x2="10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-10" y1="-30" x2="10" y2="-30" x3="0" y3="-10" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="10" y1="-20" x2="-10" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-15" x2="-10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{756d2316-cbfa-4db5-9845-5f8097260a46}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{2fd4fa1d-d427-42a1-a9fd-4350c1018f8b}" name="" x="0" y="0" orientation="s" type="Generic"/>
+    </description>
+</definition>

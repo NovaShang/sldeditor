@@ -1,0 +1,31 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="10" hotspot_x="15" hotspot_y="2">
+    <uuid uuid="{0a0138b0-b392-579f-7881-58512660f381}"/>
+    <names>
+        <name lang="ca">Bobina, símbol general;</name>
+        <name lang="cs">Induktor
+Cívka
+Vinutí
+Tlumivka</name>
+        <name lang="de">Induktivität
+Spule
+Wicklung
+Drossel</name>
+        <name lang="en">Coil, general symbol; Winding, general symbol</name>
+        <name lang="fr">Inductance
+Bobine
+Enroulement
+Piège</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="35" y="22.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{565d3069-dccc-4426-a4a7-1a4c9169b6c0}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <arc x="10" y="0" width="10" height="10" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="-10" y="0" width="10" height="10" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="20" y="0" width="10" height="10" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="0" y="0" width="10" height="10" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+    </description>
+</definition>

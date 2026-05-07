@@ -1,0 +1,646 @@
+{
+  "version": "0.1",
+  "generatedAt": "2026-05-07T07:00:02.948Z",
+  "sourceLicense": "GPLv2 (QElectroTech ELEMENTS.LICENSE) — see THIRD_PARTY_NOTICES.md",
+  "categories": {
+    "busbar": [
+      "busbar",
+      "earth"
+    ],
+    "switching": [
+      "breaker",
+      "disconnector",
+      "earthing-switch",
+      "load-switch",
+      "fuse"
+    ],
+    "transformer": [
+      "transformer-2w",
+      "transformer-3w",
+      "autotransformer"
+    ],
+    "instrument-transformer": [
+      "ct",
+      "pt"
+    ],
+    "source": [
+      "generator",
+      "grid-source",
+      "battery"
+    ],
+    "load": [
+      "sync-motor",
+      "async-motor",
+      "load"
+    ],
+    "compensation": [
+      "shunt-reactor",
+      "series-reactor",
+      "shunt-capacitor"
+    ],
+    "protection": [
+      "arrester"
+    ]
+  },
+  "elements": [
+    {
+      "id": "busbar",
+      "name": "母线段",
+      "category": "busbar",
+      "description": "可拉伸单母线段，多设备挂接",
+      "viewBox": "-42 -4 84 8",
+      "width": 84,
+      "height": 8,
+      "svg": "<line x1=\"-40\" y1=\"0\" x2=\"40\" y2=\"0\" stroke=\"black\" stroke-width=\"3\" stroke-linecap=\"round\" fill=\"none\"/>",
+      "terminals": [
+        {
+          "id": "t_left",
+          "x": -40,
+          "y": 0,
+          "orientation": "w"
+        },
+        {
+          "id": "t_right",
+          "x": 40,
+          "y": 0,
+          "orientation": "e"
+        }
+      ],
+      "stretchable": {
+        "axis": "x",
+        "minLength": 20
+      },
+      "source": {
+        "kind": "inline"
+      }
+    },
+    {
+      "id": "earth",
+      "name": "接地",
+      "category": "busbar",
+      "viewBox": "-12 -17 24 34",
+      "width": 24,
+      "height": 34,
+      "svg": "<line x1=\"-10\" y1=\"0\" x2=\"10\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-15\" x2=\"0\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-7\" y1=\"5\" x2=\"7\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-4\" y1=\"10\" x2=\"4\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0.5\" y1=\"15\" x2=\"-0.5\" y2=\"15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": 0,
+          "y": -15,
+          "orientation": "n"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_02/en_60617_02_15/en_60617_02_15_01.elmt",
+        "qetEnglishName": "Earth or ground, general symbol"
+      }
+    },
+    {
+      "id": "breaker",
+      "name": "断路器 (QF)",
+      "category": "switching",
+      "viewBox": "-7 -22 15 46",
+      "width": 15,
+      "height": 46,
+      "svg": "<polyline points=\"0,20 0,10 -5,-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"2\" y1=\"-8\" x2=\"-2\" y2=\"-12\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"2\" y1=\"-12\" x2=\"-2\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"2\" y=\"-10.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"4\" fill=\"#000000\">1</text><text x=\"3\" y=\"21.2\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"4\" fill=\"#000000\">2</text>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": 0,
+          "y": -20,
+          "orientation": "n"
+        },
+        {
+          "id": "t2",
+          "x": 0,
+          "y": 20,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "11_singlepole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur1.elmt",
+        "qetEnglishName": "Circuit-breaker"
+      }
+    },
+    {
+      "id": "disconnector",
+      "name": "隔离开关 (QS)",
+      "category": "switching",
+      "viewBox": "-10 -42 15 64",
+      "width": 15,
+      "height": 64,
+      "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"-8\" y2=\"-23\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-3\" y1=\"-20\" x2=\"3\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": 0,
+          "y": -40,
+          "orientation": "n"
+        },
+        {
+          "id": "t2",
+          "x": 0,
+          "y": 20,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_06.elmt",
+        "qetEnglishName": "Disconnector; Isolator"
+      }
+    },
+    {
+      "id": "earthing-switch",
+      "name": "接地刀闸 (QE)",
+      "category": "switching",
+      "description": "隔离开关 + 接地连接，单端口",
+      "viewBox": "-12 -32 24 64",
+      "width": 24,
+      "height": 64,
+      "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-12\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"-12\" x2=\"-9\" y2=\"9\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-3\" y1=\"-12\" x2=\"3\" y2=\"-12\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-10\" y1=\"14\" x2=\"10\" y2=\"14\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-7\" y1=\"19\" x2=\"7\" y2=\"19\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-4\" y1=\"24\" x2=\"4\" y2=\"24\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-1.5\" y1=\"29\" x2=\"1.5\" y2=\"29\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/>",
+      "terminals": [
+        {
+          "id": "t_top",
+          "x": 0,
+          "y": -30,
+          "orientation": "n"
+        }
+      ],
+      "source": {
+        "kind": "inline"
+      }
+    },
+    {
+      "id": "load-switch",
+      "name": "负荷开关",
+      "category": "switching",
+      "viewBox": "-10 -42 14 64",
+      "width": 14,
+      "height": 64,
+      "svg": "<line x1=\"0\" y1=\"-24\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"-8\" y2=\"-23\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"-22\" rx=\"2\" ry=\"2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-2\" y1=\"-24\" x2=\"2\" y2=\"-24\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": 0,
+          "y": -40,
+          "orientation": "n"
+        },
+        {
+          "id": "t2",
+          "x": 0,
+          "y": 20,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_08.elmt",
+        "qetEnglishName": "Switch-disconnector; On-load isolating switch"
+      }
+    },
+    {
+      "id": "fuse",
+      "name": "熔断器 (FU)",
+      "category": "switching",
+      "viewBox": "-7 -32 14 64",
+      "width": 14,
+      "height": 64,
+      "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-5\" y=\"-15\" width=\"10\" height=\"30\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": 0,
+          "y": 30,
+          "orientation": "s"
+        },
+        {
+          "id": "t2",
+          "x": 0,
+          "y": -30,
+          "orientation": "n"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_07/en_60617_07_21/en_60617_07_21_01.elmt",
+        "qetEnglishName": "Fuse, general symbol"
+      }
+    },
+    {
+      "id": "transformer-2w",
+      "name": "双绕组变压器",
+      "category": "transformer",
+      "viewBox": "-62 -142 64 144",
+      "width": 64,
+      "height": 144,
+      "svg": "<ellipse cx=\"-30\" cy=\"-90\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-140\" x2=\"-30\" y2=\"-120\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"-30\" cy=\"-50\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-20\" x2=\"-30\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": -30,
+          "y": 0,
+          "orientation": "s"
+        },
+        {
+          "id": "t2",
+          "x": -30,
+          "y": -140,
+          "orientation": "n"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_01.elmt",
+        "qetEnglishName": "Transformer with two windings, general symbol"
+      }
+    },
+    {
+      "id": "transformer-3w",
+      "name": "三绕组变压器",
+      "category": "transformer",
+      "viewBox": "-82 -131 114 133",
+      "width": 114,
+      "height": 133,
+      "svg": "<ellipse cx=\"-30\" cy=\"-80\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-31\" y1=\"-129\" x2=\"-31\" y2=\"-109\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"-50\" cy=\"-50\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"-50\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-50\" y1=\"-20\" x2=\"-50\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": -31,
+          "y": -129,
+          "orientation": "n"
+        },
+        {
+          "id": "t_low_left",
+          "x": -50,
+          "y": 0,
+          "orientation": "s"
+        },
+        {
+          "id": "t_low_right",
+          "x": 0,
+          "y": 0,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_04.elmt",
+        "qetEnglishName": "Transformer with three windings, general symbol"
+      }
+    },
+    {
+      "id": "autotransformer",
+      "name": "自耦变压器",
+      "category": "transformer",
+      "viewBox": "-62 -112 64 144",
+      "width": 64,
+      "height": 144,
+      "svg": "<ellipse cx=\"-30\" cy=\"-30\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-110\" x2=\"-30\" y2=\"-90\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"0\" x2=\"-30\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 -30 A 30 60 0 0 0 -30 -90\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": -30,
+          "y": -110,
+          "orientation": "n"
+        },
+        {
+          "id": "t_bottom",
+          "x": -30,
+          "y": 20,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_06.elmt",
+        "qetEnglishName": "Auto-transformer, general symbol"
+      }
+    },
+    {
+      "id": "ct",
+      "name": "电流互感器 (CT)",
+      "category": "instrument-transformer",
+      "viewBox": "-42 -62 54 64",
+      "width": 54,
+      "height": 64,
+      "svg": "<line x1=\"-30\" y1=\"-60\" x2=\"-30\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-30\" x2=\"10\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"-30\" cy=\"-30\" rx=\"10\" ry=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-20\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5\" y1=\"-20\" x2=\"5\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": -30,
+          "y": 0,
+          "orientation": "s"
+        },
+        {
+          "id": "t2",
+          "x": -30,
+          "y": -60,
+          "orientation": "n"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_10.elmt",
+        "qetEnglishName": "Current transformer, general symbol"
+      }
+    },
+    {
+      "id": "pt",
+      "name": "电压互感器 (PT)",
+      "category": "instrument-transformer",
+      "viewBox": "-22 -42 44 115",
+      "width": 44,
+      "height": 115,
+      "svg": "<ellipse cx=\"0\" cy=\"1\" rx=\"20\" ry=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-40\" x2=\"0\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"30\" rx=\"20\" ry=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-0.13\" y1=\"51\" x2=\"-0.13\" y2=\"71\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": 0,
+          "y": 71,
+          "orientation": "s"
+        },
+        {
+          "id": "t2",
+          "x": 0,
+          "y": -40,
+          "orientation": "n"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_13/en_60617_06_13_01A.elmt",
+        "qetEnglishName": "Voltage transformer"
+      }
+    },
+    {
+      "id": "generator",
+      "name": "发电机 (G)",
+      "category": "source",
+      "viewBox": "-42 -42 44 44",
+      "width": 44,
+      "height": 44,
+      "svg": "<rect x=\"-40\" y=\"-40\" width=\"40\" height=\"40\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-24\" y=\"-8.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">G</text>",
+      "terminals": [
+        {
+          "id": "t_bottom",
+          "x": -20,
+          "y": 0,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_16/en_60617_06_16_01.elmt",
+        "qetEnglishName": "Generator, general symbol"
+      }
+    },
+    {
+      "id": "grid-source",
+      "name": "系统电源",
+      "category": "source",
+      "description": "无穷大母线 / 外部电网",
+      "viewBox": "-16 -31 32 53",
+      "width": 32,
+      "height": 53,
+      "svg": "<circle cx=\"0\" cy=\"-15\" r=\"14\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"0\" y=\"-12\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"14\">~</text><line x1=\"0\" y1=\"-1\" x2=\"0\" y2=\"20\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/>",
+      "terminals": [
+        {
+          "id": "t_bottom",
+          "x": 0,
+          "y": 20,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "inline"
+      }
+    },
+    {
+      "id": "battery",
+      "name": "电池储能",
+      "category": "source",
+      "viewBox": "-12 -12 29 24",
+      "width": 29,
+      "height": 24,
+      "svg": "<line x1=\"-10\" y1=\"0\" x2=\"0\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-5\" x2=\"0\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"5\" y1=\"-10\" x2=\"5\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"5\" y1=\"0\" x2=\"15\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t_left",
+          "x": -10,
+          "y": 0,
+          "orientation": "w"
+        },
+        {
+          "id": "t_right",
+          "x": 15,
+          "y": 0,
+          "orientation": "e"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_15/en_60617_06_15_01.elmt",
+        "qetEnglishName": "Battery cell"
+      }
+    },
+    {
+      "id": "sync-motor",
+      "name": "同步电动机",
+      "category": "load",
+      "viewBox": "-62 -82 64 114",
+      "width": 64,
+      "height": 114,
+      "svg": "<ellipse cx=\"-30\" cy=\"-30\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-34\" y=\"-24.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">M</text><line x1=\"-50\" y1=\"-80\" x2=\"-50\" y2=\"-53\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-53\" x2=\"-10\" y2=\"-80\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-45\" y=\"-7.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">1</text><path d=\"M -25 -20 A 5 2.5 0 0 0 -35 -20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -25 -20 A 5 2.5 0 0 0 -15 -20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -40 10 A 5 5 0 0 0 -50 10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -30 10 A 5 5 0 0 0 -40 10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -20 10 A 5 5 0 0 0 -30 10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -10 10 A 5 5 0 0 0 -20 10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-50\" y1=\"10\" x2=\"-50\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"10\" x2=\"-10\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"15\" x2=\"-20\" y2=\"15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"-32\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-27\" y1=\"20\" x2=\"-20\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": -10,
+          "y": -80,
+          "orientation": "n"
+        },
+        {
+          "id": "t2",
+          "x": -50,
+          "y": -80,
+          "orientation": "n"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_07/en_60617_06_07_02.elmt",
+        "qetEnglishName": "Synchronous motor, single-phase"
+      }
+    },
+    {
+      "id": "async-motor",
+      "name": "异步电动机",
+      "category": "load",
+      "viewBox": "-62 -82 64 84",
+      "width": 64,
+      "height": 84,
+      "svg": "<ellipse cx=\"-30\" cy=\"-30\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-34\" y=\"-24.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">M</text><text x=\"-45\" y=\"-7.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">3</text><path d=\"M -25 -20 A 5 2.5 0 0 0 -35 -20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -25 -20 A 5 2.5 0 0 0 -15 -20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-80\" x2=\"-30\" y2=\"-60\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-50\" y1=\"-80\" x2=\"-50\" y2=\"-53\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-80\" x2=\"-10\" y2=\"-53\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": -50,
+          "y": -80,
+          "orientation": "n"
+        },
+        {
+          "id": "t2",
+          "x": -10,
+          "y": -80,
+          "orientation": "n"
+        },
+        {
+          "id": "t3",
+          "x": -30,
+          "y": -80,
+          "orientation": "n"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_08/en_60617_06_08_01.elmt",
+        "qetEnglishName": "Induction motor, three-phase, squirrel cage"
+      }
+    },
+    {
+      "id": "load",
+      "name": "负荷",
+      "category": "load",
+      "description": "抽象负荷（电流流出箭头）",
+      "viewBox": "-8 -22 16 46",
+      "width": 16,
+      "height": 46,
+      "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"10\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><polygon points=\"-6,10 6,10 0,22\" fill=\"black\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t_top",
+          "x": 0,
+          "y": -20,
+          "orientation": "n"
+        }
+      ],
+      "source": {
+        "kind": "inline"
+      }
+    },
+    {
+      "id": "shunt-reactor",
+      "name": "并联电抗器",
+      "category": "compensation",
+      "viewBox": "-62 -82 64 104",
+      "width": 64,
+      "height": 104,
+      "svg": "<line x1=\"-30\" y1=\"0\" x2=\"-30\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -30 0 A 30 30 0 1 0 -60 -30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-80\" x2=\"-30\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"-30\" x2=\"-30\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": -30,
+          "y": -80,
+          "orientation": "n"
+        },
+        {
+          "id": "t_bottom",
+          "x": -30,
+          "y": 20,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_08.elmt",
+        "qetEnglishName": "Choke; Reactor, general symbol"
+      }
+    },
+    {
+      "id": "series-reactor",
+      "name": "串联电抗器",
+      "category": "compensation",
+      "description": "与并联电抗器同符号；通过用法区分。",
+      "viewBox": "-62 -82 64 104",
+      "width": 64,
+      "height": 104,
+      "svg": "<line x1=\"-30\" y1=\"0\" x2=\"-30\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -30 0 A 30 30 0 1 0 -60 -30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-80\" x2=\"-30\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"-30\" x2=\"-30\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": -30,
+          "y": -80,
+          "orientation": "n"
+        },
+        {
+          "id": "t_bottom",
+          "x": -30,
+          "y": 20,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_08.elmt",
+        "qetEnglishName": "Choke; Reactor, general symbol"
+      }
+    },
+    {
+      "id": "shunt-capacitor",
+      "name": "并联电容器",
+      "category": "compensation",
+      "viewBox": "-7 -23 14 27",
+      "width": 14,
+      "height": 27,
+      "svg": "<line x1=\"-5\" y1=\"2\" x2=\"5\" y2=\"2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5\" y1=\"-2\" x2=\"5\" y2=\"-2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": 0,
+          "y": -21,
+          "orientation": "n"
+        },
+        {
+          "id": "t_bottom",
+          "x": 0,
+          "y": 2,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "11_singlepole/395_electronics_semiconductors/20_capacitors/capacite.elmt",
+        "qetEnglishName": "Capacitor"
+      }
+    },
+    {
+      "id": "arrester",
+      "name": "避雷器 (FBL)",
+      "category": "protection",
+      "viewBox": "-7 -22 14 44",
+      "width": 14,
+      "height": 44,
+      "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"10\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"-2,-8 2,-8 0,-2\" fill=\"black\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-5\" y=\"-10\" width=\"10\" height=\"20\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "terminals": [
+        {
+          "id": "t1",
+          "x": 0,
+          "y": -20,
+          "orientation": "n"
+        },
+        {
+          "id": "t2",
+          "x": 0,
+          "y": 20,
+          "orientation": "s"
+        }
+      ],
+      "source": {
+        "kind": "elmt",
+        "path": "91_en_60617/en_60617_07/en_60617_07_22/en_60617_07_22_03.elmt",
+        "qetEnglishName": "Surge diverter; Lightning arrester"
+      }
+    }
+  ]
+}

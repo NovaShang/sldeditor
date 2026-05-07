@@ -1,0 +1,35 @@
+<definition version="0.100.0" type="element" link_type="simple" width="180" height="120" hotspot_x="106" hotspot_y="85">
+    <uuid uuid="{4f00f987-9080-f2db-0283-51da5214f62b}"/>
+    <names>
+        <name lang="ca">tub oscil·lador d'ona que viatja cap enrere;</name>
+        <name lang="cs">Mahnetron laditelný napětím
+(05-13-18, zjednodušený tvar)</name>
+        <name lang="de">Magnetron mit Spannungsabstimmung
+(05-13-18, vereinfachte Form)</name>
+        <name lang="en">Backward travelling wave oscillator tube; Voltage tunable magnetron</name>
+        <name lang="fr">Tube oscillateur à onde progressive inverse
+(magnétron accordable par la tension)
+(05-13-18, forme simplifiée)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{3de9f25b-09b8-4b68-9935-afe200e3af55}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-80" y="-80" width="100" height="100" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-80" x2="-30" y2="-70" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="20" x2="-30" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="14" y1="-54" x2="5" y2="-49" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="9" y1="1" x2="2" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-74" y1="-6" x2="-66" y2="-11" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-69" y1="-61" x2="-62" y2="-55" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="40" y="-40" width="10" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-30" x2="70" y2="-30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-80" y1="20" x2="20" y2="-80" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="19" y1="-76" x2="16" y2="-79" x3="22" y3="-82" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <text text="f" x="-40" y="-30" rotation="0" font="Liberation Sans,12,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <text text="U" x="-90" y="20" rotation="0" font="Liberation Sans,12,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+    </description>
+</definition>

@@ -1,0 +1,37 @@
+<definition version="0.100.0" type="element" link_type="simple" width="110" height="70" hotspot_x="50" hotspot_y="40">
+    <uuid uuid="{5c1cda49-7348-4ee9-cc61-8d9351478a86}"/>
+    <names>
+        <name lang="ca">Secció recta que consta de diversos compartiments separats</name>
+        <name lang="cs">Přímý díl ze tří oddělených částí</name>
+        <name lang="de">Gerader Elektro-Installationskanal, bestehend
+aus drei getrennten Kammern</name>
+        <name lang="en">Straight section consisting of several separate compartments</name>
+        <name lang="fr">Élément droit comprenant trois compartiments
+séparés</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <text text="A" x="10" y="-30" rotation="0" font="Liberation Sans,6,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <line x1="50" y1="-20" x2="-40" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="55" y="12.5" z="3" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{61f7f444-1773-431b-b98c-b9f9eaec91f1}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-40" y1="-25" x2="-40" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="50" y1="-10" x2="-40" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="50" y1="-25" x2="50" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="B" x="10" y="-10" rotation="0" font="Liberation Sans,6,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <text text="C" x="10" y="10" rotation="0" font="Liberation Sans,6,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <line x1="-40" y1="-15" x2="-40" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="50" y1="-15" x2="50" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-10" y="-35" width="10" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-10" y="-15" width="10" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-10" y="5" width="10" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="15" x2="20" y2="15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{eaa532b0-aad9-434e-8a67-4b40a1ca77ee}" name="" x="50" y="-10" orientation="e" type="Generic"/>
+        <terminal uuid="{06d9d1c7-dc40-4654-a960-198d032bf69b}" name="" x="-40" y="-10" orientation="w" type="Generic"/>
+        <terminal uuid="{2ea49520-f51b-42cb-94b8-e29d10883e59}" name="" x="50" y="-20" orientation="e" type="Generic"/>
+        <terminal uuid="{4ab62edd-0b64-4e63-b5e0-211a0fb4fa57}" name="" x="-40" y="-20" orientation="w" type="Generic"/>
+    </description>
+</definition>

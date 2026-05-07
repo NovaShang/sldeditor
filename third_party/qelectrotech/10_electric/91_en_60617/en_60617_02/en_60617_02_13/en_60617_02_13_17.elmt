@@ -1,0 +1,27 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="20" hotspot_x="11" hotspot_y="10">
+    <uuid uuid="{06fb80b2-d01d-fcd8-9145-16c7625b7d69}"/>
+    <names>
+        <name lang="ca">Actuador (accionat per perfil de lleva/lleva)</name>
+        <name lang="cs">Profil vačky</name>
+        <name lang="de">Nockenprofil</name>
+        <name lang="en">Actuator (operated by cam/cam profile)</name>
+        <name lang="es">Accionado por perfil de leva</name>
+        <name lang="fr">Profil de came</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <ellipse x="-6" y="-6" width="12" height="12" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="2.5" z="2" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{0c4918e6-caa0-42c8-8144-3cbb82367e56}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="6" y="-4" width="8" height="8" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="4" y1="7" x2="3" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="5" y1="4" x2="6" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="6" y1="5" x2="4" y2="7" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-5" y="-7.5" width="10" height="3" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-5" y1="-6" x2="-4" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="5" y1="-6" x2="4" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

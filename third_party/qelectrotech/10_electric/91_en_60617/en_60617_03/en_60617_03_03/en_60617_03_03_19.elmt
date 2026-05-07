@@ -1,0 +1,27 @@
+<definition version="0.100.0" type="element" link_type="simple" width="60" height="30" hotspot_x="40" hotspot_y="19">
+    <uuid uuid="{f6200d0e-dd4e-b1b8-3ae1-6f597c03aff9}"/>
+    <names>
+        <name lang="ca">Enllaç de connexió, obert</name>
+        <name lang="cs">Spojka, otevřená</name>
+        <name lang="de">Trennstelle, Lasche offen</name>
+        <name lang="en">Connecting link, open</name>
+        <name lang="fr">Barrette de connexion, ouverte</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{17cb200e-c7dd-4b04-b75d-ad15d27409e7}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-3" y="-3" width="6" height="6" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-23" y="-3" width="6" height="6" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-3" x2="-2" y2="-12" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-18" y1="2" x2="1" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="3" y1="0" x2="10" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-23" y1="0" x2="-30" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-3" y="-13" width="6" height="6" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{886e5415-94a8-4ca1-b1d5-cb1fa2c1ce30}" name="" x="-30" y="0" orientation="w" type="Generic"/>
+        <terminal uuid="{23d73c9f-2bae-4324-8f0f-5feed8dd3a4d}" name="" x="10" y="0" orientation="e" type="Generic"/>
+    </description>
+</definition>

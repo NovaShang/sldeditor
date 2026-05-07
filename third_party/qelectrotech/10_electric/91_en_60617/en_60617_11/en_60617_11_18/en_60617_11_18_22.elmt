@@ -1,0 +1,28 @@
+<definition version="0.100.0" type="element" link_type="simple" width="170" height="50" hotspot_x="165" hotspot_y="45">
+    <uuid uuid="{f4ed5a8e-adc6-a4b7-3cdf-be9b8ed46d01}"/>
+    <names>
+        <name lang="ca">Senyal d'orientació de rodament</name>
+        <name lang="cs">Návěstní znak pro vedení při pojíždění:
+"RAMP"</name>
+        <name lang="de">Verkehrszeichen,
+Wegweiser, RAMP</name>
+        <name lang="en">Taxiing guidance sign</name>
+        <name lang="fr">Panneau de guidage pour le roulage: "RAMP"</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{eb927755-35d3-441f-8db1-e1d39964f444}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-120" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-40" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-160" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-80" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="R" x="-145" y="-15" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <text text="M" x="-65" y="-15" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <text text="A" x="-105" y="-15" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <text text="P" x="-25" y="-15" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+    </description>
+</definition>

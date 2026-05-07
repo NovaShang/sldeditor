@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="100" height="70" hotspot_x="65" hotspot_y="65">
+    <uuid uuid="{ab3f89e7-1091-2c4d-a426-4068e5a59740}"/>
+    <names>
+        <name lang="ca">Generador de mà (demanador magnètic)</name>
+        <name lang="cs">Ruční generátor (magneto, induktor)</name>
+        <name lang="de">Handgenerator
+Kurbelinduktor</name>
+        <name lang="en">Hand-generator (magneto caller)</name>
+        <name lang="fr">Générateur à commande manuelle</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{786eafb3-842d-4acd-95a3-8f2242833c27}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-60" y="-60" width="60" height="60" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="G" x="-35" y="-25" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <rect x="0" y="-32" width="10" height="4" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="10" y1="-28" x2="10" y2="-20" x3="30" y3="-20" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

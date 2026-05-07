@@ -1,0 +1,28 @@
+<definition version="0.100.0" type="element" link_type="simple" width="90" height="20" hotspot_x="30" hotspot_y="10">
+    <uuid uuid="{df318255-bb21-8fb6-93b4-a27fb93e45b4}"/>
+    <names>
+        <name lang="ca">Connector tipus endoll i presa, mascle-femella</name>
+        <name lang="cs">Zásuvková spojka s mezičlenem</name>
+        <name lang="de">Stecker verbunden, z. B. U-Stecker:
+- mit Adapter</name>
+        <name lang="en">Plug and socket-type connector, male-female</name>
+        <name lang="fr">Fiche et prise de connecteur, par exemple
+cavalier, mâle-femelle</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{bd9aacfd-b2fe-403e-a9f9-20a81ac8d477}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="0" y="-3" width="20" height="6" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <line x1="30" y1="0" x2="50" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-6" y1="0" x2="-20" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-5" y="-5" width="10" height="10" start="90" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="20" y="-5" width="10" height="10" start="90" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <rect x="25" y="-3" width="10" height="6" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <terminal uuid="{74cdd570-d0b3-4d1c-813d-ea4dd28e0cbb}" name="" x="50" y="0" orientation="e" type="Generic"/>
+        <terminal uuid="{1f6c1170-087e-4248-b18d-1dfe6c488cb5}" name="" x="-20" y="0" orientation="w" type="Generic"/>
+    </description>
+</definition>

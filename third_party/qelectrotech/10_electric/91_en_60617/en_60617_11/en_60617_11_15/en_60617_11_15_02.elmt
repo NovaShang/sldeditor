@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="60" height="40" hotspot_x="57" hotspot_y="30">
+    <uuid uuid="{ae52019a-a6e8-732c-23c7-d4011794a990}"/>
+    <names>
+        <name lang="ca">Presa d'il·luminació a la paret</name>
+        <name lang="cs">Světelný vývod nástěnný</name>
+        <name lang="de">Leuchtenauslaß auf Putz</name>
+        <name lang="en">Lighting outlet on wall</name>
+        <name lang="fr">Point d'attente d'appareil d'éclairage en
+applique murale</name>
+        <name lang="nl_BE">Aansluitpunt voor wandverlichtingstoestel</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="13.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="true" text_from="ElementInfo" uuid="{1f15bbe3-231c-4988-9f31-0fcc960fb120}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-25" x2="0" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-20" x2="-20" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-20" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-50" y1="-10" x2="-10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{3d589863-fbe0-51a1-d21d-872ecacfa1f3}" name="" x="-50" y="-10" orientation="w" type="Generic"/>
+    </description>
+</definition>

@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="60" height="40" hotspot_x="30" hotspot_y="30">
+    <uuid uuid="{ae85ea3a-a64f-18f1-d337-46a0a7ba702e}"/>
+    <names>
+        <name lang="ca">Connexió en T</name>
+        <name lang="cs">T-spojení</name>
+        <name lang="de">T-Verbindung, Abzweigung</name>
+        <name lang="en">T-connection</name>
+        <name lang="fr">Liaison en T</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{4936e1bb-4346-4106-ad25-584a0740f953}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-20" y1="-20" x2="20" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-20" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{d6e345c3-d110-4e2e-80ed-876df9d73634}" name="" x="20" y="-20" orientation="e" type="Generic"/>
+        <terminal uuid="{66c28d63-3270-47e2-8de4-d280d1b2040a}" name="" x="-20" y="-20" orientation="w" type="Generic"/>
+        <terminal uuid="{941c6201-4df7-4d77-819c-03f5f06ce08e}" name="" x="0" y="0" orientation="s" type="Generic"/>
+    </description>
+</definition>

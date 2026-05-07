@@ -1,0 +1,29 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="80" hotspot_x="7" hotspot_y="50">
+    <uuid uuid="{0bfa381a-cb09-2a6d-0856-eb4e81a4f024}"/>
+    <names>
+        <name lang="ca">Contactor;</name>
+        <name lang="cs">Stykač, Hlavní vypínací kontakt stykače</name>
+        <name lang="de">Schütz,
+Leistungskontakt eines Schützes
+(Kontakt geschlossen)</name>
+        <name lang="en">Contactor; Main break contact of a contactor</name>
+        <name lang="fr">Rupteur,
+Contact principal à ouverture d'un contacteur
+(contact fermé)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="0" y1="-20" x2="0" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="8" y2="-23" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="4" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{062d8e91-11e5-47ce-b0b9-7c75c8599adb}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-20" x2="10" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-2.5" y="-25.5" width="5" height="5" start="270" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <terminal uuid="{bc95ae68-48ee-4fea-8d79-20e9ff0ed833}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{9c06ecb5-e017-46ee-9cc4-01a1060b8812}" name="" x="0" y="20" orientation="s" type="Generic"/>
+    </description>
+</definition>

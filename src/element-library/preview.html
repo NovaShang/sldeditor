@@ -1,0 +1,37 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Element library preview</title>
+<style>
+  body { font: 13px/1.4 -apple-system, sans-serif; padding: 24px; background: #fafafa; }
+  h2 { margin: 28px 0 8px; color: #444; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+  .cell { background: white; border: 1px solid #e5e5e5; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .cell svg { max-width: 110px; max-height: 110px; }
+  .cell .id { font-family: ui-monospace, monospace; font-size: 11px; color: #888; }
+  .cell .nm { font-weight: 500; }
+  .cell .meta { font-size: 11px; color: #aaa; }
+</style>
+<div id="root">Loading…</div>
+<script type="module">
+  const data = await fetch('./index.json').then(r => r.json());
+  const root = document.getElementById('root');
+  root.innerHTML = '';
+  for (const [cat, ids] of Object.entries(data.categories)) {
+    const h = document.createElement('h2'); h.textContent = cat; root.appendChild(h);
+    const grid = document.createElement('div'); grid.className = 'grid';
+    for (const id of ids) {
+      const el = data.elements.find(e => e.id === id);
+      const cell = document.createElement('div'); cell.className = 'cell';
+      const termDots = el.terminals
+        .map(t => `<circle cx="${t.x}" cy="${t.y}" r="1.5" fill="#dc2626"/>`).join('');
+      cell.innerHTML = `
+        <svg viewBox="${el.viewBox}" xmlns="http://www.w3.org/2000/svg">${el.svg}${termDots}</svg>
+        <div class="nm">${el.name}</div>
+        <div class="id">${el.id}</div>
+        <div class="meta">${el.terminals.length} 端子 · ${el.viewBox}</div>
+      `;
+      grid.appendChild(cell);
+    }
+    root.appendChild(grid);
+  }
+</script>

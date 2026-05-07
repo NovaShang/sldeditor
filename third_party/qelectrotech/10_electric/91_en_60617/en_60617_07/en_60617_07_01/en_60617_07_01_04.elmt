@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="20" hotspot_x="10" hotspot_y="10">
+    <uuid uuid="{9b318549-0fef-2caa-2aed-12885caaeca4}"/>
+    <names>
+        <name lang="ca">Funció interruptor-seccionador;</name>
+        <name lang="cs">Funkce odpínače</name>
+        <name lang="de">Lasttrennschalter-Funktion</name>
+        <name lang="en">Switch-disconnector function; Isolating-switch function</name>
+        <name lang="fr">Fonction interrupteur-sectionneur</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="5" y1="-5" x2="-5" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="2" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{362cfa25-6691-4ca3-a7e5-73b0cf414418}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-5" y="-5" width="10" height="10" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

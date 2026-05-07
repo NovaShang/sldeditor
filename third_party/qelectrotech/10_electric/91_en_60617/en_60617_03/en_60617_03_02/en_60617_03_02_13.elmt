@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="60" height="50" hotspot_x="57" hotspot_y="45">
+    <uuid uuid="{ee6d7d27-f5d7-8d11-7832-c0198ff7dadc}"/>
+    <names>
+        <name lang="ca">Punt neutre</name>
+        <name lang="cs">Střední bod</name>
+        <name lang="de">Neutralpunkt in einem Mehrphasensystem</name>
+        <name lang="en">Neutral point</name>
+        <name lang="fr">Point neutre</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{166ff86a-0c71-4554-85a6-67ec8860da6d}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-50" y1="-20" x2="0" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-10" y1="-40" x2="0" y2="-40" x3="0" y3="0" x4="-10" y4="0" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-40" y1="-30" x2="-20" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="n" x="-45" y="-30" rotation="0" font="Liberation Sans,6,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <terminal uuid="{da84641d-52f3-4199-87bf-ef753955fc46}" name="" x="-50" y="-20" orientation="w" type="Generic"/>
+    </description>
+</definition>

@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="45" hotspot_y="45">
+    <uuid uuid="{816e6107-c1b3-6f62-9ecf-1eb55a244027}"/>
+    <names>
+        <name lang="ca">Central generadora de plasma, prevista;</name>
+        <name lang="cs">Plazmová elektrárna ( projektovaná)</name>
+        <name lang="de">Kraftwerk nach dem MHD-Verfahren,
+Magnetohydrodynamisches Kraftwerk
+(Plasmakraftwerk) (in Planung)</name>
+        <name lang="en">Plasma generating station, planned; Magneto-hydrodynamic (MHD), planned</name>
+        <name lang="fr">Centrale à plasma,
+Centrale MHD (en projet)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{6a6b458c-4840-49b1-8b82-907db0fcdd58}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-40" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-30" y1="-20" x2="-20" y2="-30" x3="-10" y3="-20" x4="-20" y4="-10" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

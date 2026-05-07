@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="160" height="30" hotspot_x="150" hotspot_y="15">
+    <uuid uuid="{bb958b64-802d-785e-e83a-ae15452eb9e0}"/>
+    <names>
+        <name lang="ca">Línia aèria</name>
+        <name lang="cs">Venkovní vedení na podpěrách</name>
+        <name lang="de">Leiter, oberirdisch,
+Freileitung</name>
+        <name lang="en">Overhead line</name>
+        <name lang="fr">Ligne aérienne</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{4240921b-beca-495e-81f5-44f33c10b0bf}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="0" x2="-140" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-80" y="-10" width="20" height="20" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{f797ceac-5262-4e83-9ebe-4894cb408315}" name="" x="0" y="0" orientation="e" type="Generic"/>
+        <terminal uuid="{98140bcd-cdf9-4d53-97fa-0fb9dc31da92}" name="" x="-140" y="0" orientation="w" type="Generic"/>
+    </description>
+</definition>

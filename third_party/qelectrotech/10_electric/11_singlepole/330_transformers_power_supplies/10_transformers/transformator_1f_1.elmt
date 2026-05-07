@@ -1,0 +1,32 @@
+<definition version="0.100.0" type="element" link_type="simple" width="40" height="100" hotspot_x="20" hotspot_y="50">
+    <uuid uuid="{6c536afe-2d00-b772-c191-97b785990ea6}"/>
+    <names>
+        <name lang="ar">محوّل أحادي الوجه</name>
+        <name lang="ca">Transductor monofàsic</name>
+        <name lang="cs">Jednofázový transformátor</name>
+        <name lang="de">Transformator einphasig</name>
+        <name lang="el">Μονοφασικός μετασχηματιστής</name>
+        <name lang="en">Single phase transducer</name>
+        <name lang="es">Transformador monofásico</name>
+        <name lang="fr">Transformateur monophasé</name>
+        <name lang="it">Trasformatore monofase</name>
+        <name lang="nl">wisselspanning transformator</name>
+        <name lang="pl">Transformator jednofazowy</name>
+        <name lang="pt">Transformador monofásico</name>
+        <name lang="ru">Однофазный трансформатор</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <ellipse x="-15" y="-25" width="30" height="30" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <ellipse x="-15" y="-5" width="30" height="30" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="0" y1="-40" x2="0" y2="-25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="25" x2="0" y2="40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="17" y="-12.5" z="5" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{b9f7982a-24fb-4dc2-8c10-089db95ea09a}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <terminal uuid="{e3365d10-83f7-4512-9ac2-9d0f32bb13c7}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{525549c0-5ac7-4257-a401-42f97b2bbe71}" name="" x="0" y="40" orientation="s" type="Generic"/>
+    </description>
+</definition>

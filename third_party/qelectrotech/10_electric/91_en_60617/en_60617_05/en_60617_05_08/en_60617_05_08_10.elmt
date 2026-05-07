@@ -1,0 +1,22 @@
+<definition version="0.100.0" type="element" link_type="simple" width="90" height="50" hotspot_x="85" hotspot_y="35">
+    <uuid uuid="{bb96055e-45db-580b-6542-0b0c158c3a2c}"/>
+    <names>
+        <name lang="ca">Elèctrodes deflectors radials</name>
+        <name lang="cs">Radiální vychylovací elektrody</name>
+        <name lang="de">radiale Ablenkelektrode</name>
+        <name lang="en">Radial deflecting electrodes</name>
+        <name lang="fr">Électrode de déviation radiale</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{30559a6d-9ba2-4646-9c9f-99835ebc6415}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-10" x2="-20" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-60" y1="-10" x2="-80" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-60" y="-30" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-55" y="-25" width="30" height="30" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

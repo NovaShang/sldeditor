@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="80" height="140" hotspot_x="56" hotspot_y="61">
+    <uuid uuid="{7759c920-277f-0602-4bdf-8d02b5376328}"/>
+    <names>
+        <name lang="ca">Transformador de tensió</name>
+        <name lang="cs">Transformátor napětí</name>
+        <name lang="de">Spannungswandler</name>
+        <name lang="en">Voltage transformer</name>
+        <name lang="fr">Transformateur de tension</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="35" y="122.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{2f14ac3b-2fc6-46f8-8f31-04c5e1f53901}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-20" y="-19" width="40" height="40" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-40" x2="0" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="Form 1 / Forme 1" x="-44" y="-50" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <ellipse x="-20" y="10" width="40" height="40" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-0.13" y1="51" x2="-0.13" y2="71" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{66f2bb55-6ed8-4ce5-8544-ae32f37f02c8}" name="" x="0" y="71" orientation="s" type="Generic"/>
+        <terminal uuid="{2281702f-cc4b-4fe8-bfcd-f9d7aab85896}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+    </description>
+</definition>

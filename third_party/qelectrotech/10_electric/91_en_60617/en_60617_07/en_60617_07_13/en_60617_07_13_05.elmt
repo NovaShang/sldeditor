@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="80" hotspot_x="11" hotspot_y="50">
+    <uuid uuid="{48ff0676-174c-5b60-0b2c-ce3252b08683}"/>
+    <names>
+        <name lang="ca">Interruptor de circuit</name>
+        <name lang="cs">Výkonový vypínač</name>
+        <name lang="de">Leistungsschalter</name>
+        <name lang="en">Circuit breaker</name>
+        <name lang="fr">Disjoncteur</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="0" y1="-20" x2="0" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="-8" y2="-23" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="4" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{7091ef02-4758-4b76-b40f-e2861c0bf8dd}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-2" y1="-22" x2="2" y2="-18" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="2" y1="-22" x2="-2" y2="-18" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{5caa3d81-f1a0-45b3-ac3f-ecc247f4cc3e}" name="" x="0" y="20" orientation="s" type="Generic"/>
+        <terminal uuid="{107d9040-63a1-425e-a310-9bfd94db2170}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+    </description>
+</definition>

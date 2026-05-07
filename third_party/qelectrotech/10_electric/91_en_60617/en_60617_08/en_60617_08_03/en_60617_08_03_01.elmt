@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="25" hotspot_y="45">
+    <uuid uuid="{0ef926e4-a609-dcee-e7ce-af246a480fb0}"/>
+    <names>
+        <name lang="ca">Enregistrament de wattmetre</name>
+        <name lang="cs">Zapisovací wattmetr</name>
+        <name lang="de">Wirkleistungsschreiber</name>
+        <name lang="en">Recording wattmeter</name>
+        <name lang="fr">Wattmètre enregistreur</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{92192d5e-9fdf-443f-ad8b-091180cddfb8}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="W" x="-6" y="-16" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+    </description>
+</definition>

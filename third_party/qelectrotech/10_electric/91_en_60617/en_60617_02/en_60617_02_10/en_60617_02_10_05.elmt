@@ -1,0 +1,22 @@
+<definition version="0.100.0" type="element" link_type="simple" width="40" height="40" hotspot_x="20" hotspot_y="20">
+    <uuid uuid="{7ba57e6b-20d0-2f39-4224-7566357d276c}"/>
+    <names>
+        <name lang="ca">Funció de pas, negatiu</name>
+        <name lang="cs">Záporná stupňovitá funkce</name>
+        <name lang="de">negative Schrittfunktion</name>
+        <name lang="en">Step function, negative going</name>
+        <name lang="es">Función de paso negativo</name>
+        <name lang="fr">Fonction échelon négative</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{18d934e3-9acf-4efc-996d-26abf79bc19e}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <polygon x1="-10" y1="-10" x2="0" y2="-10" x3="0" y3="10" x4="10" y4="10" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <terminal uuid="{eec7dd76-fda7-4c2a-9212-ed2eda8e5d82}" name="" x="10" y="10" orientation="e" type="Generic"/>
+        <terminal uuid="{dd441c93-f5eb-4515-94c6-3cc87f7608f2}" name="" x="-10" y="-10" orientation="w" type="Generic"/>
+    </description>
+</definition>

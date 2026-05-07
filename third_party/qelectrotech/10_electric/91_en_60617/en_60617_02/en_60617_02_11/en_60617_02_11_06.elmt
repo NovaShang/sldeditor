@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="30" hotspot_x="25" hotspot_y="15">
+    <uuid uuid="{1be3c8a8-e797-608e-084c-4a33c7db4c07}"/>
+    <names>
+        <name lang="ca">Facsímil</name>
+        <name lang="cs">Fax</name>
+        <name lang="de">Fernkopieren</name>
+        <name lang="en">Facsimile</name>
+        <name lang="es">fax</name>
+        <name lang="fr">Télécopie</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{ca32277b-e294-43d6-b9d7-77dd37571031}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-10" width="20" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="0" y="-10" width="20" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+    </description>
+</definition>

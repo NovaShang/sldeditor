@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="20" hotspot_x="9" hotspot_y="5">
+    <uuid uuid="{944291a3-8576-f998-9c32-de83734c56b0}"/>
+    <names>
+        <name lang="ca">Moviment circular;</name>
+        <name lang="cs">Jednosměrný otáčivý pohyb, jednosměrné otáčení, jednosměrný točivý moment</name>
+        <name lang="de">einfachgerichtete kreisförmige Bewegung einfachgerichtete Drehung einfachgerichtetes Drehmoment</name>
+        <name lang="en">Circular motion; Rotation; Torque (unidirectional)</name>
+        <name lang="es">Movimiento circular unidireccional Rotación unidireccional Par unidireccional</name>
+        <name lang="fr">Mouvement circulaire unidirectionnel Rotation unidirectionnelle Couple unidirectionnel</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{b528c4ec-b5c1-4aa8-80e6-4fa9f16bd0d4}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <arc x="-5" y="5" width="10" height="10" start="45" angle="110" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <polygon x1="5" y1="6" x2="3" y2="8" x3="6" y3="9" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+    </description>
+</definition>

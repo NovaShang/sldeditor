@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="60" hotspot_x="45" hotspot_y="55">
+    <uuid uuid="{b84f22ad-b14b-8714-55a0-3074ab9b63ac}"/>
+    <names>
+        <name lang="ca">Rellotge de temps, enregistrador de temps</name>
+        <name lang="cs">Kontrolní elektrické hodiny (píchačky)</name>
+        <name lang="de">Zeiterfassungsgerät</name>
+        <name lang="en">Time clock, time recorder</name>
+        <name lang="fr">Horloge de pointage,
+Enregistreur horaire</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{cc0a7f03-4e96-4391-a274-b542038fe9fd}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-30" y="-30" width="20" height="20" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-35" y1="-40" x2="-5" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-40" y="-50" width="40" height="50" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-27" y1="-20" x2="-20" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-20" x2="-20" y2="-28" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

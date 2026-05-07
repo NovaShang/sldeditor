@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="70" hotspot_x="65" hotspot_y="65">
+    <uuid uuid="{62c8775c-47f4-afb6-9fe4-bd8de56e2000}"/>
+    <names>
+        <name lang="ca">Relé actual</name>
+        <name lang="cs">Proudové relé s nastavením maxima a minima</name>
+        <name lang="de">Stromrelais mit einstellbarem Höchst- und
+Tiefstwert</name>
+        <name lang="en">Current relay</name>
+        <name lang="fr">Relais à maximum et minimum de courant</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{3dc8ed4d-aba0-4d6e-b4e4-460aebaca2b5}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-60" y="-60" width="60" height="60" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="&lt; 3A" x="-33" y="-15" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <text text="I" x="-47" y="-27" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <text text="> 5A" x="-33" y="-36" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+    </description>
+</definition>

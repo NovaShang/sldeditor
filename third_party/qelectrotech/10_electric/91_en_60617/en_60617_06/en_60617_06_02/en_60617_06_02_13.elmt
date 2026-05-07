@@ -1,0 +1,32 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="30" hotspot_x="25" hotspot_y="25">
+    <uuid uuid="{bbe9cfa2-4596-d741-301a-c3c4a7d39e82}"/>
+    <names>
+        <name lang="ca">Bobinatge de sis fases, forquilla amb neutre tret</name>
+        <name lang="cs">Šestifázové vinutí
+do lomené hvězdy s vyvedeným uzlem</name>
+        <name lang="de">Sechsphasenwicklung, Gabelschaltung,
+Neutralleiter herausgeführt</name>
+        <name lang="en">Six-phase winding, fork with neutral brought out</name>
+        <name lang="fr">Enroulement hexaphasé, en double zigzag,
+avec neutre sorti</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{ea01fdce-89fc-4bb0-8e17-c77e4325ec70}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-10" y1="-16" x2="-10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-10" x2="-4" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-16" y1="-6" x2="-10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-16" y1="-20" x2="-10" y2="-16" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-16" x2="-4" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-4" y1="0" x2="-4" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-4" y1="-6" x2="0" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-16" y1="0" x2="-16" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-16" y1="-6" x2="-20" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-12.5" y="-12.5" width="5" height="5" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <line x1="-10" y1="-10" x2="0" y2="-16" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

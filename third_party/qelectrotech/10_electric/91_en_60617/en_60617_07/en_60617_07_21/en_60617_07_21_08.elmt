@@ -1,0 +1,28 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="80" hotspot_x="10" hotspot_y="40">
+    <uuid uuid="{24ad788b-14fe-57a5-af12-e4b5e3b4cbb9}"/>
+    <names>
+        <name lang="ca">Fusible-seccionador;</name>
+        <name lang="cs">Pojistkový odpojovač</name>
+        <name lang="de">Sicherungstrennschalter</name>
+        <name lang="en">Fuse-disconnector; Fuse isolator</name>
+        <name lang="fr">Fusible sectionneur</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{75796463-898d-4450-89b4-059d2aba77e0}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="30" x2="0" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="10" x2="-5" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-10" x2="0" y2="-30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-3" y1="6" x2="-6" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-2" y1="-6" x2="1" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="1" y1="5" x2="-3" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-2" y1="-6" x2="-6" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-2" y1="-10" x2="2" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{da06843b-9c25-4287-8f27-51ff5d808a50}" name="" x="0" y="30" orientation="s" type="Generic"/>
+        <terminal uuid="{745c8d6f-0023-4bbb-8202-373eb05990fc}" name="" x="0" y="-30" orientation="n" type="Generic"/>
+    </description>
+</definition>

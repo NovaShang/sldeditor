@@ -1,0 +1,22 @@
+<definition version="0.100.0" type="element" link_type="simple" width="130" height="170" hotspot_x="65" hotspot_y="125">
+    <uuid uuid="{68b93f1c-ad83-83f3-c850-0592c07044c7}"/>
+    <names>
+        <name lang="ca">Càtode de piscina aïllat</name>
+        <name lang="cs">Tekutá katoda izolovaná</name>
+        <name lang="de">Flüssigkathode, isoliert</name>
+        <name lang="en">Insulated pool cathode</name>
+        <name lang="fr">Cathode liquide isolée de l'enveloppe</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="35" y="32.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{ec86b1c1-3867-4e74-adf0-ceaa9afa7c95}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-60" y="-120" width="120" height="120" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-30" x2="0" y2="40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-55" y="-115" width="110" height="110" start="190" angle="160" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-50" y1="-40" x2="51" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

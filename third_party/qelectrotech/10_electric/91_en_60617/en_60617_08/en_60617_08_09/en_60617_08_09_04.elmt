@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="70" hotspot_x="35" hotspot_y="55">
+    <uuid uuid="{18777aa2-b8f1-c836-0fdf-867c1724e974}"/>
+    <names>
+        <name lang="ca">Giroscopi</name>
+        <name lang="cs">Volný setrvačník (gyro)</name>
+        <name lang="de">Kreisel</name>
+        <name lang="en">Gyro</name>
+        <name lang="fr">Gyro</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{e759e2d2-9685-4ca7-a6a8-5932e0d14718}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-20" y="-40" width="40" height="40" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-30" y="-50" width="60" height="60" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-16" y="-36" width="32" height="32" start="90" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <polygon x1="-3" y1="-34" x2="-4" y2="-37" x3="1" y3="-36" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <rect x="-30" y="-30" width="60" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:white;color:black" antialias="false"/>
+    </description>
+</definition>

@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="40" hotspot_x="15" hotspot_y="10">
+    <uuid uuid="{fbf8c254-1a5a-141d-3778-ae5f522f906e}"/>
+    <names>
+        <name lang="ca">Transistor d'efecte de camp d'unió amb canal tipus P</name>
+        <name lang="cs">Tranzistor řízený polem (JFET)s kanálem typu P</name>
+        <name lang="de">Sperrschicht-Feldeffekt-Transistor (JFET) mit
+P-Kanal</name>
+        <name lang="en">Junction field effect transistor with P-type channel</name>
+        <name lang="fr">Transistor à effet de champ à grille-jonction
+avec canal de type P</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="25" y="32.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{e7657649-03e0-4e9a-9aba-7ceda331e2fc}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="30" y1="0" x2="10" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="10" y1="-5" x2="10" y2="25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="30" y1="20" x2="-10" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="5" y1="15" x2="0" y2="20" x3="5" y3="25" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="20" hotspot_x="15" hotspot_y="15">
+    <uuid uuid="{21d31e04-9008-d004-ce48-7f744ef02e08}"/>
+    <names>
+        <name lang="ca">Imant permanent;</name>
+        <name lang="cs">Trvalý magnet</name>
+        <name lang="de">Dauermagnet</name>
+        <name lang="en">Permanent magnet; Magnet, permanent</name>
+        <name lang="es">Imán permanente</name>
+        <name lang="fr">Aimant permanent</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{42b759ca-df01-4cc1-8dd0-b2be4b16184d}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <polygon x1="-10" y1="-10" x2="-10" y2="0" x3="10" y3="0" x4="10" y4="-10" x5="5" y5="-10" x6="5" y6="-5" x7="-5" y7="-5" x8="-5" y8="-10" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+    </description>
+</definition>

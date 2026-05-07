@@ -1,0 +1,28 @@
+<definition version="0.100.0" type="element" link_type="simple" width="60" height="80" hotspot_x="30" hotspot_y="50">
+    <uuid uuid="{7c00d676-8620-0647-ce02-d406a1064a59}"/>
+    <names>
+        <name lang="ca">Seccionador de dues vies;</name>
+        <name lang="cs">Dvoucestný odpojovač, ve střední poloze vypnutý</name>
+        <name lang="de">Zweiwege-Trennschalter</name>
+        <name lang="en">Two-way disconnector; Two-way isolator</name>
+        <name lang="fr">Sectionneur à deux directions</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="0" y1="4" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="0" y2="-24" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="3" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{59488930-11f4-4903-a6a7-f58e57822e91}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-20" y1="-40" x2="-20" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="20" y1="-40" x2="20" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-24" y1="-20" x2="-16" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="16" y1="-20" x2="24" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-2" y="0" width="4" height="4" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{2af75171-63d5-4d50-a251-00a9978d22e4}" name="" x="-20" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{435c8095-5f48-42f2-8d16-720d25ca10ab}" name="" x="0" y="20" orientation="s" type="Generic"/>
+        <terminal uuid="{0766acfc-de43-4686-ba3a-e54f2329eb2e}" name="" x="20" y="-40" orientation="n" type="Generic"/>
+    </description>
+</definition>

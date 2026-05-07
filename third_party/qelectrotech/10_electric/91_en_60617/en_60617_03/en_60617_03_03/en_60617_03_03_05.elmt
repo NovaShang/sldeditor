@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="80" height="20" hotspot_x="30" hotspot_y="10">
+    <uuid uuid="{a4f6cd03-c1bb-0e8e-f1ff-5ed086be0c91}"/>
+    <names>
+        <name lang="ca">Endoll i endoll</name>
+        <name lang="cs">Vidlice a zásuvka</name>
+        <name lang="de">Stecker und Buchse</name>
+        <name lang="en">Plug and socket</name>
+        <name lang="fr">Fiche et prise</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{fbb09605-73d6-4dda-b61f-cec43d844110}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="0" y="-3" width="20" height="6" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <line x1="20" y1="0" x2="40" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-6" y1="0" x2="-20" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-5" y="-5" width="10" height="10" start="90" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <terminal uuid="{ccf917dc-a90b-4e94-ab1f-e3510cb5513c}" name="" x="-20" y="0" orientation="w" type="Generic"/>
+        <terminal uuid="{ef46774e-ed5f-4466-9f56-a8623f3631cf}" name="" x="40" y="0" orientation="e" type="Generic"/>
+    </description>
+</definition>

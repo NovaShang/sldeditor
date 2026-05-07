@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="80" hotspot_x="11" hotspot_y="50">
+    <uuid uuid="{4a629f37-aead-e818-ff02-c3ebd13d6329}"/>
+    <names>
+        <name lang="ca">Fer contacte, símbol general;</name>
+        <name lang="cs">Zapínací kontakt</name>
+        <name lang="de">Schließer</name>
+        <name lang="en">Make contact, general symbol; Switch, general symbol</name>
+        <name lang="fr">Contact à fermeture (contact de travail)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <ellipse x="-2" y="-2" width="4" height="4" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-20" x2="0" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="2" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-1" y1="-2" x2="-8" y2="-23" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="5" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{d0955c25-9d27-46c4-b18f-c2d516b9fc72}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <terminal uuid="{58e3c743-be84-402e-95c7-e09fbe4c2dc1}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{7c8a2474-e8d4-4377-862b-b432d825f7c2}" name="" x="0" y="20" orientation="s" type="Generic"/>
+    </description>
+</definition>

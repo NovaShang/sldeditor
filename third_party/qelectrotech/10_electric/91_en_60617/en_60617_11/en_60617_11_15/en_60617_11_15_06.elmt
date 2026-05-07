@@ -1,0 +1,27 @@
+<definition version="0.80" type="element" link_type="simple" width="60" height="40" hotspot_x="25" hotspot_y="32">
+    <uuid uuid="{e1578cf6-f50a-8619-5c41-3ebf68ea62b8}"/>
+    <names>
+        <name lang="ca">Lluminària amb molts tubs fluorescents</name>
+        <name lang="cs">Svítidlo s pěti zářivkami</name>
+        <name lang="de">Leuchte mit fünf Leuchtstofflampen</name>
+        <name lang="en">Luminaire with many fluorescent tubes</name>
+        <name lang="fr">Luminaire à cinq tubes fluorescents</name>
+        <name lang="nl_BE">Armatuur met x fluorescerende buislampen</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="35" y="23.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" text_from="ElementInfo" uuid="{e8532e2f-063a-41a3-8293-359153617e3a}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-20" y1="0" x2="30" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-5" x2="-20" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="30" y1="-5" x2="30" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="5" x2="10" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="7" y="-21" z="6" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" text_from="UserText" uuid="{cc042a1f-e331-49f7-942c-b9d18f7389a6}" font="Liberation Sans,9,-1,5,0,0,0,0,0,0,Regular">
+            <text>x</text>
+            <info_name>quantity</info_name>
+        </dynamic_text>
+    </description>
+</definition>

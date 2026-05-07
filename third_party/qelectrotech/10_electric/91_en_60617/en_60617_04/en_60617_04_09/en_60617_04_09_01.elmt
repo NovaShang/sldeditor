@@ -1,0 +1,22 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="25" hotspot_y="45">
+    <uuid uuid="{1389e726-e20d-47a1-7352-0c6c28ab8c35}"/>
+    <names>
+        <name lang="ca">Línia de retard, símbol general;</name>
+        <name lang="cs">Zpožďovací linka</name>
+        <name lang="de">Verzögerungsleitung, allgemein</name>
+        <name lang="en">Delay line, general symbol; Delay element, general symbol</name>
+        <name lang="fr">Ligne à retard</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{66d1d65d-0da1-4d3d-bfea-5e4afb37f9b3}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-15" y1="-30" x2="15" y2="-30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="15" y1="-35" x2="15" y2="-25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-15" y1="-35" x2="-15" y2="-25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

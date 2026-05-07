@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="160" height="20" hotspot_x="150" hotspot_y="12">
+    <uuid uuid="{10445a7d-8132-47cc-be21-266c66d65e45}"/>
+    <names>
+        <name lang="ca">Línia submarina</name>
+        <name lang="cs">Vedení pod vodou</name>
+        <name lang="de">Leiter im Gewässer,
+Seekabe</name>
+        <name lang="en">Submarine line</name>
+        <name lang="fr">Ligne immergée</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{157b3906-d2a5-45fa-b9ac-fbb38e6acd03}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="0" x2="-140" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-80" y="-12.5" width="10" height="5" start="180" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="-70" y="-12.5" width="10" height="5" start="180" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <terminal uuid="{b26b1d5b-3691-4bb7-ab96-d5be117d9814}" name="" x="-140" y="0" orientation="w" type="Generic"/>
+        <terminal uuid="{9fd3b5f6-8f4b-4f60-980c-0477f44512c5}" name="" x="0" y="0" orientation="e" type="Generic"/>
+    </description>
+</definition>

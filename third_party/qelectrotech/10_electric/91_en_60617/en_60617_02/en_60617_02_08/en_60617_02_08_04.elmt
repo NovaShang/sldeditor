@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="20" hotspot_x="10" hotspot_y="10">
+    <uuid uuid="{87a0209e-8554-5adf-75a8-26b788397d98}"/>
+    <names>
+        <name lang="ca">Efecte o dependència del camp magnètic</name>
+        <name lang="cs">Účinek magnetického pole nebo závislost na něm</name>
+        <name lang="de">Magnetfeld-Wirkung oder -Abhängigkeit</name>
+        <name lang="en">Magnetic field effect or dependence</name>
+        <name lang="es">Efecto de campo magnético o dependencia</name>
+        <name lang="fr">Effet ou dépendance de champ magnétique</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{18cd3dfc-0771-4870-9a93-650361e2c3b8}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-5" y1="-5" x2="5" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="5" y1="-5" x2="-5" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

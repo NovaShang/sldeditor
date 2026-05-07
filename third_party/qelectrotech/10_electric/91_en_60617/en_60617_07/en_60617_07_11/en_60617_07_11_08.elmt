@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="70" hotspot_x="65" hotspot_y="65">
+    <uuid uuid="{05cb4a3d-4d98-944d-b6f6-67df99df9a66}"/>
+    <names>
+        <name lang="ca">Interruptor de múltiples posicions, una posició desactivada</name>
+        <name lang="cs">Jednopólový čtyřpolohový spínač</name>
+        <name lang="de">Mehrstellungsschalter mit vier Schaltstellungen</name>
+        <name lang="en">Multi-position switch, one position disabled</name>
+        <name lang="fr">Élément de commutateur à quatre directions</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{51d121af-2954-4e07-a9c0-ca76e3967b48}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-40" x2="0" y2="-60" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-40" x2="-20" y2="-60" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-40" x2="-40" y2="-50" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-60" y1="-40" x2="-60" y2="-60" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-40" y1="0" x2="-40" y2="-20" x3="-60" y3="-35" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

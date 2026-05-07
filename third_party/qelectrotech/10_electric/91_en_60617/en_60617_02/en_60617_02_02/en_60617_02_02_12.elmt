@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="10" hotspot_x="15" hotspot_y="6">
+    <uuid uuid="{56ec91ed-ec19-40d8-d198-613586e5878b}"/>
+    <names>
+        <name lang="ca">Corrent rectificat amb component altern</name>
+        <name lang="cs">Usměrněný proud se střídavou složkou</name>
+        <name lang="de">gleichgerichteter Strom</name>
+        <name lang="en">Rectified current with alternating component</name>
+        <name lang="es">Corriente rectificada con componente de CA</name>
+        <name lang="fr">Courant redressé avec composante alternative</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <arc x="-9" y="-4" width="6" height="4" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="3" y="-4" width="6" height="4" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="-3" y="-4" width="6" height="4" start="180" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <dynamic_text x="5" y="2.5" z="4" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{e66b7089-570f-48b9-9e1c-53b02918ecc8}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-9" y1="2" x2="-2" y2="2" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="2" y1="2" x2="9" y2="2" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

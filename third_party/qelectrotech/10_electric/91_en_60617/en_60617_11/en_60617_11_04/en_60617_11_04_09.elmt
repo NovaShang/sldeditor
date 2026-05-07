@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="60" hotspot_x="45" hotspot_y="48">
+    <uuid uuid="{b21d2440-693f-0060-c326-8bb307786d19}"/>
+    <names>
+        <name lang="ca">Ànode protector de magnesi</name>
+        <name lang="cs">Ochranná anoda z magnézia</name>
+        <name lang="de">Magnesium-Schutzanode</name>
+        <name lang="en">Magnesium protective anode</name>
+        <name lang="fr">Anode de protection en magnésium</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{f1f8d416-1e98-4f2a-80c2-2b96c28fe4ae}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-25" y1="-15" x2="-15" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-20" x2="-10" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-35" y1="-25" x2="-5" y2="-25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-40" y1="-30" x2="0" y2="-30" x3="-20" y3="0" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-20" y1="-45" x2="-20" y2="-30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="Mg" x="-10" y="0" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+    </description>
+</definition>

@@ -1,0 +1,22 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="90" hotspot_x="45" hotspot_y="85">
+    <uuid uuid="{4e1f09ee-eb2d-0de6-4b20-e3366d40b596}"/>
+    <names>
+        <name lang="ca">Unitat d'alimentació de línia</name>
+        <name lang="cs">Napájecí jednotka sítě</name>
+        <name lang="de">Fernspeise-Netzgerät</name>
+        <name lang="en">Line power unit</name>
+        <name lang="fr">Dispositif d'alimentation de ligne</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="35" y="42.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{da2f3457-7f38-4d17-bc7b-dfcb081403f1}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-40" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-80" x2="-20" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-30" y="-22.5" width="10" height="5" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="-20" y="-22.5" width="10" height="5" start="180" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+    </description>
+</definition>

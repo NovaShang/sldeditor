@@ -1,0 +1,33 @@
+<definition version="0.100.0" type="element" link_type="simple" width="110" height="190" hotspot_x="86" hotspot_y="172">
+    <uuid uuid="{e23edd3a-b389-7f55-7970-6c0327f6af7b}"/>
+    <names>
+        <name lang="ca">Transformador amb toc central en un bobinat</name>
+        <name lang="cs">Transformátor s vývodem ze středu jednoho vinutí</name>
+        <name lang="de">Transformator mit Mittenanzapfung an einer
+Wicklung</name>
+        <name lang="en">Transformer with centre tapping on one winding</name>
+        <name lang="fr">Transformateur à prise médiane sur un
+enroulement</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{b27e53d0-dc9c-48ca-85ec-b30388e08c5d}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-60" y="-120" width="60" height="60" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-150" x2="-30" y2="-120" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="Form 1 / Forme 1" x="-74" y="-160" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <ellipse x="-60" y="-80" width="60" height="60" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-20" x2="-30" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-130" x2="-20" y2="-140" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-135" x2="-20" y2="-145" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="0" x2="-20" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="5" x2="-20" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-80" x2="-30" y2="-90" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-90" x2="20" y2="-90" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{671aba38-3c30-4979-a7ce-207cab78392e}" name="" x="-30" y="10" orientation="s" type="Generic"/>
+        <terminal uuid="{44175306-b649-48ef-ae59-e848f8c6056d}" name="" x="-30" y="-150" orientation="n" type="Generic"/>
+    </description>
+</definition>

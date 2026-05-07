@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="40" height="80" hotspot_x="7" hotspot_y="40">
+    <uuid uuid="{2f681b6d-2712-6482-eeaf-bc048aa82820}"/>
+    <names>
+        <name lang="ca">fusible;</name>
+        <name lang="cs">Tavná pojistka s mechanickým spojením</name>
+        <name lang="de">Sicherung mit mechanischer Auslösemeldung
+(Schlagbolzensicherung)</name>
+        <name lang="en">Fuse; Striker fuse</name>
+        <name lang="fr">Fusible à percuteur (à liaison mécanique)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{8a510c5c-78d4-4537-a8f2-58a6dde2778a}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-30" x2="0" y2="30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-5" y="-15" width="10" height="30" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="5" y1="0" x2="30" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{4caf7f6b-7d9e-414b-92ed-1de9acd34d06}" name="" x="0" y="30" orientation="s" type="Generic"/>
+        <terminal uuid="{2d40a6ab-cc4d-41a7-8e96-394ca28803bb}" name="" x="0" y="-30" orientation="n" type="Generic"/>
+    </description>
+</definition>

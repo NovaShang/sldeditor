@@ -1,0 +1,28 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="30" hotspot_x="25" hotspot_y="22">
+    <uuid uuid="{e18f4c4e-71dd-f040-ca02-12eaefdcdedb}"/>
+    <names>
+        <name lang="ca">Connector tipus endoll i presa, mascle-mascle amb accés a presa</name>
+        <name lang="cs">Zásuvková spojka s vyvedenou zdířkou</name>
+        <name lang="de">Stecker verbunden, z. B. U-Stecker: - mit Abzweigbuchse</name>
+        <name lang="en">Plug and socket-type connector, male-male with socket access</name>
+        <name lang="fr">Fiche et prise de connecteur, par exemple
+cavalier, mâle-mâle avec prise de dérivation</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{523c1a54-8287-4864-8ef3-c716a279ae4a}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="0" y="-3" width="20" height="6" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <line x1="25" y1="0" x2="35" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-5" y1="0" x2="-15" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-5" y="-5" width="10" height="10" start="90" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="15" y="-5" width="10" height="10" start="270" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="5" y="-25" width="10" height="10" start="180" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="10" y1="-15" x2="10" y2="-3" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{d8ad6174-7962-44be-a7e8-7c10eea0806d}" name="" x="-15" y="0" orientation="w" type="Generic"/>
+        <terminal uuid="{68c69bda-c2b4-45bb-b560-ab564cd7a9e4}" name="" x="35" y="0" orientation="e" type="Generic"/>
+    </description>
+</definition>

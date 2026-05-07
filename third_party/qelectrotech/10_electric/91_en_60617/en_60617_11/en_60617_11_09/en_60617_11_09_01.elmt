@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="110" height="30" hotspot_x="45" hotspot_y="6">
+    <uuid uuid="{b1571800-7cd0-af2e-d6c3-4c68dad8d555}"/>
+    <names>
+        <name lang="ca">Equalitzador</name>
+        <name lang="cs">Equalizer (vyrovnavač)</name>
+        <name lang="de">Entzerrer</name>
+        <name lang="en">Equalizer</name>
+        <name lang="fr">Égaliseur</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="65" y="32.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{f8a3087f-c6ee-45a0-89cd-78d5a95c282e}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-40" y1="9" x2="-10" y2="9" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-10" y1="9" x2="10" y2="-1" x3="30" y3="9" x4="10" y4="19" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="30" y1="9" x2="60" y2="9" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

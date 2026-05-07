@@ -1,0 +1,22 @@
+<definition version="0.100.0" type="element" link_type="simple" width="90" height="30" hotspot_x="85" hotspot_y="25">
+    <uuid uuid="{c3ea7650-0cd2-1feb-ed08-d09b224fb3d4}"/>
+    <names>
+        <name lang="ca">Elèctrodes deflectors laterals</name>
+        <name lang="cs">Elektrody s boční odchylkou</name>
+        <name lang="de">Ablenkelektroden</name>
+        <name lang="en">Lateral deflecting electrodes</name>
+        <name lang="fr">Électrodes de déviation latérale</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{ab54bb06-cd44-49a3-aa1f-280f3c8e4935}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-10" x2="-20" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-60" y1="-10" x2="-80" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-60" y1="0" x2="-60" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="0" x2="-20" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

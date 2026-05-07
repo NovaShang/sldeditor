@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="40" height="20" hotspot_x="27" hotspot_y="10">
+    <uuid uuid="{c03db20a-83cd-9780-51a9-a3edfff6fa8d}"/>
+    <names>
+        <name lang="ca">Actuador (accionat girant)</name>
+        <name lang="cs">Ovládání otáčením</name>
+        <name lang="de">Betätigung durch Drehen</name>
+        <name lang="en">Actuator (operated by turning)</name>
+        <name lang="es">Accionado por giro</name>
+        <name lang="fr">Commande rotative</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{20cbcec0-ec66-4100-ae2a-6ecc710325fa}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-17" y1="0" x2="8" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-17" y1="-5" x2="-17" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-17" y1="-5" x2="-12" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-17" y1="5" x2="-22" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

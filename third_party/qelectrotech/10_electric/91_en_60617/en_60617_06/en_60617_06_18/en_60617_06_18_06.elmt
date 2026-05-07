@@ -1,0 +1,28 @@
+<definition version="0.100.0" type="element" link_type="simple" width="90" height="70" hotspot_x="35" hotspot_y="25">
+    <uuid uuid="{65693514-590c-a030-a99a-b424da59f140}"/>
+    <names>
+        <name lang="ca">Generador fotovoltaic</name>
+        <name lang="cs">Fotonapěťový generátor</name>
+        <name lang="de">Photoelektrischer Generator</name>
+        <name lang="en">Photovoltaic generator</name>
+        <name lang="fr">Générateur photovoltaïque</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="-16" y1="24" x2="-26" y2="14" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="45" y="102.5" z="2" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{0e41f828-fd61-4c66-8d4f-ce17dc69fe85}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-21" y1="29" x2="-31" y2="19" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-20" y1="23" x2="-17" y2="20" x3="-15" y3="25" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <polygon x1="-22" y1="25" x2="-25" y2="28" x3="-20" y3="30" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <rect x="-10" y="-20" width="60" height="60" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="G" x="15" y="0" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <line x1="10" y1="20" x2="20" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="20" y1="15" x2="20" y2="25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="25" y1="10" x2="25" y2="30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="25" y1="20" x2="35" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

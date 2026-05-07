@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="30" hotspot_x="25" hotspot_y="15">
+    <uuid uuid="{2f4adddd-cc7d-4b28-4529-691a62983971}"/>
+    <names>
+        <name lang="ca">Material, no especificat</name>
+        <name lang="cs">Materiál, blíže neurčený</name>
+        <name lang="de">Materie, allgemein</name>
+        <name lang="en">Material, unspecified</name>
+        <name lang="es">Material no especificado</name>
+        <name lang="fr">Matière non spécifiée</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{8392227e-9553-4c31-93e4-3966ce9005fd}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-10" width="40" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

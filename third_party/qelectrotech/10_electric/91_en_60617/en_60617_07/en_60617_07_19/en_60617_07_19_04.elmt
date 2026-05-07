@@ -1,0 +1,27 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="80" hotspot_x="15" hotspot_y="40">
+    <uuid uuid="{5225ee0c-b49f-e92c-ec2d-6d57d02215cd}"/>
+    <names>
+        <name lang="ca">Sensor tàctil</name>
+        <name lang="cs">Dotykové čidlo</name>
+        <name lang="de">Berührungssensor</name>
+        <name lang="en">Touch sensor</name>
+        <name lang="fr">Capteur sensible à l'effleurement</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{27bc2c18-83ec-41b8-8b6c-d4fbef6c2acd}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-30" x2="0" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="30" x2="0" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="0" y1="-10" x2="-10" y2="0" x3="0" y3="10" x4="10" y4="0" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-4" y1="-6" x2="-4" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="4" y1="-6" x2="4" y2="6" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-10" x2="-10" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="10" y1="0" x2="30" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{8ccb97d2-d156-47ff-8366-509da768e1d4}" name="" x="0" y="30" orientation="s" type="Generic"/>
+        <terminal uuid="{f833a577-4ca0-49fa-968f-cb6c96bbb5c0}" name="" x="0" y="-30" orientation="n" type="Generic"/>
+    </description>
+</definition>

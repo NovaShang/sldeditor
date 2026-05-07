@@ -1,0 +1,31 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="70" hotspot_x="27" hotspot_y="24">
+    <uuid uuid="{18ac1d89-c890-6678-4d50-030fe878f84b}"/>
+    <names>
+        <name lang="ca">Condensador, depenent de la tensió i polaritzat</name>
+        <name lang="cs">Kondenzátor polarizovaný napěťově závislý</name>
+        <name lang="de">gepolter Kondensator, spannungsabhängig,
+z.B. Halbleiter-Kondensator</name>
+        <name lang="en">Capacitor, voltage dependent and polarised</name>
+        <name lang="fr">Condensateur polarisé dépendant de la
+tension, par exemple condensateur à
+semiconducteu</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <polygon x1="20" y1="-12" x2="-12" y2="20" x3="-25" y3="20" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <dynamic_text x="5" y="32.5" z="2" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{8e14b13c-8a78-47e7-bbcd-aa93a3ed34de}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-20" y1="10" x2="20" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="5" x2="20" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="10" x2="0" y2="30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="5" x2="0" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-10" x2="-10" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-15" y1="-5" x2="-5" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="U" x="-15" y="33" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <terminal uuid="{06b5c350-f75f-4771-a9ad-e6dc66a101df}" name="" x="0" y="-15" orientation="n" type="Generic"/>
+        <terminal uuid="{ee4f4c88-ce5e-4afc-a7cd-bce7679908a9}" name="" x="0" y="30" orientation="s" type="Generic"/>
+    </description>
+</definition>

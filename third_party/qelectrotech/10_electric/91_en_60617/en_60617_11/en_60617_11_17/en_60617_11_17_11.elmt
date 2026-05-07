@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="110" height="40" hotspot_x="50" hotspot_y="18">
+    <uuid uuid="{c589e094-8d12-3373-82dd-12b674945617}"/>
+    <names>
+        <name lang="ca">Unitat d'expansió per a tancament</name>
+        <name lang="cs">Dilatační díl krytu nebo nosiče</name>
+        <name lang="de">Ausdehnungsstück für Gehäuse</name>
+        <name lang="en">Expansion unit for enclosure</name>
+        <name lang="fr">Élément de dilatation pour enveloppe</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="55" y="32.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{597549ea-5d46-415b-b234-3144a0c42c07}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="50" y1="10" x2="19" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="5" x2="-40" y2="15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="50" y1="5" x2="50" y2="15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-2.5" y="-11.5" width="25" height="25" start="315" angle="270" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-40" y1="10" x2="1" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{61c4611a-ba03-4275-8463-04c0b7a14a6f}" name="" x="-40" y="10" orientation="w" type="Generic"/>
+        <terminal uuid="{808c6891-a1c4-4bd6-9730-607ccb1e2da9}" name="" x="50" y="10" orientation="e" type="Generic"/>
+    </description>
+</definition>

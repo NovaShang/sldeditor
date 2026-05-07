@@ -1,0 +1,26 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="42" hotspot_y="45">
+    <uuid uuid="{fd107495-4c0a-2609-9ba7-a3955b67f3a6}"/>
+    <names>
+        <name lang="ca">Llum corba, color verd/verd i feix bidireccional, superfície</name>
+        <name lang="cs">Světelné návěstidlo v zatáčce,
+barva zelená/zelená a dvojsměrný svazek</name>
+        <name lang="de">Kurvenfeuer, grün/grün, zweiseitig strahlend</name>
+        <name lang="en">Curve light, green/green colour and bi-directional beam, surface</name>
+        <name lang="fr">Feu de virage, faisceau vert/vert et
+bidirectionnel (en surface)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{6a7882ca-6a25-4e97-bcfb-8644d969aa5e}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-40" y="-40" width="40" height="40" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-5" y="-40" width="10" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:white;color:white" antialias="false"/>
+        <ellipse x="-35" y="-35" width="30" height="30" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-35" y1="-20" x2="-5" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-22" y="-29" width="4" height="4" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <ellipse x="-22" y="-15" width="4" height="4" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+    </description>
+</definition>

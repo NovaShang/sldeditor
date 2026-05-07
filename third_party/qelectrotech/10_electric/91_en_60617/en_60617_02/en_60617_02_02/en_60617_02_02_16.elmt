@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="20" hotspot_x="13" hotspot_y="4">
+    <uuid uuid="{fe5a0172-9e9c-608d-2f2b-31433aa3a248}"/>
+    <names>
+        <name lang="ca">Fil mitjà</name>
+        <name lang="cs">Střední vodič (stejnosměrný proud)</name>
+        <name lang="de">Mittelleiter</name>
+        <name lang="en">Mid-wire</name>
+        <name lang="es">Medio</name>
+        <name lang="fr">Conducteur médian</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{afefac18-92e2-4bd8-bc44-e8d1fde3b0ab}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <text text="M" x="-3" y="6" rotation="0" font="Liberation Sans,6,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+    </description>
+</definition>

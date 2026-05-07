@@ -1,0 +1,28 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="70" hotspot_x="35" hotspot_y="65">
+    <uuid uuid="{91bbbadd-fd7f-0486-84e4-db64111ce187}"/>
+    <names>
+        <name lang="ca">Transistor PNIN amb connexió a la regió intrínseca</name>
+        <name lang="cs">PNIN-Tranzistor s ohmickým připojením s intrinsické oblasti</name>
+        <name lang="de">PNIN-Transistor mit Anschluss zur
+eigenleitenden Zone</name>
+        <name lang="en">PNIN transistor with connection to the intrinsic region</name>
+        <name lang="fr">Transistor PNIN avec connexion à la région
+intrinsèque</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{21fb6faf-5e9f-464c-9ff6-d7e5701440e5}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-10" y1="-50" x2="-10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-15" x2="10" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-20" x2="-30" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="10" y1="-60" x2="-10" y2="-45" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-5" y1="-51" x2="-7" y2="-47" x3="-3" y3="-48" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-30" y1="-40" x2="-10" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-10" y1="-25" x2="0" y2="-20" x3="0" y3="-8" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-4" y1="-17" x2="4" y2="-11" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

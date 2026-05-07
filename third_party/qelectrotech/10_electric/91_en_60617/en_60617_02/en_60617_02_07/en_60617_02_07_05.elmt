@@ -1,0 +1,22 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="30" hotspot_x="25" hotspot_y="15">
+    <uuid uuid="{4069967f-9204-b7f0-299c-53618b47137e}"/>
+    <names>
+        <name lang="ca">Material, electret</name>
+        <name lang="cs">Materiál elektret</name>
+        <name lang="de">Elektret</name>
+        <name lang="en">Material, electret</name>
+        <name lang="es">Electreto</name>
+        <name lang="fr">Électret</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{272539d5-9ec3-49bc-a510-005db536feb3}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-10" width="40" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-5" y1="-6" x2="-10" y2="6" x3="10" y3="6" x4="5" y4="-6" x5="0" y5="6" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-5" y1="-6" x2="5" y2="-6" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

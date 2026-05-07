@@ -1,0 +1,22 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="45" hotspot_y="45">
+    <uuid uuid="{5beedf4c-fdfd-2e46-56ef-28ae41fc35b8}"/>
+    <names>
+        <name lang="ca">Central hidroelèctrica, en servei o no especificada</name>
+        <name lang="cs">Vodní elektrárna ( v provozu)</name>
+        <name lang="de">Kraftwerk mit Wasserkraft betrieben,
+Wasserkraftwerk (in Betrieb oder undefiniert)</name>
+        <name lang="en">Hydroelectric generating station, in service or unspecified</name>
+        <name lang="fr">Centrale hydraulique (en service ou
+indéterminé)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{4a7e297c-f4cc-4d47-8e8f-0e9a5d84e48d}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-40" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-40" y1="0" x2="-40" y2="-40" x3="0" y3="-40" antialias="false" style="line-style:normal;line-weight:normal;filling:hor;color:black"/>
+    </description>
+</definition>

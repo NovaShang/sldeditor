@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="110" height="50" hotspot_x="105" hotspot_y="45">
+    <uuid uuid="{825b5413-80ec-1ec5-5f7e-2b4cf19af954}"/>
+    <names>
+        <name lang="ca">Bloc de potència</name>
+        <name lang="cs">Oddělovací místo</name>
+        <name lang="de">Trennstelle</name>
+        <name lang="en">Power block</name>
+        <name lang="fr">Dispositif de blocage d'alimentation</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="42.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{2425353c-66bc-42c3-920d-8113ef29d2fe}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-100" y1="-20" x2="0" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-55" y1="-40" x2="-55" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-45" y1="-40" x2="-45" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

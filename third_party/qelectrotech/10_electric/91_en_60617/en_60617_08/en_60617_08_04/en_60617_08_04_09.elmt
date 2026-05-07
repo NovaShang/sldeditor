@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="70" hotspot_x="25" hotspot_y="65">
+    <uuid uuid="{3d4e2e84-093d-e5d3-cfc0-9b6c72c5f0ee}"/>
+    <names>
+        <name lang="ca">Excés de watt-hora</name>
+        <name lang="cs">Nadlimitní watthodinový měřič</name>
+        <name lang="de">Überverbrauchszähler, Spitzenzähler</name>
+        <name lang="en">Excess watt-hour meter</name>
+        <name lang="fr">Compteur d'énergie active à dépassement</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{58ee574b-10ed-4d35-8e9c-3b224c870427}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="Wh" x="-8" y="-26" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <rect x="-20" y="-60" width="40" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="P" x="-7" y="-10" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <polygon x1="4" y1="-17" x2="10" y2="-15" x3="4" y3="-12" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="160" height="30" hotspot_x="150" hotspot_y="22">
+    <uuid uuid="{b90cf41e-6a57-54c0-15a6-2cbafb289faa}"/>
+    <names>
+        <name lang="ca">Línia de metro</name>
+        <name lang="cs">Vedení v zemi</name>
+        <name lang="de">Leiter im Erdreich,
+Erdkabel</name>
+        <name lang="en">Underground line</name>
+        <name lang="fr">Ligne souterraine</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{6744c393-e18d-44e9-90c2-06813bf974c5}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="0" x2="-140" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-75" y1="-10" x2="-65" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-80" y1="-15" x2="-60" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-85" y1="-20" x2="-55" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{4307c04e-f991-4d2e-8412-8f6d764d2006}" name="" x="-140" y="0" orientation="w" type="Generic"/>
+        <terminal uuid="{7644ca5a-aba3-418a-9e27-074f205e6066}" name="" x="0" y="0" orientation="e" type="Generic"/>
+    </description>
+</definition>

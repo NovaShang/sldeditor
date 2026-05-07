@@ -1,0 +1,27 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="80" hotspot_x="17" hotspot_y="50">
+    <uuid uuid="{e49db017-ffde-59ea-85d7-77c87c83c454}"/>
+    <names>
+        <name lang="ca">Contacte amb dues pauses</name>
+        <name lang="cs">Dvojvypínací kontakt</name>
+        <name lang="de">Zwillingsöffner</name>
+        <name lang="en">Contact with two breaks</name>
+        <name lang="fr">Contact à deux ouvertures</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="0" y1="-20" x2="0" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="8" y2="-23" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="4" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{3a8f39db-c5fa-4579-93a6-db0eab3650ef}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-10" y1="-40" x2="-10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-10" x2="10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-20" x2="10" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{a7bf892d-c121-442d-97f2-fd608e397bbf}" name="" x="0" y="20" orientation="s" type="Generic"/>
+        <terminal uuid="{41715369-4a54-4766-85cb-2025efbceeb0}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{b2b12a98-a282-4165-84cc-cf56eb693676}" name="" x="-10" y="-40" orientation="n" type="Generic"/>
+    </description>
+</definition>

@@ -1,0 +1,29 @@
+<definition version="0.100.0" type="element" link_type="simple" width="40" height="80" hotspot_x="12" hotspot_y="50">
+    <uuid uuid="{650618dd-752c-d9d5-8164-6a26698c00d7}"/>
+    <names>
+        <name lang="ca">Interruptor sensible a la temperatura, contacte</name>
+        <name lang="cs">Spínač citlivý na teplotu, zapínací kontakt</name>
+        <name lang="de">Schließer, temperaturabhängig</name>
+        <name lang="en">Temperature sensitive switch, make contact</name>
+        <name lang="fr">Interrupteur fonctionnant sous l'effet de la
+température, contact à fermeture</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="0" y1="-20" x2="0" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="-8" y2="-23" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="4" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{d45dc097-4284-4f21-ae37-d25485b31574}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <arc x="16" y="-23.5" width="8" height="7" start="315" angle="180" style="line-style:normal;line-weight:hight;filling:none;color:black" antialias="true"/>
+        <arc x="11" y="-18.5" width="8" height="7" start="135" angle="180" style="line-style:normal;line-weight:hight;filling:none;color:black" antialias="true"/>
+        <line x1="17" y1="-22" x2="12" y2="-17" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:hight;filling:none;color:black" antialias="false"/>
+        <line x1="22" y1="-17" x2="18" y2="-13" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:hight;filling:none;color:black" antialias="false"/>
+        <line x1="13" y1="-18" x2="23" y2="-18" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{8d44e394-3d7b-413f-aa9d-dab962a8d26b}" name="" x="0" y="20" orientation="s" type="Generic"/>
+        <terminal uuid="{aef3c409-c2a2-4bd0-a122-d799f0ebb998}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+    </description>
+</definition>

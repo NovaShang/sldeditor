@@ -1,0 +1,32 @@
+<definition version="0.100.0" type="element" link_type="simple" width="40" height="80" hotspot_x="20" hotspot_y="50">
+    <uuid uuid="{82786e99-f941-1694-60d9-7f5e4228968f}"/>
+    <names>
+        <name lang="ca">Contacte de canvi amb posició fora, retorn automàtic i mantenir-se posat</name>
+        <name lang="cs">Přepínací kontakt se střední polohou a
+samočinným návratem z jedné a nesamočinným návratem
+z druhé polohy</name>
+        <name lang="de">Zweiwegeschließer</name>
+        <name lang="en">Change-over contact with off-position, automatic return and stay put</name>
+        <name lang="fr">Contact à deux directions avec position
+médiane de coupure avec et sans retour
+automatique</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="10" y1="-26" x2="10" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="2" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-2" x2="0" y2="-23" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="4" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{fdce8257-17fa-4a6f-9cb2-cf1736263b04}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-2" y="-2" width="4" height="4" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-40" x2="-10" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-10" y1="-20" x2="-7" y2="-23" x3="-10" y3="-25" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <ellipse x="7.5" y="-25.5" width="5" height="5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{ef4d614d-4517-4287-bdc9-563821c37297}" name="" x="-10" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{d6c62301-02d8-4cb4-915d-b76bd1207fbb}" name="" x="10" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{0bcf32ad-cf95-48bb-b3fc-51c9b310edfb}" name="" x="0" y="20" orientation="s" type="Generic"/>
+    </description>
+</definition>

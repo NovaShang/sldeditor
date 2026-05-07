@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="50" hotspot_x="42" hotspot_y="45">
+    <uuid uuid="{0d2da045-9888-a870-118a-a682a1977725}"/>
+    <names>
+        <name lang="ca">Llum aeronàutic de terra, feix unidireccional intermitent blanc, elevat</name>
+        <name lang="cs">Letecké pozemní světelné návěstidlo
+bílé zábleskové, jednosměrný svazek</name>
+        <name lang="de">Flugplatzfeuer, weiss blitzend, einseitig
+strahlend</name>
+        <name lang="en">Aeronautical ground light, white flashing uni-directional beam, elevated</name>
+        <name lang="fr">Feu d'approche à éclats, faisceau
+unidirectionnel blanc (en hauteur)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{1bc6dcc0-6373-42a5-aea1-183d1cc89f7f}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-40" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="0" y1="0" x2="-40" y2="-20" x3="0" y3="-40" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <polygon x1="10" y1="-30" x2="15" y2="-30" x3="15" y3="-40" x4="20" y4="-40" x5="20" y5="-30" x6="25" y6="-30" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

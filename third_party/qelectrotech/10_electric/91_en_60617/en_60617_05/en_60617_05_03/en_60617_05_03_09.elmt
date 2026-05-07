@@ -1,0 +1,26 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="60" hotspot_x="25" hotspot_y="50">
+    <uuid uuid="{64189e61-515f-5313-db98-1a6ab7ff7ea6}"/>
+    <names>
+        <name lang="ca">Díode bidireccional</name>
+        <name lang="cs">Obousměrná dioda</name>
+        <name lang="de">bidirektionale Diode</name>
+        <name lang="en">Bidirectional diode</name>
+        <name lang="fr">Diode bidirectionelle</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{1606e5ab-37cd-4075-a3d4-4ecc8aa5bb21}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-10" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-10" x2="10" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-20" y1="-30" x2="0" y2="-30" x3="-10" y3="-10" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <polygon x1="0" y1="-10" x2="10" y2="-30" x3="20" y3="-10" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="0" y1="-30" x2="0" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-30" x2="20" y2="-30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{88b8d7d9-cd10-4c68-aae7-f3943282176b}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{a0bc8d2a-55a1-4726-b822-ff5f4bb55d64}" name="" x="0" y="0" orientation="s" type="Generic"/>
+    </description>
+</definition>

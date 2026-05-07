@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="70" hotspot_x="25" hotspot_y="65">
+    <uuid uuid="{274a3259-31b1-095a-ab18-e4e49585aecf}"/>
+    <names>
+        <name lang="ca">Comptador de watt-hora</name>
+        <name lang="cs">Watthodinový měřič</name>
+        <name lang="de">Wattstundenzähler,
+Elektrizitätszähler</name>
+        <name lang="en">Watt-hour meter</name>
+        <name lang="fr">Compteur d'énergie active
+Wattheuremètre</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{d1750bd0-f1ee-47a6-8836-3f4ae4cf6591}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="Wh" x="-8" y="-16" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <rect x="-20" y="-60" width="40" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

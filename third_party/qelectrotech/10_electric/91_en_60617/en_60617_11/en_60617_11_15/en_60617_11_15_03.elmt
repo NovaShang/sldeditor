@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="30" hotspot_x="25" hotspot_y="25">
+    <uuid uuid="{46a7ed6f-92ea-26e8-0c8e-3296b52622cd}"/>
+    <names>
+        <name lang="ca">Làmpada, símbol general</name>
+        <name lang="cs">Světelný zdroj</name>
+        <name lang="de">Leuchte, allgemein</name>
+        <name lang="en">Lamp, general symbol</name>
+        <name lang="fr">Lampe, symbole général</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{d4471fca-0261-44c4-a1c8-f448afcf6bbd}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-20" y="-20" width="20" height="20" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-16" y1="-17" x2="-4" y2="-3" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-4" y1="-17" x2="-17" y2="-3" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

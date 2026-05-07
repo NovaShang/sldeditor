@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="80" hotspot_x="11" hotspot_y="50">
+    <uuid uuid="{745b670a-232f-1f4b-2c48-ddf0b69b6852}"/>
+    <names>
+        <name lang="ca">Interruptor-seccionador;</name>
+        <name lang="cs">Odpínač</name>
+        <name lang="de">Lasttrennschalter</name>
+        <name lang="en">Switch-disconnector; On-load isolating switch</name>
+        <name lang="fr">Interrupteur-sectionneur</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="0" y1="-24" x2="0" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="-8" y2="-23" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="4" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{06649c8d-a23d-42ec-b40b-e318dd57b6e5}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-2" y="-24" width="4" height="4" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-2" y1="-24" x2="2" y2="-24" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{f43ff945-b3ec-4928-9247-ac3cb5f4196b}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{98ebe258-4fa1-431a-9511-940326212832}" name="" x="0" y="20" orientation="s" type="Generic"/>
+    </description>
+</definition>

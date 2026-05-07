@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="20" hotspot_x="25" hotspot_y="13">
+    <uuid uuid="{6d9b80f5-3fc6-fccd-754f-b5a944fbb911}"/>
+    <names>
+        <name lang="ca">Acoblament mecànic, enganxat</name>
+        <name lang="cs">Spojka, mechanické spojení zapnuto</name>
+        <name lang="de">Kupplung, gekuppelt</name>
+        <name lang="en">Mechanical coupling, engaged</name>
+        <name lang="es">Acoplamiento mecánico, ocupado</name>
+        <name lang="fr">Accouplement mécanique embrayé</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{4979afb8-c418-4ed8-a04e-e883353d08e7}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-20" y1="0" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="0" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="7" y1="0" x2="7" y2="-7" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="7" y1="0" x2="20" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-3" y1="-2" x2="-3" y2="-5" x3="10" y3="-5" x4="10" y4="-2" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

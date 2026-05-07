@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="60" hotspot_x="55" hotspot_y="55">
+    <uuid uuid="{4b60fb88-c006-6222-e086-76e4153dd0bf}"/>
+    <names>
+        <name lang="ca">Punt d'amplificació en un recinte resistent a la intempèrie</name>
+        <name lang="cs">Zesilovací stanice v pouzdře, venkovní</name>
+        <name lang="de">Verstärkerpunkt in wetterfestem Gehäuse</name>
+        <name lang="en">Amplifying point in a weather-proof enclosure</name>
+        <name lang="fr">Cabine d'amplification</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{be7bb094-395a-4c00-bff5-a638e42a8b4e}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <arc x="-50" y="-50" width="60" height="20" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-40" y1="0" x2="-40" y2="-47" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="0" y2="-47" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="0" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-25" y1="-20" x2="-25" y2="-30" x3="-15" y3="-25" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

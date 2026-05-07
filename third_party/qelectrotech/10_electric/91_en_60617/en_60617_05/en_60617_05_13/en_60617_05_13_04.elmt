@@ -1,0 +1,39 @@
+<definition version="0.100.0" type="element" link_type="simple" width="270" height="290" hotspot_x="195" hotspot_y="265">
+    <uuid uuid="{aaf94873-d973-8940-718a-51df6af7a4dc}"/>
+    <names>
+        <name lang="ca">Klystron reflex</name>
+        <name lang="cs">Reflexní klystron</name>
+        <name lang="de">Reflexklystron, diverse Formen und
+Ausführungen</name>
+        <name lang="en">Reflex klystron</name>
+        <name lang="fr">Klystron réflexe, réalisation et forme différentes</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{a556ab44-dbaa-40ca-9cc5-62d83e36fefc}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-137" y="-65" width="10" height="10" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <line x1="0" y1="-60" x2="0" y2="-180" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-137" y="-85" width="10" height="10" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <arc x="-190" y="-100" width="60" height="60" start="29" angle="300" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="-120" y="-120" width="120" height="120" start="180" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <arc x="-120" y="-240" width="120" height="120" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-120" y1="-180" x2="-120" y2="-60" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="7" y="-144" width="10" height="10" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <ellipse x="7" y="-164" width="10" height="10" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <arc x="10" y="-179" width="60" height="60" start="209" angle="300" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-60" y1="-240" x2="-60" y2="-220" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="40" y1="-160" x2="40" y2="-260" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-80" y1="-4" x2="-80" y2="-60" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-4" x2="-40" y2="-60" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-80" y1="-40" x2="-40" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-160" y1="-60" x2="-160" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-165" y="-15" width="10" height="10" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-162.5" y="-12.5" width="5" height="5" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <rect x="30" y="-220" width="20" height="10" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-80" y1="-220" x2="-40" y2="-220" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

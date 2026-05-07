@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="50" hotspot_x="65" hotspot_y="45">
+    <uuid uuid="{c2a1099c-1b4c-56de-ec2b-fd836f194707}"/>
+    <names>
+        <name lang="ca">Sense relé de tensió</name>
+        <name lang="cs">Relé nulového napětí</name>
+        <name lang="de">Nullspannungsrelais</name>
+        <name lang="en">No voltage relay</name>
+        <name lang="fr">Relais à manque de tension</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{ee0d52c8-dc4e-46c4-abb9-a36ea875a706}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-60" y="-40" width="60" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="U = 0" x="-46" y="-15" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+    </description>
+</definition>

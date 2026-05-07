@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="90" height="160" hotspot_x="86" hotspot_y="134">
+    <uuid uuid="{04c0ce67-15e9-ce31-0016-4a23eac5bcc1}"/>
+    <names>
+        <name lang="ca">Autotransformador, símbol general</name>
+        <name lang="cs">Autotransformátor</name>
+        <name lang="de">Spartransformator</name>
+        <name lang="en">Auto-transformer, general symbol</name>
+        <name lang="fr">Autotransformateur</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{9439aaa5-adb4-4eb5-8cd3-2894d22d6cbb}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-60" y="-60" width="60" height="60" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-110" x2="-30" y2="-90" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="Form 1 / Forme 1" x="-74" y="-120" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <line x1="-30" y1="0" x2="-30" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-60" y="-90" width="60" height="120" start="0" angle="90" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <terminal uuid="{b9b20cca-6dde-4918-8b39-8f336cb9b51c}" name="" x="-30" y="-110" orientation="n" type="Generic"/>
+    </description>
+</definition>

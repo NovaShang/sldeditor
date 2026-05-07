@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="20" height="20" hotspot_x="13" hotspot_y="4">
+    <uuid uuid="{73d0a84d-f9a9-9916-4e09-e27f599a18be}"/>
+    <names>
+        <name lang="ca">Neutre</name>
+        <name lang="cs">Střední vodič (neutrální)(střídavý proud)</name>
+        <name lang="de">Neutralleiter</name>
+        <name lang="en">Neutral</name>
+        <name lang="es">Neutro</name>
+        <name lang="fr">Conducteur neutre</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{c2d56750-9304-4864-8522-d77231608401}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <text text="N" x="-3" y="6" rotation="0" font="Liberation Sans,6,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+    </description>
+</definition>

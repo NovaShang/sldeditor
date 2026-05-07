@@ -1,0 +1,20 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="25" hotspot_y="45">
+    <uuid uuid="{9e98056c-3465-baf7-629b-a478bde361e7}"/>
+    <names>
+        <name lang="ca">Oscil·lograf</name>
+        <name lang="cs">Oscilograf</name>
+        <name lang="de">Kurvenschreiber</name>
+        <name lang="en">Oscillograph</name>
+        <name lang="fr">Oscillographe</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{87416e39-f5d7-44b8-9f3e-1e3c72be79b0}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <polygon x1="-15" y1="-15" x2="0" y2="-25" x3="0" y3="-15" x4="15" y4="-25" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <rect x="-20" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="70" hotspot_x="65" hotspot_y="65">
+    <uuid uuid="{9bd2f2de-e41c-5a92-0600-5ffbfad7f6a0}"/>
+    <names>
+        <name lang="ca">Motor pas a pas, símbol general</name>
+        <name lang="cs">Krokový motor</name>
+        <name lang="de">Schrittmotor</name>
+        <name lang="en">Stepping motor, general symbol</name>
+        <name lang="fr">Moteur pas à pas</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{4893a1dc-1868-4f09-a217-f9dadf3d9098}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-60" y="-60" width="60" height="60" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="M" x="-35" y="-25" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <polygon x1="-35" y1="-5" x2="-35" y2="-10" x3="-25" y3="-10" x4="-25" y4="-15" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

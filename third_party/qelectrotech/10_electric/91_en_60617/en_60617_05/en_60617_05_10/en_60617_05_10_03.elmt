@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="130" height="170" hotspot_x="65" hotspot_y="125">
+    <uuid uuid="{f87aca37-5c79-43d8-cb1b-fd8f73473aee}"/>
+    <names>
+        <name lang="ca">Càtode de piscina</name>
+        <name lang="cs">Tekutá katoda</name>
+        <name lang="de">Flüssigkathode</name>
+        <name lang="en">Pool cathode</name>
+        <name lang="fr">Cathode liquide</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="35" y="32.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{21531918-48a1-4ff5-9359-679c3f49827d}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-60" y="-120" width="120" height="120" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-56" y1="-40" x2="56" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-30" x2="0" y2="40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

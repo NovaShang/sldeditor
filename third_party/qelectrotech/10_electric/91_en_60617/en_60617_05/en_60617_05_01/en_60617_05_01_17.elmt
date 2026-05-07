@@ -1,0 +1,27 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="70" hotspot_x="45" hotspot_y="55">
+    <uuid uuid="{7cca7483-a79f-4a7f-9896-f21bda2e9fab}"/>
+    <names>
+        <name lang="ca">Emissors en una regió de tipus de conductivitat diferent, emissors N en una regió P</name>
+        <name lang="cs">Několik emitorů typu N v oblasti P</name>
+        <name lang="de">Mehrere N-Emitter auf einer P-Zone</name>
+        <name lang="en">Emitters on a region of dissimilar conductivity type, N emitters on a P region</name>
+        <name lang="fr">Plusieurs émetteurs N sur région P</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="-20" y1="-5" x2="0" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-15" x2="0" y2="-30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="2.5" z="3" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{62981d3c-026f-4809-9ebb-c0e36a1c0c68}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-20" y1="-35" x2="0" y2="-50" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-16" y1="-22" x2="-9" y2="-23" x3="-12" y3="-18" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <polygon x1="-13" y1="-2" x2="-11" y2="2" x3="-16" y3="1" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-20" y1="-40" x2="-20" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-16" y1="-42" x2="-9" y2="-43" x3="-12" y3="-38" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-20" y1="-25" x2="-40" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-24" y1="-31" x2="-28" y2="-31" x3="-26" y3="-27" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

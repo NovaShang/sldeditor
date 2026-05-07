@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="40" height="20" hotspot_x="28" hotspot_y="10">
+    <uuid uuid="{1057b9c3-8894-b6e4-d984-3c17b21cac2b}"/>
+    <names>
+        <name lang="ca">Actuador (accionat per mànec extraïble)</name>
+        <name lang="cs">Ovládání snímatelnou rukojetí</name>
+        <name lang="de">Betätigung durch abnehmbaren Griff</name>
+        <name lang="en">Actuator (operated by removable handle)</name>
+        <name lang="es">Accionado por mango extraíble</name>
+        <name lang="fr">Commande manuelle amovible</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{6ff1ef3e-876e-43c6-a33b-c902e9c173cb}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-10" y1="0" x2="7" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-24" y1="0" x2="-17" y2="7" x3="-10" y3="0" x4="-17" y4="-7" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+    </description>
+</definition>

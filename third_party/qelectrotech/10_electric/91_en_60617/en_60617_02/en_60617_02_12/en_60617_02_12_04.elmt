@@ -1,0 +1,36 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="20" hotspot_x="25" hotspot_y="10">
+    <uuid uuid="{96c61f5a-5c4f-70a3-5214-0a4678850f73}"/>
+    <names>
+        <name lang="ca">Enllaç</name>
+        <name lang="cs">Spojeni, například:
+- mechanické
+- pneumatické
+- hydraulické
+- optické
+- funkční</name>
+        <name lang="de">Wirkverbindung, z.B.:
+- mechanische
+- pneumatische
+- hydraulische
+- optische
+- funktionelle</name>
+        <name lang="en">Link</name>
+        <name lang="es">Enlace (uso solo en espacios muy restringidos)</name>
+        <name lang="fr">Liaison, par exemple:
+- mécanique
+- pneumatique
+- hydraulique
+- optique
+- fonctionnelle</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{2a5d18bb-b136-4616-817a-1c3aceb14e07}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-20" y1="4" x2="20" y2="4" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-4" x2="20" y2="-4" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

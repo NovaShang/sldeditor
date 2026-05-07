@@ -1,0 +1,21 @@
+<definition version="0.100.0" type="element" link_type="simple" width="110" height="80" hotspot_x="105" hotspot_y="45">
+    <uuid uuid="{5c767534-109d-2a0b-fc49-0bd57132ce93}"/>
+    <names>
+        <name lang="ca">Punt d'injecció d'alimentació</name>
+        <name lang="cs">Napájecí bod</name>
+        <name lang="de">Einspeisepunkt</name>
+        <name lang="en">Power feeding injection point</name>
+        <name lang="fr">Point d'injection de l'alimentation</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="42.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{ccea8c3b-5603-4768-8555-e6b733f36a1b}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-100" y1="-20" x2="0" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-70" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-50" y1="0" x2="-50" y2="30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

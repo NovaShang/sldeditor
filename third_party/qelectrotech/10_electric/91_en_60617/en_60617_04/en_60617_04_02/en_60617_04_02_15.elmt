@@ -1,0 +1,30 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="70" hotspot_x="27" hotspot_y="26">
+    <uuid uuid="{3e631083-d720-5c2a-232d-2df62b77880c}"/>
+    <names>
+        <name lang="ca">Condensador, depenent de la temperatura i polaritzat</name>
+        <name lang="cs">Kondenzátor polarizovaný, teplotně závislý</name>
+        <name lang="de">gepolter Kondensator, temperaturabhängig,
+z.B. Keramik-Kondensator</name>
+        <name lang="en">Capacitor, temperature dependent and polarised</name>
+        <name lang="fr">Condensateur polarisé dépendant de la
+température, par exemple condensateur céramique</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <ellipse x="-13" y="24" width="5.93" height="12.95" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="32.5" z="2" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{af560d65-6eb4-499a-be95-a46e43a53122}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <arc x="-13" y="28.71" width="3" height="3.53" start="0" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-20" y1="10" x2="20" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-10" y="28.71" width="3" height="3.53" start="180" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-20" y1="5" x2="20" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="10" x2="0" y2="30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="5" x2="0" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="20" y1="-12" x2="-12" y2="20" x3="-24" y3="20" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <terminal uuid="{a74b6cca-48a1-42e7-ac94-4250a3636ef9}" name="" x="0" y="30" orientation="s" type="Generic"/>
+        <terminal uuid="{6524fa5d-2b57-4304-a68d-334f14b1cc40}" name="" x="0" y="-15" orientation="n" type="Generic"/>
+    </description>
+</definition>

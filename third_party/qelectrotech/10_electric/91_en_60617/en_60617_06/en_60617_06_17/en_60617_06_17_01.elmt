@@ -1,0 +1,23 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="50" hotspot_x="55" hotspot_y="45">
+    <uuid uuid="{27e24bd7-7110-b66a-89dd-0b8fd8397629}"/>
+    <names>
+        <name lang="ca">Font de calor, símbol general</name>
+        <name lang="cs">Tepelný zdroj</name>
+        <name lang="de">Heizquelle</name>
+        <name lang="en">Heat source, general symbol</name>
+        <name lang="fr">Source de chaleur</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="22.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{ad0c4c98-5bcf-49da-b6f8-94652a6b9a16}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-40" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-45" y="-40" width="5" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-50" y="-40" width="5" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="0" y="-40" width="5" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="5" y="-40" width="5" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

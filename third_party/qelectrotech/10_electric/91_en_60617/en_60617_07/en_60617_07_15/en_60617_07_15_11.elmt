@@ -1,0 +1,27 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="60" hotspot_x="25" hotspot_y="30">
+    <uuid uuid="{78c4a531-de42-ade2-ff8d-f2bf5d50bc23}"/>
+    <names>
+        <name lang="ca">Bobina de relé d'un relé no afectat pel corrent altern</name>
+        <name lang="cs">Cívka přístroje necitlivého na střídavý proud</name>
+        <name lang="de">elektromagnetischer Antrieb, gegen
+Wechselstrom unempfindlich</name>
+        <name lang="en">Relay coil of a relay unaffected by alternating current</name>
+        <name lang="fr">Organe de commande d'un relais insensible au
+courant alternatif</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{f35e40dc-f349-49ab-badb-26e89eb6bb12}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-10" width="40" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-20" x2="0" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="10" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-20" y="-10" width="40" height="5" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <rect x="-20" y="5" width="40" height="5" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <terminal uuid="{2678c991-2a3f-486c-b196-5209ea7f43be}" name="" x="0" y="20" orientation="s" type="Generic"/>
+        <terminal uuid="{b7a87976-baf0-4bbf-9fff-bfe9f62c8bee}" name="" x="0" y="-20" orientation="n" type="Generic"/>
+    </description>
+</definition>

@@ -1,0 +1,26 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="20" hotspot_x="30" hotspot_y="10">
+    <uuid uuid="{acf97e34-5bc1-6f02-837d-a2d9a416e04c}"/>
+    <names>
+        <name lang="ca">Element de calefacció</name>
+        <name lang="cs">Rezistor topný</name>
+        <name lang="de">Heizelement</name>
+        <name lang="en">Heating element</name>
+        <name lang="fr">Élément chauffant</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{23913193-0da5-468d-b036-68881a8971dd}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-20" y1="0" x2="-10" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-10" y="-5" width="30" height="10" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="20" y1="0" x2="30" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-5" y1="-5" x2="-5" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="5" y1="-5" x2="5" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="15" y1="-5" x2="15" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{c8ecad77-ef1b-470d-bf99-97bec365c78c}" name="" x="-20" y="0" orientation="w" type="Generic"/>
+        <terminal uuid="{b8ec702d-fe91-4c62-9f21-f428cf483cd9}" name="" x="30" y="0" orientation="e" type="Generic"/>
+    </description>
+</definition>

@@ -1,0 +1,30 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="80" hotspot_x="42" hotspot_y="50">
+    <uuid uuid="{82813d2c-0a8f-8ed9-be16-86ce69c60672}"/>
+    <names>
+        <name lang="ca">seccionador;</name>
+        <name lang="cs">Odpojovač s blokovacím ústrojím
+ručně ovládaným</name>
+        <name lang="de">Trennschalter mit Blockiereinrichtung,
+handbetätigt</name>
+        <name lang="en">Disconnector; Isolator</name>
+        <name lang="fr">Sectionneur à commande manuelle</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="0" y1="-20" x2="0" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="0" x2="-8" y2="-23" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="5" y="12.5" z="4" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{f2af2294-1039-42ba-a242-60c4b2616ceb}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-4" y1="-20" x2="4" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-30" y="-18" width="10" height="8" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-18" y1="-22" x2="-18" y2="-16" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-15" x2="-40" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-10" x2="-3" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{45e0c69f-6f67-4647-af54-59390e383027}" name="" x="0" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{9b118917-f8e6-4d60-b7ab-c97bdf90f13d}" name="" x="0" y="20" orientation="s" type="Generic"/>
+    </description>
+</definition>

@@ -1,0 +1,22 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="70" hotspot_x="25" hotspot_y="65">
+    <uuid uuid="{a5b3faf2-13ff-9027-f9bc-25563bdf990d}"/>
+    <names>
+        <name lang="ca">Var-hora comptador</name>
+        <name lang="cs">Varhodinový měřič</name>
+        <name lang="de">Blindverbrauchszähler</name>
+        <name lang="en">Var-hour meter</name>
+        <name lang="fr">Varheuremètre,
+Compteur d'énergie réactive</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{f29847e1-f259-4e39-aac4-42c0ff146629}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-20" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <text text="varh" x="-12" y="-16" rotation="0" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular" color="#000000"/>
+        <rect x="-20" y="-60" width="40" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

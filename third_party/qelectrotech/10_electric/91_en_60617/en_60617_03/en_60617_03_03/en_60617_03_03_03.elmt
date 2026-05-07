@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="20" hotspot_x="42" hotspot_y="10">
+    <uuid uuid="{8ba41725-abac-c8a7-53a3-9b210fc67a1e}"/>
+    <names>
+        <name lang="ca">Contacte, mascle (d'un endoll o endoll)</name>
+        <name lang="cs">Kolíkový kontakt
+Vidlice</name>
+        <name lang="de">Pol eines Steckers
+Stecker</name>
+        <name lang="en">Contact, male (of a socket or plug)</name>
+        <name lang="fr">Contact mâle (d’une prise ou d’une fiche)
+Fiche</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{858bd039-01f6-448e-9730-150c2ba6c026}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-40" y="-3" width="20" height="6" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <line x1="-25" y1="0" x2="0" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{30a28313-b9b4-4291-91a5-b6cd191422a3}" name="" x="0" y="0" orientation="e" type="Generic"/>
+    </description>
+</definition>

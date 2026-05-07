@@ -1,0 +1,29 @@
+<definition version="0.100.0" type="element" link_type="simple" width="90" height="30" hotspot_x="83" hotspot_y="25">
+    <uuid uuid="{2acbc462-e8ab-488f-76f6-6a881ebcbeb9}"/>
+    <names>
+        <name lang="ca">Endoll i presa tipus telèfon</name>
+        <name lang="cs">Telefonní kolík a svírka</name>
+        <name lang="de">Stecker und Klinke, zweipolig</name>
+        <name lang="en">Telephone type plug and jack</name>
+        <name lang="fr">Fiche et jack, bipolaires, type téléphone</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{14e0ca2c-caf6-4eb1-ad41-50e000e87262}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <ellipse x="-2.5" y="-2.5" width="5" height="5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <ellipse x="-2.5" y="-22.5" width="5" height="5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-3" y1="-20" x2="-25" y2="-20" x3="-30" y3="-15" x4="-35" y4="-20" closed="false" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <rect x="-45" y="-22.5" width="5" height="5" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <rect x="-45" y="-2.5" width="5" height="5" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <rect x="-45" y="-22.5" width="5" height="25" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-3" y1="0" x2="-39" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-70" y="-12.5" width="20" height="5" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <rect x="-70" y="-2.5" width="10" height="5" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <line x1="-80" y1="0" x2="-70" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-80" y1="-10" x2="-70" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

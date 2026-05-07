@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="60" hotspot_x="15" hotspot_y="30">
+    <uuid uuid="{6ab19693-783d-ac07-f3e6-4944cbf72c36}"/>
+    <names>
+        <name lang="ca">Contactor estàtic (semiconductor).</name>
+        <name lang="cs">Statický (polovodičový) stykač</name>
+        <name lang="de">elektronisches Schütz (Halbleiter)</name>
+        <name lang="en">Static (semiconductor) contactor</name>
+        <name lang="fr">Contacteur à semiconducteur (statique)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{6dcbdc40-2ab6-4615-a4b6-024be9df68d2}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-10" y1="10" x2="10" y2="10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="10" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-10" x2="0" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="10" x2="-7" y2="-11" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <arc x="-2" y="-14" width="4" height="4" start="90" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <terminal uuid="{0e47e2d3-63da-4369-bbbe-d167ae57ef61}" name="" x="0" y="-20" orientation="n" type="Generic"/>
+        <terminal uuid="{c5bb65d0-b3af-4e8f-9caa-06904930f6c4}" name="" x="0" y="20" orientation="s" type="Generic"/>
+    </description>
+</definition>

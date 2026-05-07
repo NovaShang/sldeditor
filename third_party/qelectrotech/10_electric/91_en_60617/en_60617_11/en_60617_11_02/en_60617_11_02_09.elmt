@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="45" hotspot_y="45">
+    <uuid uuid="{4f4feb13-6a8f-af19-163f-14d4d8cbc912}"/>
+    <names>
+        <name lang="ca">Central de generació solar, prevista</name>
+        <name lang="cs">Sluneční elektrárna ( projektovaná)</name>
+        <name lang="de">Kraftwerk mit Sonnenenergie betrieben,
+Sonnenkraftwerk (in Planung)</name>
+        <name lang="en">Solar generating station, planned</name>
+        <name lang="fr">Centrale solaire (en projet)</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="12.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{0bc1a633-c1a5-49fe-81fc-f4cb2a4c75fc}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <rect x="-40" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-20" x2="0" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-25" y1="-40" x2="-15" y2="-30" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-30" y1="-35" x2="-20" y2="-25" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-19" y1="-32" x2="-17" y2="-34" x3="-14" y3="-29" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <polygon x1="-22" y1="-29" x2="-19" y2="-24" x3="-24" y3="-27" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+    </description>
+</definition>

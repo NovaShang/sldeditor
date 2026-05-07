@@ -1,0 +1,25 @@
+<definition version="0.100.0" type="element" link_type="simple" width="50" height="50" hotspot_x="25" hotspot_y="45">
+    <uuid uuid="{1f15ff59-54a6-0ef4-9f82-5babec9d4f28}"/>
+    <names>
+        <name lang="ca">Instrument de gravació, símbol general</name>
+        <name lang="cs">Zapisovací přístroj</name>
+        <name lang="de">Meßgerät, aufzeichnend</name>
+        <name lang="en">Recording instrument, general symbol</name>
+        <name lang="fr">Appareil enregistreur</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <polygon x1="-2" y1="-22" x2="2" y2="-22" x3="0" y3="-25" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <polygon x1="-2" y1="-22" x2="-2" y2="-19" x3="-6" y3="-20" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <dynamic_text x="5" y="12.5" z="3" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{415cc002-5828-461b-98d2-f836a26112dd}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <polygon x1="2" y1="-22" x2="2" y2="-19" x3="6" y3="-20" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <polygon x1="-2" y1="-19" x2="0" y2="-17" x3="-3" y3="-15" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <polygon x1="0" y1="-17" x2="2" y2="-19" x3="4" y3="-15" antialias="false" style="line-style:normal;line-weight:normal;filling:black;color:black"/>
+        <rect x="-2" y="-22" width="4" height="4" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:black;color:black" antialias="false"/>
+        <rect x="-20" y="-40" width="40" height="40" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

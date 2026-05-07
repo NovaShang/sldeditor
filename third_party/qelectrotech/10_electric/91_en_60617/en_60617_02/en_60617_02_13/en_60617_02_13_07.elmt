@@ -1,0 +1,24 @@
+<definition version="0.100.0" type="element" link_type="simple" width="40" height="20" hotspot_x="29" hotspot_y="10">
+    <uuid uuid="{6dcc2f21-b336-0776-4fdc-e9c7767ded43}"/>
+    <names>
+        <name lang="ca">Actuador (accionat tocant)</name>
+        <name lang="cs">Ovládání dotykem</name>
+        <name lang="de">Betätigung durch Berühren</name>
+        <name lang="en">Actuator (operated by touching)</name>
+        <name lang="es">Accionado por dispositivo térmico</name>
+        <name lang="fr">Commande par effleurement</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="2.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{633b1a8c-ca7b-4a2c-b9c7-be0fbb8d1ed3}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="-14" y1="0" x2="6" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="-24" y1="0" x2="-19" y2="-5" x3="-14" y3="0" x4="-19" y4="5" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="-20" y1="-4" x2="-20" y2="4" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-18" y1="-4" x2="-18" y2="4" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-24" y1="-4" x2="-24" y2="4" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+    </description>
+</definition>

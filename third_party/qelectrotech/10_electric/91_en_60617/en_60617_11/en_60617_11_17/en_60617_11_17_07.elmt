@@ -1,0 +1,30 @@
+<definition version="0.100.0" type="element" link_type="simple" width="60" height="60" hotspot_x="50" hotspot_y="50">
+    <uuid uuid="{9b81166d-648f-01fb-d6d1-ddb59508f72f}"/>
+    <names>
+        <name lang="ca">Encreuament de dos sistemes sense connexió</name>
+        <name lang="cs">Křížení dvou systémůbez spojení</name>
+        <name lang="de">Kreuzung von zwei Verteilsystemen ohne
+Verbindung</name>
+        <name lang="en">Crossing of two systems without connection</name>
+        <name lang="fr">Croisement de deux canalisations sans
+branchement</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="5" y="22.5" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{1b19efb4-d5b3-45d0-95a3-14c1d157aa70}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-20" x2="-40" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-40" y1="-25" x2="-40" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-25" x2="0" y2="-15" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-25" y1="0" x2="-15" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-20" y1="-40" x2="-20" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-25" y1="-40" x2="-15" y2="-40" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{8be4092f-d319-4d30-8912-54494851beec}" name="" x="-20" y="-40" orientation="n" type="Generic"/>
+        <terminal uuid="{8d57a5f8-3b93-4c6a-a3b8-49ed08fa22b4}" name="" x="0" y="-20" orientation="e" type="Generic"/>
+        <terminal uuid="{88a537c9-769b-479e-b3ee-bdfe5ebf4e63}" name="" x="-40" y="-20" orientation="w" type="Generic"/>
+        <terminal uuid="{38dca08b-478d-4706-9021-ee049af06b9b}" name="" x="-20" y="0" orientation="s" type="Generic"/>
+    </description>
+</definition>
