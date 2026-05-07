@@ -167,7 +167,7 @@ export function compile(diagram: DiagramFile): InternalModel {
         m.diagnostics.push({
           code: 'E004',
           severity: 'error',
-          message: `layout key "${id}" 引用了不存在的元件`,
+          message: t('compile.layoutMissingElement', { id }),
           pointer: `/layout/${id}`,
         });
     }
@@ -248,7 +248,7 @@ export function compile(diagram: DiagramFile): InternalModel {
       m.diagnostics.push({
         code: 'W001',
         severity: 'warning',
-        message: `元件 "${re.element.id}" 没有任何连接`,
+        message: t('compile.elementUnconnected', { id: re.element.id }),
       });
     }
   }

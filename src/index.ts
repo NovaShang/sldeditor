@@ -50,3 +50,8 @@ export type {
 
 export { useEditorStore } from './store';
 export type { EditorState } from './store';
+
+// Locale store — exposed so embedding apps can sync the editor's UI language
+// with their own i18n system.
+export { useLocale } from './i18n';
+export type { Locale } from './i18n';
