@@ -82,11 +82,20 @@ function OutlinePanel({ onClose }: { onClose: () => void }) {
 
 function OutlineRow({ element }: { element: Element }) {
   const lib = libraryById[element.kind];
+  const selected = useEditorStore((s) => s.selection.includes(element.id));
+  const setSelection = useEditorStore((s) => s.setSelection);
+  const toggleInSelection = useEditorStore((s) => s.toggleInSelection);
+  const onClick = (e: React.MouseEvent) => {
+    if (e.shiftKey || e.metaKey || e.ctrlKey) toggleInSelection(element.id);
+    else setSelection([element.id]);
+  };
   return (
     <li
-      className="group flex items-center gap-2 rounded-md px-2 py-1 hover:bg-accent"
+      className="group flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 hover:bg-accent data-[selected=true]:bg-[color-mix(in_oklch,var(--selection)_18%,transparent)]"
       title={element.note ?? `${element.name ?? element.id} (${element.kind})`}
       data-element-id={element.id}
+      data-selected={selected ? 'true' : undefined}
+      onClick={onClick}
     >
       <div className="flex h-4 w-6 shrink-0 items-center justify-center">
         {lib && (
