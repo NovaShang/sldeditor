@@ -7,7 +7,8 @@
 
 import { libraryById } from '@/element-library';
 import { transformAttr } from '@/canvas/transform-attr';
-import type { InternalModel } from '@/compiler';
+import { transformPoint, type InternalModel, type ResolvedPlacement } from '@/compiler';
+import type { LibraryEntry } from '@/model';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PADDING = 24;
@@ -92,8 +93,28 @@ function computeContentBbox(model: InternalModel): Bbox {
   for (const t of model.terminals.values()) update(t.world[0], t.world[1]);
   for (const re of model.elements.values()) {
     const place = model.layout.get(re.element.id);
-    if (!place) continue;
-    update(place.at[0], place.at[1]);
+    const lib = re.libraryDef;
+    if (!place || !lib) continue;
+    const vb = parseViewBox(lib.viewBox);
+    if (!vb) {
+      update(place.at[0], place.at[1]);
+      continue;
+    }
+    // Stretchable elements (busbars) scale their viewBox along the stretch
+    // axis by `span / referenceLength`. Apply that pre-rotation so the bbox
+    // matches the rendered transform from `transformAttr`.
+    const sx = stretchFactor(lib, place, 'x');
+    const sy = stretchFactor(lib, place, 'y');
+    const corners: Array<[number, number]> = [
+      [vb.x * sx, vb.y * sy],
+      [(vb.x + vb.w) * sx, vb.y * sy],
+      [vb.x * sx, (vb.y + vb.h) * sy],
+      [(vb.x + vb.w) * sx, (vb.y + vb.h) * sy],
+    ];
+    for (const c of corners) {
+      const [wx, wy] = transformPoint(c, place);
+      update(wx, wy);
+    }
   }
   for (const route of model.routes.values()) {
     for (const path of route.paths) {
@@ -107,6 +128,28 @@ function computeContentBbox(model: InternalModel): Bbox {
     maxY = 0;
   }
   return { minX, minY, maxX, maxY };
+}
+
+function stretchFactor(
+  lib: LibraryEntry,
+  place: ResolvedPlacement,
+  axis: 'x' | 'y',
+): number {
+  const stretch = lib.stretchable;
+  if (!stretch || stretch.axis !== axis || !place.span) return 1;
+  if (lib.terminals.length < 2) return 1;
+  const vs = lib.terminals.map((t) => (axis === 'x' ? t.x : t.y));
+  const ref = Math.max(...vs) - Math.min(...vs);
+  if (ref <= 0) return 1;
+  return place.span / ref;
+}
+
+function parseViewBox(
+  s: string,
+): { x: number; y: number; w: number; h: number } | null {
+  const parts = s.trim().split(/\s+/).map(Number);
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return null;
+  return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
 }
 
 function escapeXml(s: string): string {

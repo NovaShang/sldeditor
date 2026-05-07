@@ -15,6 +15,7 @@
 import { useEffect, type RefObject } from 'react';
 import { useEditorStore } from '@/store';
 import { hitElement, hitNode, hitTerminal } from './hit-test';
+import { publishHoverElement } from './hover-bus';
 
 const C_HOST = 'ole-hover-element-host';
 const C_TERM = 'ole-hover-terminal-on';
@@ -72,6 +73,7 @@ export function useHoverHighlight(
       // Mirror to root attr so CSS can distinguish "any element hovered" state
       if (id) host.setAttribute('data-hover-element', '');
       else host.removeAttribute('data-hover-element');
+      publishHoverElement(id);
     };
 
     const updateNodeHover = (nodeId: string | null) => {

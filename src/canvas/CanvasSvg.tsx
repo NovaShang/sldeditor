@@ -47,12 +47,28 @@ const SHIFT = IS_MAC ? '⇧' : 'Shift+';
 export function CanvasSvg() {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const groupRef = useRef<SVGGElement | null>(null);
+  const gridPatternRef = useRef<SVGPatternElement | null>(null);
   const viewport = useViewport(hostRef, groupRef);
   useTools(hostRef, viewport);
   useHoverHighlight(hostRef);
   useEffect(() => {
     setViewportApi(viewport);
     return () => setViewportApi(null);
+  }, [viewport]);
+  // Keep the dot grid locked to world coordinates so it pans / zooms with the
+  // canvas. Without this the grid lives in screen space and slides past the
+  // snap targets, which made placed elements look "off the grid".
+  useEffect(() => {
+    const sync = (vp: { tx: number; ty: number; scale: number }) => {
+      const el = gridPatternRef.current;
+      if (!el) return;
+      el.setAttribute(
+        'patternTransform',
+        `translate(${vp.tx} ${vp.ty}) scale(${vp.scale})`,
+      );
+    };
+    sync(viewport.getViewport());
+    return viewport.subscribe(sync);
   }, [viewport]);
   const contextMenu = useContextMenu();
 
@@ -195,12 +211,16 @@ export function CanvasSvg() {
       >
         <defs>
           <pattern
+            ref={gridPatternRef}
             id="ole-grid-dots"
             width={20}
             height={20}
             patternUnits="userSpaceOnUse"
           >
-            <circle cx={10} cy={10} r={1} fill="var(--canvas-grid-strong)" />
+            {/* Dot at the cell corner so every visible dot lands on a snap
+                position (snap step = 10, pattern step = 20 → every dot is on
+                a multiple-of-20 snap point). */}
+            <circle cx={0} cy={0} r={1} fill="var(--canvas-grid-strong)" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#ole-grid-dots)" />

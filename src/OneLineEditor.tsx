@@ -11,11 +11,17 @@ export interface OneLineEditorProps {
 }
 
 export function OneLineEditor({ className, diagram }: OneLineEditorProps) {
-  const setDiagram = useEditorStore((s) => s.setDiagram);
-
   useEffect(() => {
-    if (diagram) setDiagram(diagram);
-  }, [diagram, setDiagram]);
+    if (!diagram) return;
+    // Don't clobber persisted/in-progress work on remount or HMR. Only seed
+    // the initial diagram if the store is empty (first visit / cleared
+    // storage). Consumers wanting to force-replace can call setDiagram
+    // imperatively.
+    const current = useEditorStore.getState().diagram;
+    if (current.elements.length === 0) {
+      useEditorStore.getState().setDiagram(diagram);
+    }
+  }, [diagram]);
 
   useKeyboardShortcuts();
 
