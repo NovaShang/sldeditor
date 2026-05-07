@@ -4,7 +4,7 @@
  * created on pointerup.
  */
 
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../store';
 
 export function BusbarPreview() {
   const start = useEditorStore((s) => s.busbarDrawStart);

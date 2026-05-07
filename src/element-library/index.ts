@@ -1,4 +1,4 @@
-import type { LibraryEntry } from '@/model/library';
+import type { LibraryEntry } from '../model/library';
 
 const modules = import.meta.glob<{ default: LibraryEntry }>('./*.json', {
   eager: true,

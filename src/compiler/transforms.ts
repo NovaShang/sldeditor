@@ -5,7 +5,7 @@
  * SVG output and computed terminal coords stay in sync.
  */
 
-import type { Orientation } from '@/model';
+import type { Orientation } from '../model';
 import type { ResolvedPlacement } from './internal-model';
 
 export function transformPoint(

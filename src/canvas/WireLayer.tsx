@@ -10,7 +10,7 @@
  * closest('[data-node-id]') resolves correctly.
  */
 
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../store';
 
 export function WireLayer() {
   const routes = useEditorStore((s) => s.internal.routes);

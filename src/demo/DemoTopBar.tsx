@@ -18,12 +18,12 @@ import {
   Sun,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
-import { useTheme } from '@/hooks/use-theme';
-import { openDiagram, saveDiagram } from '@/lib/file-io';
-import { downloadPng, downloadSvg } from '@/lib/export-image';
-import { useEditorStore } from '@/store';
+import { Button } from '../components/ui/button';
+import { Tooltip } from '../components/ui/tooltip';
+import { useTheme } from '../hooks/use-theme';
+import { openDiagram, saveDiagram } from '../lib/file-io';
+import { downloadPng, downloadSvg } from '../lib/export-image';
+import { useEditorStore } from '../store';
 
 export function DemoTopBar() {
   const { theme, toggle } = useTheme();

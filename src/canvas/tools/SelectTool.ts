@@ -10,10 +10,10 @@
  * recompile on every pointermove.
  */
 
-import { useEditorStore } from '@/store';
-import type { ResolvedPlacement } from '@/compiler';
-import type { ElementId, TerminalRef } from '@/model';
-import { libraryById } from '@/element-library';
+import { useEditorStore } from '../../store';
+import type { ResolvedPlacement } from '../../compiler';
+import type { ElementId, TerminalRef } from '../../model';
+import { libraryById } from '../../element-library';
 import { snap } from '../grid';
 import { hitElement, hitNode, hitTerminal } from '../hit-test';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';

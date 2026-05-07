@@ -6,16 +6,16 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { libraryById } from '@/element-library';
-import { useEditorStore } from '@/store';
+import { libraryById } from '../element-library';
+import { useEditorStore } from '../store';
 import type {
   Element,
   ElementId,
   LibraryParamField,
   LibraryStateField,
   ParamValue,
-} from '@/model';
-import { cn } from '@/lib/utils';
+} from '../model';
+import { cn } from '../lib/utils';
 
 export function PropertyPanel() {
   const selection = useEditorStore((s) => s.selection);

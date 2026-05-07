@@ -11,9 +11,9 @@
 
 import { useEffect, useRef } from 'react';
 import { FlipHorizontal, RotateCw, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
-import { useEditorStore } from '@/store';
+import { Button } from './ui/button';
+import { Tooltip } from './ui/tooltip';
+import { useEditorStore } from '../store';
 
 const GAP_PX = 12;
 const TOP_FLIP_THRESHOLD_PX = 56;

@@ -1,4 +1,4 @@
-import type { DiagramFile } from '@/model';
+import type { DiagramFile } from '../model';
 
 /**
  * 10kV 单母线（一进两出），照搬 docs/data-model.md §11.2 的示例。

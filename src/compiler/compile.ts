@@ -16,7 +16,7 @@ import type {
   ElementId,
   NodeId,
   TerminalRef,
-} from '@/model';
+} from '../model';
 import { autoLayout } from './auto-layout';
 import { autoRoute } from './auto-route';
 import { LIBRARY } from './library-index';

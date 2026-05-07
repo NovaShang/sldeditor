@@ -8,8 +8,8 @@
  * connection that will be committed on release.
  */
 
-import { useEditorStore } from '@/store';
-import { getLibraryEntry } from '@/compiler';
+import { useEditorStore } from '../store';
+import { getLibraryEntry } from '../compiler';
 import { pickConnectTerminal, resolvePlaceSource } from './drop-on-bus';
 
 export function PlaceGhost() {

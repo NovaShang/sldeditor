@@ -4,8 +4,8 @@
  * `src/element-library/index.ts`.
  */
 
-import { libraryById } from '@/element-library';
-import type { LibraryEntry } from '@/model';
+import { libraryById } from '../element-library';
+import type { LibraryEntry } from '../model';
 
 export const LIBRARY: ReadonlyMap<string, LibraryEntry> = new Map(
   Object.entries(libraryById),

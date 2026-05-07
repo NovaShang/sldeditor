@@ -4,7 +4,7 @@
  * `ElementHoverLabel` subscribes to render a small floating name tag.
  */
 
-import type { ElementId } from '@/model';
+import type { ElementId } from '../model';
 
 type Listener = (id: ElementId | null) => void;
 

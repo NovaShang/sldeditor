@@ -20,8 +20,8 @@ import {
   compile,
   type InternalModel,
   type ResolvedPlacement,
-} from '@/compiler';
-import type { FileSession } from '@/lib/file-io';
+} from '../compiler';
+import type { FileSession } from '../lib/file-io';
 import type {
   Connection,
   DiagramFile,
@@ -31,7 +31,7 @@ import type {
   NodeId,
   Placement,
   TerminalRef,
-} from '@/model';
+} from '../model';
 import { newElementId } from './id-allocator';
 
 const EMPTY_DIAGRAM: DiagramFile = { version: '1', elements: [] };

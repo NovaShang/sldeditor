@@ -13,7 +13,7 @@
  * cursor is over a bus body.
  */
 
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../../store';
 import { hitTerminal } from '../hit-test';
 import { resolveWireTarget } from '../resolve-wire-target';
 import { publishWireTarget } from '../wire-target-bus';

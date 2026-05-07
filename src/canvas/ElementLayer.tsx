@@ -14,8 +14,8 @@
  * still draw on top because they're added after.
  */
 
-import { useEditorStore } from '@/store';
-import type { LibraryEntry } from '@/model';
+import { useEditorStore } from '../store';
+import type { LibraryEntry } from '../model';
 import { transformAttr } from './transform-attr';
 
 interface BBox {

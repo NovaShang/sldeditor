@@ -6,8 +6,8 @@
  * paint a marker so the user sees where a release will land.
  */
 
-import { useEditorStore } from '@/store';
-import type { TerminalRef } from '@/model';
+import { useEditorStore } from '../store';
+import type { TerminalRef } from '../model';
 import type { WireTarget } from './wire-target-bus';
 
 export function resolveWireTarget(

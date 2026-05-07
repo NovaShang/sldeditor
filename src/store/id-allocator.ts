@@ -4,7 +4,7 @@
  * disconnectors, etc.); unknown kinds fall back to the kind string itself.
  */
 
-import type { DiagramFile, ElementId } from '@/model';
+import type { DiagramFile, ElementId } from '../model';
 
 const PREFIX: Record<string, string> = {
   busbar: 'B',

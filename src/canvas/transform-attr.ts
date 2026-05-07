@@ -7,8 +7,8 @@
  *   translate(at) → rotate(rot) → scale(mirror?-1:1, 1) → stretch(span)
  */
 
-import type { LibraryEntry } from '@/model';
-import type { ResolvedPlacement } from '@/compiler';
+import type { LibraryEntry } from '../model';
+import type { ResolvedPlacement } from '../compiler';
 
 export function transformAttr(
   p: ResolvedPlacement,

@@ -10,7 +10,7 @@
  * coords — showing both produces visible "double" control points.
  */
 
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../store';
 
 export function TerminalLayer() {
   const terminals = useEditorStore((s) => s.internal.terminals);

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { CanvasSvg } from '@/canvas';
-import { ElementHoverLabel } from '@/canvas/ElementHoverLabel';
+import { CanvasSvg } from '../canvas';
+import { ElementHoverLabel } from '../canvas/ElementHoverLabel';
 import { ContextMenuHost } from './ContextMenu';
 import { ContextualToolbar } from './ContextualToolbar';
 import { FloatingToolbar } from './FloatingToolbar';

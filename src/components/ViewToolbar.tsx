@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Grid2x2, Maximize2, Minus, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
-import { getViewportApi, getScale, subscribeScale } from '@/canvas';
-import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
+import { Tooltip } from './ui/tooltip';
+import { getViewportApi, getScale, subscribeScale } from '../canvas';
+import { cn } from '../lib/utils';
 
 const ZOOM_STEPS = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 6, 8] as const;
 const MIN_SCALE = 0.1;

@@ -6,7 +6,7 @@
  * download anchor in browsers without it.
  */
 
-import type { DiagramFile } from '@/model';
+import type { DiagramFile } from '../model';
 
 const ACCEPT: Record<string, string[]> = { 'application/json': ['.json'] };
 

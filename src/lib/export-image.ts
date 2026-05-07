@@ -5,10 +5,10 @@
  * etc.) out of the file and crops tightly around the actual content.
  */
 
-import { libraryById } from '@/element-library';
-import { transformAttr } from '@/canvas/transform-attr';
-import { transformPoint, type InternalModel, type ResolvedPlacement } from '@/compiler';
-import type { LibraryEntry } from '@/model';
+import { libraryById } from '../element-library';
+import { transformAttr } from '../canvas/transform-attr';
+import { transformPoint, type InternalModel, type ResolvedPlacement } from '../compiler';
+import type { LibraryEntry } from '../model';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PADDING = 24;

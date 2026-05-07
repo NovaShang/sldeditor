@@ -1,4 +1,4 @@
-import { OneLineEditor } from '@/OneLineEditor';
+import { OneLineEditor } from '../OneLineEditor';
 import { DemoTopBar } from './DemoTopBar';
 import { SAMPLE_DIAGRAM } from './sample-diagram';
 

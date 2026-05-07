@@ -9,12 +9,12 @@
  */
 
 import { useRef } from 'react';
-import { useEditorStore } from '@/store';
-import { libraryById } from '@/element-library';
-import type { ElementId } from '@/model';
+import { useEditorStore } from '../store';
+import { libraryById } from '../element-library';
+import type { ElementId } from '../model';
 import { getViewportApi } from './viewport-bus';
 import { isSnapEnabled, GRID_SIZE } from './grid';
-import { transformPoint } from '@/compiler';
+import { transformPoint } from '../compiler';
 
 const MIN_SPAN = 20;
 

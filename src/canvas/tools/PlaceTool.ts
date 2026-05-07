@@ -18,7 +18,7 @@
  * Esc or switch tools to leave.
  */
 
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../../store';
 import { dropElement, dropElementFromTerminal } from '../drop-on-bus';
 import { hitTerminal } from '../hit-test';
 import type { Tool } from './types';

@@ -6,7 +6,7 @@
  */
 
 import { useEffect, type RefObject } from 'react';
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../store';
 import { TOOLS } from './tools';
 import type { ToolContext } from './tools';
 import type { ViewportApi } from './useViewport';

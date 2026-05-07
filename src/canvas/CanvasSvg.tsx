@@ -20,8 +20,8 @@ import {
   Trash2,
   Undo2,
 } from 'lucide-react';
-import { useContextMenu, type ContextMenuEntry } from '@/components/ContextMenu';
-import { useEditorStore } from '@/store';
+import { useContextMenu, type ContextMenuEntry } from '../components/ContextMenu';
+import { useEditorStore } from '../store';
 import { setViewportApi } from './viewport-bus';
 import { dropElement } from './drop-on-bus';
 import { BusHandles } from './BusHandles';

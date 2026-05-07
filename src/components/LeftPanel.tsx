@@ -1,8 +1,8 @@
 import { ListTree, PanelBottomClose } from 'lucide-react';
-import { libraryById } from '@/element-library';
-import { usePanels } from '@/hooks/use-panels';
-import { useEditorStore } from '@/store';
-import type { Element } from '@/model';
+import { libraryById } from '../element-library';
+import { usePanels } from '../hooks/use-panels';
+import { useEditorStore } from '../store';
+import type { Element } from '../model';
 
 export function LeftPanel() {
   const open = usePanels((s) => s.outlineOpen);

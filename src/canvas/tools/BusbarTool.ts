@@ -14,7 +14,7 @@
  * global keyboard hook (re-activates select).
  */
 
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../../store';
 import type { Tool } from './types';
 
 const GRID = 10;

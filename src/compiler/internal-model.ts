@@ -11,7 +11,7 @@ import type {
   Orientation,
   Placement,
   TerminalRef,
-} from '@/model';
+} from '../model';
 
 /** Element + the resolved library record for its `kind`. */
 export interface ResolvedElement {

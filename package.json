@@ -1,17 +1,17 @@
 {
-  "name": "oneline-editor",
+  "name": "sldeditor",
   "version": "0.0.1",
   "description": "Lightweight in-browser editor for electrical single-line diagrams.",
   "type": "module",
   "license": "MIT",
-  "main": "./dist/oneline-editor.cjs",
-  "module": "./dist/oneline-editor.js",
+  "main": "./dist/sldeditor.cjs",
+  "module": "./dist/sldeditor.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/oneline-editor.js",
-      "require": "./dist/oneline-editor.cjs"
+      "import": "./dist/sldeditor.js",
+      "require": "./dist/sldeditor.cjs"
     },
     "./style.css": "./dist/style.css"
   },

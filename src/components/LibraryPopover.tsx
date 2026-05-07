@@ -11,10 +11,10 @@ import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
   libraryByCategory,
-} from '@/element-library';
-import { usePanels } from '@/hooks/use-panels';
-import { useEditorStore } from '@/store';
-import type { LibraryEntry } from '@/model/library';
+} from '../element-library';
+import { usePanels } from '../hooks/use-panels';
+import { useEditorStore } from '../store';
+import type { LibraryEntry } from '../model/library';
 
 const PALETTE_COLLAPSE_STORAGE_KEY = 'ole-palette-collapsed';
 

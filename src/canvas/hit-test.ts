@@ -4,8 +4,8 @@
  * tools can locate the model they belong to without React state lookups.
  */
 
-import { useEditorStore } from '@/store';
-import type { ElementId, NodeId, TerminalRef } from '@/model';
+import { useEditorStore } from '../store';
+import type { ElementId, NodeId, TerminalRef } from '../model';
 
 function ancestor(target: EventTarget | null, attr: string): Element | null {
   if (!(target instanceof Element)) return null;

@@ -10,9 +10,9 @@ import {
   Undo2,
   Wand2,
 } from 'lucide-react';
-import { Tooltip } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
-import { useEditorStore, type ToolId } from '@/store';
+import { Tooltip } from './ui/tooltip';
+import { cn } from '../lib/utils';
+import { useEditorStore, type ToolId } from '../store';
 
 interface ToolDef {
   id: string;

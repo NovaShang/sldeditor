@@ -5,7 +5,7 @@
  * would land before they release.
  */
 
-import type { TerminalRef } from '@/model';
+import type { TerminalRef } from '../model';
 
 export interface WireTarget {
   ref: TerminalRef;

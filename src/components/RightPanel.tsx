@@ -1,5 +1,5 @@
-import { libraryById } from '@/element-library';
-import { useEditorStore } from '@/store';
+import { libraryById } from '../element-library';
+import { useEditorStore } from '../store';
 import { PropertyPanel } from './PropertyPanel';
 
 export function RightPanel() {

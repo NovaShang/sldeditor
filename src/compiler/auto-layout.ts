@@ -23,7 +23,7 @@
  * drags don't introduce sub-grid jitter.
  */
 
-import type { Connection, Element, ElementId, LibraryEntry, TerminalRef } from '@/model';
+import type { Connection, Element, ElementId, LibraryEntry, TerminalRef } from '../model';
 import type { ResolvedPlacement } from './internal-model';
 import { orientationVec, transformOrientation, transformPoint } from './transforms';
 

@@ -5,7 +5,7 @@
  * width constant across zoom levels.
  */
 
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../store';
 import { transformAttr } from './transform-attr';
 
 export function SelectionOverlay() {

@@ -6,7 +6,7 @@
  */
 
 import { useEffect } from 'react';
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../store';
 
 function isEditing(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;

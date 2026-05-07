@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../store';
 import {
   getWireTarget,
   subscribeWireTarget,

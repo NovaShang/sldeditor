@@ -8,9 +8,9 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { libraryById } from '@/element-library';
-import { useEditorStore } from '@/store';
-import type { ElementId } from '@/model';
+import { libraryById } from '../element-library';
+import { useEditorStore } from '../store';
+import type { ElementId } from '../model';
 import { getHoverElement, subscribeHoverElement } from './hover-bus';
 
 interface Anchor {

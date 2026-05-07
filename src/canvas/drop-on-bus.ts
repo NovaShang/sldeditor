@@ -9,7 +9,7 @@
  * away from the bus naturally.
  */
 
-import { libraryById } from '@/element-library';
+import { libraryById } from '../element-library';
 import type {
   DiagramFile,
   Element,
@@ -19,9 +19,9 @@ import type {
   Orientation,
   Placement,
   TerminalRef,
-} from '@/model';
-import { newElementId } from '@/store';
-import { useEditorStore } from '@/store';
+} from '../model';
+import { newElementId } from '../store';
+import { useEditorStore } from '../store';
 import { snap } from './grid';
 
 const PROXIMITY_PX = 30;

@@ -29,7 +29,7 @@ export default defineConfig({
       name: 'OneLineEditor',
       formats: ['es', 'cjs'],
       fileName: (format) =>
-        format === 'es' ? 'oneline-editor.js' : 'oneline-editor.cjs',
+        format === 'es' ? 'sldeditor.js' : 'sldeditor.cjs',
     },
     rollupOptions: {
       external: ['react', 'react-dom', 'react/jsx-runtime'],

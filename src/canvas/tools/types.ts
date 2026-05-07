@@ -9,10 +9,10 @@
  * module-level refs inside the tool file).
  */
 
-import type { ToolId } from '@/store';
+import type { ToolId } from '../../store';
 import type { ViewportApi } from '../useViewport';
 
-export type { ToolId } from '@/store';
+export type { ToolId } from '../../store';
 
 export interface ToolContext {
   viewport: ViewportApi;

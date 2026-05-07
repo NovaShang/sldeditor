@@ -13,7 +13,7 @@
  */
 
 import { useEffect, type RefObject } from 'react';
-import { useEditorStore } from '@/store';
+import { useEditorStore } from '../store';
 import { hitElement, hitNode, hitTerminal } from './hit-test';
 import { publishHoverElement } from './hover-bus';
 
