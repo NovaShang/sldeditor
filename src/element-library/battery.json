@@ -20,6 +20,9 @@
       "orientation": "e"
     }
   ],
+  "params": [
+    { "name": "E", "label": "容量", "type": "number", "unit": "kWh" }
+  ],
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_06/en_60617_06_15/en_60617_06_15_01.elmt",

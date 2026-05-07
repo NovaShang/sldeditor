@@ -2,7 +2,7 @@
   "version": "1",
   "meta": {
     "title": "110/35kV 单母线变电站（开发测试用例）",
-    "description": "练手 fixture：进线 + 主变 + 35kV 母线 + 两条馈线 + 容性补偿。覆盖 bus.tap 简写、N 元组、命名节点、稀疏 layout、手动 route、open 开关。",
+    "description": "练手 fixture：进线 + 主变 + 35kV 母线 + 两条馈线 + 容性补偿。覆盖 B.tap 多端引用、N 元组、命名节点、稀疏 layout、手动 route、open 开关。",
     "author": "dev-fixture",
     "createdAt": "2026-05-07T00:00:00Z",
     "updatedAt": "2026-05-07T00:00:00Z"
@@ -18,8 +18,7 @@
 
     {
       "id": "B1", "kind": "busbar", "name": "110kV-I",
-      "params": { "Un": 110 },
-      "tap": ["QS02.t2", "CT1.t2", "QS_T1.t1", "PT1.t1"]
+      "params": { "Un": 110 }
     },
 
     { "id": "PT1",   "kind": "pt",          "name": "母线 PT" },
@@ -35,8 +34,7 @@
 
     {
       "id": "B2", "kind": "busbar", "name": "35kV",
-      "params": { "Un": 35 },
-      "tap": ["T1.t2", "FBL1.t1", "QS_F1.t1", "QS_F2.t1", "QS_C1.t1"]
+      "params": { "Un": 35 }
     },
 
     { "id": "FBL1",   "kind": "arrester", "name": "母线避雷器" },
@@ -65,6 +63,8 @@
 
     ["CT1.t1", "QS02.t2"],
 
+    ["B1.tap", "QS02.t2", "CT1.t2", "QS_T1.t1", "PT1.t1"],
+
     ["QS_T1.t2", "QF_T1.t1"],
     ["QF_T1.t2", "T1.t1"],
 
@@ -75,6 +75,8 @@
     },
 
     ["FBL1.t2", "GND_FBL1.t1"],
+
+    ["B2.tap", "T1.t2", "FBL1.t1", "QS_F1.t1", "QS_F2.t1", "QS_C1.t1"],
 
     ["QS_F1.t2", "QF_F1.t1"], ["QF_F1.t2", "LD1.t_top"],
     ["QS_F2.t2", "QF_F2.t1"], ["QF_F2.t2", "LD2.t_top"],

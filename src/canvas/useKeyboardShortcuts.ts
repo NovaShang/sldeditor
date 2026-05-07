@@ -19,6 +19,29 @@ function isEditing(target: EventTarget | null): boolean {
   );
 }
 
+/**
+ * Step out of drawing state. Wire/busbar tools always return to select.
+ * Place tool clears its placeKind first; if no kind is selected, returns to
+ * select. For non-drawing tools, falls back to clearing selection. Shared
+ * between Esc and the canvas right-click handler.
+ */
+export function exitDrawingState(): void {
+  const store = useEditorStore.getState();
+  const tool = store.activeTool;
+  if (tool === 'wire' || tool === 'busbar') {
+    store.setActiveTool('select');
+    return;
+  }
+  if (tool === 'place') {
+    if (store.placeKind) store.setPlaceKind(null);
+    else store.setActiveTool('select');
+    return;
+  }
+  if (store.selectedNode || store.selection.length > 0) {
+    store.clearSelection();
+  }
+}
+
 export function useKeyboardShortcuts(): void {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -117,14 +140,7 @@ export function useKeyboardShortcuts(): void {
           }
           return;
         case 'Escape':
-          // Cancel in-progress wire, then clear selection / leave place mode.
-          if (store.wireFromTerminal) {
-            store.setWireFromTerminal(null);
-          } else if (store.activeTool === 'place') {
-            store.setActiveTool('select');
-          } else if (store.selectedNode || store.selection.length > 0) {
-            store.clearSelection();
-          }
+          exitDrawingState();
           return;
       }
     };

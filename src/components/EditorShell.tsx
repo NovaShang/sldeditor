@@ -1,11 +1,11 @@
 import { CanvasSvg } from '@/canvas';
+import { ElementHoverLabel } from '@/canvas/ElementHoverLabel';
 import { ContextMenuHost } from './ContextMenu';
 import { ContextualToolbar } from './ContextualToolbar';
 import { FloatingToolbar } from './FloatingToolbar';
 import { LeftPanel } from './LeftPanel';
 import { LibraryPopover } from './LibraryPopover';
 import { RightPanel } from './RightPanel';
-import { TopBar } from './TopBar';
 import { ViewToolbar } from './ViewToolbar';
 
 export function EditorShell() {
@@ -15,11 +15,11 @@ export function EditorShell() {
         <CanvasSvg />
         <LeftPanel />
         <RightPanel />
-        <TopBar />
         <FloatingToolbar />
         <ViewToolbar />
         <ContextualToolbar />
         <LibraryPopover />
+        <ElementHoverLabel />
       </div>
     </ContextMenuHost>
   );

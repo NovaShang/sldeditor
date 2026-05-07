@@ -19,18 +19,9 @@ export function transformAttr(
   if (p.mirror) parts.push(`scale(-1 1)`);
 
   const stretch = lib?.stretchable;
-  if (stretch && p.span && lib) {
-    const ref = referenceLength(lib, stretch.axis);
-    if (ref > 0) {
-      const k = p.span / ref;
-      parts.push(stretch.axis === 'x' ? `scale(${k} 1)` : `scale(1 ${k})`);
-    }
+  if (stretch && p.span) {
+    const k = p.span / stretch.naturalSpan;
+    parts.push(stretch.axis === 'x' ? `scale(${k} 1)` : `scale(1 ${k})`);
   }
   return parts.join(' ');
-}
-
-function referenceLength(lib: LibraryEntry, axis: 'x' | 'y'): number {
-  if (lib.terminals.length < 2) return 0;
-  const vs = lib.terminals.map((t) => (axis === 'x' ? t.x : t.y));
-  return Math.max(...vs) - Math.min(...vs);
 }

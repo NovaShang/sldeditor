@@ -11,6 +11,7 @@ import { useEditorStore } from '@/store';
 import type {
   Element,
   ElementId,
+  LibraryParamField,
   LibraryStateField,
   ParamValue,
 } from '@/model';
@@ -72,7 +73,150 @@ export function PropertyPanel() {
           ))}
         </div>
       )}
+      <ParamsSection
+        id={id}
+        element={element}
+        schema={lib?.params ?? []}
+      />
     </div>
+  );
+}
+
+function ParamsSection({
+  id,
+  element,
+  schema,
+}: {
+  id: ElementId;
+  element: Element;
+  schema: LibraryParamField[];
+}) {
+  const schemaKeys = new Set(schema.map((p) => p.name));
+  const extras = element.params
+    ? Object.entries(element.params).filter(([k]) => !schemaKeys.has(k))
+    : [];
+  if (schema.length === 0 && extras.length === 0) return null;
+  return (
+    <div className="mt-1 flex flex-col gap-1.5 border-t border-border/40 pt-2.5">
+      {schema.map((field) => (
+        <SchemaParamField
+          key={field.name}
+          id={id}
+          element={element}
+          field={field}
+        />
+      ))}
+      {extras.map(([key, value]) => (
+        <ParamField
+          key={key}
+          id={id}
+          element={element}
+          fieldKey={key}
+          value={value}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Schema-driven param row: uses the library entry's declared label / unit /
+ * type / default.
+ */
+function SchemaParamField({
+  id,
+  element,
+  field,
+}: {
+  id: ElementId;
+  element: Element;
+  field: LibraryParamField;
+}) {
+  const cur = element.params?.[field.name] ?? field.default;
+  const label = field.label ?? field.name;
+  const onCommit = (next: ParamValue | undefined) => {
+    const params = { ...(element.params ?? {}) };
+    if (next === undefined || next === field.default) delete params[field.name];
+    else params[field.name] = next;
+    useEditorStore.getState().updateElement(id, {
+      params: Object.keys(params).length > 0 ? params : undefined,
+    });
+  };
+
+  if (field.type === 'boolean') {
+    return (
+      <Field label={label}>
+        <ToggleButton active={!!cur} onClick={() => onCommit(!cur)}>
+          {cur ? '是' : '否'}
+        </ToggleButton>
+      </Field>
+    );
+  }
+  if (field.type === 'number') {
+    return (
+      <NumberRow
+        label={label}
+        value={typeof cur === 'number' ? cur : 0}
+        unit={field.unit}
+        onCommit={onCommit}
+      />
+    );
+  }
+  return (
+    <TextRow
+      label={label}
+      value={typeof cur === 'string' ? cur : ''}
+      unit={field.unit}
+      onCommit={(v) => onCommit(v.trim() === '' ? undefined : v)}
+    />
+  );
+}
+
+/**
+ * Param row driven purely by the stored value's type (no library schema
+ * required). Number/boolean/string are each rendered with the right input;
+ * empty strings clear the key so users don't leave dangling `""` values.
+ */
+function ParamField({
+  id,
+  element,
+  fieldKey,
+  value,
+}: {
+  id: ElementId;
+  element: Element;
+  fieldKey: string;
+  value: ParamValue;
+}) {
+  const onCommit = (next: ParamValue | undefined) => {
+    const params = { ...(element.params ?? {}) };
+    if (next === undefined) delete params[fieldKey];
+    else params[fieldKey] = next;
+    useEditorStore.getState().updateElement(id, {
+      params: Object.keys(params).length > 0 ? params : undefined,
+    });
+  };
+
+  if (typeof value === 'boolean') {
+    return (
+      <Field label={fieldKey}>
+        <ToggleButton active={value} onClick={() => onCommit(!value)}>
+          {value ? '是' : '否'}
+        </ToggleButton>
+      </Field>
+    );
+  }
+  if (typeof value === 'number') {
+    return (
+      <NumberRow label={fieldKey} value={value} onCommit={onCommit} />
+    );
+  }
+  return (
+    <TextRow
+      label={fieldKey}
+      value={value}
+      onCommit={(v) => onCommit(v.trim() === '' ? undefined : v)}
+    />
   );
 }
 
@@ -161,7 +305,9 @@ function Field({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <label className="w-12 shrink-0 text-[11px] text-muted-foreground">{label}</label>
+      <label className="w-16 shrink-0 truncate text-[11px] text-muted-foreground">
+        {label}
+      </label>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
@@ -171,11 +317,13 @@ function TextRow({
   label,
   value,
   placeholder,
+  unit,
   onCommit,
 }: {
   label: string;
   value: string;
   placeholder?: string;
+  unit?: string;
   onCommit: (v: string) => void;
 }) {
   const [local, setLocal] = useState(value);
@@ -183,24 +331,34 @@ function TextRow({
   useEffect(() => setLocal(value), [value]);
   return (
     <Field label={label}>
-      <input
-        ref={ref}
-        type="text"
-        value={local}
-        placeholder={placeholder}
-        onChange={(e) => setLocal(e.target.value)}
-        onBlur={() => {
-          if (local !== value) onCommit(local);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') ref.current?.blur();
-          if (e.key === 'Escape') {
-            setLocal(value);
-            ref.current?.blur();
-          }
-        }}
-        className="h-7 w-full rounded-md border border-border/60 bg-background/50 px-2 text-[11px] focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
-      />
+      <div className="relative">
+        <input
+          ref={ref}
+          type="text"
+          value={local}
+          placeholder={placeholder}
+          onChange={(e) => setLocal(e.target.value)}
+          onBlur={() => {
+            if (local !== value) onCommit(local);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') ref.current?.blur();
+            if (e.key === 'Escape') {
+              setLocal(value);
+              ref.current?.blur();
+            }
+          }}
+          className={cn(
+            'h-7 w-full rounded-md border border-border/60 bg-background/50 px-2 text-[11px] focus:border-border focus:outline-none focus:ring-1 focus:ring-ring',
+            unit && 'pr-8',
+          )}
+        />
+        {unit && (
+          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+            {unit}
+          </span>
+        )}
+      </div>
     </Field>
   );
 }
@@ -235,11 +393,13 @@ function NumberRow({
   label,
   value,
   min,
+  unit,
   onCommit,
 }: {
   label: string;
   value: number;
   min?: number;
+  unit?: string;
   onCommit: (v: number) => void;
 }) {
   const [local, setLocal] = useState(String(value));
@@ -247,26 +407,36 @@ function NumberRow({
   useEffect(() => setLocal(String(value)), [value]);
   return (
     <Field label={label}>
-      <input
-        ref={ref}
-        type="number"
-        value={local}
-        onChange={(e) => setLocal(e.target.value)}
-        onBlur={() => {
-          const n = Number(local);
-          if (Number.isFinite(n) && n !== value) onCommit(n);
-          else setLocal(String(value));
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') ref.current?.blur();
-          if (e.key === 'Escape') {
-            setLocal(String(value));
-            ref.current?.blur();
-          }
-        }}
-        min={min}
-        className="h-7 w-full rounded-md border border-border/60 bg-background/50 px-2 font-mono text-[11px] tabular-nums focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
-      />
+      <div className="relative">
+        <input
+          ref={ref}
+          type="number"
+          value={local}
+          onChange={(e) => setLocal(e.target.value)}
+          onBlur={() => {
+            const n = Number(local);
+            if (Number.isFinite(n) && n !== value) onCommit(n);
+            else setLocal(String(value));
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') ref.current?.blur();
+            if (e.key === 'Escape') {
+              setLocal(String(value));
+              ref.current?.blur();
+            }
+          }}
+          min={min}
+          className={cn(
+            'h-7 w-full rounded-md border border-border/60 bg-background/50 px-2 font-mono text-[11px] tabular-nums focus:border-border focus:outline-none focus:ring-1 focus:ring-ring',
+            unit && 'pr-8',
+          )}
+        />
+        {unit && (
+          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+            {unit}
+          </span>
+        )}
+      </div>
     </Field>
   );
 }

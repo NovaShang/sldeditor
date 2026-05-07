@@ -20,6 +20,10 @@
       "orientation": "n"
     }
   ],
+  "params": [
+    { "name": "S", "label": "容量", "type": "number", "unit": "MVA" },
+    { "name": "ratio", "label": "变比", "type": "string" }
+  ],
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_01.elmt",

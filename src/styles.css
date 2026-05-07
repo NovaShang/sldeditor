@@ -169,6 +169,19 @@
 .ole-terminal.ole-hover-terminal-on {
   display: inline;
 }
+/* Recolor the hovered element's strokes to selection blue — same affordance
+   as wire hover, so users see "this is what you'd be selecting" before
+   committing the click. */
+.ole-element.ole-hover-element-host [stroke='black'],
+.ole-element.ole-hover-element-host [stroke='#000'],
+.ole-element.ole-hover-element-host [stroke='#000000'] {
+  stroke: var(--selection);
+}
+.ole-element.ole-hover-element-host [fill='black'],
+.ole-element.ole-hover-element-host [fill='#000'],
+.ole-element.ole-hover-element-host [fill='#000000'] {
+  fill: var(--selection);
+}
 
 /* Connectivity hover: only the members of the hovered node light up.
    Other wires/terminals stay untouched — dimming everything-else proved too
@@ -203,6 +216,20 @@
 .ole-wire-preview-anchor {
   fill: var(--selection);
   stroke: none;
+}
+/* Drop-target indicator during the wire drag — solid dot inside a halo
+   ring so the user sees exactly where a release will land. */
+.ole-wire-preview-target-ring {
+  fill: color-mix(in oklch, var(--selection) 25%, transparent);
+  stroke: var(--selection);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.ole-wire-preview-target-dot {
+  fill: var(--selection);
+  stroke: var(--canvas-bg);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
 /* Busbar preview during the busbar tool. Thicker stroke matches the actual

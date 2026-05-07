@@ -34,6 +34,7 @@ import { TerminalLayer } from './TerminalLayer';
 import { WireLayer } from './WireLayer';
 import { WirePreview } from './WirePreview';
 import { hitElement, hitNode } from './hit-test';
+import { exitDrawingState } from './useKeyboardShortcuts';
 import { useHoverHighlight } from './useHoverHighlight';
 import { useTools } from './useTools';
 import { useViewport } from './useViewport';
@@ -73,6 +74,13 @@ export function CanvasSvg() {
   const onContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     const store = useEditorStore.getState();
+    // In drawing tools, right-click steps out of the current drawing state
+    // (mirrors Esc) instead of opening the contextual menu.
+    const tool = store.activeTool;
+    if (tool === 'wire' || tool === 'busbar' || tool === 'place') {
+      exitDrawingState();
+      return;
+    }
     // If right-clicking an element that isn't part of the current selection,
     // make it the selection — matches Figma / desktop-app convention.
     const elementId = hitElement(e.target);

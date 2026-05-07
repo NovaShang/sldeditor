@@ -1,0 +1,178 @@
+{
+  "version": "1",
+  "meta": {
+    "title": "220/35kV 双母线变电站（综合测试用例）",
+    "description": "220kV 双母线 + 母联 + 1#主变 + 35kV 母线（多馈线 / 容性补偿 / 电抗器 / 电动机 / 电池储能 / 光伏并网 / 接地变 + NGR）",
+    "author": "dev-fixture",
+    "createdAt": "2026-05-07T00:00:00Z",
+    "updatedAt": "2026-05-07T00:00:00Z"
+  },
+
+  "elements": [
+    { "id": "GRID1", "kind": "grid-source", "name": "线路 L1（北郊变）" },
+    { "id": "QS_L1",    "kind": "disconnector", "name": "L1-01" },
+    { "id": "QF_L1",    "kind": "breaker",      "name": "L1-Q" },
+    { "id": "QS_L1_I",  "kind": "disconnector", "name": "L1-1" },
+    { "id": "QS_L1_II", "kind": "disconnector", "name": "L1-2", "state": { "open": true } },
+
+    { "id": "GRID2", "kind": "grid-source", "name": "线路 L2（南郊变）" },
+    { "id": "QS_L2",    "kind": "disconnector", "name": "L2-01" },
+    { "id": "QF_L2",    "kind": "breaker",      "name": "L2-Q" },
+    { "id": "QS_L2_I",  "kind": "disconnector", "name": "L2-1", "state": { "open": true } },
+    { "id": "QS_L2_II", "kind": "disconnector", "name": "L2-2" },
+
+    {
+      "id": "BI", "kind": "busbar", "name": "220kV-I", "params": { "Un": 220 }
+    },
+    {
+      "id": "BII", "kind": "busbar", "name": "220kV-II", "params": { "Un": 220 }
+    },
+
+    { "id": "QS_BT_I",  "kind": "disconnector", "name": "母联 BT-1" },
+    { "id": "QF_BT",    "kind": "breaker",      "name": "母联 BT-Q" },
+    { "id": "QS_BT_II", "kind": "disconnector", "name": "母联 BT-2" },
+
+    { "id": "PT_I",      "kind": "pt",       "name": "母线 I PT" },
+    { "id": "FBL_I",     "kind": "arrester", "name": "母线 I 避雷器" },
+    { "id": "GND_FBL_I", "kind": "earth" },
+
+    { "id": "PT_II",      "kind": "pt",       "name": "母线 II PT" },
+    { "id": "FBL_II",     "kind": "arrester", "name": "母线 II 避雷器" },
+    { "id": "GND_FBL_II", "kind": "earth" },
+
+    { "id": "QS_T1_I",  "kind": "disconnector", "name": "T1-1" },
+    { "id": "QS_T1_II", "kind": "disconnector", "name": "T1-2", "state": { "open": true } },
+    { "id": "QF_T1",    "kind": "breaker",      "name": "T1-Q" },
+    { "id": "CT_T1",    "kind": "ct",           "name": "主变 CT" },
+    {
+      "id": "T1", "kind": "transformer-2w", "name": "1#主变",
+      "note": "240MVA YNd11，2024-Q3 大修后投运",
+      "params": { "S": 240, "ratio": "220/35" }
+    },
+
+    {
+      "id": "B35", "kind": "busbar", "name": "35kV", "params": { "Un": 35 }
+    },
+
+    { "id": "GT_T1",  "kind": "grounding-transformer", "name": "35kV 接地变" },
+    { "id": "NGR_T1", "kind": "ngr", "name": "中性点电阻", "params": { "R": 20 } },
+
+    { "id": "PT_35",      "kind": "pt",       "name": "35kV PT" },
+    { "id": "FBL_35",     "kind": "arrester", "name": "35kV 避雷器" },
+    { "id": "GND_FBL_35", "kind": "earth" },
+
+    { "id": "QS_F1", "kind": "disconnector", "name": "F1-1" },
+    { "id": "QF_F1", "kind": "breaker",      "name": "F1-Q" },
+    { "id": "LD1",   "kind": "load",         "name": "馈线 1（城东配电）",
+      "params": { "P": 8.0, "cosphi": 0.92 } },
+
+    { "id": "QS_F2", "kind": "disconnector", "name": "F2-1", "state": { "open": true } },
+    { "id": "QF_F2", "kind": "breaker",      "name": "F2-Q", "state": { "open": true } },
+    { "id": "LD2",   "kind": "load",         "name": "馈线 2（备用）" },
+
+    { "id": "QS_M",  "kind": "disconnector", "name": "M-1" },
+    { "id": "QF_M",  "kind": "breaker",      "name": "M-Q" },
+    { "id": "CT_M",  "kind": "ct",           "name": "电机 CT" },
+    { "id": "MOT",   "kind": "async-motor",  "name": "循环水泵 (800kW)" },
+
+    { "id": "QS_C",  "kind": "disconnector",   "name": "C-1" },
+    { "id": "QF_C",  "kind": "breaker",        "name": "C-Q" },
+    { "id": "C1",    "kind": "shunt-capacitor", "name": "无功补偿 C1",
+      "params": { "Q": 6, "stages": 3 } },
+    { "id": "GND_C1", "kind": "earth" },
+
+    { "id": "QS_R",  "kind": "disconnector",  "name": "R-1", "state": { "open": true } },
+    { "id": "QF_R",  "kind": "breaker",       "name": "R-Q", "state": { "open": true } },
+    { "id": "SR1",   "kind": "shunt-reactor", "name": "并联电抗器" },
+    { "id": "GND_R1", "kind": "earth" },
+
+    { "id": "QS_BAT", "kind": "disconnector",     "name": "BAT-1" },
+    { "id": "QF_BAT", "kind": "breaker",          "name": "BAT-Q" },
+    { "id": "PCS",    "kind": "converter-bidir",  "name": "储能 PCS",
+      "note": "AC↔DC 双向变流器；DC 侧接 100kWh 锂电池组",
+      "params": { "S": 0.5 } },
+    { "id": "BAT",    "kind": "battery",          "name": "100kWh 储能", "params": { "E": 100 } },
+
+    { "id": "QS_PV", "kind": "disconnector", "name": "PV-1" },
+    { "id": "QF_PV", "kind": "breaker",      "name": "PV-Q" },
+    { "id": "INV1",  "kind": "inverter",     "name": "光伏逆变器" },
+    { "id": "PV1",   "kind": "pv",           "name": "光伏阵列 (2MWp)" }
+  ],
+
+  "connections": [
+    ["GRID1.t_bottom", "QS_L1.t1"],
+    ["QS_L1.t2", "QF_L1.t1"],
+    ["QF_L1.t2", "QS_L1_I.t1", "QS_L1_II.t1"],
+
+    ["GRID2.t_bottom", "QS_L2.t1"],
+    ["QS_L2.t2", "QF_L2.t1"],
+    ["QF_L2.t2", "QS_L2_I.t1", "QS_L2_II.t1"],
+
+    ["QS_BT_I.t2", "QF_BT.t1"],
+    ["QF_BT.t2", "QS_BT_II.t2"],
+
+    ["FBL_I.t2", "GND_FBL_I.t1"],
+    ["FBL_II.t2", "GND_FBL_II.t1"],
+
+    ["BI.tap",  "QS_L1_I.t2",  "QS_L2_I.t2",  "QS_BT_I.t1",  "PT_I.t1",  "FBL_I.t1",  "QS_T1_I.t1"],
+    ["BII.tap", "QS_L1_II.t2", "QS_L2_II.t2", "QS_BT_II.t1", "PT_II.t1", "FBL_II.t1", "QS_T1_II.t1"],
+
+    ["QS_T1_I.t2", "QS_T1_II.t2", "QF_T1.t1"],
+    ["QF_T1.t2", "CT_T1.t1"],
+    ["CT_T1.t2", "T1.t1"],
+
+    {
+      "node": "n_t1_neutral_35kv",
+      "name": "1#主变 35kV 中性点",
+      "terminals": ["GT_T1.t1", "NGR_T1.t_top"]
+    },
+
+    ["FBL_35.t2", "GND_FBL_35.t1"],
+
+    ["B35.tap", "T1.t2", "GT_T1.t2", "PT_35.t1", "FBL_35.t1", "QS_F1.t1", "QS_F2.t1", "QS_M.t1", "QS_C.t1", "QS_R.t1", "QS_BAT.t1", "QS_PV.t1"],
+
+    ["QS_F1.t2", "QF_F1.t1"], ["QF_F1.t2", "LD1.t_top"],
+    ["QS_F2.t2", "QF_F2.t1"], ["QF_F2.t2", "LD2.t_top"],
+
+    ["QS_M.t2", "QF_M.t1"],
+    ["QF_M.t2", "CT_M.t1"],
+    ["CT_M.t2", "MOT.t3"],
+
+    ["QS_C.t2", "QF_C.t1"],
+    ["QF_C.t2", "C1.t1"],
+    ["C1.t_bottom", "GND_C1.t1"],
+
+    ["QS_R.t2", "QF_R.t1"],
+    ["QF_R.t2", "SR1.t1"],
+    ["SR1.t_bottom", "GND_R1.t1"],
+
+    ["QS_BAT.t2", "QF_BAT.t1"],
+    ["QF_BAT.t2", "PCS.t_ac"],
+    ["PCS.t_dc", "BAT.t_left"],
+
+    ["QS_PV.t2", "QF_PV.t1"],
+    ["QF_PV.t2", "INV1.t_ac"],
+    ["INV1.t_dc", "PV1.t_dc"]
+  ],
+
+  "layout": {
+    "GRID1":   { "at": [240,  40] },
+    "GRID2":   { "at": [820,  40] },
+    "BI":      { "at": [620, 340], "span": 880 },
+    "BII":     { "at": [620, 420], "span": 880 },
+    "QF_BT":   { "at": [620, 280] },
+    "T1":      { "at": [620, 720] },
+    "B35":     { "at": [720, 860], "span": 1240 },
+    "BAT":     { "at": [160, 980] },
+    "PV1":     { "at": [1280, 1020] },
+    "GT_T1":   { "at": [380, 940] },
+    "NGR_T1":  { "at": [380, 1060] }
+  },
+
+  "routes": {
+    "n_t1_neutral_35kv": {
+      "path": [[380, 940], [380, 1010], [380, 1060]],
+      "manual": true
+    }
+  }
+}

@@ -9,22 +9,20 @@
   "svg": "<line x1=\"-40\" y1=\"0\" x2=\"40\" y2=\"0\" stroke=\"black\" stroke-width=\"3\" stroke-linecap=\"round\" fill=\"none\"/>",
   "terminals": [
     {
-      "id": "t_left",
-      "x": -40,
+      "id": "tap",
+      "x": 0,
       "y": 0,
-      "orientation": "w"
-    },
-    {
-      "id": "t_right",
-      "x": 40,
-      "y": 0,
-      "orientation": "e"
+      "orientation": "n"
     }
   ],
   "stretchable": {
     "axis": "x",
-    "minLength": 20
+    "minLength": 20,
+    "naturalSpan": 80
   },
+  "params": [
+    { "name": "Un", "label": "额定电压", "type": "number", "unit": "kV" }
+  ],
   "source": {
     "kind": "inline"
   }

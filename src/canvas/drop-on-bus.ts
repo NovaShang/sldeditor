@@ -103,7 +103,7 @@ function nearestBus(d: DiagramFile, at: [number, number]): NearestBus | null {
     if (!place) continue;
     const lib = libraryById['busbar'];
     if (!lib?.stretchable) continue;
-    const span = place.span ?? referenceSpan(lib);
+    const span = place.span ?? lib.stretchable.naturalSpan;
     const axis = lib.stretchable.axis;
     let dist: number;
     if (axis === 'x') {
@@ -138,9 +138,3 @@ function pickTapTerminal(lib: LibraryEntry, busAxis: 'x' | 'y'): string {
   return sorted[0].id;
 }
 
-function referenceSpan(lib: LibraryEntry): number {
-  const axis = lib.stretchable?.axis ?? 'x';
-  const vs = lib.terminals.map((t) => (axis === 'x' ? t.x : t.y));
-  if (vs.length < 2) return 0;
-  return Math.max(...vs) - Math.min(...vs);
-}

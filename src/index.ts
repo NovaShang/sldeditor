@@ -21,6 +21,7 @@ export type {
   LibraryTerminal,
   LibraryStretchable,
   LibraryStateField,
+  LibraryParamField,
   LibrarySource,
   Orientation,
 } from './model';

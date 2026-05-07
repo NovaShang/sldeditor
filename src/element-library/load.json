@@ -15,6 +15,10 @@
       "orientation": "n"
     }
   ],
+  "params": [
+    { "name": "P", "label": "有功功率", "type": "number", "unit": "MW" },
+    { "name": "cosphi", "label": "功率因数", "type": "number" }
+  ],
   "source": {
     "kind": "inline"
   }

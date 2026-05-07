@@ -21,6 +21,9 @@
       "orientation": "s"
     }
   ],
+  "params": [
+    { "name": "S", "label": "容量", "type": "number", "unit": "MVA" }
+  ],
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_06.elmt",

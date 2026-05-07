@@ -27,6 +27,8 @@ export interface LibraryTerminal {
 export interface LibraryStretchable {
   axis: 'x' | 'y';
   minLength: number;
+  /** Length at scale 1.0 along the stretch axis. */
+  naturalSpan: number;
 }
 
 /**
@@ -44,6 +46,23 @@ export interface LibraryStateField {
   default?: boolean | number | string;
   /** Optional human label for property panels. */
   label?: string;
+}
+
+/**
+ * Parameter schema declared by a library entry. Drives the property panel:
+ * declared keys render with their human label + unit; any extra keys present
+ * on `Element.params` (not in the schema) still render generically so JSON
+ * authors can add custom fields without library updates.
+ */
+export interface LibraryParamField {
+  /** Field key on `Element.params`. */
+  name: string;
+  type: 'boolean' | 'number' | 'string';
+  default?: boolean | number | string;
+  /** Human label (Chinese in v0). Falls back to `name` when omitted. */
+  label?: string;
+  /** Display-only unit suffix, e.g. "kV", "MVA", "Ω". */
+  unit?: string;
 }
 
 /**
@@ -71,5 +90,12 @@ export interface LibraryEntry {
    * Used by the property panel and validators; not enforced at TS compile time.
    */
   state?: LibraryStateField[];
+  /**
+   * Parameter fields this kind declares on `Element.params`. Used by the
+   * property panel to render labeled / unit-suffixed inputs. Not enforced
+   * at TS compile time. Extras (keys present on `Element.params` but not in
+   * this list) still render generically.
+   */
+  params?: LibraryParamField[];
   source: LibrarySource;
 }

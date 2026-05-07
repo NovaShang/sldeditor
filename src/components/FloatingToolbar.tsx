@@ -10,15 +10,15 @@ import {
   Undo2,
   Wand2,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { usePanels } from '@/hooks/use-panels';
 import { useEditorStore, type ToolId } from '@/store';
 
 interface ToolDef {
   id: string;
   label: string;
   hotkey: string;
+  description: string;
   icon: React.ComponentType<{ className?: string }>;
   /** Render a divider after this tool (visually groups the toolbar). */
   groupBreakAfter?: boolean;
@@ -28,21 +28,54 @@ interface ToolDef {
    * `undefined` = keep current placeKind; `null` = clear; string = preset.
    */
   presetPlaceKind?: string | null;
+  /** Icon-only render (label still goes to aria-label / tooltip). */
+  iconOnly?: boolean;
 }
 
 const TOOLS: ToolDef[] = [
-  { id: 'select', label: '选择', hotkey: 'V', icon: MousePointer2, switchTo: 'select' },
-  { id: 'pan', label: '平移', hotkey: 'H', icon: Hand, switchTo: 'pan', groupBreakAfter: true },
-  { id: 'wire', label: '连线', hotkey: 'W', icon: Cable, switchTo: 'wire' },
+  {
+    id: 'select',
+    label: '选择',
+    hotkey: 'V',
+    description: '点选元件，框选多个，或右键打开菜单',
+    icon: MousePointer2,
+    switchTo: 'select',
+    iconOnly: true,
+  },
+  {
+    id: 'pan',
+    label: '平移',
+    hotkey: 'H',
+    description: '拖动画布；空格键可临时切换',
+    icon: Hand,
+    switchTo: 'pan',
+    groupBreakAfter: true,
+    iconOnly: true,
+  },
+  {
+    id: 'wire',
+    label: '连线',
+    hotkey: 'W',
+    description: '从一个端子拖动到另一个端子完成连线',
+    icon: Cable,
+    switchTo: 'wire',
+  },
   {
     id: 'busbar',
     label: '母线',
     hotkey: 'B',
+    description: '画布上拖动一段母线，按下定起点、释放定终点',
     icon: Minus,
-    switchTo: 'place',
-    presetPlaceKind: 'busbar',
+    switchTo: 'busbar',
   },
-  { id: 'place', label: '放置元件', hotkey: 'P', icon: Shapes, switchTo: 'place' },
+  {
+    id: 'place',
+    label: '元件',
+    hotkey: 'P',
+    description: '打开元件库，选择类型后在画布点击放置',
+    icon: Shapes,
+    switchTo: 'place',
+  },
 ];
 
 export function FloatingToolbar() {
@@ -53,17 +86,8 @@ export function FloatingToolbar() {
   const future = useEditorStore((s) => s.future.length);
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
-  const libraryOpen = usePanels((s) => s.libraryOpen);
-  const toggleLibrary = usePanels((s) => s.toggleLibrary);
 
-  const isToolActive = (t: ToolDef): boolean => {
-    if (t.id === 'busbar') return active === 'place' && placeKind === 'busbar';
-    // The "place" button now controls the element library popover; its
-    // active state reflects whether the library is open. Picking a kind
-    // from the library separately activates the place tool.
-    if (t.id === 'place') return libraryOpen;
-    return active === t.switchTo;
-  };
+  const isToolActive = (t: ToolDef): boolean => active === t.switchTo;
 
   return (
     <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2">
@@ -74,29 +98,23 @@ export function FloatingToolbar() {
           const tip =
             t.id === 'place' && isActive && placeKind == null
               ? '从左侧元件库选择一个元件后点击画布放置'
-              : `${t.label} (${t.hotkey})`;
+              : t.description;
           return (
             <Fragment key={t.id}>
-              <Button
-                variant={isActive ? 'default' : 'ghost'}
-                size="icon"
-                aria-label={t.label}
-                aria-pressed={isActive}
-                title={tip}
+              <ToolbarButton
+                icon={Icon}
+                label={t.label}
+                hotkey={t.hotkey}
+                active={isActive}
+                iconOnly={t.iconOnly}
+                description={tip}
                 onClick={() => {
-                  if (t.id === 'place') {
-                    toggleLibrary();
-                    return;
-                  }
                   setTool(t.switchTo, {
                     placeKind:
                       t.presetPlaceKind !== undefined ? t.presetPlaceKind : undefined,
                   });
                 }}
-                className={cn(!isActive && 'text-muted-foreground')}
-              >
-                <Icon />
-              </Button>
+              />
               {t.groupBreakAfter && (
                 <div aria-hidden className="mx-1 h-5 w-px bg-border" />
               )}
@@ -104,34 +122,101 @@ export function FloatingToolbar() {
           );
         })}
         <div aria-hidden className="mx-1 h-5 w-px bg-border" />
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="撤销"
-          title="撤销 (⌘Z)"
+        <ToolbarButton
+          icon={Undo2}
+          label="撤销"
+          hotkey="⌘Z"
+          description="撤销上一次编辑（移动 / 旋转 / 删除等）"
+          iconOnly
           disabled={past === 0}
           onClick={undo}
-          className={cn(past === 0 ? 'text-muted-foreground/40' : 'text-muted-foreground')}
-        >
-          <Undo2 />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="重做"
-          title="重做 (⌘⇧Z)"
+        />
+        <ToolbarButton
+          icon={Redo2}
+          label="重做"
+          hotkey="⌘⇧Z"
+          description="重做被撤销的操作"
+          iconOnly
           disabled={future === 0}
           onClick={redo}
-          className={cn(
-            future === 0 ? 'text-muted-foreground/40' : 'text-muted-foreground',
-          )}
-        >
-          <Redo2 />
-        </Button>
+        />
         <div aria-hidden className="mx-1 h-5 w-px bg-border" />
         <LayoutMenuButton />
       </div>
     </div>
+  );
+}
+
+/**
+ * Toolbar button: icon + label, with a small hotkey hint pinned to the
+ * top-left corner. Active = filled (primary). Disabled = dimmed.
+ */
+function ToolbarButton({
+  icon: Icon,
+  label,
+  hotkey,
+  active,
+  disabled,
+  iconOnly,
+  onClick,
+  description,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  hotkey?: string;
+  active?: boolean;
+  disabled?: boolean;
+  iconOnly?: boolean;
+  onClick: () => void;
+  description?: React.ReactNode;
+}) {
+  const tipContent = (
+    <div className="space-y-0.5">
+      <div>
+        <span className="font-medium">{label}</span>
+        {hotkey && (
+          <span className="ml-1.5 text-muted-foreground">{hotkey}</span>
+        )}
+      </div>
+      {description && <div className="text-muted-foreground">{description}</div>}
+    </div>
+  );
+  return (
+    <Tooltip content={tipContent} disabled={disabled}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={label}
+        aria-pressed={active}
+        className={cn(
+          'flex h-9 items-center gap-1.5 rounded-md text-xs font-medium transition-colors',
+          iconOnly ? 'w-9 justify-center' : 'px-2.5',
+          active
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+          disabled && 'pointer-events-none opacity-40',
+        )}
+      >
+        <span className="relative inline-flex shrink-0">
+          <Icon className="size-4" />
+          {hotkey && (
+            <span
+              aria-hidden
+              className={cn(
+                'pointer-events-none absolute -right-1.5 -top-1.5 rounded-sm px-1 font-mono text-[8px] leading-[1.1]',
+                active
+                  ? 'bg-primary-foreground/20 text-primary-foreground/85'
+                  : 'bg-foreground/10 text-muted-foreground',
+              )}
+            >
+              {hotkey}
+            </span>
+          )}
+        </span>
+        {!iconOnly && <span>{label}</span>}
+      </button>
+    </Tooltip>
   );
 }
 
@@ -175,18 +260,13 @@ function LayoutMenuButton() {
 
   return (
     <div ref={ref} className="relative">
-      <Button
-        variant={open ? 'default' : 'ghost'}
-        size="icon"
-        aria-label="布局"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title="布局"
+      <ToolbarButton
+        icon={Wand2}
+        label="布局"
+        description="自动排版整个图或仅选中范围，并填补空缺"
+        active={open}
         onClick={() => setOpen((v) => !v)}
-        className={cn(!open && 'text-muted-foreground')}
-      >
-        <Wand2 />
-      </Button>
+      />
       {open && (
         <div
           role="menu"

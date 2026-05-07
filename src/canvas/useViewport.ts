@@ -30,7 +30,12 @@ export interface ViewportApi {
 
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 8;
-const ZOOM_FACTOR = 1.0015;
+// Mouse wheel events on macOS arrive with |deltaY| ≈ 100 per click, so a
+// small factor still produces a comfortable per-click zoom. Trackpad pinch
+// (Chrome/Safari synthesize wheel events with ctrlKey + small deltaY,
+// typically 1–10) needs a much larger factor or it crawls vs. native apps.
+const ZOOM_FACTOR_WHEEL = 1.0015;
+const ZOOM_FACTOR_PINCH = 1.02;
 
 export function useViewport(
   hostRef: RefObject<HTMLDivElement | null>,
@@ -84,10 +89,12 @@ export function useViewport(
       // slip into the pan branch, producing a "wobble" during zoom).
       // Pinch (ctrl/meta) zooms regardless of axis. Only deltaX-bearing
       // events without a modifier are treated as trackpad pan.
-      const isZoom = e.deltaX === 0 || e.ctrlKey || e.metaKey;
+      const isPinch = e.ctrlKey || e.metaKey;
+      const isZoom = e.deltaX === 0 || isPinch;
 
       if (isZoom) {
-        const k = Math.pow(ZOOM_FACTOR, -e.deltaY);
+        const factor = isPinch ? ZOOM_FACTOR_PINCH : ZOOM_FACTOR_WHEEL;
+        const k = Math.pow(factor, -e.deltaY);
         const next = clamp(vp.current.scale * k, MIN_SCALE, MAX_SCALE);
         // Keep cursor anchored.
         const ratio = next / vp.current.scale;
