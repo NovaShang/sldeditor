@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { EditorShell } from '@/components/EditorShell';
+import { useKeyboardShortcuts } from '@/canvas';
 import type { DiagramFile } from '@/model';
 import { useEditorStore } from '@/store';
 
@@ -15,6 +16,8 @@ export function OneLineEditor({ className, diagram }: OneLineEditorProps) {
   useEffect(() => {
     if (diagram) setDiagram(diagram);
   }, [diagram, setDiagram]);
+
+  useKeyboardShortcuts();
 
   return (
     <div className={className ?? 'h-full w-full'}>

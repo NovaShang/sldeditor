@@ -89,11 +89,37 @@
   --canvas-scale: 1;
 }
 
-/* Glass panel — used by floating chrome (top bar, toolbars). */
+/* Glass panel — used by floating chrome (top bar, toolbars, side panels). */
 .ole-glass {
   background-color: color-mix(in oklch, var(--card) 80%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+
+/* Library SVG symbols hardcode `stroke="black"` / `fill="black"` from their
+   QElectroTech origin. Rewrite those to `currentColor` via attribute selectors
+   so symbols honor the active theme without mutating the JSON. Applies to
+   palette/outline thumbnails (`.ole-symbol`) AND canvas-rendered elements
+   (`.ole-element`). */
+.ole-symbol,
+.ole-element {
+  color: var(--foreground);
+}
+.ole-symbol [stroke='black'],
+.ole-symbol [stroke='#000'],
+.ole-symbol [stroke='#000000'],
+.ole-element [stroke='black'],
+.ole-element [stroke='#000'],
+.ole-element [stroke='#000000'] {
+  stroke: currentColor;
+}
+.ole-symbol [fill='black'],
+.ole-symbol [fill='#000'],
+.ole-symbol [fill='#000000'],
+.ole-element [fill='black'],
+.ole-element [fill='#000'],
+.ole-element [fill='#000000'] {
+  fill: currentColor;
 }
 
 /* Canvas SVG. The grid lives in <pattern>; this just paints the canvas surface. */
@@ -102,20 +128,114 @@
   touch-action: none;
 }
 
-/* Terminals — hidden by default. A future "wire" tool will set
-   `.tool-wire` on `.ole-canvas-root` to reveal all terminals. */
+/* Grid toggle: hide the dot-grid background while keeping the surface. The
+   grid is rendered as the <svg>'s first direct <rect> (see CanvasSvg). */
+.ole-canvas-root.hide-grid .ole-canvas-svg > rect {
+  display: none;
+}
+
+/* Terminals — hidden by default. The wire tool sets `.tool-wire` on
+   `.ole-canvas-root` to reveal all terminals and turn on hit-testing. */
 .ole-terminal {
   display: none;
   fill: var(--canvas-bg);
   stroke: var(--foreground);
-  stroke-width: calc(1 / var(--canvas-scale, 1));
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
   pointer-events: none;
+  transition: r 80ms ease-out;
 }
 .ole-terminal[data-connected='true'] {
   fill: var(--foreground);
 }
+.ole-terminal[data-active='true'] {
+  stroke: var(--selection);
+  stroke-width: 2;
+  fill: var(--selection);
+}
 .ole-canvas-root.tool-wire .ole-terminal {
   display: inline;
+  pointer-events: auto;
+}
+.ole-canvas-root.tool-wire .ole-terminal:hover {
+  r: 5;
+  stroke: var(--selection);
+  cursor: crosshair;
+}
+
+/* Hover an element → reveal its terminals (others stay hidden). The
+   useHoverHighlight hook tags the cursor's element with .ole-hover-element-host
+   and its terminals with .ole-hover-terminal-on; CSS finishes the look. */
+.ole-terminal.ole-hover-terminal-on {
+  display: inline;
+}
+
+/* Connectivity hover: dim wires/terminals globally, then re-highlight the
+   members tagged by useHoverHighlight (.ole-hover-node-on). */
+.ole-canvas-root[data-hover-node] .ole-wire,
+.ole-canvas-root[data-hover-node] .ole-terminal {
+  opacity: 0.35;
+}
+.ole-wire.ole-hover-node-on,
+.ole-terminal.ole-hover-node-on {
+  opacity: 1 !important;
+  stroke: var(--selection);
+}
+.ole-terminal.ole-hover-node-on[data-connected='true'] {
+  fill: var(--selection);
+}
+
+/* Selection halo — non-scaling stroke so the box stays 1.5px regardless
+   of zoom; rect uses the library's viewBox in element-local coords and
+   inherits the element's transform. */
+.ole-selection-rect {
+  stroke: var(--selection);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+/* Wire preview during the wire tool. Anchor stays solid, line is dashed. */
+.ole-wire-preview-line {
+  stroke: var(--selection);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.ole-wire-preview-anchor {
+  fill: var(--selection);
+  stroke: none;
+}
+
+/* Place ghost during the place tool — shape inherits all library colors. */
+.ole-place-ghost [stroke] {
+  vector-effect: non-scaling-stroke;
+}
+
+/* Bus stretch handles. Visible grips at each end of a selected stretchable
+   element; cursor hints the drag axis. */
+.ole-bus-handle {
+  fill: var(--canvas-bg);
+  stroke: var(--selection);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  cursor: ew-resize;
+  pointer-events: auto;
+}
+.ole-bus-handle:hover {
+  fill: var(--selection);
+}
+
+/* Marquee selection box — translucent fill + dashed selection-color stroke. */
+.ole-marquee {
+  fill: color-mix(in oklch, var(--selection) 8%, transparent);
+  stroke: var(--selection);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
 }
 
 /* Wires. `pointer-events: stroke` so they're hoverable but the body of the
@@ -129,4 +249,23 @@
    zooming in. The library SVG fragments use stroke-width="1" by convention. */
 .ole-element [stroke] {
   vector-effect: non-scaling-stroke;
+}
+
+/* Per-element hit target. `fill: transparent` (vs `none`) means the rect is
+   invisible but still receives pointer events, so users can grab any part
+   of an element's bounding box, not just its visible strokes. */
+.ole-element-hit {
+  fill: transparent;
+  stroke: none;
+  cursor: inherit;
+}
+.ole-canvas-root.tool-wire .ole-element-hit {
+  /* Don't swallow clicks meant for terminals when wiring. */
+  pointer-events: none;
+}
+.ole-element:hover .ole-element-hit {
+  fill: color-mix(in oklch, var(--selection) 8%, transparent);
+}
+.ole-element[data-selected='true'] .ole-element-hit {
+  fill: color-mix(in oklch, var(--selection) 12%, transparent);
 }

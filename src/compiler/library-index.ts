@@ -1,23 +1,16 @@
 /**
- * Eager-load every element library JSON at build time and expose a Map keyed
- * by `LibraryEntry.id` (which equals `Element.kind` in DiagramFile).
+ * Re-export the element library indexed by `LibraryEntry.id` for use in the
+ * compile pipeline. The actual library is loaded once in
+ * `src/element-library/index.ts`.
  */
 
+import { libraryById } from '@/element-library';
 import type { LibraryEntry } from '@/model';
 
-const modules = import.meta.glob<{ default: LibraryEntry }>(
-  '../element-library/*.json',
-  { eager: true },
+export const LIBRARY: ReadonlyMap<string, LibraryEntry> = new Map(
+  Object.entries(libraryById),
 );
 
-const entries = new Map<string, LibraryEntry>();
-for (const mod of Object.values(modules)) {
-  const entry = mod.default;
-  entries.set(entry.id, entry);
-}
-
-export const LIBRARY: ReadonlyMap<string, LibraryEntry> = entries;
-
 export function getLibraryEntry(kind: string): LibraryEntry | undefined {
-  return entries.get(kind);
+  return libraryById[kind];
 }

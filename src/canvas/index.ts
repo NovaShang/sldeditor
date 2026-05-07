@@ -1,3 +1,9 @@
 export { CanvasSvg } from './CanvasSvg';
 export { useViewport } from './useViewport';
+export { useTools } from './useTools';
+export { useKeyboardShortcuts } from './useKeyboardShortcuts';
+export { transformAttr } from './transform-attr';
+export { hitElement, hitTerminal, hitNode } from './hit-test';
+export { getScale, subscribeScale } from './zoom-bus';
+export { getViewportApi, setViewportApi } from './viewport-bus';
 export type { Viewport, ViewportApi } from './useViewport';

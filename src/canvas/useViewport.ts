@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useRef, type RefObject } from 'react';
+import { publishScale } from './zoom-bus';
 
 export interface Viewport {
   tx: number;
@@ -21,6 +22,10 @@ export interface ViewportApi {
   screenToSvg(clientX: number, clientY: number): [number, number];
   /** Read-only snapshot of the current transform. */
   getViewport(): Viewport;
+  /** Update one or more viewport fields. */
+  setViewport(patch: Partial<Viewport>): void;
+  /** Subscribe to viewport changes; returns an unsubscribe fn. */
+  subscribe(listener: (vp: Viewport) => void): () => void;
 }
 
 const MIN_SCALE = 0.1;
@@ -33,9 +38,10 @@ export function useViewport(
   initial: Viewport = { tx: 0, ty: 0, scale: 1 },
 ): ViewportApi {
   const vp = useRef<Viewport>({ ...initial });
+  const listeners = useRef(new Set<(vp: Viewport) => void>());
 
   // Apply transform on the SVG group + expose --canvas-scale for stroke
-  // compensation in CSS.
+  // compensation in CSS, then notify subscribers.
   const apply = () => {
     const g = groupRef.current;
     const host = hostRef.current;
@@ -47,6 +53,11 @@ export function useViewport(
     }
     if (host) {
       host.style.setProperty('--canvas-scale', String(vp.current.scale));
+    }
+    publishScale(vp.current.scale);
+    if (listeners.current.size > 0) {
+      const snapshot = { ...vp.current };
+      for (const fn of listeners.current) fn(snapshot);
     }
   };
 
@@ -63,12 +74,19 @@ export function useViewport(
     let spaceDown = false;
 
     const onWheel = (e: WheelEvent) => {
-      // Pinch / Cmd-wheel → zoom; plain wheel → pan.
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const rect = host.getBoundingClientRect();
-        const cx = e.clientX - rect.left;
-        const cy = e.clientY - rect.top;
+      e.preventDefault();
+      const rect = host.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+
+      // CAD-style: any pure-vertical wheel event zooms (mouse wheel on macOS
+      // can have |deltaY| < 30 — earlier threshold-based heuristic let those
+      // slip into the pan branch, producing a "wobble" during zoom).
+      // Pinch (ctrl/meta) zooms regardless of axis. Only deltaX-bearing
+      // events without a modifier are treated as trackpad pan.
+      const isZoom = e.deltaX === 0 || e.ctrlKey || e.metaKey;
+
+      if (isZoom) {
         const k = Math.pow(ZOOM_FACTOR, -e.deltaY);
         const next = clamp(vp.current.scale * k, MIN_SCALE, MAX_SCALE);
         // Keep cursor anchored.
@@ -76,13 +94,11 @@ export function useViewport(
         vp.current.tx = cx - (cx - vp.current.tx) * ratio;
         vp.current.ty = cy - (cy - vp.current.ty) * ratio;
         vp.current.scale = next;
-        apply();
       } else {
-        e.preventDefault();
         vp.current.tx -= e.deltaX;
         vp.current.ty -= e.deltaY;
-        apply();
       }
+      apply();
     };
 
     const onPointerDown = (e: PointerEvent) => {
@@ -164,6 +180,19 @@ export function useViewport(
     },
     getViewport() {
       return { ...vp.current };
+    },
+    setViewport(patch: Partial<Viewport>) {
+      if (patch.tx !== undefined) vp.current.tx = patch.tx;
+      if (patch.ty !== undefined) vp.current.ty = patch.ty;
+      if (patch.scale !== undefined)
+        vp.current.scale = clamp(patch.scale, MIN_SCALE, MAX_SCALE);
+      apply();
+    },
+    subscribe(listener) {
+      listeners.current.add(listener);
+      return () => {
+        listeners.current.delete(listener);
+      };
     },
   };
 }
