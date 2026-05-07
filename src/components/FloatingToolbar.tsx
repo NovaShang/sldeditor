@@ -72,11 +72,67 @@ const TOOLS: ToolDef[] = [
     id: 'place',
     label: '元件',
     hotkey: 'P',
-    description: '打开元件库，选择类型后在画布点击放置',
+    description: '点击画布放置；或从端子/母线拖出，同时放置并连接',
     icon: Shapes,
     switchTo: 'place',
   },
 ];
+
+/**
+ * Short usage hint shown above the toolbar for whichever tool is active.
+ * Keeps users oriented without forcing them to discover a tooltip — most
+ * tools have a non-obvious gesture and the hint paid off in usability tests.
+ */
+function ToolHint() {
+  const active = useEditorStore((s) => s.activeTool);
+  const placeKind = useEditorStore((s) => s.placeKind);
+  const placeFrom = useEditorStore((s) => s.placeFromTerminal);
+  const wireFrom = useEditorStore((s) => s.wireFromTerminal);
+  const busbarStart = useEditorStore((s) => s.busbarDrawStart);
+
+  let text: string | null = null;
+  let cancelHint = false;
+  switch (active) {
+    case 'select':
+      text = '点选元件 · 拖动移动 · 框选多个 · 右键打开菜单';
+      break;
+    case 'pan':
+      text = '拖动画布 · 滚轮缩放 · 按住空格可在其他工具下临时平移';
+      break;
+    case 'wire':
+      text = wireFrom
+        ? '拖到另一个端子或母线上释放完成连线'
+        : '从端子按下，拖动到另一个端子或母线上释放';
+      cancelHint = true;
+      break;
+    case 'busbar':
+      text = busbarStart
+        ? '拖动决定母线方向，释放定终点'
+        : '在画布按下定起点，拖动后释放定终点';
+      cancelHint = true;
+      break;
+    case 'place':
+      if (!placeKind) {
+        text = '从左侧元件库选择一种元件';
+      } else if (placeFrom) {
+        text = '拖到目标位置释放，新元件将连接到起点端子';
+        cancelHint = true;
+      } else {
+        text = '点击空白放置；或从已有端子 / 母线拖出，同时放置并连接';
+        cancelHint = true;
+      }
+      break;
+  }
+  if (!text) return null;
+  return (
+    <div className="ole-glass pointer-events-none flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground shadow-sm">
+      <span>{text}</span>
+      {cancelHint && (
+        <span className="text-muted-foreground/70">· 右键 / Esc 取消</span>
+      )}
+    </div>
+  );
+}
 
 export function FloatingToolbar() {
   const active = useEditorStore((s) => s.activeTool);
@@ -90,7 +146,8 @@ export function FloatingToolbar() {
   const isToolActive = (t: ToolDef): boolean => active === t.switchTo;
 
   return (
-    <div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2">
+    <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5">
+      <ToolHint />
       <div className="ole-glass flex flex-row items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
         {TOOLS.map((t) => {
           const Icon = t.icon;
