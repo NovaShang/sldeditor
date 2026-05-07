@@ -33,7 +33,8 @@ export function exitDrawingState(): void {
     return;
   }
   if (tool === 'place') {
-    if (store.placeKind) store.setPlaceKind(null);
+    if (store.placeFromTerminal) store.setPlaceFromTerminal(null);
+    else if (store.placeKind) store.setPlaceKind(null);
     else store.setActiveTool('select');
     return;
   }

@@ -66,6 +66,9 @@ export interface EditorState {
   placeKind: string | null;
   /** When `activeTool === 'wire'` and the user has clicked one terminal. */
   wireFromTerminal: TerminalRef | null;
+  /** When `activeTool === 'place'` and the user pressed down on a terminal,
+   *  starting a drag-from-terminal placement. */
+  placeFromTerminal: TerminalRef | null;
   /** When `activeTool === 'busbar'` and the user has pressed pointer down. */
   busbarDrawStart: [number, number] | null;
   /** Cursor in SVG coordinates; updated by tools' onPointerMove. */
@@ -99,6 +102,7 @@ export interface EditorState {
   setActiveTool: (tool: ToolId, opts?: { placeKind?: string | null }) => void;
   setPlaceKind: (kind: string | null) => void;
   setWireFromTerminal: (ref: TerminalRef | null) => void;
+  setPlaceFromTerminal: (ref: TerminalRef | null) => void;
   setBusbarDrawStart: (pt: [number, number] | null) => void;
   setCursorSvg: (pt: [number, number] | null) => void;
 
@@ -154,6 +158,7 @@ export const useEditorStore = create<EditorState>()(
   activeTool: 'select',
   placeKind: null,
   wireFromTerminal: null,
+  placeFromTerminal: null,
   busbarDrawStart: null,
   cursorSvg: null,
   selection: [],
@@ -174,6 +179,7 @@ export const useEditorStore = create<EditorState>()(
       selection: [],
       selectedNode: null,
       wireFromTerminal: null,
+      placeFromTerminal: null,
     }),
 
   setFileSession: (fileSession) => set({ fileSession }),
@@ -188,6 +194,7 @@ export const useEditorStore = create<EditorState>()(
       selection: [],
       selectedNode: null,
       wireFromTerminal: null,
+      placeFromTerminal: null,
     }),
 
   dispatch: (mutator) => {
@@ -213,6 +220,7 @@ export const useEditorStore = create<EditorState>()(
       past: past.slice(0, -1),
       future: [...future, diagram],
       wireFromTerminal: null,
+      placeFromTerminal: null,
     });
   },
 
@@ -226,6 +234,7 @@ export const useEditorStore = create<EditorState>()(
       past: [...past, diagram],
       future: future.slice(0, -1),
       wireFromTerminal: null,
+      placeFromTerminal: null,
     });
   },
 
@@ -234,9 +243,11 @@ export const useEditorStore = create<EditorState>()(
       activeTool: tool,
       placeKind: opts?.placeKind ?? (tool === 'place' ? get().placeKind : null),
       wireFromTerminal: tool === 'wire' ? get().wireFromTerminal : null,
+      placeFromTerminal: tool === 'place' ? get().placeFromTerminal : null,
     }),
   setPlaceKind: (kind) => set({ placeKind: kind }),
   setWireFromTerminal: (ref) => set({ wireFromTerminal: ref }),
+  setPlaceFromTerminal: (ref) => set({ placeFromTerminal: ref }),
   setBusbarDrawStart: (pt) => set({ busbarDrawStart: pt }),
   setCursorSvg: (pt) => set({ cursorSvg: pt }),
 

@@ -15,6 +15,8 @@ import type {
   Element,
   ElementId,
   LibraryEntry,
+  LibraryTerminal,
+  Orientation,
   Placement,
   TerminalRef,
 } from '@/model';
@@ -136,5 +138,168 @@ function pickTapTerminal(lib: LibraryEntry, busAxis: 'x' | 'y'): string {
     busAxis === 'x' ? a.y - b.y : a.x - b.x,
   );
   return sorted[0].id;
+}
+
+/**
+ * Resolved place-source: world coords + orientation of the terminal we're
+ * dragging from. Handles both real terminals and the busbar virtual `tap`
+ * (projected onto the bus axis at the cursor point, with orientation flipped
+ * to point toward the drag side so the new element body extends away).
+ */
+export interface PlaceSource {
+  ref: TerminalRef;
+  world: [number, number];
+  orientation: Orientation;
+  /** True iff `ref` is `<busId>.tap` (virtual). */
+  isBusTap: boolean;
+  /** Set when isBusTap; needed for the bus.tap[] sugar path on commit. */
+  busElementId?: ElementId;
+}
+
+export function resolvePlaceSource(
+  ref: TerminalRef,
+  cursorWorld: [number, number],
+): PlaceSource | null {
+  const internal = useEditorStore.getState().internal;
+  // Busbar's `tap` is special: it exists in `internal.terminals` (at bus
+  // center), but here we want to project the cursor onto the bus axis so the
+  // user controls *where* along the bus the new element attaches — and to
+  // commit via `bus.tap[]` sugar instead of a free connection.
+  const dot = ref.indexOf('.');
+  if (dot > 0) {
+    const elemId = ref.slice(0, dot) as ElementId;
+    const pin = ref.slice(dot + 1);
+    const re = internal.elements.get(elemId);
+    if (
+      pin === 'tap' &&
+      re?.element.kind === 'busbar' &&
+      re.libraryDef?.stretchable
+    ) {
+      const place = internal.layout.get(elemId);
+      if (!place) return null;
+      const { axis, naturalSpan } = re.libraryDef.stretchable;
+      const span = place.span ?? naturalSpan;
+      if (axis === 'x') {
+        const minX = place.at[0] - span / 2;
+        const maxX = place.at[0] + span / 2;
+        const x = Math.max(minX, Math.min(maxX, cursorWorld[0]));
+        const y = place.at[1];
+        const orientation: Orientation = cursorWorld[1] >= y ? 's' : 'n';
+        return { ref, world: [x, y], orientation, isBusTap: true, busElementId: elemId };
+      }
+      const minY = place.at[1] - span / 2;
+      const maxY = place.at[1] + span / 2;
+      const y = Math.max(minY, Math.min(maxY, cursorWorld[1]));
+      const x = place.at[0];
+      const orientation: Orientation = cursorWorld[0] >= x ? 'e' : 'w';
+      return { ref, world: [x, y], orientation, isBusTap: true, busElementId: elemId };
+    }
+  }
+  const term = internal.terminals.get(ref);
+  if (term) {
+    return {
+      ref,
+      world: term.world,
+      orientation: term.orientation,
+      isBusTap: false,
+    };
+  }
+  return null;
+}
+
+/**
+ * Pick which terminal of the new element should connect to the source. The
+ * element is being placed centered at `placeAt` (cursor world coords); we
+ * want the terminal whose *world* position lands closest to the source —
+ * that's the natural endpoint for the connecting wire.
+ */
+export function pickConnectTerminal(
+  lib: LibraryEntry,
+  source: PlaceSource,
+  placeAt: [number, number],
+): LibraryTerminal {
+  if (lib.terminals.length === 0) {
+    // Library validation should prevent this, but degrade gracefully.
+    return { id: 't', x: 0, y: 0, orientation: 'n' };
+  }
+  let best = lib.terminals[0];
+  let bestDist = termWorldDist(best, placeAt, source.world);
+  for (let i = 1; i < lib.terminals.length; i++) {
+    const t = lib.terminals[i];
+    const d = termWorldDist(t, placeAt, source.world);
+    if (d < bestDist) {
+      bestDist = d;
+      best = t;
+    }
+  }
+  return best;
+}
+
+function termWorldDist(
+  t: LibraryTerminal,
+  placeAt: [number, number],
+  source: [number, number],
+): number {
+  const dx = placeAt[0] + t.x - source[0];
+  const dy = placeAt[1] + t.y - source[1];
+  return dx * dx + dy * dy;
+}
+
+/**
+ * Place a new element with one of its terminals connected to `sourceRef` in
+ * a single undo step. If the source is a busbar virtual tap, uses the
+ * `bus.tap[]` sugar; otherwise appends a regular connection.
+ */
+export function dropElementFromTerminal(
+  kind: string,
+  sourceRef: TerminalRef,
+  cursorAt: [number, number],
+): DropResult | null {
+  const lib = libraryById[kind];
+  const store = useEditorStore.getState();
+  const diagram = store.diagram;
+  if (!lib) return null;
+
+  const source = resolvePlaceSource(sourceRef, cursorAt);
+  if (!source) return null;
+
+  // Place the new element at the cursor (snapped); pick whichever of its
+  // terminals lands closest to the source as the connection point.
+  const placedAt: [number, number] = [snap(cursorAt[0]), snap(cursorAt[1])];
+  const chosen = pickConnectTerminal(lib, source, placedAt);
+  const newId = newElementId(diagram, kind);
+
+  store.dispatch((d) => {
+    const newElement: Element = { id: newId, kind };
+    const placement: Placement = { at: placedAt };
+    const newPinRef = `${newId}.${chosen.id}` as TerminalRef;
+    const elements = [...d.elements];
+    if (source.isBusTap && source.busElementId) {
+      const idx = elements.findIndex((e) => e.id === source.busElementId);
+      if (idx >= 0) {
+        const cur = elements[idx];
+        elements[idx] = {
+          ...cur,
+          tap: [...(cur.tap ?? []), newPinRef],
+        };
+      }
+      elements.push(newElement);
+      return {
+        ...d,
+        elements,
+        layout: { ...(d.layout ?? {}), [newId]: placement },
+      };
+    }
+    elements.push(newElement);
+    return {
+      ...d,
+      elements,
+      connections: [...(d.connections ?? []), [sourceRef, newPinRef]],
+      layout: { ...(d.layout ?? {}), [newId]: placement },
+    };
+  });
+
+  store.setSelection([newId]);
+  return { newElementId: newId, attachedToBus: source.isBusTap };
 }
 

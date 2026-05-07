@@ -84,16 +84,29 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Editor-specific exposes the live canvas scale to children for stroke-width compensation. */
+/* Editor-specific exposes the live canvas scale to children for stroke-width
+   compensation. Also disables text selection on the diagram surface. */
 .ole-canvas-root {
   --canvas-scale: 1;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-/* Glass panel — used by floating chrome (top bar, toolbars, side panels). */
+/* Glass panel — used by floating chrome (top bar, toolbars, side panels).
+   Chrome text is not selectable to keep drags/clicks crisp; inputs and
+   textareas opt back in below. */
 .ole-glass {
   background-color: color-mix(in oklch, var(--card) 80%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ole-glass input,
+.ole-glass textarea,
+.ole-glass [contenteditable='true'] {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 /* Library SVG symbols hardcode `stroke="black"` / `fill="black"` from their
@@ -161,6 +174,17 @@
   r: 5;
   stroke: var(--selection);
   cursor: crosshair;
+}
+/* Place tool reveals terminals so users can drag-from-terminal to place
+   a new element pre-connected to that point. */
+.ole-canvas-root.tool-place .ole-terminal {
+  display: inline;
+  pointer-events: auto;
+}
+.ole-canvas-root.tool-place .ole-terminal:hover {
+  r: 5;
+  stroke: var(--selection);
+  cursor: copy;
 }
 
 /* Hover an element → reveal its terminals (others stay hidden). The
@@ -336,10 +360,11 @@
 .ole-element[data-node-related='true'] .ole-element-hit {
   fill: color-mix(in oklch, var(--selection) 14%, transparent);
 }
-/* Recolor the element's strokes to selection blue. Library SVGs use
-   stroke="black" / "#000" / "#000000"; match all forms. */
+/* Recolor the element's strokes to a muted selection blue — softer than
+   the wire's own selection stroke so the wire stays the focal point.
+   Library SVGs use stroke="black" / "#000" / "#000000"; match all forms. */
 .ole-element[data-node-related='true'] [stroke='black'],
 .ole-element[data-node-related='true'] [stroke='#000'],
 .ole-element[data-node-related='true'] [stroke='#000000'] {
-  stroke: var(--selection);
+  stroke: color-mix(in oklch, var(--selection) 55%, var(--foreground));
 }
