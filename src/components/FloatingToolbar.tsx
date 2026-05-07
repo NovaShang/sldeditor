@@ -89,12 +89,16 @@ function ToolHint() {
   const placeFrom = useEditorStore((s) => s.placeFromTerminal);
   const wireFrom = useEditorStore((s) => s.wireFromTerminal);
   const busbarStart = useEditorStore((s) => s.busbarDrawStart);
+  const hasSelection = useEditorStore(
+    (s) => s.selection.length > 0 || s.selectedNode != null,
+  );
 
   let text: string | null = null;
   let cancelHint = false;
   switch (active) {
     case 'select':
       text = '点选元件 · 拖动移动 · 框选多个 · 右键打开菜单';
+      if (hasSelection) cancelHint = true;
       break;
     case 'pan':
       text = '拖动画布 · 滚轮缩放 · 按住空格可在其他工具下临时平移';
@@ -124,12 +128,13 @@ function ToolHint() {
       break;
   }
   if (!text) return null;
+  // In select mode right-click opens the context menu rather than cancelling,
+  // so only Esc clears the selection. In drawing tools right-click also cancels.
+  const cancelText = active === 'select' ? 'Esc 清除选择' : '右键 / Esc 取消';
   return (
     <div className="ole-glass pointer-events-none flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground shadow-sm">
       <span>{text}</span>
-      {cancelHint && (
-        <span className="text-muted-foreground/70">· 右键 / Esc 取消</span>
-      )}
+      {cancelHint && <span className="text-muted-foreground/70">· {cancelText}</span>}
     </div>
   );
 }
