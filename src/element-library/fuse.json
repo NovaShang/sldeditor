@@ -1,0 +1,36 @@
+{
+  "id": "fuse",
+  "name": "熔断器 (FU)",
+  "category": "switching",
+  "viewBox": "-7 -32 14 64",
+  "width": 14,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-5\" y=\"-15\" width=\"10\" height=\"30\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": 30,
+      "orientation": "s"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    }
+  ],
+  "state": [
+    {
+      "name": "blown",
+      "type": "boolean",
+      "default": false,
+      "label": "熔断"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_21/en_60617_07_21_01.elmt",
+    "qetEnglishName": "Fuse, general symbol"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "load",
+  "name": "负荷",
+  "category": "load",
+  "description": "抽象负荷（电流流出箭头）",
+  "viewBox": "-8 -22 16 46",
+  "width": 16,
+  "height": 46,
+  "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"10\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><polygon points=\"-6,10 6,10 0,22\" fill=\"black\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -20,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

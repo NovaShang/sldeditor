@@ -1,0 +1,29 @@
+{
+  "id": "earthing-switch",
+  "name": "接地刀闸 (QE)",
+  "category": "switching",
+  "description": "隔离开关 + 接地连接，单端口",
+  "viewBox": "-12 -32 24 64",
+  "width": 24,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-12\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"-12\" x2=\"-9\" y2=\"9\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-3\" y1=\"-12\" x2=\"3\" y2=\"-12\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-10\" y1=\"14\" x2=\"10\" y2=\"14\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-7\" y1=\"19\" x2=\"7\" y2=\"19\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-4\" y1=\"24\" x2=\"4\" y2=\"24\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-1.5\" y1=\"29\" x2=\"1.5\" y2=\"29\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": true,
+      "label": "断开"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

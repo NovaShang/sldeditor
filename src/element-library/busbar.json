@@ -1,0 +1,31 @@
+{
+  "id": "busbar",
+  "name": "母线段",
+  "category": "busbar",
+  "description": "可拉伸单母线段，多设备挂接",
+  "viewBox": "-42 -4 84 8",
+  "width": 84,
+  "height": 8,
+  "svg": "<line x1=\"-40\" y1=\"0\" x2=\"40\" y2=\"0\" stroke=\"black\" stroke-width=\"3\" stroke-linecap=\"round\" fill=\"none\"/>",
+  "terminals": [
+    {
+      "id": "t_left",
+      "x": -40,
+      "y": 0,
+      "orientation": "w"
+    },
+    {
+      "id": "t_right",
+      "x": 40,
+      "y": 0,
+      "orientation": "e"
+    }
+  ],
+  "stretchable": {
+    "axis": "x",
+    "minLength": 20
+  },
+  "source": {
+    "kind": "inline"
+  }
+}

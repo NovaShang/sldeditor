@@ -63,16 +63,16 @@
 
 ## 2. Element：库引用 + 实例参数
 
-每个设备实例由"库种类（`kind`）+ 实例字段"构成。库定义引脚名、默认参数、SVG 模板和语义；JSON 里**绝不**内联 SVG。
+每个设备实例由"库种类（`kind`）+ 实例字段"构成。库定义引脚名、默认参数、状态字段和 SVG 模板；JSON 里**绝不**内联 SVG。
 
 ```jsonc
 {
   "id": "QF1",                     // 人可读 ID，全局唯一
-  "kind": "breaker",               // 引用库种类
+  "kind": "breaker",               // 必须命中 src/element-library/<id>.json 的某个 id
   "name": "201",                   // 显示名（可省，默认= id）
   "note": "出线断路器，2024-Q3 更换",  // 自由文本，LLM 上下文
-  "params": { "Un": 220, "In": 2000 }, // 仅写覆盖默认的字段
-  "open": false                    // 部分种类才有的状态简写
+  "params": { "Un": 220, "In": 2000 }, // 仅写覆盖库默认的字段
+  "state":  { "open": false }      // 状态字段集合；合法 key 由库 entry 的 state[] 声明
 }
 ```
 
@@ -88,36 +88,19 @@
 
 引脚名由库定义；编译期校验。**不允许引用不存在的引脚**。
 
-### 2.2 内置 `kind` 清单（v0）
+### 2.2 kind = library entry id
 
-| 类别 | kind | 引脚 | 状态字段 |
-|---|---|---|---|
-| 母线/接地 | `bus` | `tap`（多挂接） | — |
-|  | `earth` | `t` | — |
-| 开关 | `breaker` | `a`, `b` | `open: bool` |
-|  | `disconnector` | `a`, `b` | `open: bool` |
-|  | `earth_switch` | `a`, `b` | `open: bool` |
-|  | `load_switch` | `a`, `b` | `open: bool` |
-|  | `fuse` | `a`, `b` | `blown: bool` |
-| 变压器 | `transformer2w` | `hv`, `lv` | — |
-|  | `transformer3w` | `hv`, `mv`, `lv` | — |
-|  | `autotransformer` | `hv`, `lv`, `tap` | — |
-| 互感器 | `ct` | `p1`, `p2` | — |
-|  | `vt` | `p`, `n` | — |
-| 源/负荷 | `generator` | `t` | — |
-|  | `sync_motor` | `t` | — |
-|  | `induction_motor` | `t` | — |
-|  | `infinite_bus` | `t` | — |
-|  | `load` | `t` | — |
-|  | `battery` | `t` | — |
-| 无功/保护 | `shunt_reactor` | `t` | — |
-|  | `series_reactor` | `a`, `b` | — |
-|  | `shunt_capacitor` | `t` | — |
-|  | `surge_arrester` | `t` | — |
-| 标注 | `note` | — | — |
-|  | `label` | — | — |
+`kind` 是字符串，必须与 `src/element-library/<id>.json` 文件里的 `id` 字段精确一致。**library 是单一事实源**，没有平行的"内置 kind 枚举"——加新元件 = 落一个 .json 文件，TypeScript / 文档零改动。
 
-**为什么内置 kind 是字符串而不是 enum？** LLM 写 `"breaker"` 比写 `"BREAKER_1"` 自然；新增 kind 不破坏旧文件；shadcn 的设计语言一致。
+每个 library entry 自己声明：
+
+- `terminals[]` — 合法的引脚名（`<id>.<pin>` 寻址用）
+- `state[]` — 合法的状态字段及类型/默认值（写到 `Element.state` 里）
+- `stretchable` — 是否可拉伸（仅 busbar 之类）
+
+校验在编译期用 library 查表完成，不依赖 TS 判别联合。当前发布的 kind 清单及其引脚/状态参见 `src/element-library/` 目录下的所有 .json 文件——脚手架可由 `node scripts/build-element-library.mjs` 重新生成。
+
+**为什么 kind 是字符串而不是 enum？** LLM 写 `"breaker"` 比写枚举常量自然；新增 kind 不破坏旧文件；TS 端把 `kind` 留作开放字符串，避免每加一个元件就要碰类型。
 
 ### 2.3 自定义/扩展元件（v1+）
 
@@ -307,39 +290,18 @@ export type TerminalRef = `${ElementId}.${PinName}`;
 export type NodeId = string;                // "n1", "n_main"
 
 // ===== Element =====
-type ElementCommon = {
+// kind 是开放字符串；合法值由 library 决定（src/element-library/*.json）。
+// state 的合法 key 由 library entry 的 state[] 声明，运行时校验。
+export type Element = {
   id: ElementId;
+  kind: string;
   name?: string;
   note?: string;
   params?: Record<string, number | string | boolean>;
+  state?: Record<string, number | string | boolean>;
+  /** 仅 busbar 等可挂接元件用。 */
+  tap?: TerminalRef[];
 };
-
-export type Element =
-  | (ElementCommon & { kind: "bus"; tap?: TerminalRef[] })
-  | (ElementCommon & { kind: "earth" })
-  | (ElementCommon & { kind: "breaker"; open?: boolean })
-  | (ElementCommon & { kind: "disconnector"; open?: boolean })
-  | (ElementCommon & { kind: "earth_switch"; open?: boolean })
-  | (ElementCommon & { kind: "load_switch"; open?: boolean })
-  | (ElementCommon & { kind: "fuse"; blown?: boolean })
-  | (ElementCommon & { kind: "transformer2w" })
-  | (ElementCommon & { kind: "transformer3w" })
-  | (ElementCommon & { kind: "autotransformer" })
-  | (ElementCommon & { kind: "ct" })
-  | (ElementCommon & { kind: "vt" })
-  | (ElementCommon & { kind: "generator" })
-  | (ElementCommon & { kind: "sync_motor" })
-  | (ElementCommon & { kind: "induction_motor" })
-  | (ElementCommon & { kind: "infinite_bus" })
-  | (ElementCommon & { kind: "load" })
-  | (ElementCommon & { kind: "battery" })
-  | (ElementCommon & { kind: "shunt_reactor" })
-  | (ElementCommon & { kind: "series_reactor" })
-  | (ElementCommon & { kind: "shunt_capacitor" })
-  | (ElementCommon & { kind: "surge_arrester" })
-  | (ElementCommon & { kind: "note"; text: string })
-  | (ElementCommon & { kind: "label"; text: string })
-  | (ElementCommon & { kind: "custom"; libraryRef: string });
 
 // ===== Connection =====
 export type Connection =
@@ -514,14 +476,16 @@ normalize = 默认值省略 + 字段排序。CI 里跑一组 fixtures 保证。
 {
   "version": "1",
   "elements": [
-    { "id": "T1", "kind": "transformer2w", "name": "1#主变" },
+    { "id": "T1", "kind": "transformer-2w", "name": "1#主变" },
     { "id": "GND1", "kind": "earth" }
   ],
   "connections": [
-    ["T1.lv", "GND1.t"]
+    ["T1.t2", "GND1.t1"]
   ]
 }
 ```
+
+> kind 与 pin 名以 `src/element-library/<id>.json` 为准。本节示例都走 v0 当前 library。
 
 ### 11.2 单母线接线（一进两出）
 
@@ -530,10 +494,10 @@ normalize = 默认值省略 + 字段排序。CI 里跑一组 fixtures 保证。
   "version": "1",
   "meta": { "title": "10kV 单母线" },
   "elements": [
-    { "id": "B1", "kind": "bus", "name": "10kV-I", "params": { "Un": 10 },
-      "tap": ["QS_in.b", "QF1.a", "QF2.a"] },
+    { "id": "B1", "kind": "busbar", "name": "10kV-I", "params": { "Un": 10 },
+      "tap": ["QS_in.t2", "QF1.t1", "QF2.t1"] },
 
-    { "id": "L_in",   "kind": "infinite_bus", "name": "进线" },
+    { "id": "L_in",   "kind": "grid-source",  "name": "进线" },
     { "id": "QS_in",  "kind": "disconnector", "name": "01" },
 
     { "id": "QF1", "kind": "breaker",       "name": "101" },
@@ -545,9 +509,9 @@ normalize = 默认值省略 + 字段排序。CI 里跑一组 fixtures 保证。
     { "id": "L2",  "kind": "load",          "name": "馈线2" }
   ],
   "connections": [
-    ["L_in.t", "QS_in.a"],
-    ["QF1.b", "QS1.a"], ["QS1.b", "L1.t"],
-    ["QF2.b", "QS2.a"], ["QS2.b", "L2.t"]
+    ["L_in.t_bottom", "QS_in.t1"],
+    ["QF1.t2", "QS1.t1"], ["QS1.t2", "L1.t_top"],
+    ["QF2.t2", "QS2.t1"], ["QS2.t2", "L2.t_top"]
   ]
 }
 ```
@@ -561,39 +525,39 @@ normalize = 默认值省略 + 字段排序。CI 里跑一组 fixtures 保证。
   "version": "1",
   "meta": { "title": "220kV 双母线 + 1#主变 240MVA" },
   "elements": [
-    { "id": "BI",  "kind": "bus", "name": "220kV-I",  "params": {"Un": 220},
-      "tap": ["QS_LI.b", "QS_T1.b"] },
-    { "id": "BII", "kind": "bus", "name": "220kV-II", "params": {"Un": 220},
-      "tap": ["QS_LII.b"] },
+    { "id": "BI",  "kind": "busbar", "name": "220kV-I",  "params": {"Un": 220},
+      "tap": ["QS_LI.t2", "QS_T1.t2"] },
+    { "id": "BII", "kind": "busbar", "name": "220kV-II", "params": {"Un": 220},
+      "tap": ["QS_LII.t2"] },
 
-    { "id": "L1",     "kind": "infinite_bus",  "name": "线路1" },
+    { "id": "L1",     "kind": "grid-source",   "name": "线路1" },
     { "id": "QS_L1",  "kind": "disconnector",  "name": "L1-0" },
     { "id": "QF_L1",  "kind": "breaker",       "name": "L1-Q" },
     { "id": "QS_LI",  "kind": "disconnector",  "name": "L1-1" },
-    { "id": "QS_LII", "kind": "disconnector",  "name": "L1-2", "open": true },
+    { "id": "QS_LII", "kind": "disconnector",  "name": "L1-2", "state": { "open": true } },
 
-    { "id": "QS_T1",  "kind": "disconnector",  "name": "T1-1" },
-    { "id": "QF_T1",  "kind": "breaker",       "name": "T1-Q" },
-    { "id": "T1",     "kind": "transformer2w", "name": "1#主变",
+    { "id": "QS_T1",  "kind": "disconnector",   "name": "T1-1" },
+    { "id": "QF_T1",  "kind": "breaker",        "name": "T1-Q" },
+    { "id": "T1",     "kind": "transformer-2w", "name": "1#主变",
       "params": { "S": 240, "ratio": "220/110" } },
     { "id": "GND_T1", "kind": "earth" }
   ],
   "connections": [
-    ["L1.t", "QS_L1.a"],
-    ["QS_L1.b", "QF_L1.a"],
-    ["QF_L1.b", "QS_LI.a", "QS_LII.a"],
+    ["L1.t_bottom", "QS_L1.t1"],
+    ["QS_L1.t2", "QF_L1.t1"],
+    ["QF_L1.t2", "QS_LI.t1", "QS_LII.t1"],
 
-    ["QS_T1.a", "QF_T1.b"],
-    ["QF_T1.a", "T1.hv"],
-    ["T1.lv", "GND_T1.t"]
+    ["QS_T1.t1", "QF_T1.t2"],
+    ["QF_T1.t1", "T1.t1"],
+    ["T1.t2", "GND_T1.t1"]
   ]
 }
 ```
 
 观察：
 
-- 进线后的 `QF_L1.b` 同时连接 `QS_LI.a` 和 `QS_LII.a`，写成一个三元组——这是双母线进线的"母联前端"语义，并查集会把它视作一个节点。
-- `QS_LII.open: true` 表示该刀闸断开，但**电气拓扑仍把两侧端子归为同一节点**。状态只影响潮流/着色，不改变拓扑。这一原则与 IEC 61970 一致。
+- 进线后的 `QF_L1.t2` 同时连接 `QS_LI.t1` 和 `QS_LII.t1`，写成一个三元组——这是双母线进线的"母联前端"语义，并查集会把它视作一个节点。
+- `QS_LII.state.open: true` 表示该刀闸断开，但**电气拓扑仍把两侧端子归为同一节点**。状态只影响潮流/着色，不改变拓扑。这一原则与 IEC 61970 一致。
 - 没有写 `layout`，全部交给 auto-layout。
 
 ---
@@ -606,7 +570,7 @@ normalize = 默认值省略 + 字段排序。CI 里跑一组 fixtures 保证。
 | 顶层独立 `connectivityNodes` 数组 | `connections` 并查集 → 编译期生成 nodes | LLM 不必命名节点；写多次自动合并 |
 | `wires[].path` 与 ConnectivityNode 强绑定 | `routes[nodeId]` 可选，默认 auto-route | 解耦；视觉变更不污染拓扑 |
 | `diagram.objects` 嵌套 | 顶层 `layout` 平铺 | 减少嵌套层级，diff 友好 |
-| `state` 嵌套对象 | `open`/`blown` 等扁平布尔 | 写起来短，常见状态优先 |
+| `state` 嵌套对象 | `state: { open, blown, ... }` | 由 library entry 的 state[] 声明合法 key，加新 kind 不动 TS |
 
 §6.3 的四条核心原则**全部保留**：
 
@@ -654,7 +618,7 @@ normalize = 默认值省略 + 字段排序。CI 里跑一组 fixtures 保证。
 
 为最大化 LLM 写得对的概率，系统提示中包含：
 
-1. 内置 kind 表（§2.2）
+1. 当前 library 的 kind / 引脚 / state 清单（由 `src/element-library/*.json` 自动汇总，不要让 LLM 猜）
 2. 引脚清单（不要让 LLM 猜引脚名）
 3. "用 `connections` 的 n-元组隐式表达连通性，不要发明节点 ID" 的明确指令
 4. "省略 `layout` 让编辑器自动布局" 的指令

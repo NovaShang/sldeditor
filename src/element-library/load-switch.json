@@ -1,0 +1,36 @@
+{
+  "id": "load-switch",
+  "name": "负荷开关",
+  "category": "switching",
+  "viewBox": "-10 -42 14 64",
+  "width": 14,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-24\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"-8\" y2=\"-23\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"-22\" rx=\"2\" ry=\"2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-2\" y1=\"-24\" x2=\"2\" y2=\"-24\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_08.elmt",
+    "qetEnglishName": "Switch-disconnector; On-load isolating switch"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "inverter",
+  "name": "逆变器 (DC→AC)",
+  "category": "renewable",
+  "viewBox": "-42 -42 44 44",
+  "width": 44,
+  "height": 44,
+  "svg": "<path d=\"M -15 -8 A 5 2.5 0 0 0 -25 -8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"0\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -15 -8 A 5 2.5 0 0 0 -5 -8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-40\" y=\"-40\" width=\"40\" height=\"40\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-36\" y1=\"-36\" x2=\"-20\" y2=\"-36\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-36\" y1=\"-32\" x2=\"-30\" y2=\"-32\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-26\" y1=\"-32\" x2=\"-20\" y2=\"-32\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_dc",
+      "x": -20,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t_ac",
+      "x": -20,
+      "y": 0,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_05.elmt",
+    "qetEnglishName": "Inverter"
+  }
+}

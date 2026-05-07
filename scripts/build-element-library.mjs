@@ -2,10 +2,10 @@
 // Build the OneLineEditor element library by converting selected QElectroTech
 // `.elmt` files into product-shaped SVG fragments + terminal metadata.
 //
-// Output layout:
-//   src/element-library/
-//     index.json        — manifest with viewBox, terminals, embedded SVG body
-//     svg/<id>.svg      — standalone SVG for visual inspection
+// Output layout (one file per element — no centralized index):
+//   src/element-library/<id>.json   — full record { id, name, category, viewBox, svg, terminals, ... }
+//
+// Frontend should auto-discover via e.g. `import.meta.glob('./*.json')`.
 //
 // Run: node scripts/build-element-library.mjs
 
@@ -18,7 +18,6 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, '..');
 const QET_ROOT = path.join(ROOT, 'third_party', 'qelectrotech', '10_electric');
 const OUT_DIR = path.join(ROOT, 'src', 'element-library');
-const OUT_SVG_DIR = path.join(OUT_DIR, 'svg');
 
 // ---------------------------------------------------------------------------
 // Manifest: every product-facing element references either a `.elmt` source
@@ -63,18 +62,21 @@ const MANIFEST = [
     name: '断路器 (QF)',
     category: 'switching',
     source: { kind: 'elmt', path: '11_singlepole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur1.elmt' },
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
   },
   {
     id: 'disconnector',
     name: '隔离开关 (QS)',
     category: 'switching',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_06.elmt' },
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
   },
   {
     id: 'earthing-switch',
     name: '接地刀闸 (QE)',
     category: 'switching',
     description: '隔离开关 + 接地连接，单端口',
+    state: [{ name: 'open', type: 'boolean', default: true, label: '断开' }],
     source: {
       kind: 'inline',
       svg: [
@@ -95,12 +97,14 @@ const MANIFEST = [
     name: '负荷开关',
     category: 'switching',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_08.elmt' },
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
   },
   {
     id: 'fuse',
     name: '熔断器 (FU)',
     category: 'switching',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_21/en_60617_07_21_01.elmt' },
+    state: [{ name: 'blown', type: 'boolean', default: false, label: '熔断' }],
   },
 
   // ---- 变压器 ----
@@ -242,6 +246,119 @@ const MANIFEST = [
     name: '避雷器 (FBL)',
     category: 'protection',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_22/en_60617_07_22_03.elmt' },
+  },
+
+  // ---- 中性点接地 (变压器中性点接地方式) ----
+  {
+    id: 'grounding-transformer',
+    name: '接地变 (Z形)',
+    category: 'grounding',
+    description: '星-曲折接线变压器，中性点接地用',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_10/en_60617_06_10_15.elmt' },
+    dropPrimitive: dropFormLabel,
+  },
+  {
+    id: 'ngr',
+    name: '中性点电阻 (NGR)',
+    category: 'grounding',
+    description: '小电阻接地：连接变压器中性点到地',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<line x1="0" y1="-30" x2="0" y2="-15" fill="none" stroke="black" stroke-width="1"/>',
+        '<rect x="-6" y="-15" width="12" height="22" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="0" y1="7" x2="0" y2="15" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-10" y1="15" x2="10" y2="15" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-7" y1="19" x2="7" y2="19" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-4" y1="23" x2="4" y2="23" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-1.5" y1="27" x2="1.5" y2="27" fill="none" stroke="black" stroke-width="1"/>',
+      ].join(''),
+      bbox: { x1: -10, y1: -30, x2: 10, y2: 28 },
+    },
+    terminals: [{ id: 't_top', x: 0, y: -30, orientation: 'n' }],
+  },
+  {
+    id: 'arc-suppression-coil',
+    name: '消弧线圈',
+    category: 'grounding',
+    description: '中性点谐振接地：电感线圈连接到地',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<line x1="0" y1="-30" x2="0" y2="-12" fill="none" stroke="black" stroke-width="1"/>',
+        // three stacked semicircular bumps (IEC inductor)
+        '<path d="M 0 -12 A 4 4 0 0 1 0 -4 A 4 4 0 0 1 0 4 A 4 4 0 0 1 0 12" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="0" y1="12" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-10" y1="20" x2="10" y2="20" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-7" y1="24" x2="7" y2="24" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-4" y1="28" x2="4" y2="28" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-1.5" y1="32" x2="1.5" y2="32" fill="none" stroke="black" stroke-width="1"/>',
+      ].join(''),
+      bbox: { x1: -10, y1: -30, x2: 10, y2: 33 },
+    },
+    terminals: [{ id: 't_top', x: 0, y: -30, orientation: 'n' }],
+  },
+
+  // ---- 新能源 / 电力电子 ----
+  {
+    id: 'pv',
+    name: '光伏组件',
+    category: 'renewable',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_18/en_60617_06_18_06.elmt' },
+    // QET symbol has no terminals; PV exits through DC bus on the right edge.
+    extraTerminals: [{ id: 't_dc', x: 50, y: 10, orientation: 'e' }],
+  },
+  {
+    id: 'wind-turbine',
+    name: '风力发电机',
+    category: 'renewable',
+    description: '风机：发电机 + 三叶轮标记',
+    source: {
+      kind: 'inline',
+      svg: [
+        // generator circle
+        '<circle cx="0" cy="0" r="20" fill="none" stroke="black" stroke-width="1"/>',
+        '<text x="0" y="4" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11">G</text>',
+        // three-blade rotor (60° spaced lines from hub on top)
+        '<line x1="0" y1="-20" x2="0" y2="-32" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="0" y1="-32" x2="-10" y2="-39" fill="none" stroke="black" stroke-width="1.5"/>',
+        '<line x1="0" y1="-32" x2="10" y2="-39" fill="none" stroke="black" stroke-width="1.5"/>',
+        '<line x1="0" y1="-32" x2="0" y2="-44" fill="none" stroke="black" stroke-width="1.5"/>',
+      ].join(''),
+      bbox: { x1: -20, y1: -44, x2: 20, y2: 20 },
+    },
+    terminals: [{ id: 't_bottom', x: 0, y: 20, orientation: 's' }],
+  },
+  {
+    id: 'rectifier',
+    name: '整流器 (AC→DC)',
+    category: 'renewable',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_03.elmt' },
+    extraTerminals: [
+      { id: 't_ac', x: -20, y: -40, orientation: 'n' },
+      { id: 't_dc', x: -20, y: 0, orientation: 's' },
+    ],
+  },
+  {
+    id: 'inverter',
+    name: '逆变器 (DC→AC)',
+    category: 'renewable',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_05.elmt' },
+    extraTerminals: [
+      { id: 't_dc', x: -20, y: -40, orientation: 'n' },
+      { id: 't_ac', x: -20, y: 0, orientation: 's' },
+    ],
+  },
+  {
+    id: 'converter-bidir',
+    name: '双向变流器 (PCS)',
+    category: 'renewable',
+    description: '储能变流器：双向 AC ↔ DC',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_06.elmt' },
+    extraTerminals: [
+      { id: 't_ac', x: -20, y: -40, orientation: 'n' },
+      { id: 't_dc', x: -20, y: 0, orientation: 's' },
+    ],
   },
 ];
 
@@ -520,7 +637,6 @@ function buildElement(entry) {
       kind: 'elmt',
       path: entry.source.path,
       qetEnglishName: parsed.names.en,
-      qetUuid: parsed.defAttrs.uuid,
     },
   });
 }
@@ -550,14 +666,9 @@ function finalize(entry, { svgBody, bbox, terminals, sourceMeta }) {
     svg: svgBody,
     terminals,
     stretchable: entry.stretchable,
+    state: entry.state,
     source: sourceMeta,
   };
-}
-
-function standaloneSvg(el) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${el.viewBox}" width="${el.width * 2}" height="${el.height * 2}">${el.svg}${el.terminals
-    .map((t) => `<circle cx="${num(t.x)}" cy="${num(t.y)}" r="1.5" fill="#dc2626"/>`)
-    .join('')}</svg>\n`;
 }
 
 // ---------------------------------------------------------------------------
@@ -565,10 +676,17 @@ function standaloneSvg(el) {
 // ---------------------------------------------------------------------------
 
 function main() {
-  fs.mkdirSync(OUT_SVG_DIR, { recursive: true });
+  fs.mkdirSync(OUT_DIR, { recursive: true });
 
-  const elements = [];
+  // Wipe any existing per-element JSON so that elements removed from the
+  // manifest don't leave stale files behind. Only touches *.json so a user
+  // can drop hand-authored sidecar files in this directory if they want.
+  for (const f of fs.readdirSync(OUT_DIR)) {
+    if (f.endsWith('.json')) fs.unlinkSync(path.join(OUT_DIR, f));
+  }
+
   const seenIds = new Set();
+  let count = 0;
   for (const entry of MANIFEST) {
     if (seenIds.has(entry.id)) throw new Error(`duplicate element id: ${entry.id}`);
     seenIds.add(entry.id);
@@ -581,27 +699,15 @@ function main() {
       throw err;
     }
 
-    elements.push(built);
-    fs.writeFileSync(path.join(OUT_SVG_DIR, `${entry.id}.svg`), standaloneSvg(built));
+    fs.writeFileSync(
+      path.join(OUT_DIR, `${entry.id}.json`),
+      JSON.stringify(built, null, 2) + '\n',
+    );
+    count++;
     console.log(`✓ ${entry.id.padEnd(22)} ${built.viewBox.padEnd(20)} terminals=${built.terminals.length}`);
   }
 
-  // Group by category for the side-panel layout (PRD §5.1).
-  const categories = {};
-  for (const el of elements) {
-    (categories[el.category] ||= []).push(el.id);
-  }
-
-  const index = {
-    version: '0.1',
-    generatedAt: new Date().toISOString(),
-    sourceLicense: 'GPLv2 (QElectroTech ELEMENTS.LICENSE) — see THIRD_PARTY_NOTICES.md',
-    categories,
-    elements,
-  };
-
-  fs.writeFileSync(path.join(OUT_DIR, 'index.json'), JSON.stringify(index, null, 2) + '\n');
-  console.log(`\nWrote ${elements.length} elements to ${path.relative(ROOT, OUT_DIR)}`);
+  console.log(`\nWrote ${count} elements to ${path.relative(ROOT, OUT_DIR)}`);
 }
 
 main();

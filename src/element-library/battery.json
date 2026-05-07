@@ -1,0 +1,28 @@
+{
+  "id": "battery",
+  "name": "电池储能",
+  "category": "source",
+  "viewBox": "-12 -12 29 24",
+  "width": 29,
+  "height": 24,
+  "svg": "<line x1=\"-10\" y1=\"0\" x2=\"0\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-5\" x2=\"0\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"5\" y1=\"-10\" x2=\"5\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"5\" y1=\"0\" x2=\"15\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_left",
+      "x": -10,
+      "y": 0,
+      "orientation": "w"
+    },
+    {
+      "id": "t_right",
+      "x": 15,
+      "y": 0,
+      "orientation": "e"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_15/en_60617_06_15_01.elmt",
+    "qetEnglishName": "Battery cell"
+  }
+}

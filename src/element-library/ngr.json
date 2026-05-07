@@ -1,0 +1,21 @@
+{
+  "id": "ngr",
+  "name": "中性点电阻 (NGR)",
+  "category": "grounding",
+  "description": "小电阻接地：连接变压器中性点到地",
+  "viewBox": "-12 -32 24 62",
+  "width": 24,
+  "height": 62,
+  "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-6\" y=\"-15\" width=\"12\" height=\"22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"7\" x2=\"0\" y2=\"15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"15\" x2=\"10\" y2=\"15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-7\" y1=\"19\" x2=\"7\" y2=\"19\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-4\" y1=\"23\" x2=\"4\" y2=\"23\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-1.5\" y1=\"27\" x2=\"1.5\" y2=\"27\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

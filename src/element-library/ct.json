@@ -1,0 +1,28 @@
+{
+  "id": "ct",
+  "name": "电流互感器 (CT)",
+  "category": "instrument-transformer",
+  "viewBox": "-42 -62 54 64",
+  "width": 54,
+  "height": 64,
+  "svg": "<line x1=\"-30\" y1=\"-60\" x2=\"-30\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-30\" x2=\"10\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"-30\" cy=\"-30\" rx=\"10\" ry=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-20\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5\" y1=\"-20\" x2=\"5\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -30,
+      "y": 0,
+      "orientation": "s"
+    },
+    {
+      "id": "t2",
+      "x": -30,
+      "y": -60,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_10.elmt",
+    "qetEnglishName": "Current transformer, general symbol"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "arc-suppression-coil",
+  "name": "消弧线圈",
+  "category": "grounding",
+  "description": "中性点谐振接地：电感线圈连接到地",
+  "viewBox": "-12 -32 24 67",
+  "width": 24,
+  "height": 67,
+  "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-12\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 -12 A 4 4 0 0 1 0 -4 A 4 4 0 0 1 0 4 A 4 4 0 0 1 0 12\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"12\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"20\" x2=\"10\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-7\" y1=\"24\" x2=\"7\" y2=\"24\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-4\" y1=\"28\" x2=\"4\" y2=\"28\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-1.5\" y1=\"32\" x2=\"1.5\" y2=\"32\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

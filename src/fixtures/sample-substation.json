@@ -1,0 +1,109 @@
+{
+  "version": "1",
+  "meta": {
+    "title": "110/35kV 单母线变电站（开发测试用例）",
+    "description": "练手 fixture：进线 + 主变 + 35kV 母线 + 两条馈线 + 容性补偿。覆盖 bus.tap 简写、N 元组、命名节点、稀疏 layout、手动 route、open 开关。",
+    "author": "dev-fixture",
+    "createdAt": "2026-05-07T00:00:00Z",
+    "updatedAt": "2026-05-07T00:00:00Z"
+  },
+
+  "elements": [
+    { "id": "GRID", "kind": "grid-source", "name": "外部电网" },
+
+    { "id": "QS01", "kind": "disconnector", "name": "01" },
+    { "id": "QF01", "kind": "breaker",      "name": "进线开关" },
+    { "id": "QS02", "kind": "disconnector", "name": "02" },
+    { "id": "CT1",  "kind": "ct",           "name": "进线 CT" },
+
+    {
+      "id": "B1", "kind": "busbar", "name": "110kV-I",
+      "params": { "Un": 110 },
+      "tap": ["QS02.t2", "CT1.t2", "QS_T1.t1", "PT1.t1"]
+    },
+
+    { "id": "PT1",   "kind": "pt",          "name": "母线 PT" },
+
+    { "id": "QS_T1", "kind": "disconnector", "name": "主变高压侧刀闸" },
+    { "id": "QF_T1", "kind": "breaker",      "name": "主变高压侧开关" },
+    {
+      "id": "T1", "kind": "transformer-2w", "name": "1#主变",
+      "note": "240MVA YNd11，2024-Q3 大修后投运",
+      "params": { "S": 240, "ratio": "110/35" }
+    },
+    { "id": "GND_T1", "kind": "earth", "name": "T1 中性点接地" },
+
+    {
+      "id": "B2", "kind": "busbar", "name": "35kV",
+      "params": { "Un": 35 },
+      "tap": ["T1.t2", "FBL1.t1", "QS_F1.t1", "QS_F2.t1", "QS_C1.t1"]
+    },
+
+    { "id": "FBL1",   "kind": "arrester", "name": "母线避雷器" },
+    { "id": "GND_FBL1", "kind": "earth" },
+
+    { "id": "QS_F1", "kind": "disconnector", "name": "馈线 1 刀闸" },
+    { "id": "QF_F1", "kind": "breaker",      "name": "馈线 1 开关" },
+    { "id": "LD1",   "kind": "load",         "name": "馈线 1 (3MW)",
+      "params": { "P": 3.0, "cosphi": 0.95 } },
+
+    { "id": "QS_F2", "kind": "disconnector", "name": "馈线 2 刀闸", "state": { "open": true } },
+    { "id": "QF_F2", "kind": "breaker",      "name": "馈线 2 开关", "state": { "open": true } },
+    { "id": "LD2",   "kind": "load",         "name": "馈线 2 (备用)" },
+
+    { "id": "QS_C1", "kind": "disconnector",   "name": "电容器组刀闸" },
+    { "id": "QF_C1", "kind": "breaker",        "name": "电容器组开关" },
+    { "id": "C1",    "kind": "shunt-capacitor", "name": "无功补偿 C1",
+      "params": { "Q": 6 } },
+    { "id": "GND_C1", "kind": "earth" }
+  ],
+
+  "connections": [
+    ["GRID.t_bottom", "QS01.t1"],
+    ["QS01.t2", "QF01.t1"],
+    ["QF01.t2", "QS02.t1"],
+
+    ["CT1.t1", "QS02.t2"],
+
+    ["QS_T1.t2", "QF_T1.t1"],
+    ["QF_T1.t2", "T1.t1"],
+
+    {
+      "node": "n_t1_neutral",
+      "name": "1#主变中性点",
+      "terminals": ["T1.t2", "GND_T1.t1"]
+    },
+
+    ["FBL1.t2", "GND_FBL1.t1"],
+
+    ["QS_F1.t2", "QF_F1.t1"], ["QF_F1.t2", "LD1.t_top"],
+    ["QS_F2.t2", "QF_F2.t1"], ["QF_F2.t2", "LD2.t_top"],
+
+    ["QS_C1.t2", "QF_C1.t1"], ["QF_C1.t2", "C1.t1"],
+    ["C1.t_bottom", "GND_C1.t1"]
+  ],
+
+  "layout": {
+    "GRID":   { "at": [200,  20] },
+    "QS01":   { "at": [200,  80] },
+    "QF01":   { "at": [200, 140] },
+    "QS02":   { "at": [200, 200] },
+    "CT1":    { "at": [200, 260] },
+    "B1":     { "at": [400, 320], "span": 600 },
+    "PT1":    { "at": [600, 380] },
+
+    "QS_T1":  { "at": [200, 380] },
+    "QF_T1":  { "at": [200, 440] },
+    "T1":     { "at": [200, 520] },
+    "GND_T1": { "at": [280, 520] },
+
+    "B2":     { "at": [400, 620], "span": 600 }
+  },
+
+  "routes": {
+    "n_t1_neutral": {
+      "path": [[200, 580], [280, 580], [280, 520]],
+      "manual": true
+    }
+  }
+}

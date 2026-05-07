@@ -1,0 +1,22 @@
+{
+  "id": "earth",
+  "name": "接地",
+  "category": "busbar",
+  "viewBox": "-12 -17 24 34",
+  "width": 24,
+  "height": 34,
+  "svg": "<line x1=\"-10\" y1=\"0\" x2=\"10\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-15\" x2=\"0\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-7\" y1=\"5\" x2=\"7\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-4\" y1=\"10\" x2=\"4\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0.5\" y1=\"15\" x2=\"-0.5\" y2=\"15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -15,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_02/en_60617_02_15/en_60617_02_15_01.elmt",
+    "qetEnglishName": "Earth or ground, general symbol"
+  }
+}

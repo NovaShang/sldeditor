@@ -1,0 +1,29 @@
+{
+  "id": "grounding-transformer",
+  "name": "接地变 (Z形)",
+  "category": "grounding",
+  "description": "星-曲折接线变压器，中性点接地用",
+  "viewBox": "-62 -152 64 164",
+  "width": 64,
+  "height": 164,
+  "svg": "<line x1=\"-30\" y1=\"-40\" x2=\"-35\" y2=\"-35\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-40\" x2=\"-25\" y2=\"-35\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"-30\" cy=\"-90\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-35\" y1=\"-35\" x2=\"-40\" y2=\"-38\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-150\" x2=\"-30\" y2=\"-120\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-25\" y1=\"-35\" x2=\"-25\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"-30\" cy=\"-50\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-40\" x2=\"-30\" y2=\"-45\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-20\" x2=\"-30\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-45\" x2=\"-25\" y2=\"-48\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"-130\" x2=\"-20\" y2=\"-140\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"-135\" x2=\"-20\" y2=\"-145\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"0\" x2=\"-20\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"5\" x2=\"-20\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-85\" x2=\"-30\" y2=\"-95\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-95\" x2=\"-20\" y2=\"-100\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-95\" x2=\"-40\" y2=\"-100\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-40\" x2=\"-20\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"-30\" cy=\"-40\" rx=\"2\" ry=\"2\" fill=\"black\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -30,
+      "y": 10,
+      "orientation": "s"
+    },
+    {
+      "id": "t2",
+      "x": -30,
+      "y": -150,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_10/en_60617_06_10_15.elmt",
+    "qetEnglishName": "Three-phase transformer, connection star-zigzag with the neutral brought out"
+  }
+}

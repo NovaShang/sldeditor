@@ -1,0 +1,34 @@
+{
+  "id": "async-motor",
+  "name": "异步电动机",
+  "category": "load",
+  "viewBox": "-62 -82 64 84",
+  "width": 64,
+  "height": 84,
+  "svg": "<ellipse cx=\"-30\" cy=\"-30\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-34\" y=\"-24.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">M</text><text x=\"-45\" y=\"-7.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">3</text><path d=\"M -25 -20 A 5 2.5 0 0 0 -35 -20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -25 -20 A 5 2.5 0 0 0 -15 -20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-80\" x2=\"-30\" y2=\"-60\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-50\" y1=\"-80\" x2=\"-50\" y2=\"-53\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-80\" x2=\"-10\" y2=\"-53\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -50,
+      "y": -80,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": -10,
+      "y": -80,
+      "orientation": "n"
+    },
+    {
+      "id": "t3",
+      "x": -30,
+      "y": -80,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_08/en_60617_06_08_01.elmt",
+    "qetEnglishName": "Induction motor, three-phase, squirrel cage"
+  }
+}

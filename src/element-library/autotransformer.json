@@ -1,0 +1,28 @@
+{
+  "id": "autotransformer",
+  "name": "自耦变压器",
+  "category": "transformer",
+  "viewBox": "-62 -112 64 144",
+  "width": 64,
+  "height": 144,
+  "svg": "<ellipse cx=\"-30\" cy=\"-30\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-110\" x2=\"-30\" y2=\"-90\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"0\" x2=\"-30\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 -30 A 30 60 0 0 0 -30 -90\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -30,
+      "y": -110,
+      "orientation": "n"
+    },
+    {
+      "id": "t_bottom",
+      "x": -30,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_06.elmt",
+    "qetEnglishName": "Auto-transformer, general symbol"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "transformer-2w",
+  "name": "双绕组变压器",
+  "category": "transformer",
+  "viewBox": "-62 -142 64 144",
+  "width": 64,
+  "height": 144,
+  "svg": "<ellipse cx=\"-30\" cy=\"-90\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-140\" x2=\"-30\" y2=\"-120\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"-30\" cy=\"-50\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-20\" x2=\"-30\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -30,
+      "y": 0,
+      "orientation": "s"
+    },
+    {
+      "id": "t2",
+      "x": -30,
+      "y": -140,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_01.elmt",
+    "qetEnglishName": "Transformer with two windings, general symbol"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "pt",
+  "name": "电压互感器 (PT)",
+  "category": "instrument-transformer",
+  "viewBox": "-22 -42 44 115",
+  "width": 44,
+  "height": 115,
+  "svg": "<ellipse cx=\"0\" cy=\"1\" rx=\"20\" ry=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-40\" x2=\"0\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"30\" rx=\"20\" ry=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-0.13\" y1=\"51\" x2=\"-0.13\" y2=\"71\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": 71,
+      "orientation": "s"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_13/en_60617_06_13_01A.elmt",
+    "qetEnglishName": "Voltage transformer"
+  }
+}

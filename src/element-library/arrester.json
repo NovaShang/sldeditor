@@ -1,0 +1,28 @@
+{
+  "id": "arrester",
+  "name": "避雷器 (FBL)",
+  "category": "protection",
+  "viewBox": "-7 -22 14 44",
+  "width": 14,
+  "height": 44,
+  "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"10\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"-2,-8 2,-8 0,-2\" fill=\"black\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-5\" y=\"-10\" width=\"10\" height=\"20\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -20,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_22/en_60617_07_22_03.elmt",
+    "qetEnglishName": "Surge diverter; Lightning arrester"
+  }
+}

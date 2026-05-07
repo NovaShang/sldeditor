@@ -1,0 +1,36 @@
+{
+  "id": "disconnector",
+  "name": "隔离开关 (QS)",
+  "category": "switching",
+  "viewBox": "-10 -42 15 64",
+  "width": 15,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"-8\" y2=\"-23\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-3\" y1=\"-20\" x2=\"3\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_06.elmt",
+    "qetEnglishName": "Disconnector; Isolator"
+  }
+}

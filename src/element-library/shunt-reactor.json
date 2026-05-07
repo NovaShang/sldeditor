@@ -1,0 +1,28 @@
+{
+  "id": "shunt-reactor",
+  "name": "并联电抗器",
+  "category": "compensation",
+  "viewBox": "-62 -82 64 104",
+  "width": 64,
+  "height": 104,
+  "svg": "<line x1=\"-30\" y1=\"0\" x2=\"-30\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -30 0 A 30 30 0 1 0 -60 -30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-80\" x2=\"-30\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"-30\" x2=\"-30\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -30,
+      "y": -80,
+      "orientation": "n"
+    },
+    {
+      "id": "t_bottom",
+      "x": -30,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_08.elmt",
+    "qetEnglishName": "Choke; Reactor, general symbol"
+  }
+}
