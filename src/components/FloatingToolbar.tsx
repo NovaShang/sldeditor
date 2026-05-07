@@ -116,15 +116,10 @@ function ToolHint() {
       cancelHint = true;
       break;
     case 'place':
-      if (!placeKind) {
-        text = '从左侧元件库选择一种元件';
-      } else if (placeFrom) {
-        text = '拖到目标位置释放，新元件将连接到起点端子';
-        cancelHint = true;
-      } else {
-        text = '点击空白放置；或从已有端子 / 母线拖出，同时放置并连接';
-        cancelHint = true;
-      }
+      if (!placeKind) text = '从左侧元件库选择一种元件';
+      else if (placeFrom) text = '拖到目标位置释放，新元件将连接到起点端子';
+      else text = '点击空白放置；或从已有端子 / 母线拖出，同时放置并连接';
+      cancelHint = true;
       break;
   }
   if (!text) return null;
