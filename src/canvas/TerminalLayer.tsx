@@ -1,6 +1,8 @@
 /**
  * Renders a `<circle>` per terminal at its world coords. Hidden by default;
  * the wire tool reveals them via the `.tool-wire` class on the canvas root.
+ * In select mode, terminals on currently-selected elements are also revealed
+ * so the user can grab one to drag-connect without switching tools.
  * `data-connected` distinguishes solid (connected) from hollow (dangling).
  *
  * Selected stretchable elements (e.g. busbar) get their terminals suppressed
@@ -22,8 +24,10 @@ export function TerminalLayer() {
   // hide them when those handles are actually shown (select tool); the wire
   // tool needs every terminal visible for connection.
   const handlesCovered = new Set<string>();
+  const selectionSet = new Set<string>();
   if (activeTool === 'select') {
     for (const id of selection) {
+      selectionSet.add(id);
       const re = internalElements.get(id);
       if (re?.libraryDef?.stretchable) handlesCovered.add(id);
     }
@@ -41,6 +45,7 @@ export function TerminalLayer() {
         const nodeId = terminalToNode.get(t.ref);
         const connected = nodeId !== undefined;
         const isOrigin = wireFrom === t.ref;
+        const onSelected = selectionSet.has(t.elementId);
         return (
           <circle
             key={t.ref}
@@ -52,6 +57,7 @@ export function TerminalLayer() {
             data-node-id={nodeId}
             data-connected={connected ? 'true' : 'false'}
             data-active={isOrigin ? 'true' : undefined}
+            data-on-selected={onSelected ? 'true' : undefined}
             className="ole-terminal"
           />
         );

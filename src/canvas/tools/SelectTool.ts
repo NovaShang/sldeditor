@@ -12,12 +12,14 @@
 
 import { useEditorStore } from '@/store';
 import type { ResolvedPlacement } from '@/compiler';
-import type { ElementId } from '@/model';
+import type { ElementId, TerminalRef } from '@/model';
 import { libraryById } from '@/element-library';
 import { snap } from '../grid';
-import { hitElement, hitNode } from '../hit-test';
+import { hitElement, hitNode, hitTerminal } from '../hit-test';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
+import { resolveWireTarget } from '../resolve-wire-target';
 import { transformAttr } from '../transform-attr';
+import { publishWireTarget } from '../wire-target-bus';
 import type { Tool } from './types';
 
 const MARQUEE_THRESHOLD = 3;
@@ -38,8 +40,14 @@ interface MarqueeState {
   baseSelection: ElementId[];
 }
 
+interface WireDragState {
+  pointerId: number;
+  fromRef: TerminalRef;
+}
+
 let drag: DragState | null = null;
 let marquee: MarqueeState | null = null;
+let wireDrag: WireDragState | null = null;
 
 export const SelectTool: Tool = {
   id: 'select',
@@ -59,8 +67,33 @@ export const SelectTool: Tool = {
       return;
     }
 
-    const id = hitElement(e.target);
     const store = useEditorStore.getState();
+
+    // If the user clicked a terminal on a currently-selected element, start a
+    // wire drag — same gesture as the wire tool, but available without
+    // switching modes. The selection set is the gating affordance.
+    const termRef = hitTerminal(e.target);
+    if (termRef) {
+      const dot = termRef.indexOf('.');
+      const elemId = dot > 0 ? termRef.slice(0, dot) : '';
+      if (elemId && store.selection.includes(elemId)) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (
+          e.target instanceof Element &&
+          e.target.hasPointerCapture?.(e.pointerId)
+        ) {
+          e.target.releasePointerCapture(e.pointerId);
+        }
+        ctx.hostEl.classList.add('tool-wire');
+        store.setWireFromTerminal(termRef);
+        store.setCursorSvg(ctx.viewport.screenToSvg(e.clientX, e.clientY));
+        wireDrag = { pointerId: e.pointerId, fromRef: termRef };
+        return;
+      }
+    }
+
+    const id = hitElement(e.target);
 
     if (!id) {
       // Click on a wire → select its ConnectivityNode (no marquee, no
@@ -121,6 +154,24 @@ export const SelectTool: Tool = {
   },
 
   onPointerMove(e, ctx) {
+    if (wireDrag && e.pointerId === wireDrag.pointerId) {
+      const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
+      useEditorStore.getState().setCursorSvg(pt);
+      // Pointer capture would pin `e.target` to the origin terminal — sample
+      // what's actually under the cursor for the live drop-target marker.
+      const under =
+        typeof document !== 'undefined'
+          ? document.elementFromPoint(e.clientX, e.clientY)
+          : null;
+      const ref = under ? hitTerminal(under) : null;
+      if (!ref || ref === wireDrag.fromRef) {
+        publishWireTarget(null);
+        return;
+      }
+      publishWireTarget(resolveWireTarget(ref, pt));
+      return;
+    }
+
     if (drag && e.pointerId === drag.pointerId) {
       const cur = ctx.viewport.screenToSvg(e.clientX, e.clientY);
       const dx = snap(cur[0] - drag.startSvg[0]);
@@ -151,6 +202,19 @@ export const SelectTool: Tool = {
   },
 
   onPointerUp(e, ctx) {
+    if (wireDrag && e.pointerId === wireDrag.pointerId) {
+      const store = useEditorStore.getState();
+      const from = wireDrag.fromRef;
+      wireDrag = null;
+      ctx.hostEl.classList.remove('tool-wire');
+      store.setWireFromTerminal(null);
+      store.setCursorSvg(null);
+      publishWireTarget(null);
+      const ref = hitTerminal(e.target);
+      if (ref && ref !== from) store.addConnection(from, ref);
+      return;
+    }
+
     if (drag && e.pointerId === drag.pointerId) {
       if (ctx.hostEl.hasPointerCapture(e.pointerId)) {
         ctx.hostEl.releasePointerCapture(e.pointerId);
@@ -195,9 +259,17 @@ export const SelectTool: Tool = {
     }
   },
 
-  onDeactivate() {
+  onDeactivate(ctx) {
     drag = null;
     marquee = null;
+    if (wireDrag) {
+      ctx.hostEl.classList.remove('tool-wire');
+      const store = useEditorStore.getState();
+      store.setWireFromTerminal(null);
+      store.setCursorSvg(null);
+      publishWireTarget(null);
+      wireDrag = null;
+    }
     publishMarquee(null);
   },
 };

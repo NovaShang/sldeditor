@@ -187,6 +187,19 @@
   cursor: copy;
 }
 
+/* In select mode, terminals on the currently-selected element(s) are
+   visible so the user can grab one and drag-connect to another terminal
+   without switching to the wire tool. */
+.ole-terminal[data-on-selected='true'] {
+  display: inline;
+  pointer-events: auto;
+}
+.ole-terminal[data-on-selected='true']:hover {
+  r: 5;
+  stroke: var(--selection);
+  cursor: crosshair;
+}
+
 /* Hover an element → reveal its terminals (others stay hidden). The
    useHoverHighlight hook tags the cursor's element with .ole-hover-element-host
    and its terminals with .ole-hover-terminal-on; CSS finishes the look. */

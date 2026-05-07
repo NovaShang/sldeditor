@@ -97,7 +97,9 @@ function ToolHint() {
   let cancelHint = false;
   switch (active) {
     case 'select':
-      text = '点选元件 · 拖动移动 · 框选多个 · 右键打开菜单';
+      text = hasSelection
+        ? '拖动元件移动 · 拖端子连线 · 右键打开菜单'
+        : '点选元件 · 拖动移动 · 框选多个 · 右键打开菜单';
       if (hasSelection) cancelHint = true;
       break;
     case 'pan':
