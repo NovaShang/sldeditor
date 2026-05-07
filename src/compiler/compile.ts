@@ -10,6 +10,7 @@
  *   7. Auto-route each ConnectivityNode unless the user supplied a path
  */
 
+import { t } from '../i18n';
 import type {
   DiagramFile,
   Element,
@@ -49,7 +50,7 @@ export function compile(diagram: DiagramFile): InternalModel {
       m.diagnostics.push({
         code: 'E001',
         severity: 'error',
-        message: `元件 ID 重复: "${el.id}"`,
+        message: t('compile.duplicateId', { id: el.id }),
         pointer: `/elements/${idx}`,
       });
       return;
@@ -60,7 +61,7 @@ export function compile(diagram: DiagramFile): InternalModel {
       m.diagnostics.push({
         code: 'E003',
         severity: 'error',
-        message: `未知元件类型 kind="${el.kind}" (id=${el.id})`,
+        message: `${t('compile.unknownKind', { kind: el.kind })} (id=${el.id})`,
         pointer: `/elements/${idx}`,
       });
     }
@@ -104,7 +105,7 @@ export function compile(diagram: DiagramFile): InternalModel {
       m.diagnostics.push({
         code: 'E003',
         severity: 'error',
-        message: `非法端子引用 "${ref}"`,
+        message: t('compile.invalidTermRef', { ref }),
         pointer,
       });
       return false;
@@ -116,18 +117,23 @@ export function compile(diagram: DiagramFile): InternalModel {
       m.diagnostics.push({
         code: 'E002',
         severity: 'error',
-        message: `引用了不存在的元件 "${elemId}"`,
+        message: t('compile.elementMissing', { id: elemId }),
         pointer,
       });
       return false;
     }
     if (!re.libraryDef) return false;
-    if (!re.libraryDef.terminals.find((t) => t.id === pin)) {
-      const avail = re.libraryDef.terminals.map((t) => t.id).join(', ');
+    if (!re.libraryDef.terminals.find((term) => term.id === pin)) {
+      const avail = re.libraryDef.terminals.map((term) => term.id).join(', ');
       m.diagnostics.push({
         code: 'E003',
         severity: 'error',
-        message: `元件 "${elemId}" (kind=${re.element.kind}) 没有引脚 "${pin}"，可用引脚: ${avail}`,
+        message: t('compile.missingPin', {
+          id: elemId,
+          kind: re.element.kind,
+          pin,
+          available: avail,
+        }),
         pointer,
       });
       return false;
@@ -143,7 +149,7 @@ export function compile(diagram: DiagramFile): InternalModel {
         m.diagnostics.push({
           code: 'W002',
           severity: 'warning',
-          message: `${g.pointer} 只包含一个端子，已忽略`,
+          message: `${g.pointer} ${t('compile.singleTerminal')}`,
           pointer: g.pointer,
         });
       }

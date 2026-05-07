@@ -21,6 +21,7 @@ import {
   Undo2,
 } from 'lucide-react';
 import { useContextMenu, type ContextMenuEntry } from '../components/ContextMenu';
+import { useT } from '../i18n';
 import { useEditorStore } from '../store';
 import { setViewportApi } from './viewport-bus';
 import { dropElement } from './drop-on-bus';
@@ -45,6 +46,7 @@ const MOD = IS_MAC ? '⌘' : 'Ctrl+';
 const SHIFT = IS_MAC ? '⇧' : 'Shift+';
 
 export function CanvasSvg() {
+  const t = useT();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const groupRef = useRef<SVGGElement | null>(null);
   const gridPatternRef = useRef<SVGPatternElement | null>(null);
@@ -120,14 +122,14 @@ export function CanvasSvg() {
     const hasAnyElement = s.diagram.elements.length > 0;
     const items: ContextMenuEntry[] = [
       {
-        label: '撤销',
+        label: t('menu.undo'),
         shortcut: `${MOD}Z`,
         icon: Undo2,
         onSelect: () => useEditorStore.getState().undo(),
         disabled: s.past.length === 0,
       },
       {
-        label: '重做',
+        label: t('menu.redo'),
         shortcut: `${MOD}${SHIFT}Z`,
         icon: Redo2,
         onSelect: () => useEditorStore.getState().redo(),
@@ -135,21 +137,21 @@ export function CanvasSvg() {
       },
       { type: 'separator' },
       {
-        label: '剪切',
+        label: t('menu.cut'),
         shortcut: `${MOD}X`,
         icon: Scissors,
         onSelect: () => useEditorStore.getState().cutSelection(),
         disabled: !hasSelection,
       },
       {
-        label: '复制',
+        label: t('menu.copy'),
         shortcut: `${MOD}C`,
         icon: Copy,
         onSelect: () => useEditorStore.getState().copySelection(),
         disabled: !hasSelection,
       },
       {
-        label: '粘贴',
+        label: t('menu.paste'),
         shortcut: `${MOD}V`,
         icon: Clipboard,
         onSelect: () => useEditorStore.getState().pasteClipboard(),
@@ -157,14 +159,14 @@ export function CanvasSvg() {
       },
       { type: 'separator' },
       {
-        label: '旋转 90°',
+        label: t('menu.rotate'),
         shortcut: 'R',
         icon: RotateCw,
         onSelect: () => useEditorStore.getState().rotateSelection(90),
         disabled: !hasSelection,
       },
       {
-        label: '镜像',
+        label: t('menu.mirror'),
         shortcut: 'M',
         icon: FlipHorizontal,
         onSelect: () => useEditorStore.getState().mirrorSelection(),
@@ -172,7 +174,7 @@ export function CanvasSvg() {
       },
       { type: 'separator' },
       {
-        label: '全选',
+        label: t('menu.selectAll'),
         shortcut: `${MOD}A`,
         icon: BoxSelect,
         onSelect: () => {
@@ -183,7 +185,7 @@ export function CanvasSvg() {
       },
       { type: 'separator' },
       {
-        label: hasNodeSelection && !hasSelection ? '断开此连线' : '删除',
+        label: hasNodeSelection && !hasSelection ? t('menu.disconnect') : t('menu.delete'),
         shortcut: 'Del',
         icon: Trash2,
         destructive: true,

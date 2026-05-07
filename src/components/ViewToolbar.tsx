@@ -3,6 +3,7 @@ import { Grid2x2, Maximize2, Minus, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tooltip } from './ui/tooltip';
 import { getViewportApi, getScale, subscribeScale } from '../canvas';
+import { useT } from '../i18n';
 import { cn } from '../lib/utils';
 
 const ZOOM_STEPS = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 6, 8] as const;
@@ -127,6 +128,7 @@ function fitToContent(): void {
 }
 
 export function ViewToolbar() {
+  const t = useT();
   const [scale, setScale] = useState(getScale);
   const [grid, setGrid] = useState<boolean>(() => readGrid());
 
@@ -143,12 +145,12 @@ export function ViewToolbar() {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key !== 'g' && e.key !== 'G') return;
-      const t = e.target as HTMLElement | null;
+      const target = e.target as HTMLElement | null;
       if (
-        t &&
-        (t.tagName === 'INPUT' ||
-          t.tagName === 'TEXTAREA' ||
-          t.isContentEditable)
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
       ) {
         return;
       }
@@ -165,9 +167,9 @@ export function ViewToolbar() {
         <Tooltip
           content={
             <div className="space-y-0.5">
-              <div className="font-medium">缩小</div>
+              <div className="font-medium">{t('view.zoomOut')}</div>
               <div className="text-muted-foreground">
-                按预设档位缩小；也可滚轮 ↓ 或 ⌘−
+                {t('view.zoomOutHint')}
               </div>
             </div>
           }
@@ -176,7 +178,7 @@ export function ViewToolbar() {
             variant="ghost"
             size="icon"
             onClick={zoomOut}
-            aria-label="缩小"
+            aria-label={t('view.zoomOut')}
           >
             <Minus />
           </Button>
@@ -184,9 +186,9 @@ export function ViewToolbar() {
         <Tooltip
           content={
             <div className="space-y-0.5">
-              <div className="font-medium">重置到 100%</div>
+              <div className="font-medium">{t('view.reset')}</div>
               <div className="text-muted-foreground">
-                当前 {Math.round(scale * 100)}% — 点击恢复 1:1
+                {t('view.current', { z: Math.round(scale * 100) })}
               </div>
             </div>
           }
@@ -195,7 +197,7 @@ export function ViewToolbar() {
             type="button"
             onClick={() => zoomTo(1)}
             className="min-w-12 rounded-md px-2 py-1 text-center text-xs tabular-nums text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            aria-label="重置到 100%"
+            aria-label={t('view.reset')}
           >
             {Math.round(scale * 100)}%
           </button>
@@ -203,9 +205,9 @@ export function ViewToolbar() {
         <Tooltip
           content={
             <div className="space-y-0.5">
-              <div className="font-medium">放大</div>
+              <div className="font-medium">{t('view.zoomIn')}</div>
               <div className="text-muted-foreground">
-                按预设档位放大；也可滚轮 ↑ 或 ⌘+
+                {t('view.zoomInHint')}
               </div>
             </div>
           }
@@ -214,7 +216,7 @@ export function ViewToolbar() {
             variant="ghost"
             size="icon"
             onClick={zoomIn}
-            aria-label="放大"
+            aria-label={t('view.zoomIn')}
           >
             <Plus />
           </Button>
@@ -223,10 +225,8 @@ export function ViewToolbar() {
         <Tooltip
           content={
             <div className="space-y-0.5">
-              <div className="font-medium">适配视图</div>
-              <div className="text-muted-foreground">
-                自动缩放并居中所有元件
-              </div>
+              <div className="font-medium">{t('view.fit')}</div>
+              <div className="text-muted-foreground">{t('view.fitHint')}</div>
             </div>
           }
         >
@@ -234,7 +234,7 @@ export function ViewToolbar() {
             variant="ghost"
             size="icon"
             onClick={fitToContent}
-            aria-label="适配视图"
+            aria-label={t('view.fit')}
           >
             <Maximize2 />
           </Button>
@@ -244,14 +244,14 @@ export function ViewToolbar() {
             <div className="space-y-0.5">
               <div>
                 <span className="font-medium">
-                  {grid ? '隐藏网格' : '显示网格'}
+                  {grid ? t('view.gridHide') : t('view.gridShow')}
                 </span>
-                <span className="ml-1.5 text-muted-foreground">G</span>
+                <span className="ml-1.5 text-muted-foreground">
+                  {t('view.gridHotkey')}
+                </span>
               </div>
               <div className="text-muted-foreground">
-                {grid
-                  ? '同时关闭对齐吸附（拖动可自由放置）'
-                  : '同时开启对齐吸附（拖动会贴到 10px 网格）'}
+                {grid ? t('view.gridHideHint') : t('view.gridShowHint')}
               </div>
             </div>
           }
@@ -260,7 +260,7 @@ export function ViewToolbar() {
             variant="ghost"
             size="icon"
             onClick={() => setGrid((v) => !v)}
-            aria-label={grid ? '隐藏网格并关闭吸附' : '显示网格并开启吸附'}
+            aria-label={grid ? t('view.gridHideAria') : t('view.gridShowAria')}
             aria-pressed={grid}
             className={cn(!grid && 'text-muted-foreground/60')}
           >

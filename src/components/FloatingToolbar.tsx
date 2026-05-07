@@ -11,14 +11,15 @@ import {
   Wand2,
 } from 'lucide-react';
 import { Tooltip } from './ui/tooltip';
+import { useT, type LocaleKey } from '../i18n';
 import { cn } from '../lib/utils';
 import { useEditorStore, type ToolId } from '../store';
 
 interface ToolDef {
   id: string;
-  label: string;
+  labelKey: LocaleKey;
   hotkey: string;
-  description: string;
+  descriptionKey: LocaleKey;
   icon: React.ComponentType<{ className?: string }>;
   /** Render a divider after this tool (visually groups the toolbar). */
   groupBreakAfter?: boolean;
@@ -35,18 +36,18 @@ interface ToolDef {
 const TOOLS: ToolDef[] = [
   {
     id: 'select',
-    label: '选择',
+    labelKey: 'tool.select',
     hotkey: 'V',
-    description: '点选元件，框选多个，或右键打开菜单',
+    descriptionKey: 'tool.selectHint',
     icon: MousePointer2,
     switchTo: 'select',
     iconOnly: true,
   },
   {
     id: 'pan',
-    label: '平移',
+    labelKey: 'tool.pan',
     hotkey: 'H',
-    description: '拖动画布；空格键可临时切换',
+    descriptionKey: 'tool.panHint',
     icon: Hand,
     switchTo: 'pan',
     groupBreakAfter: true,
@@ -54,25 +55,25 @@ const TOOLS: ToolDef[] = [
   },
   {
     id: 'wire',
-    label: '连线',
+    labelKey: 'tool.wire',
     hotkey: 'W',
-    description: '从一个端子拖动到另一个端子完成连线',
+    descriptionKey: 'tool.wireHint',
     icon: Cable,
     switchTo: 'wire',
   },
   {
     id: 'busbar',
-    label: '母线',
+    labelKey: 'tool.bus',
     hotkey: 'B',
-    description: '画布上拖动一段母线，按下定起点、释放定终点',
+    descriptionKey: 'tool.busHint',
     icon: Minus,
     switchTo: 'busbar',
   },
   {
     id: 'place',
-    label: '元件',
+    labelKey: 'tool.place',
     hotkey: 'P',
-    description: '点击画布放置；或从端子/母线拖出，同时放置并连接',
+    descriptionKey: 'tool.placeHint',
     icon: Shapes,
     switchTo: 'place',
   },
@@ -84,6 +85,7 @@ const TOOLS: ToolDef[] = [
  * tools have a non-obvious gesture and the hint paid off in usability tests.
  */
 function ToolHint() {
+  const t = useT();
   const active = useEditorStore((s) => s.activeTool);
   const placeKind = useEditorStore((s) => s.placeKind);
   const placeFrom = useEditorStore((s) => s.placeFromTerminal);
@@ -98,36 +100,32 @@ function ToolHint() {
   switch (active) {
     case 'select':
       text = hasSelection
-        ? '拖动元件移动 · 拖端子连线 · 右键打开菜单'
-        : '点选元件 · 拖动移动 · 框选多个 · 右键打开菜单';
+        ? t('mode.selectWithSel')
+        : t('mode.selectEmpty');
       if (hasSelection) cancelHint = true;
       break;
     case 'pan':
-      text = '拖动画布 · 滚轮缩放 · 按住空格可在其他工具下临时平移';
+      text = t('mode.pan');
       break;
     case 'wire':
-      text = wireFrom
-        ? '拖到另一个端子或母线上释放完成连线'
-        : '从端子按下，拖动到另一个端子或母线上释放';
+      text = wireFrom ? t('mode.wireDragging') : t('mode.wireInit');
       cancelHint = true;
       break;
     case 'busbar':
-      text = busbarStart
-        ? '拖动决定母线方向，释放定终点'
-        : '在画布按下定起点，拖动后释放定终点';
+      text = busbarStart ? t('mode.busDragging') : t('mode.busInit');
       cancelHint = true;
       break;
     case 'place':
-      if (!placeKind) text = '从左侧元件库选择一种元件';
-      else if (placeFrom) text = '拖到目标位置释放，新元件将连接到起点端子';
-      else text = '点击空白放置；或从已有端子 / 母线拖出，同时放置并连接';
+      if (!placeKind) text = t('mode.placeNoKind');
+      else if (placeFrom) text = t('mode.placeFromTerm');
+      else text = t('mode.placeNormal');
       cancelHint = true;
       break;
   }
   if (!text) return null;
   // In select mode right-click opens the context menu rather than cancelling,
   // so only Esc clears the selection. In drawing tools right-click also cancels.
-  const cancelText = active === 'select' ? 'Esc 清除选择' : '右键 / Esc 取消';
+  const cancelText = active === 'select' ? t('mode.escSelect') : t('mode.escOther');
   return (
     <div className="ole-glass pointer-events-none flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground shadow-sm">
       <span>{text}</span>
@@ -137,6 +135,7 @@ function ToolHint() {
 }
 
 export function FloatingToolbar() {
+  const t = useT();
   const active = useEditorStore((s) => s.activeTool);
   const placeKind = useEditorStore((s) => s.placeKind);
   const setTool = useEditorStore((s) => s.setActiveTool);
@@ -145,36 +144,36 @@ export function FloatingToolbar() {
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
 
-  const isToolActive = (t: ToolDef): boolean => active === t.switchTo;
+  const isToolActive = (def: ToolDef): boolean => active === def.switchTo;
 
   return (
     <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5">
       <ToolHint />
       <div className="ole-glass flex flex-row items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
-        {TOOLS.map((t) => {
-          const Icon = t.icon;
-          const isActive = isToolActive(t);
+        {TOOLS.map((def) => {
+          const Icon = def.icon;
+          const isActive = isToolActive(def);
           const tip =
-            t.id === 'place' && isActive && placeKind == null
-              ? '从左侧元件库选择一个元件后点击画布放置'
-              : t.description;
+            def.id === 'place' && isActive && placeKind == null
+              ? t('tool.placeNoKindTooltip')
+              : t(def.descriptionKey);
           return (
-            <Fragment key={t.id}>
+            <Fragment key={def.id}>
               <ToolbarButton
                 icon={Icon}
-                label={t.label}
-                hotkey={t.hotkey}
+                label={t(def.labelKey)}
+                hotkey={def.hotkey}
                 active={isActive}
-                iconOnly={t.iconOnly}
+                iconOnly={def.iconOnly}
                 description={tip}
                 onClick={() => {
-                  setTool(t.switchTo, {
+                  setTool(def.switchTo, {
                     placeKind:
-                      t.presetPlaceKind !== undefined ? t.presetPlaceKind : undefined,
+                      def.presetPlaceKind !== undefined ? def.presetPlaceKind : undefined,
                   });
                 }}
               />
-              {t.groupBreakAfter && (
+              {def.groupBreakAfter && (
                 <div aria-hidden className="mx-1 h-5 w-px bg-border" />
               )}
             </Fragment>
@@ -183,18 +182,18 @@ export function FloatingToolbar() {
         <div aria-hidden className="mx-1 h-5 w-px bg-border" />
         <ToolbarButton
           icon={Undo2}
-          label="撤销"
+          label={t('tool.undo')}
           hotkey="⌘Z"
-          description="撤销上一次编辑（移动 / 旋转 / 删除等）"
+          description={t('tool.undoHint')}
           iconOnly
           disabled={past === 0}
           onClick={undo}
         />
         <ToolbarButton
           icon={Redo2}
-          label="重做"
+          label={t('tool.redo')}
           hotkey="⌘⇧Z"
-          description="重做被撤销的操作"
+          description={t('tool.redoHint')}
           iconOnly
           disabled={future === 0}
           onClick={redo}
@@ -280,6 +279,7 @@ function ToolbarButton({
 }
 
 function LayoutMenuButton() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -321,8 +321,8 @@ function LayoutMenuButton() {
     <div ref={ref} className="relative">
       <ToolbarButton
         icon={Wand2}
-        label="布局"
-        description="自动排版整个图或仅选中范围，并填补空缺"
+        label={t('layout.label')}
+        description={t('layout.hint')}
         active={open}
         onClick={() => setOpen((v) => !v)}
       />
@@ -337,14 +337,14 @@ function LayoutMenuButton() {
             icon={<Wand2 />}
             disabled={!hasAnyElement || !hasArrangedAny}
           >
-            重新自动布局
+            {t('layout.allAuto')}
           </PopoverItem>
           <PopoverItem
             onClick={run(() => useEditorStore.getState().autoArrangeSelection())}
             icon={<Wand2 />}
             disabled={!hasSelection || !selectionHasArranged}
           >
-            重新自动布局选区
+            {t('layout.selAuto')}
           </PopoverItem>
           <div aria-hidden className="my-1 h-px bg-border" />
           <PopoverItem
@@ -352,14 +352,14 @@ function LayoutMenuButton() {
             icon={<LayoutGrid />}
             disabled={!hasGapsAll}
           >
-            填补未排版位置
+            {t('layout.allFill')}
           </PopoverItem>
           <PopoverItem
             onClick={run(() => useEditorStore.getState().fillUnplacedSelection())}
             icon={<LayoutGrid />}
             disabled={!hasSelection || !selectionHasGaps}
           >
-            填补未排版选区
+            {t('layout.selFill')}
           </PopoverItem>
         </div>
       )}

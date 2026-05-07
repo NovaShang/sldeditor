@@ -13,12 +13,14 @@ import { useEffect, useRef } from 'react';
 import { FlipHorizontal, RotateCw, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tooltip } from './ui/tooltip';
+import { useT } from '../i18n';
 import { useEditorStore } from '../store';
 
 const GAP_PX = 12;
 const TOP_FLIP_THRESHOLD_PX = 56;
 
 export function ContextualToolbar() {
+  const t = useT();
   const selection = useEditorStore((s) => s.selection);
   const selectedNode = useEditorStore((s) => s.selectedNode);
   const activeTool = useEditorStore((s) => s.activeTool);
@@ -98,7 +100,7 @@ export function ContextualToolbar() {
     <div
       ref={ref}
       role="toolbar"
-      aria-label={isNodeMode ? '选中连线操作' : '选中元件操作'}
+      aria-label={isNodeMode ? t('ctx.ariaNode') : t('ctx.ariaElement')}
       className="ole-glass pointer-events-auto fixed left-0 top-0 z-30 hidden items-center gap-0.5 rounded-2xl border border-border p-1 shadow-md"
     >
       {!isNodeMode && (
@@ -107,12 +109,10 @@ export function ContextualToolbar() {
             content={
               <div className="space-y-0.5">
                 <div>
-                  <span className="font-medium">旋转 90°</span>
+                  <span className="font-medium">{t('ctx.rotate')}</span>
                   <span className="ml-1.5 text-muted-foreground">R</span>
                 </div>
-                <div className="text-muted-foreground">
-                  顺时针旋转选中元件，连线随端子自动重排
-                </div>
+                <div className="text-muted-foreground">{t('ctx.rotateHint')}</div>
               </div>
             }
           >
@@ -121,7 +121,7 @@ export function ContextualToolbar() {
               size="icon"
               className="size-7"
               onClick={() => rotate(90)}
-              aria-label="旋转 90°"
+              aria-label={t('ctx.rotate')}
             >
               <RotateCw />
             </Button>
@@ -130,10 +130,10 @@ export function ContextualToolbar() {
             content={
               <div className="space-y-0.5">
                 <div>
-                  <span className="font-medium">水平镜像</span>
+                  <span className="font-medium">{t('ctx.mirror')}</span>
                   <span className="ml-1.5 text-muted-foreground">M</span>
                 </div>
-                <div className="text-muted-foreground">左右翻转选中元件</div>
+                <div className="text-muted-foreground">{t('ctx.mirrorHint')}</div>
               </div>
             }
           >
@@ -142,7 +142,7 @@ export function ContextualToolbar() {
               size="icon"
               className="size-7"
               onClick={() => mirror()}
-              aria-label="镜像"
+              aria-label={t('ctx.mirrorTitle')}
             >
               <FlipHorizontal />
             </Button>
@@ -154,13 +154,11 @@ export function ContextualToolbar() {
         content={
           <div className="space-y-0.5">
             <div>
-              <span className="font-medium">删除</span>
+              <span className="font-medium">{t('ctx.delete')}</span>
               <span className="ml-1.5 text-muted-foreground">Del</span>
             </div>
             <div className="text-muted-foreground">
-              {isNodeMode
-                ? '断开此电气节点上的所有连接（保留元件）'
-                : '移除选中元件及其连接的连线'}
+              {isNodeMode ? t('ctx.deleteHintNode') : t('ctx.deleteHintElement')}
             </div>
           </div>
         }
@@ -170,7 +168,7 @@ export function ContextualToolbar() {
           size="icon"
           className="size-7 text-destructive hover:text-destructive"
           onClick={() => (isNodeMode ? delNode() : del())}
-          aria-label="删除"
+          aria-label={t('ctx.delete')}
         >
           <Trash2 />
         </Button>

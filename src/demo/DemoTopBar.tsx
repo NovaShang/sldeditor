@@ -13,6 +13,7 @@ import {
   FilePlus,
   FileType,
   FolderOpen,
+  Languages,
   Moon,
   Save,
   Sun,
@@ -21,16 +22,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Tooltip } from '../components/ui/tooltip';
 import { useTheme } from '../hooks/use-theme';
+import { useLocale, useT } from '../i18n';
 import { openDiagram, saveDiagram } from '../lib/file-io';
 import { downloadPng, downloadSvg } from '../lib/export-image';
 import { useEditorStore } from '../store';
 
 export function DemoTopBar() {
+  const t = useT();
   const { theme, toggle } = useTheme();
   const isDark = theme === 'dark';
 
   const fileSession = useEditorStore((s) => s.fileSession);
-  const fileLabel = fileSession?.name ?? '未命名';
+  const fileLabel = fileSession?.name ?? t('common.unnamed');
 
   const { onNew, onOpen, onSave, onSaveAs } = useFileActions();
 
@@ -64,14 +67,17 @@ export function DemoTopBar() {
         />
         <ExportMenu />
         <div aria-hidden className="mx-1 h-4 w-px bg-border" />
+        <LocaleToggle />
         <Tooltip
           content={
             <div className="space-y-0.5">
               <div className="font-medium">
-                {isDark ? '切换到亮色' : '切换到暗色'}
+                {isDark ? t('topbar.theme.toLight') : t('topbar.theme.toDark')}
               </div>
               <div className="text-muted-foreground">
-                当前：{isDark ? '暗色' : '亮色'}主题
+                {isDark
+                  ? t('topbar.theme.currentDark')
+                  : t('topbar.theme.currentLight')}
               </div>
             </div>
           }
@@ -79,7 +85,9 @@ export function DemoTopBar() {
           <Button
             variant="ghost"
             size="icon"
-            aria-label={isDark ? '切换到亮色' : '切换到暗色'}
+            aria-label={
+              isDark ? t('topbar.theme.toLight') : t('topbar.theme.toDark')
+            }
             aria-pressed={isDark}
             onClick={toggle}
           >
@@ -91,7 +99,42 @@ export function DemoTopBar() {
   );
 }
 
+function LocaleToggle() {
+  const t = useT();
+  const locale = useLocale((s) => s.locale);
+  const toggle = useLocale((s) => s.toggle);
+  const isZh = locale === 'zh';
+  return (
+    <Tooltip
+      content={
+        <div className="space-y-0.5">
+          <div className="font-medium">
+            {isZh ? t('topbar.lang.toEnglish') : t('topbar.lang.toChinese')}
+          </div>
+          <div className="text-muted-foreground">
+            {isZh
+              ? t('topbar.lang.currentChinese')
+              : t('topbar.lang.currentEnglish')}
+          </div>
+        </div>
+      }
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label={
+          isZh ? t('topbar.lang.toEnglish') : t('topbar.lang.toChinese')
+        }
+        onClick={toggle}
+      >
+        <Languages />
+      </Button>
+    </Tooltip>
+  );
+}
+
 function ExportMenu() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -121,7 +164,7 @@ function ExportMenu() {
     else
       downloadPng(internal, `${baseName}.png`, { ...opts, scale: 2 }).catch((err) => {
         console.error(err);
-        alert(`导出 PNG 失败: ${(err as Error).message}`);
+        alert(t('topbar.export.pngFailed', { err: (err as Error).message }));
       });
   };
 
@@ -130,9 +173,9 @@ function ExportMenu() {
       <Tooltip
         content={
           <div className="space-y-0.5">
-            <div className="font-medium">导出</div>
+            <div className="font-medium">{t('topbar.export.label')}</div>
             <div className="text-muted-foreground">
-              SVG 矢量（可编辑）或 PNG 位图（2× 高清）
+              {t('topbar.export.tooltip')}
             </div>
           </div>
         }
@@ -147,7 +190,7 @@ function ExportMenu() {
           onClick={() => setOpen((v) => !v)}
         >
           <Download />
-          导出
+          {t('topbar.export.label')}
         </Button>
       </Tooltip>
       {open && (
@@ -192,6 +235,7 @@ function FileMenu({
   onSave: () => void;
   onSaveAs: () => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -222,16 +266,16 @@ function FileMenu({
         content={
           <div className="space-y-0.5">
             <div>
-              <span className="font-medium">文件</span>
+              <span className="font-medium">{t('topbar.file.label')}</span>
               <span className="ml-1.5 text-muted-foreground">
                 ⌘O / ⌘S / ⌘⇧S
               </span>
             </div>
             <div className="text-muted-foreground">
-              当前：{fileLabel}
+              {t('topbar.file.current', { name: fileLabel })}
             </div>
             <div className="text-muted-foreground">
-              打开本地 .json 图、保存、或另存为
+              {t('topbar.file.tooltip')}
             </div>
           </div>
         }
@@ -246,7 +290,7 @@ function FileMenu({
           onClick={() => setOpen((v) => !v)}
         >
           <FolderOpen />
-          文件
+          {t('topbar.file.label')}
         </Button>
       </Tooltip>
       {open && (
@@ -258,16 +302,16 @@ function FileMenu({
             {fileLabel}
           </div>
           <MenuItem onClick={run(onNew)} icon={<FilePlus />}>
-            新建
+            {t('topbar.file.new')}
           </MenuItem>
           <MenuItem onClick={run(onOpen)} icon={<FolderOpen />} hint="⌘O">
-            打开…
+            {t('topbar.file.open')}
           </MenuItem>
           <MenuItem onClick={run(onSave)} icon={<Save />} hint="⌘S">
-            保存
+            {t('topbar.file.save')}
           </MenuItem>
           <MenuItem onClick={run(onSaveAs)} icon={<Save />} hint="⌘⇧S">
-            另存为…
+            {t('topbar.file.saveAs')}
           </MenuItem>
         </div>
       )}
@@ -303,6 +347,7 @@ function MenuItem({
 }
 
 function useFileActions() {
+  const t = useT();
   const loadDiagramFromFile = useEditorStore((s) => s.loadDiagramFromFile);
   const setFileSession = useEditorStore((s) => s.setFileSession);
   const setDiagram = useEditorStore((s) => s.setDiagram);
@@ -310,7 +355,7 @@ function useFileActions() {
   const onNew = () => {
     const { diagram } = useEditorStore.getState();
     if (diagram.elements.length > 0) {
-      const ok = confirm('新建会清空当前未保存的内容，是否继续？');
+      const ok = confirm(t('topbar.file.newConfirm'));
       if (!ok) return;
     }
     setDiagram({ version: '1', elements: [] });
@@ -322,7 +367,7 @@ function useFileActions() {
       const result = await openDiagram();
       if (result) loadDiagramFromFile(result.diagram, result.session);
     } catch (e) {
-      alert(`打开失败：${(e as Error).message}`);
+      alert(t('topbar.file.openFailed', { err: (e as Error).message }));
     }
   };
 
@@ -332,7 +377,7 @@ function useFileActions() {
       const session = await saveDiagram(diagram, fileSession);
       if (session) setFileSession(session);
     } catch (e) {
-      alert(`保存失败：${(e as Error).message}`);
+      alert(t('topbar.file.saveFailed', { err: (e as Error).message }));
     }
   };
 
@@ -342,7 +387,7 @@ function useFileActions() {
       const session = await saveDiagram(diagram, fileSession, { saveAs: true });
       if (session) setFileSession(session);
     } catch (e) {
-      alert(`保存失败：${(e as Error).message}`);
+      alert(t('topbar.file.saveFailed', { err: (e as Error).message }));
     }
   };
 

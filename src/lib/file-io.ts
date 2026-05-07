@@ -6,6 +6,7 @@
  * download anchor in browsers without it.
  */
 
+import { t } from '../i18n';
 import type { DiagramFile } from '../model';
 
 const ACCEPT: Record<string, string[]> = { 'application/json': ['.json'] };
@@ -29,17 +30,17 @@ function parseDiagram(text: string): DiagramFile {
   try {
     raw = JSON.parse(text);
   } catch (e) {
-    throw new Error(`JSON 解析失败：${(e as Error).message}`);
+    throw new Error(t('io.parseFailed', { err: (e as Error).message }));
   }
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new Error('文件不是 JSON 对象');
+    throw new Error(t('io.notObject'));
   }
   const obj = raw as Record<string, unknown>;
   if (obj.version !== '1') {
-    throw new Error(`版本不兼容：期望 "1"，实际 ${JSON.stringify(obj.version)}`);
+    throw new Error(t('io.versionMismatch', { actual: JSON.stringify(obj.version) }));
   }
   if (!Array.isArray(obj.elements)) {
-    throw new Error('elements 字段缺失或不是数组');
+    throw new Error(t('io.elementsMissing'));
   }
   return obj as unknown as DiagramFile;
 }
@@ -61,7 +62,7 @@ export async function openDiagram(): Promise<{
     try {
       [handle] = await window.showOpenFilePicker!({
         multiple: false,
-        types: [{ description: 'OneLineEditor diagram', accept: ACCEPT }],
+        types: [{ description: t('topbar.file.fileDescription'), accept: ACCEPT }],
       });
     } catch (e) {
       if (isAbort(e)) return null;
@@ -120,7 +121,7 @@ export async function saveDiagram(
     try {
       handle = await window.showSaveFilePicker!({
         suggestedName: session?.name ?? 'diagram.json',
-        types: [{ description: 'OneLineEditor diagram', accept: ACCEPT }],
+        types: [{ description: t('topbar.file.fileDescription'), accept: ACCEPT }],
       });
     } catch (e) {
       if (isAbort(e)) return null;

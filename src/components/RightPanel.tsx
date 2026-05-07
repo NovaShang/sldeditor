@@ -1,8 +1,12 @@
 import { libraryById } from '../element-library';
+import { useT } from '../i18n';
+import { useLibT } from '../i18n/library';
 import { useEditorStore } from '../store';
 import { PropertyPanel } from './PropertyPanel';
 
 export function RightPanel() {
+  const t = useT();
+  const libT = useLibT();
   const selection = useEditorStore((s) => s.selection);
   const selectedNode = useEditorStore((s) => s.selectedNode);
   const elements = useEditorStore((s) => s.diagram.elements);
@@ -11,15 +15,15 @@ export function RightPanel() {
   // actions; the right panel exists only to edit the selected target.
   if (selection.length === 0 && !selectedNode) return null;
 
-  let title = '属性';
+  let title = t('props.title');
   let count: number | null = null;
   if (selectedNode) {
-    title = '电气节点';
+    title = t('props.node');
   } else if (selection.length === 1) {
     const el = elements.find((e) => e.id === selection[0]);
     if (el) {
       const lib = libraryById[el.kind];
-      title = lib?.name ?? el.kind;
+      title = lib ? libT(`${lib.id}.name`, lib.name) : el.kind;
     }
   } else {
     count = selection.length;
@@ -36,7 +40,7 @@ export function RightPanel() {
         </span>
         {count != null && (
           <span className="rounded bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-muted-foreground/80">
-            {count} 选中
+            {t('props.nSelected', { n: count })}
           </span>
         )}
       </div>

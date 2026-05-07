@@ -8,11 +8,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import {
-  CATEGORY_LABELS,
   CATEGORY_ORDER,
   libraryByCategory,
 } from '../element-library';
 import { usePanels } from '../hooks/use-panels';
+import { useT, type LocaleKey } from '../i18n';
+import { useLibT } from '../i18n/library';
 import { useEditorStore } from '../store';
 import type { LibraryEntry } from '../model/library';
 
@@ -68,6 +69,7 @@ function writePaletteCollapsed(s: Set<string>) {
 }
 
 export function LibraryPopover() {
+  const t = useT();
   const open = useEditorStore((s) => s.activeTool === 'place');
   const setTool = useEditorStore((s) => s.setActiveTool);
   const outlineOpen = usePanels((s) => s.outlineOpen);
@@ -88,7 +90,7 @@ export function LibraryPopover() {
       className="absolute left-3 z-20"
       style={{ top: TOP_INSET }}
       role="dialog"
-      aria-label="元件库"
+      aria-label={t('library.title')}
     >
       <aside
         className="ole-glass flex w-72 flex-col overflow-hidden rounded-2xl border border-border shadow-md"
@@ -96,14 +98,14 @@ export function LibraryPopover() {
       >
         <div className="flex items-center gap-1.5 border-b border-border/40 px-3 py-2">
           <span className="flex-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            元件库
+            {t('library.title')}
           </span>
           <button
             type="button"
             onClick={() => setTool('select')}
             className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            aria-label="关闭"
-            title="关闭"
+            aria-label={t('common.close')}
+            title={t('common.close')}
           >
             <X className="size-3.5" />
           </button>
@@ -115,6 +117,8 @@ export function LibraryPopover() {
 }
 
 function LibraryBody() {
+  const t = useT();
+  const libT = useLibT();
   const [query, setQuery] = useState('');
   const [collapsed, setCollapsed] = useState<Set<string>>(() =>
     readPaletteCollapsed(),
@@ -125,16 +129,19 @@ function LibraryBody() {
     if (!q) return PALETTE_BY_CATEGORY;
     const out: Record<string, LibraryEntry[]> = {};
     for (const [cat, entries] of Object.entries(PALETTE_BY_CATEGORY)) {
-      const hits = entries.filter(
-        (e) =>
-          e.name.toLowerCase().includes(q) ||
+      const hits = entries.filter((e) => {
+        const name = libT(`${e.id}.name`, e.name).toLowerCase();
+        const desc = libT(`${e.id}.desc`, e.description ?? '').toLowerCase();
+        return (
+          name.includes(q) ||
           e.id.toLowerCase().includes(q) ||
-          (e.description?.toLowerCase().includes(q) ?? false),
-      );
+          desc.includes(q)
+        );
+      });
       if (hits.length) out[cat] = hits;
     }
     return out;
-  }, [query]);
+  }, [query, libT]);
 
   const isSearching = query.trim().length > 0;
   const noMatch =
@@ -158,14 +165,14 @@ function LibraryBody() {
       <div className="flex-1 overflow-y-auto px-2 pb-2">
         {noMatch ? (
           <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-            没有匹配的元件
+            {t('library.empty')}
           </p>
         ) : (
           CATEGORY_IDS.map((catId) => {
             const entries = filteredByCat[catId];
             if (!entries?.length) return null;
             const total = PALETTE_BY_CATEGORY[catId]?.length ?? entries.length;
-            const label = CATEGORY_LABELS[catId] ?? catId;
+            const label = t(`cat.${catId}` as LocaleKey);
             const isOpen = isSearching || !collapsed.has(catId);
             return (
               <details
@@ -210,6 +217,7 @@ function SearchBox({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const t = useT();
   return (
     <div className="relative">
       <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -217,14 +225,14 @@ function SearchBox({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="搜索元件…"
+        placeholder={t('library.searchPlaceholder')}
         className="h-7 w-full rounded-md border border-border/60 bg-background/50 pl-7 pr-7 text-xs placeholder:text-muted-foreground focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
-        aria-label="搜索元件"
+        aria-label={t('library.searchAria')}
       />
       {value && (
         <button
           type="button"
-          aria-label="清除搜索"
+          aria-label={t('library.clearSearch')}
           onClick={() => onChange('')}
           className="absolute right-1 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
@@ -236,6 +244,10 @@ function SearchBox({
 }
 
 function ElementRow({ entry }: { entry: LibraryEntry }) {
+  const t = useT();
+  const libT = useLibT();
+  const name = libT(`${entry.id}.name`, entry.name);
+  const description = libT(`${entry.id}.desc`, entry.description ?? '');
   const setTool = useEditorStore((s) => s.setActiveTool);
   const armed = useEditorStore(
     (s) => s.activeTool === 'place' && s.placeKind === entry.id,
@@ -277,11 +289,7 @@ function ElementRow({ entry }: { entry: LibraryEntry }) {
       onDragStart={onDragStart}
       onClick={() => setTool('place', { placeKind: entry.id })}
       data-kind={entry.id}
-      title={
-        entry.description
-          ? `${entry.name} — ${entry.description}`
-          : `${entry.name} — 单击进入放置模式或拖到画布`
-      }
+      title={description ? `${name} — ${description}` : `${name} — ${t('library.itemHint')}`}
     >
       <div className="flex h-7 w-12 shrink-0 items-center justify-center">
         <svg
@@ -292,7 +300,7 @@ function ElementRow({ entry }: { entry: LibraryEntry }) {
         />
       </div>
       <span className="truncate text-xs text-foreground/80 group-hover:text-accent-foreground">
-        {entry.name}
+        {name}
       </span>
     </li>
   );
