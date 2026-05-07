@@ -147,23 +147,25 @@
   display: none;
 }
 
-/* Terminals — hidden by default. The wire tool sets `.tool-wire` on
-   `.ole-canvas-root` to reveal all terminals and turn on hit-testing. */
+/* Terminals — hidden by default. The wire/place tools (and select-mode
+   selection) reveal them via dedicated rules below. We color them with
+   --selection (teal) instead of --foreground so the dots stand out from
+   the diagram's own black strokes; hollow = unconnected, filled = connected. */
 .ole-terminal {
   display: none;
   fill: var(--canvas-bg);
-  stroke: var(--foreground);
-  stroke-width: 1;
+  stroke: var(--selection);
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
   transition: r 80ms ease-out;
 }
 .ole-terminal[data-connected='true'] {
-  fill: var(--foreground);
+  fill: var(--selection);
 }
 .ole-terminal[data-active='true'] {
   stroke: var(--selection);
-  stroke-width: 2;
+  stroke-width: 4;
   fill: var(--selection);
 }
 .ole-canvas-root.tool-wire .ole-terminal {
@@ -236,7 +238,7 @@
    inherits the element's transform. */
 .ole-selection-rect {
   stroke: var(--selection);
-  stroke-width: 1.5;
+  stroke-width: 3;
   stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
@@ -245,7 +247,7 @@
 /* Wire preview during the wire tool. Anchor stays solid, line is dashed. */
 .ole-wire-preview-line {
   stroke: var(--selection);
-  stroke-width: 1.5;
+  stroke-width: 3;
   stroke-dasharray: 4 3;
   fill: none;
   vector-effect: non-scaling-stroke;
@@ -259,13 +261,13 @@
 .ole-wire-preview-target-ring {
   fill: color-mix(in oklch, var(--selection) 25%, transparent);
   stroke: var(--selection);
-  stroke-width: 1.5;
+  stroke-width: 3;
   vector-effect: non-scaling-stroke;
 }
 .ole-wire-preview-target-dot {
   fill: var(--selection);
   stroke: var(--canvas-bg);
-  stroke-width: 1;
+  stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
 
@@ -273,7 +275,7 @@
    bus rendering; endpoints rounded for a clear "draw line" affordance. */
 .ole-busbar-preview-line {
   stroke: var(--selection);
-  stroke-width: 3;
+  stroke-width: 6;
   stroke-linecap: round;
   stroke-dasharray: 6 4;
   fill: none;
@@ -294,7 +296,7 @@
 .ole-bus-handle {
   fill: var(--canvas-bg);
   stroke: var(--selection);
-  stroke-width: 1.5;
+  stroke-width: 3;
   vector-effect: non-scaling-stroke;
   cursor: ew-resize;
   pointer-events: auto;
@@ -307,7 +309,7 @@
 .ole-marquee {
   fill: color-mix(in oklch, var(--selection) 8%, transparent);
   stroke: var(--selection);
-  stroke-width: 1;
+  stroke-width: 2;
   stroke-dasharray: 3 3;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
@@ -326,7 +328,7 @@
 }
 .ole-wire[data-selected='true'] {
   stroke: var(--selection);
-  stroke-width: 3.5;
+  stroke-width: 7;
 }
 
 /* Invisible wide hit area underneath the visible wire — gives users a
@@ -344,9 +346,14 @@
 }
 
 /* Element strokes look the same at every zoom level — strokes don't grow when
-   zooming in. The library SVG fragments use stroke-width="1" by convention. */
+   zooming in. Library SVG fragments author at stroke-width="1"; we override
+   to 2 so the rendered glyph reads at typical UI density. */
 .ole-element [stroke] {
   vector-effect: non-scaling-stroke;
+  stroke-width: 2;
+}
+.ole-element text {
+  font-size: 8px;
 }
 
 /* Per-element hit target. `fill: transparent` (vs `none`) means the rect is
