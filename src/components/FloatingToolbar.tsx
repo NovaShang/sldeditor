@@ -1,12 +1,14 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   Cable,
   Hand,
+  LayoutGrid,
   Minus,
   MousePointer2,
   Redo2,
   Shapes,
   Undo2,
+  Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -126,7 +128,131 @@ export function FloatingToolbar() {
         >
           <Redo2 />
         </Button>
+        <div aria-hidden className="mx-1 h-5 w-px bg-border" />
+        <LayoutMenuButton />
       </div>
     </div>
+  );
+}
+
+function LayoutMenuButton() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Subscribe at field-level so disabled state stays live while menu is open.
+  const elements = useEditorStore((s) => s.diagram.elements);
+  const layout = useEditorStore((s) => s.diagram.layout);
+  const selection = useEditorStore((s) => s.selection);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('mousedown', onClick);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onClick);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const explicit = layout ?? {};
+  const hasAnyElement = elements.length > 0;
+  const hasArrangedAny = Object.keys(explicit).length > 0;
+  const hasGapsAll = elements.some((el) => !explicit[el.id]);
+  const hasSelection = selection.length > 0;
+  const selectionHasArranged = selection.some((id) => !!explicit[id]);
+  const selectionHasGaps = selection.some((id) => !explicit[id]);
+
+  const run = (action: () => void) => () => {
+    setOpen(false);
+    action();
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <Button
+        variant={open ? 'default' : 'ghost'}
+        size="icon"
+        aria-label="布局"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="布局"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(!open && 'text-muted-foreground')}
+      >
+        <Wand2 />
+      </Button>
+      {open && (
+        <div
+          role="menu"
+          // Toolbar lives at bottom of screen — open menu upward.
+          className="ole-glass absolute bottom-full right-0 mb-1.5 min-w-52 rounded-md border border-border p-1 shadow-md"
+        >
+          <PopoverItem
+            onClick={run(() => useEditorStore.getState().autoArrangeAll())}
+            icon={<Wand2 />}
+            disabled={!hasAnyElement || !hasArrangedAny}
+          >
+            重新自动布局
+          </PopoverItem>
+          <PopoverItem
+            onClick={run(() => useEditorStore.getState().autoArrangeSelection())}
+            icon={<Wand2 />}
+            disabled={!hasSelection || !selectionHasArranged}
+          >
+            重新自动布局选区
+          </PopoverItem>
+          <div aria-hidden className="my-1 h-px bg-border" />
+          <PopoverItem
+            onClick={run(() => useEditorStore.getState().fillUnplacedAll())}
+            icon={<LayoutGrid />}
+            disabled={!hasGapsAll}
+          >
+            填补未排版位置
+          </PopoverItem>
+          <PopoverItem
+            onClick={run(() => useEditorStore.getState().fillUnplacedSelection())}
+            icon={<LayoutGrid />}
+            disabled={!hasSelection || !selectionHasGaps}
+          >
+            填补未排版选区
+          </PopoverItem>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PopoverItem({
+  children,
+  icon,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground [&>svg]:size-4',
+        disabled &&
+          'pointer-events-none text-muted-foreground opacity-60 hover:bg-transparent',
+      )}
+    >
+      {icon}
+      <span className="flex-1">{children}</span>
+    </button>
   );
 }
