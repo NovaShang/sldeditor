@@ -64,6 +64,10 @@ export interface EditorState {
   activeTool: ToolId;
   /** When `activeTool === 'place'`, the kind to drop on click. */
   placeKind: string | null;
+  /** Sticky memory of the last kind picked from the library — survives Esc /
+   *  tool switches so re-entering place mode auto-arms the user's previous
+   *  pick. Updated whenever `setPlaceKind` is called with a non-null kind. */
+  lastPlaceKind: string | null;
   /** When `activeTool === 'wire'` and the user has clicked one terminal. */
   wireFromTerminal: TerminalRef | null;
   /** When `activeTool === 'place'` and the user pressed down on a terminal,
@@ -157,6 +161,7 @@ export const useEditorStore = create<EditorState>()(
 
   activeTool: 'select',
   placeKind: null,
+  lastPlaceKind: null,
   wireFromTerminal: null,
   placeFromTerminal: null,
   busbarDrawStart: null,
@@ -238,14 +243,26 @@ export const useEditorStore = create<EditorState>()(
     });
   },
 
-  setActiveTool: (tool, opts) =>
+  setActiveTool: (tool, opts) => {
+    const cur = get();
+    // Resolve placeKind for place mode: explicit > existing armed > last-used.
+    let placeKind: string | null;
+    if (opts?.placeKind !== undefined) placeKind = opts.placeKind;
+    else if (tool === 'place') placeKind = cur.placeKind ?? cur.lastPlaceKind;
+    else placeKind = null;
     set({
       activeTool: tool,
-      placeKind: opts?.placeKind ?? (tool === 'place' ? get().placeKind : null),
-      wireFromTerminal: tool === 'wire' ? get().wireFromTerminal : null,
-      placeFromTerminal: tool === 'place' ? get().placeFromTerminal : null,
-    }),
-  setPlaceKind: (kind) => set({ placeKind: kind }),
+      placeKind,
+      lastPlaceKind: placeKind ?? cur.lastPlaceKind,
+      wireFromTerminal: tool === 'wire' ? cur.wireFromTerminal : null,
+      placeFromTerminal: tool === 'place' ? cur.placeFromTerminal : null,
+    });
+  },
+  setPlaceKind: (kind) =>
+    set((s) => ({
+      placeKind: kind,
+      lastPlaceKind: kind ?? s.lastPlaceKind,
+    })),
   setWireFromTerminal: (ref) => set({ wireFromTerminal: ref }),
   setPlaceFromTerminal: (ref) => set({ placeFromTerminal: ref }),
   setBusbarDrawStart: (pt) => set({ busbarDrawStart: pt }),
@@ -450,14 +467,14 @@ export const useEditorStore = create<EditorState>()(
     get().dispatch((d) => {
       const layout = { ...(d.layout ?? {}) };
       for (const [id, delta] of deltas) {
-        const cur = layout[id];
-        // Auto-placed elements aren't in `d.layout` yet — fall back to the
-        // compiler's resolved coords so the move starts from where the user
-        // actually sees the element on screen.
-        const baseAt: [number, number] = cur?.at ?? internalLayout.get(id)?.at ?? [0, 0];
+        // Auto-placed elements aren't in `d.layout` yet — bake the compiler's
+        // full resolved placement (span/rot/mirror, not just `at`) so a drag
+        // doesn't strip auto-computed properties like a busbar's span.
+        const resolved = internalLayout.get(id);
+        const base: Placement = layout[id] ?? (resolved ? compactPlacement(resolved) : { at: [0, 0] });
         layout[id] = {
-          ...(cur ?? {}),
-          at: [baseAt[0] + delta[0], baseAt[1] + delta[1]],
+          ...base,
+          at: [base.at[0] + delta[0], base.at[1] + delta[1]],
         };
       }
       return { ...d, layout };
@@ -631,6 +648,7 @@ export const useEditorStore = create<EditorState>()(
         diagram: s.diagram,
         activeTool: s.activeTool,
         placeKind: s.placeKind,
+        lastPlaceKind: s.lastPlaceKind,
       }),
       // After rehydration, recompile the internal model so the canvas
       // matches the restored diagram.
