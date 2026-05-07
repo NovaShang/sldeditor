@@ -84,6 +84,10 @@ export function useKeyboardShortcuts(): void {
         case 'W':
           store.setActiveTool('wire');
           return;
+        case 'b':
+        case 'B':
+          store.setActiveTool('busbar');
+          return;
         case 'p':
         case 'P':
           store.setActiveTool('place');
@@ -104,7 +108,10 @@ export function useKeyboardShortcuts(): void {
           return;
         case 'Delete':
         case 'Backspace':
-          if (store.selection.length > 0) {
+          if (store.selectedNode) {
+            e.preventDefault();
+            store.deleteSelectedNode();
+          } else if (store.selection.length > 0) {
             e.preventDefault();
             store.deleteSelection();
           }
@@ -115,7 +122,7 @@ export function useKeyboardShortcuts(): void {
             store.setWireFromTerminal(null);
           } else if (store.activeTool === 'place') {
             store.setActiveTool('select');
-          } else if (store.selection.length > 0) {
+          } else if (store.selectedNode || store.selection.length > 0) {
             store.clearSelection();
           }
           return;

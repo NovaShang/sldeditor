@@ -15,7 +15,7 @@ import type { ResolvedPlacement } from '@/compiler';
 import type { ElementId } from '@/model';
 import { libraryById } from '@/element-library';
 import { snap } from '../grid';
-import { hitElement } from '../hit-test';
+import { hitElement, hitNode } from '../hit-test';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
 import { transformAttr } from '../transform-attr';
 import type { Tool } from './types';
@@ -63,6 +63,15 @@ export const SelectTool: Tool = {
     const store = useEditorStore.getState();
 
     if (!id) {
+      // Click on a wire → select its ConnectivityNode (no marquee, no
+      // element selection change beyond the implicit clear).
+      const nodeId = hitNode(e.target);
+      if (nodeId) {
+        e.preventDefault();
+        store.setSelectedNode(nodeId);
+        return;
+      }
+
       // Empty-space click → start marquee. The selection only changes on
       // pointerup; leaves selection unchanged for plain shift+drag.
       if (!e.shiftKey) store.clearSelection();

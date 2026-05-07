@@ -162,43 +162,83 @@ export function ViewToolbar() {
   return (
     <div className="absolute bottom-3 right-3 z-20">
       <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={zoomOut}
-          aria-label="缩小"
-          title="缩小"
+        <Tooltip
+          content={
+            <div className="space-y-0.5">
+              <div className="font-medium">缩小</div>
+              <div className="text-muted-foreground">
+                按预设档位缩小；也可滚轮 ↓ 或 ⌘−
+              </div>
+            </div>
+          }
         >
-          <Minus />
-        </Button>
-        <button
-          type="button"
-          onClick={() => zoomTo(1)}
-          className="min-w-12 rounded-md px-2 py-1 text-center text-xs tabular-nums text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-          aria-label="重置到 100%"
-          title="重置到 100%"
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={zoomOut}
+            aria-label="缩小"
+          >
+            <Minus />
+          </Button>
+        </Tooltip>
+        <Tooltip
+          content={
+            <div className="space-y-0.5">
+              <div className="font-medium">重置到 100%</div>
+              <div className="text-muted-foreground">
+                当前 {Math.round(scale * 100)}% — 点击恢复 1:1
+              </div>
+            </div>
+          }
         >
-          {Math.round(scale * 100)}%
-        </button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={zoomIn}
-          aria-label="放大"
-          title="放大"
+          <button
+            type="button"
+            onClick={() => zoomTo(1)}
+            className="min-w-12 rounded-md px-2 py-1 text-center text-xs tabular-nums text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            aria-label="重置到 100%"
+          >
+            {Math.round(scale * 100)}%
+          </button>
+        </Tooltip>
+        <Tooltip
+          content={
+            <div className="space-y-0.5">
+              <div className="font-medium">放大</div>
+              <div className="text-muted-foreground">
+                按预设档位放大；也可滚轮 ↑ 或 ⌘+
+              </div>
+            </div>
+          }
         >
-          <Plus />
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={zoomIn}
+            aria-label="放大"
+          >
+            <Plus />
+          </Button>
+        </Tooltip>
         <div aria-hidden className="mx-1 h-4 w-px bg-border" />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={fitToContent}
-          aria-label="适配视图"
-          title="适配视图"
+        <Tooltip
+          content={
+            <div className="space-y-0.5">
+              <div className="font-medium">适配视图</div>
+              <div className="text-muted-foreground">
+                自动缩放并居中所有元件
+              </div>
+            </div>
+          }
         >
-          <Maximize2 />
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={fitToContent}
+            aria-label="适配视图"
+          >
+            <Maximize2 />
+          </Button>
+        </Tooltip>
         <Tooltip
           content={
             <div className="space-y-0.5">

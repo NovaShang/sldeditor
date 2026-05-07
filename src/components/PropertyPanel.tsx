@@ -19,6 +19,9 @@ import { cn } from '@/lib/utils';
 export function PropertyPanel() {
   const selection = useEditorStore((s) => s.selection);
   const elements = useEditorStore((s) => s.diagram.elements);
+  const selectedNode = useEditorStore((s) => s.selectedNode);
+
+  if (selectedNode) return <NodePanel nodeId={selectedNode} />;
 
   if (selection.length === 0) {
     return (
@@ -69,6 +72,78 @@ export function PropertyPanel() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Connectivity-node panel — shown when a wire is the selected target.
+// ---------------------------------------------------------------------------
+
+function NodePanel({ nodeId }: { nodeId: string }) {
+  const node = useEditorStore((s) => s.internal.nodes.get(nodeId));
+  const elements = useEditorStore((s) => s.diagram.elements);
+  const setSelection = useEditorStore((s) => s.setSelection);
+
+  if (!node) {
+    return (
+      <div className="px-4 py-5 text-center text-xs text-muted-foreground">
+        电气节点 {nodeId} 不存在
+      </div>
+    );
+  }
+
+  // Group terminals by element so the list reads "QF1: a, b" rather than
+  // a flat 1-per-row blob.
+  const byElement = new Map<string, string[]>();
+  for (const ref of node.terminals) {
+    const dot = ref.indexOf('.');
+    if (dot < 0) continue;
+    const eId = ref.slice(0, dot);
+    const pin = ref.slice(dot + 1);
+    const arr = byElement.get(eId) ?? [];
+    arr.push(pin);
+    byElement.set(eId, arr);
+  }
+
+  const elById = new Map(elements.map((e) => [e.id, e]));
+
+  return (
+    <div className="flex flex-col gap-3 px-3 py-3 text-xs">
+      <div className="space-y-1">
+        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          电气节点
+        </div>
+        <div className="font-mono text-[12px]">
+          {node.name ? `${node.name} · ` : ''}
+          {node.id}
+        </div>
+        <div className="text-[11px] text-muted-foreground">
+          {node.terminals.length} 个端子 · {byElement.size} 个元件
+        </div>
+      </div>
+
+      <ul className="space-y-0.5 border-t border-border/40 pt-2">
+        {[...byElement.entries()].map(([eId, pins]) => {
+          const el = elById.get(eId);
+          return (
+            <li
+              key={eId}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 hover:bg-accent"
+              onClick={() => setSelection([eId])}
+              title={`选中 ${eId}`}
+            >
+              <span className="flex-1 truncate font-mono text-[11px]">{eId}</span>
+              <span className="truncate text-[10px] text-muted-foreground">
+                {el?.name ?? ''}
+              </span>
+              <span className="font-mono text-[10px] text-muted-foreground/80">
+                {pins.join(', ')}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

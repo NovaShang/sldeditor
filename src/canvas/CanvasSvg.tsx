@@ -25,6 +25,7 @@ import { useEditorStore } from '@/store';
 import { setViewportApi } from './viewport-bus';
 import { dropElement } from './drop-on-bus';
 import { BusHandles } from './BusHandles';
+import { BusbarPreview } from './BusbarPreview';
 import { ElementLayer } from './ElementLayer';
 import { MarqueeOverlay } from './MarqueeOverlay';
 import { PlaceGhost } from './PlaceGhost';
@@ -32,7 +33,7 @@ import { SelectionOverlay } from './SelectionOverlay';
 import { TerminalLayer } from './TerminalLayer';
 import { WireLayer } from './WireLayer';
 import { WirePreview } from './WirePreview';
-import { hitElement } from './hit-test';
+import { hitElement, hitNode } from './hit-test';
 import { useHoverHighlight } from './useHoverHighlight';
 import { useTools } from './useTools';
 import { useViewport } from './useViewport';
@@ -75,12 +76,22 @@ export function CanvasSvg() {
     // If right-clicking an element that isn't part of the current selection,
     // make it the selection — matches Figma / desktop-app convention.
     const elementId = hitElement(e.target);
-    if (elementId && !store.selection.includes(elementId)) {
-      store.setSelection([elementId]);
+    if (elementId) {
+      if (!store.selection.includes(elementId)) {
+        store.setSelection([elementId]);
+      }
+    } else {
+      // No element under cursor — try a wire instead, so right-clicking a
+      // wire surfaces wire-relevant operations.
+      const nodeId = hitNode(e.target);
+      if (nodeId && store.selectedNode !== nodeId) {
+        store.setSelectedNode(nodeId);
+      }
     }
 
     const s = useEditorStore.getState();
     const hasSelection = s.selection.length > 0;
+    const hasNodeSelection = s.selectedNode != null;
     const hasClipboard = !!s.clipboard;
     const hasAnyElement = s.diagram.elements.length > 0;
     const items: ContextMenuEntry[] = [
@@ -148,12 +159,15 @@ export function CanvasSvg() {
       },
       { type: 'separator' },
       {
-        label: '删除',
+        label: hasNodeSelection && !hasSelection ? '断开此连线' : '删除',
         shortcut: 'Del',
         icon: Trash2,
         destructive: true,
-        onSelect: () => useEditorStore.getState().deleteSelection(),
-        disabled: !hasSelection,
+        onSelect: () =>
+          hasNodeSelection && !hasSelection
+            ? useEditorStore.getState().deleteSelectedNode()
+            : useEditorStore.getState().deleteSelection(),
+        disabled: !hasSelection && !hasNodeSelection,
       },
     ];
     contextMenu.open(e.clientX, e.clientY, items);
@@ -189,6 +203,7 @@ export function CanvasSvg() {
           <BusHandles />
           <TerminalLayer />
           <WirePreview />
+          <BusbarPreview />
           <PlaceGhost />
           <MarqueeOverlay />
         </g>

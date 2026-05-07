@@ -4,15 +4,18 @@ import { PropertyPanel } from './PropertyPanel';
 
 export function RightPanel() {
   const selection = useEditorStore((s) => s.selection);
+  const selectedNode = useEditorStore((s) => s.selectedNode);
   const elements = useEditorStore((s) => s.diagram.elements);
 
   // Hidden when nothing selected — the contextual toolbar handles transient
-  // actions; the right panel exists only to edit the selected element.
-  if (selection.length === 0) return null;
+  // actions; the right panel exists only to edit the selected target.
+  if (selection.length === 0 && !selectedNode) return null;
 
   let title = '属性';
   let count: number | null = null;
-  if (selection.length === 1) {
+  if (selectedNode) {
+    title = '电气节点';
+  } else if (selection.length === 1) {
     const el = elements.find((e) => e.id === selection[0]);
     if (el) {
       const lib = libraryById[el.kind];

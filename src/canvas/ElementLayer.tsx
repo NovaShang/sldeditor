@@ -49,7 +49,22 @@ export function ElementLayer() {
   const elements = useEditorStore((s) => s.internal.elements);
   const layout = useEditorStore((s) => s.internal.layout);
   const selection = useEditorStore((s) => s.selection);
+  const selectedNode = useEditorStore((s) => s.selectedNode);
+  const nodes = useEditorStore((s) => s.internal.nodes);
   const selSet = new Set(selection);
+
+  // Elements that have at least one terminal in the selected ConnectivityNode
+  // get a halo to show "this is what the wire connects".
+  const nodeRelated = new Set<string>();
+  if (selectedNode) {
+    const node = nodes.get(selectedNode);
+    if (node) {
+      for (const ref of node.terminals) {
+        const dot = ref.indexOf('.');
+        if (dot > 0) nodeRelated.add(ref.slice(0, dot));
+      }
+    }
+  }
 
   return (
     <g className="ole-element-layer">
@@ -57,6 +72,7 @@ export function ElementLayer() {
         const place = layout.get(re.element.id);
         if (!place) return null;
         const isSelected = selSet.has(re.element.id);
+        const isNodeRelated = nodeRelated.has(re.element.id);
 
         if (!re.libraryDef) {
           // Unknown kind → small red placeholder square.
@@ -65,6 +81,7 @@ export function ElementLayer() {
               key={re.element.id}
               data-element-id={re.element.id}
               data-selected={isSelected ? 'true' : undefined}
+              data-node-related={isNodeRelated ? 'true' : undefined}
               transform={transformAttr(place)}
               className="ole-element ole-element--unknown"
             >
@@ -97,6 +114,7 @@ export function ElementLayer() {
             key={re.element.id}
             data-element-id={re.element.id}
             data-selected={isSelected ? 'true' : undefined}
+            data-node-related={isNodeRelated ? 'true' : undefined}
             transform={transformAttr(place, re.libraryDef)}
             className="ole-element"
           >

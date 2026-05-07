@@ -32,26 +32,11 @@ export function BusHandles() {
   if (!place) return null;
 
   const axis = lib.stretchable.axis;
-  // Endpoint terminals are the two with min/max coord along the stretch axis.
-  const sorted = [...lib.terminals].sort((a, b) =>
-    axis === 'x' ? a.x - b.x : a.y - b.y,
-  );
-  if (sorted.length < 2) return null;
-  const startTerm = sorted[0];
-  const endTerm = sorted[sorted.length - 1];
-
-  // World coords of the visible endpoints (mirroring/rotating local positions
-  // through the placement, scaled by the rendered span).
-  const refLen = (axis === 'x' ? endTerm.x - startTerm.x : endTerm.y - startTerm.y) || 1;
-  const k = (place.span ?? refLen) / refLen;
-  const startLocal: [number, number] = [
-    axis === 'x' ? startTerm.x * k : startTerm.x,
-    axis === 'y' ? startTerm.y * k : startTerm.y,
-  ];
-  const endLocal: [number, number] = [
-    axis === 'x' ? endTerm.x * k : endTerm.x,
-    axis === 'y' ? endTerm.y * k : endTerm.y,
-  ];
+  // Endpoints are derived from naturalSpan + span, independent of terminals.
+  const span = place.span ?? lib.stretchable.naturalSpan;
+  const half = span / 2;
+  const startLocal: [number, number] = axis === 'x' ? [-half, 0] : [0, -half];
+  const endLocal: [number, number] = axis === 'x' ? [half, 0] : [0, half];
   const startWorld = transformPoint(startLocal, place);
   const endWorld = transformPoint(endLocal, place);
 

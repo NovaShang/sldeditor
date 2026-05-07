@@ -15,6 +15,7 @@
  */
 
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import {
   compile,
   type InternalModel,
@@ -27,6 +28,7 @@ import type {
   Element,
   ElementId,
   NamedConnection,
+  NodeId,
   Placement,
   TerminalRef,
 } from '@/model';
@@ -49,7 +51,7 @@ export interface ClipboardData {
   connections: Connection[];
 }
 
-export type ToolId = 'select' | 'pan' | 'wire' | 'place';
+export type ToolId = 'select' | 'pan' | 'wire' | 'place' | 'busbar';
 
 export interface EditorState {
   // ---- Document --------------------------------------------------------
@@ -64,9 +66,14 @@ export interface EditorState {
   placeKind: string | null;
   /** When `activeTool === 'wire'` and the user has clicked one terminal. */
   wireFromTerminal: TerminalRef | null;
+  /** When `activeTool === 'busbar'` and the user has pressed pointer down. */
+  busbarDrawStart: [number, number] | null;
   /** Cursor in SVG coordinates; updated by tools' onPointerMove. */
   cursorSvg: [number, number] | null;
   selection: ElementId[];
+  /** Selected ConnectivityNode (set by clicking a wire). Mutually exclusive
+   *  with `selection` — selecting an element clears it and vice versa. */
+  selectedNode: NodeId | null;
 
   // ---- History ---------------------------------------------------------
   past: DiagramFile[];
@@ -92,11 +99,14 @@ export interface EditorState {
   setActiveTool: (tool: ToolId, opts?: { placeKind?: string | null }) => void;
   setPlaceKind: (kind: string | null) => void;
   setWireFromTerminal: (ref: TerminalRef | null) => void;
+  setBusbarDrawStart: (pt: [number, number] | null) => void;
   setCursorSvg: (pt: [number, number] | null) => void;
 
   setSelection: (ids: ElementId[]) => void;
   toggleInSelection: (id: ElementId) => void;
   clearSelection: () => void;
+  /** Select (or deselect with `null`) a ConnectivityNode by clicking a wire. */
+  setSelectedNode: (nodeId: NodeId | null) => void;
 
   // ---- Clipboard actions ----------------------------------------------
   copySelection: () => void;
@@ -116,6 +126,12 @@ export interface EditorState {
   // ---- Document edit shortcuts ----------------------------------------
   moveElements: (deltas: Map<ElementId, [number, number]>) => void;
   deleteSelection: () => void;
+  /**
+   * Drop every connection (and bus.tap entry) that touches the currently
+   * selected ConnectivityNode — effectively "delete this wire". Elements
+   * stay; only the connectivity disappears.
+   */
+  deleteSelectedNode: () => void;
   rotateSelection: (deltaDegrees: 90 | -90 | 180) => void;
   mirrorSelection: () => void;
   addElement: (
@@ -128,7 +144,9 @@ export interface EditorState {
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
 }
 
-export const useEditorStore = create<EditorState>((set, get) => ({
+export const useEditorStore = create<EditorState>()(
+  persist(
+    (set, get) => ({
   diagram: EMPTY_DIAGRAM,
   internal: compile(EMPTY_DIAGRAM),
   fileSession: null,
@@ -136,8 +154,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   activeTool: 'select',
   placeKind: null,
   wireFromTerminal: null,
+  busbarDrawStart: null,
   cursorSvg: null,
   selection: [],
+  selectedNode: null,
 
   past: [],
   future: [],
@@ -152,6 +172,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       past: [],
       future: [],
       selection: [],
+      selectedNode: null,
       wireFromTerminal: null,
     }),
 
@@ -165,6 +186,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       past: [],
       future: [],
       selection: [],
+      selectedNode: null,
       wireFromTerminal: null,
     }),
 
@@ -215,18 +237,22 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }),
   setPlaceKind: (kind) => set({ placeKind: kind }),
   setWireFromTerminal: (ref) => set({ wireFromTerminal: ref }),
+  setBusbarDrawStart: (pt) => set({ busbarDrawStart: pt }),
   setCursorSvg: (pt) => set({ cursorSvg: pt }),
 
-  setSelection: (ids) => set({ selection: dedupe(ids) }),
+  setSelection: (ids) => set({ selection: dedupe(ids), selectedNode: null }),
   toggleInSelection: (id) => {
     const sel = get().selection;
     set({
       selection: sel.includes(id)
         ? sel.filter((x) => x !== id)
         : [...sel, id],
+      selectedNode: null,
     });
   },
-  clearSelection: () => set({ selection: [] }),
+  clearSelection: () => set({ selection: [], selectedNode: null }),
+  setSelectedNode: (nodeId) =>
+    set({ selectedNode: nodeId, selection: nodeId ? [] : get().selection }),
 
   copySelection: () => {
     const { selection, diagram, internal } = get();
@@ -449,6 +475,63 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set({ selection: [] });
   },
 
+  deleteSelectedNode: () => {
+    const { selectedNode, internal } = get();
+    if (!selectedNode) return;
+    const node = internal.nodes.get(selectedNode);
+    if (!node) return;
+    const memberSet = new Set<string>(node.terminals);
+
+    // Elements that lose a connection here. Auto-placed ones would otherwise
+    // jump to a fallback position once the connection that anchored them is
+    // gone — bake their current resolved coords into `layout` first so they
+    // stay where the user sees them.
+    const affectedElementIds = new Set<ElementId>();
+    for (const ref of node.terminals) {
+      const dot = ref.indexOf('.');
+      if (dot > 0) affectedElementIds.add(ref.slice(0, dot));
+    }
+
+    get().dispatch((d) => {
+      const layout = { ...(d.layout ?? {}) };
+      for (const id of affectedElementIds) {
+        if (layout[id]) continue;
+        const resolved = internal.layout.get(id);
+        if (!resolved) continue;
+        const placement: Placement = { at: resolved.at };
+        if (resolved.rot) placement.rot = resolved.rot;
+        if (resolved.mirror) placement.mirror = resolved.mirror;
+        if (resolved.span !== undefined) placement.span = resolved.span;
+        layout[id] = placement;
+      }
+
+      // Drop any connection that touches the node (connections are union-find
+      // groups, so by definition every member of the group lives in the same
+      // node — `some` is sufficient).
+      const connections = (d.connections ?? []).filter((c) => {
+        const terms = Array.isArray(c) ? c : c.terminals;
+        return !terms.some((t) => memberSet.has(t));
+      });
+      // Strip bus.tap entries that landed in this node.
+      const elements = d.elements.map((el) => {
+        if (el.kind !== 'busbar' || !Array.isArray(el.tap)) return el;
+        const filtered = el.tap.filter((ref) => !memberSet.has(ref));
+        if (filtered.length === el.tap.length) return el;
+        const next: Element = { ...el };
+        if (filtered.length > 0) next.tap = filtered;
+        else delete next.tap;
+        return next;
+      });
+      return {
+        ...d,
+        elements,
+        connections: connections.length ? connections : undefined,
+        layout: Object.keys(layout).length ? layout : undefined,
+      };
+    });
+    set({ selectedNode: null });
+  },
+
   rotateSelection: (deltaDegrees) => {
     const { selection, internal } = get();
     if (selection.length === 0) return;
@@ -524,7 +607,28 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       };
     });
   },
-}));
+    }),
+    {
+      name: 'ole-editor',
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      // Persist only the document and a couple of UI prefs. `internal` is
+      // re-derived from `diagram`; `fileSession` holds non-serializable
+      // FileSystemFileHandle; selection / cursor / wire-from / undo history
+      // are transient by design.
+      partialize: (s) => ({
+        diagram: s.diagram,
+        activeTool: s.activeTool,
+        placeKind: s.placeKind,
+      }),
+      // After rehydration, recompile the internal model so the canvas
+      // matches the restored diagram.
+      onRehydrateStorage: () => (state) => {
+        if (state?.diagram) state.internal = compile(state.diagram);
+      },
+    },
+  ),
+);
 
 // ---------------------------------------------------------------------------
 // Helpers
