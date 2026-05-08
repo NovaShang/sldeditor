@@ -65,3 +65,8 @@ export type { Locale } from './i18n';
 // want a "local file" mode without their own persistence layer.
 export { FileMenu } from './components/FileMenu';
 export { ExportMenu } from './components/ExportMenu';
+
+// Image export primitives — exposed so consumers (e.g. cloud apps with their
+// own naming/persistence) can build their own export UI on top of the same
+// SVG/PNG pipeline the bundled ExportMenu uses.
+export { buildExportSvg, downloadSvg, downloadPng } from './lib/export-image';
