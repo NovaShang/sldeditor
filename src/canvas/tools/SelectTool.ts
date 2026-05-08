@@ -101,8 +101,15 @@ export const SelectTool: Tool = {
 
     // If the user clicked a terminal on a currently-selected element, start a
     // wire drag — same gesture as the wire tool, but available without
-    // switching modes. The selection set is the gating affordance.
-    const termRef = hitTerminal(e.target);
+    // switching modes. The selection set is the gating affordance. We only
+    // accept *direct* terminal hits (`data-terminal-id` ancestor); the
+    // busbar-body fallback in `hitTerminal` is excluded so dragging the bus
+    // body still moves the bus instead of starting a wire.
+    const directTerm =
+      e.target instanceof Element
+        ? e.target.closest('[data-terminal-id]')?.getAttribute('data-terminal-id')
+        : null;
+    const termRef = directTerm ? hitTerminal(e.target) : null;
     if (termRef) {
       const dot = termRef.indexOf('.');
       const elemId = dot > 0 ? termRef.slice(0, dot) : '';
