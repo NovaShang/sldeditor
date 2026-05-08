@@ -333,24 +333,41 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
   if (rootBuses.length === 0 && buses.length > 0) rootBuses.push(buses[0].id);
 
-  const busOrder: ElementId[] = [];
-  const visitedBuses = new Set<ElementId>();
-  const bfsQueue: ElementId[] = [...rootBuses];
-  while (bfsQueue.length > 0) {
-    const id = bfsQueue.shift()!;
-    if (visitedBuses.has(id)) continue;
-    visitedBuses.add(id);
-    busOrder.push(id);
-    const links = busLinks.get(id);
-    if (links) {
+  // Tier assignment: BFS depth from each root bus. Buses linked to the same
+  // upper bus end up at the same level (parallel transformers feeding two
+  // downstream bars get a single shared Y instead of being stacked).
+  const busLevel = new Map<ElementId, number>();
+  for (const r of rootBuses) busLevel.set(r, 0);
+  {
+    const bfsQ: ElementId[] = [...rootBuses];
+    while (bfsQ.length > 0) {
+      const id = bfsQ.shift()!;
+      const lvl = busLevel.get(id)!;
+      const links = busLinks.get(id);
+      if (!links) continue;
       for (const otherId of links.keys()) {
-        if (!visitedBuses.has(otherId)) bfsQueue.push(otherId);
+        if (busLevel.has(otherId)) continue;
+        busLevel.set(otherId, lvl + 1);
+        bfsQ.push(otherId);
       }
     }
   }
+  // Disconnected buses fall to a level beyond the deepest reachable one.
   for (const bus of buses) {
-    if (!visitedBuses.has(bus.id)) busOrder.push(bus.id);
+    if (busLevel.has(bus.id)) continue;
+    const maxLvl = busLevel.size === 0
+      ? -1
+      : Math.max(...Array.from(busLevel.values()));
+    busLevel.set(bus.id, maxLvl + 1);
   }
+  const levelToBuses = new Map<number, ElementId[]>();
+  for (const bus of buses) {
+    const lvl = busLevel.get(bus.id)!;
+    const arr = levelToBuses.get(lvl) ?? [];
+    arr.push(bus.id);
+    levelToBuses.set(lvl, arr);
+  }
+  const sortedLevels = [...levelToBuses.keys()].sort((a, b) => a - b);
 
   // ---- 3. Place buses with dynamic Y gap ---------------------------------
   // The gap floors at `MIN_BUS_GAP_Y` and stretches to fit whatever sits in
@@ -454,36 +471,19 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     return Math.max(MIN_BUS_GAP_Y, upperChain + pinSpan + lowerChain);
   };
 
-  let curY = BUS_Y0;
-  for (let i = 0; i < busOrder.length; i++) {
-    const busId = busOrder[i];
-    if (layout.has(busId)) {
-      curY = Math.max(curY, layout.get(busId)!.at[1]);
-    } else {
-      layout.set(busId, {
-        at: [snap(BUS_X), snap(curY)],
-        rot: 0,
-        mirror: false,
-        span: DEFAULT_BUS_SPAN,
-      });
-    }
-    if (i + 1 < busOrder.length) {
-      curY += gapBetween(busId, busOrder[i + 1]);
-    }
-  }
-
-  // ---- 4. Distribute bus taps along each bus span (width-aware, side-split)
-  // Runs BEFORE linker placement so the linker can align its X with the
-  // chain head element (the tap that anchors the chain leading up to it).
-  // Linkers themselves are skipped here — they get their own placement next.
-  for (const bus of buses) {
+  // ---- 3-5. Tier-based bus / tap / linker placement ---------------------
+  // Walk levels top-down. For each level: pick a Y from the previous
+  // level's Y plus the maximum parent-child gap; pick each bus's X (root =
+  // default; non-root = chain-head X of its parent linker so the linker
+  // body lines up with whatever's coming down from above); distribute that
+  // bus's taps; then place every linker whose lower bus is at this level
+  // (both endpoints are now placed and chain heads on both sides are known).
+  const distributeBusTaps = (bus: Element): void => {
     const tapRefs = effectiveTaps.get(bus.id);
-    if (!tapRefs || tapRefs.length === 0) continue;
+    if (!tapRefs || tapRefs.length === 0) return;
     const place = layout.get(bus.id);
-    if (!place) continue;
+    if (!place) return;
 
-    // Skip taps already placed (user layout) or known to be linkers (which
-    // get bridged between two buses in stage 5 below).
     const remaining = tapRefs.flatMap((ref) => {
       const dot = ref.indexOf('.');
       if (dot < 0) return [];
@@ -497,10 +497,8 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       if (!localTerm) return [];
       return [{ elId, lib, localTerm }];
     });
-    if (remaining.length === 0) continue;
+    if (remaining.length === 0) return;
 
-    // Split: pin local Y > 0 → body extends UP from pin (above-bus side).
-    //        pin local Y ≤ 0 → body extends DOWN from pin (below-bus side).
     const aboveSide: typeof remaining = [];
     const belowSide: typeof remaining = [];
     for (const r of remaining) {
@@ -508,10 +506,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       else belowSide.push(r);
     }
 
-    // Adaptive span: each side is distributed independently, so the wider
-    // side dictates the minimum bus length needed to fit its taps. We honor
-    // the user's span when it's already enough; otherwise grow it (covers
-    // both "no span supplied" and "supplied span too short").
     const sideTotalWidth = (group: typeof remaining): number =>
       group.reduce((s, r) => s + Math.max(r.lib.width, MIN_TAP_SPACING), 0);
     const requiredSpan =
@@ -526,9 +520,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       if (group.length === 0) return;
       const widths = group.map((r) => Math.max(r.lib.width, MIN_TAP_SPACING));
       const totalW = widths.reduce((s, w) => s + w, 0);
-      // Use the full bus span when taps fit; otherwise extend just enough.
-      // Slack is split into N+1 boundaries (margin on each end + N-1 between)
-      // so taps spread out instead of clumping at the bus center.
       const usableSpan = Math.max(span, totalW);
       const slotGap = (usableSpan - totalW) / (group.length + 1);
       let cursor = place.at[0] - usableSpan / 2 + slotGap;
@@ -545,26 +536,20 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         cursor += slotW + slotGap;
       }
     };
-
     distribute(aboveSide);
     distribute(belowSide);
-  }
+  };
 
-  // ---- 5. Place linker elements between their bus pair -------------------
-  // Anchored at the chain head's X (the tap that starts the chain leading
-  // up to this linker) so the body lines up with what's coming down from
-  // the upper bus, and offset down by the chain length so the chain
-  // elements (placed in stage 6) fit into the gap above the linker.
-  for (const link of linkers) {
-    if (layout.has(link.elementId)) continue;
+  const placeLinker = (link: LinkerInfo): void => {
+    if (layout.has(link.elementId)) return;
     const linkerLib = libOf(link.elementId);
-    if (!linkerLib) continue;
+    if (!linkerLib) return;
 
     const reachedBuses = link.attachments
       .map((a) => a.busId)
       .filter((id) => layout.has(id))
       .sort((a, b) => layout.get(a)!.at[1] - layout.get(b)!.at[1]);
-    if (reachedBuses.length < 2) continue;
+    if (reachedBuses.length < 2) return;
     const upperBusId = reachedBuses[0];
     const upperPlace = layout.get(upperBusId)!;
 
@@ -572,17 +557,12 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const lowerPin = link.attachments.find((a) => a.busId === reachedBuses[1])!.pin;
     const upperLocal = linkerLib.terminals.find((t) => t.id === upperPin);
     const lowerLocal = linkerLib.terminals.find((t) => t.id === lowerPin);
-    if (!upperLocal || !lowerLocal) continue;
+    if (!upperLocal || !lowerLocal) return;
 
-    // For rot=0, upperLocal.y must be ≤ lowerLocal.y so the upper pin ends
-    // up above the lower pin in world space; flip 180° if reversed.
     const rot: 0 | 180 = upperLocal.y <= lowerLocal.y ? 0 : 180;
-
     const upperResult = chainExtentToBus(link, upperBusId, upperPin);
     const upperPinWorldY = upperPlace.at[1] + upperResult.extent;
 
-    // Align with the chain head's X if there's a chain; otherwise center on
-    // the upper bus (covers the direct-tap-on-both-sides case).
     let xCenter = upperPlace.at[0];
     if (upperResult.head) {
       const headPlace = layout.get(upperResult.head);
@@ -593,8 +573,98 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       rot === 0
         ? [snap(xCenter - upperLocal.x), snap(upperPinWorldY - upperLocal.y)]
         : [snap(xCenter + upperLocal.x), snap(upperPinWorldY + upperLocal.y)];
-
     layout.set(link.elementId, { at, rot, mirror: false });
+  };
+
+  // Sibling buses at the same level that are NOT linker-bridged get spread
+  // horizontally so they don't overlap when sharing a Y. (Linker-bridged
+  // siblings inherit their X from chain-head X of the parent linker, which
+  // is computed below — this only matters for level 0 with multiple roots
+  // or for orphan tiers added at the bottom.)
+  const SIBLING_X_GAP = 100;
+
+  let prevLevelY = BUS_Y0;
+  for (let li = 0; li < sortedLevels.length; li++) {
+    const lvl = sortedLevels[li];
+    const busIdsAtLevel = levelToBuses.get(lvl)!;
+
+    let levelY: number;
+    if (li === 0) {
+      levelY = BUS_Y0;
+    } else {
+      const prevBusIds = levelToBuses.get(sortedLevels[li - 1])!;
+      let maxGap = 0;
+      for (const parent of prevBusIds) {
+        for (const child of busIdsAtLevel) {
+          if (busLinks.get(parent)?.get(child)) {
+            maxGap = Math.max(maxGap, gapBetween(parent, child));
+          }
+        }
+      }
+      // No linker between prev level and this level (orphan tier) → use the
+      // global floor.
+      if (maxGap === 0) maxGap = MIN_BUS_GAP_Y;
+      levelY = prevLevelY + maxGap;
+    }
+    prevLevelY = levelY;
+
+    // Place each bus at this level. Linker-bridged children center on the
+    // parent linker's chain head; siblings without a linker spread out so
+    // they don't overlap.
+    let nextSiblingX = BUS_X;
+    for (const busId of busIdsAtLevel) {
+      if (layout.has(busId)) {
+        prevLevelY = Math.max(prevLevelY, layout.get(busId)!.at[1]);
+        continue;
+      }
+      let busX: number | undefined;
+      if (li > 0) {
+        const prevBusIds = levelToBuses.get(sortedLevels[li - 1])!;
+        for (const parent of prevBusIds) {
+          const link = busLinks.get(parent)?.get(busId);
+          if (!link) continue;
+          const parentPin = link.attachments.find((a) => a.busId === parent)!.pin;
+          const result = chainExtentToBus(link, parent, parentPin);
+          if (result.head && layout.has(result.head)) {
+            busX = layout.get(result.head)!.at[0];
+            break;
+          }
+          // Parent linker exists but no chain → fall through to parent's X.
+          busX = layout.get(parent)!.at[0];
+          break;
+        }
+      }
+      if (busX === undefined) {
+        busX = nextSiblingX;
+        nextSiblingX += DEFAULT_BUS_SPAN + SIBLING_X_GAP;
+      }
+      layout.set(busId, {
+        at: [snap(busX), snap(levelY)],
+        rot: 0,
+        mirror: false,
+        span: DEFAULT_BUS_SPAN,
+      });
+    }
+
+    // Distribute taps for each bus at this level — needs to happen after the
+    // bus is placed so chain heads have known X for the next level.
+    for (const busId of busIdsAtLevel) {
+      const bus = elementById.get(busId);
+      if (bus) distributeBusTaps(bus);
+    }
+
+    // Place every linker whose lower bus is at this level. Both endpoints
+    // are placed by now and chain heads on both sides have been distributed.
+    if (li > 0) {
+      for (const link of linkers) {
+        if (layout.has(link.elementId)) continue;
+        const involvesThisLevel = link.attachments.some((a) =>
+          busIdsAtLevel.includes(a.busId),
+        );
+        if (!involvesThisLevel) continue;
+        placeLinker(link);
+      }
+    }
   }
 
   // ---- 6. Node-based parallel-branch placement --------------------------
