@@ -18,11 +18,13 @@
  *      above-bus / below-bus groups by their local pin Y (so sources don't
  *      crowd the X axis used by loads), with each slot sized to the element's
  *      library width (with a min spacing).
- *   5. BFS through `connections` for any other reachable element. The
- *      downstream is rotated so its connecting pin faces the upstream's exit
- *      direction (otherwise the body extends back across the wire path).
- *      Placements are nudged in 10px steps along the exit direction until
- *      they no longer overlap a previously placed bbox.
+ *   5. Resolve electrical nodes via union-find (raw connections + bus taps).
+ *      For each node with placed and unplaced members, vote on an anchor pin
+ *      (the placed pin most directly connected to the unplaced cluster) and
+ *      lay the remaining elements out as parallel branches along the
+ *      perpendicular to the anchor's exit direction. Iterate to a fixpoint
+ *      so chained downstream elements eventually anchor on a placed pin
+ *      rather than being routed back across the bus.
  *   6. Anything still unplaced falls back to a grid in the lower-right.
  *
  * All resolved positions are snapped to a 10px grid so subsequent user
@@ -39,6 +41,7 @@ import type {
 } from '../model';
 import type { ResolvedPlacement } from './internal-model';
 import { orientationVec, transformOrientation, transformPoint } from './transforms';
+import { UnionFind } from './union-find';
 
 const ORIENT_CYCLE: readonly Orientation[] = ['n', 'e', 's', 'w'];
 const OPPOSITE_ORIENT: Record<Orientation, Orientation> = {
@@ -78,7 +81,6 @@ const DEFAULT_BUS_SPAN = 720;
 const CHAIN_GAP = 60;
 const MIN_TAP_SPACING = 80;
 const GRID = 10;
-const COLLISION_SAFETY_STEPS = 20;
 const FALLBACK_GRID_X0 = 60;
 const FALLBACK_GRID_Y0 = 520;
 const FALLBACK_GRID_DX = 80;
@@ -86,13 +88,6 @@ const FALLBACK_GRID_DY = 80;
 const FALLBACK_GRID_COLS = 8;
 
 const SOURCE_CATEGORIES = new Set(['source', 'renewable']);
-
-interface BBox {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
 
 interface BusAttachment {
   busId: ElementId;
@@ -481,110 +476,213 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     distribute(belowSide);
   }
 
-  // ---- 6. BFS through connections (collision-aware) ----------------------
-  // Build adjacency groups: explicit connections + sugar-derived groups.
-  const groups: TerminalRef[][] = [];
-  for (const c of connections) {
-    if (Array.isArray(c)) {
-      if (c.length >= 2) groups.push(c);
-    } else if (c.terminals.length >= 2) {
-      groups.push(c.terminals);
-    }
+  // ---- 6. Node-based parallel-branch placement --------------------------
+  // The earlier implementation walked raw connection groups and chained
+  // each downstream off whichever upstream was visited first. That blew up
+  // on multi-pin nodes — three earthing switches sharing `QF2.t2` were
+  // serialized via collision-nudge, and any sibling reached through the
+  // *wrong* pin (e.g. QE7 reached via QE1.t_top) was placed pointing back
+  // across the bus.
+  //
+  // Now we resolve electrical nodes via union-find and, for each node with
+  // unplaced members, pick the anchor pin by *voting* on raw connection
+  // co-membership. Unplaced elements that share an anchor pin are laid out
+  // as parallel branches along the perpendicular to the anchor's exit. We
+  // iterate to a fixpoint so newly-placed elements can anchor further
+  // chains. Bus-tap nodes use stage-5 placements; the synthetic `B*.tap`
+  // pin is excluded from anchor candidates.
+  const uf = new UnionFind<TerminalRef>();
+  const rawGroups: TerminalRef[][] = [];
+  for (const conn of connections) {
+    const terms = Array.isArray(conn) ? conn : conn.terminals;
+    if (terms.length < 2) continue;
+    rawGroups.push(terms);
+    for (let i = 1; i < terms.length; i++) uf.union(terms[0], terms[i]);
   }
   for (const bus of buses) {
-    const tapRefs = effectiveTaps.get(bus.id);
-    if (!tapRefs || tapRefs.length === 0) continue;
-    // Express as a group `[B.tap, ...members]` so the BFS treats the bus
-    // as the hub for its taps.
-    groups.push([`${bus.id}.tap` as TerminalRef, ...tapRefs]);
+    const tapKey = `${bus.id}.tap` as TerminalRef;
+    const taps = effectiveTaps.get(bus.id);
+    if (!taps || taps.length === 0) continue;
+    uf.add(tapKey);
+    for (const t of taps) {
+      uf.union(tapKey, t);
+      // Each tap is also a "raw group" so voting can credit a placed tap
+      // when an unplaced sibling co-references it.
+      rawGroups.push([tapKey, t]);
+    }
+  }
+  for (const el of elements) {
+    if (el.kind === 'busbar') {
+      uf.add(`${el.id}.tap` as TerminalRef);
+      continue;
+    }
+    const lib = libOf(el.id);
+    if (!lib) continue;
+    for (const t of lib.terminals) uf.add(`${el.id}.${t.id}` as TerminalRef);
   }
 
-  const placedBboxes: BBox[] = [];
-  for (const [id, p] of layout) {
-    const lib = libOf(id);
-    if (lib) placedBboxes.push(approxBbox(p, lib));
+  const isPinPlaced = (ref: TerminalRef): boolean => {
+    const dot = ref.indexOf('.');
+    if (dot < 0) return false;
+    const id = ref.slice(0, dot);
+    return layout.has(id);
+  };
+  const isBusPin = (ref: TerminalRef): boolean => {
+    const dot = ref.indexOf('.');
+    if (dot < 0) return false;
+    return busIds.has(ref.slice(0, dot));
+  };
+
+  // Index pin → list of raw groups containing it. Used for vote-based anchor
+  // selection so QE5 → QF2.t1 (not QF1.t1) when both are placed in the same
+  // bus-tap node.
+  const pinToGroups = new Map<TerminalRef, TerminalRef[][]>();
+  for (const group of rawGroups) {
+    for (const pin of group) {
+      const arr = pinToGroups.get(pin);
+      if (arr) arr.push(group);
+      else pinToGroups.set(pin, [group]);
+    }
   }
 
-  const queue: ElementId[] = Array.from(layout.keys());
-  const visited = new Set<ElementId>(queue);
+  // Iterate to fixpoint: each pass places one "layer" of parallel branches.
+  // Newly-placed elements expose their other terminals as anchors for the
+  // next pass, so chained downstream elements still get reached.
+  let progressed = true;
+  let safety = elements.length + 4;
+  while (progressed && safety-- > 0) {
+    progressed = false;
+    const nodeRoots = uf.groups();
 
-  while (queue.length > 0) {
-    const upstreamId = queue.shift()!;
-    const upstreamLib = libOf(upstreamId);
-    if (!upstreamLib) continue;
-    const upstreamPlace = layout.get(upstreamId);
-    if (!upstreamPlace) continue;
+    for (const [, node] of nodeRoots) {
+      if (node.length < 2) continue;
 
-    for (const group of groups) {
-      const upstreamRefInGroup = group.find((r) => r.startsWith(`${upstreamId}.`));
-      if (!upstreamRefInGroup) continue;
-      const upstreamPin = upstreamRefInGroup.slice(upstreamId.length + 1);
-      const upstreamLocal = upstreamLib.terminals.find((t) => t.id === upstreamPin);
-      if (!upstreamLocal) continue;
-      const upstreamWorld = transformPoint(
-        [upstreamLocal.x, upstreamLocal.y],
-        upstreamPlace,
+      interface UnplacedPinInfo {
+        ref: TerminalRef;
+        elId: ElementId;
+        lib: LibraryEntry;
+        localTerm: {
+          id: string;
+          x: number;
+          y: number;
+          orientation: Orientation;
+        };
+      }
+      const placedPins: TerminalRef[] = [];
+      // De-dup unplaced by element id at collection time — we only need one
+      // pin per element (the one in this node) to position it.
+      const unplacedByEl = new Map<ElementId, UnplacedPinInfo>();
+
+      for (const ref of node) {
+        const dot = ref.indexOf('.');
+        if (dot < 0) continue;
+        const id = ref.slice(0, dot);
+        const pinName = ref.slice(dot + 1);
+        if (busIds.has(id)) {
+          // Bus.tap is a virtual hub, not a real pin we can hang branches
+          // from. Stage 5 owns bus-side distribution.
+          continue;
+        }
+        if (layout.has(id)) {
+          placedPins.push(ref);
+          continue;
+        }
+        if (linkerIds.has(id)) continue;
+        if (unplacedByEl.has(id)) continue;
+        const lib = libOf(id);
+        if (!lib) continue;
+        const localTerm = lib.terminals.find((t) => t.id === pinName);
+        if (!localTerm) continue;
+        unplacedByEl.set(id, { ref, elId: id, lib, localTerm });
+      }
+      if (unplacedByEl.size === 0 || placedPins.length === 0) continue;
+      const unplacedUnique = [...unplacedByEl.values()];
+
+      // Vote on anchor: each unplaced pin contributes a vote to every placed
+      // pin it co-occurs with in a raw group. Strong winner = the placed pin
+      // most directly connected to the unplaced cluster.
+      const votes = new Map<TerminalRef, number>();
+      for (const u of unplacedUnique) {
+        const groups = pinToGroups.get(u.ref);
+        if (!groups) continue;
+        for (const g of groups) {
+          for (const p of g) {
+            if (p === u.ref) continue;
+            if (!isPinPlaced(p) || isBusPin(p)) continue;
+            votes.set(p, (votes.get(p) ?? 0) + 1);
+          }
+        }
+      }
+
+      let anchor: TerminalRef | undefined;
+      if (votes.size > 0) {
+        let best = -1;
+        for (const [p, v] of votes) {
+          if (v > best || (v === best && (anchor === undefined || p < anchor))) {
+            best = v;
+            anchor = p;
+          }
+        }
+      }
+      if (!anchor) {
+        // Fallback: any placed non-bus pin in the node.
+        anchor = [...placedPins].sort()[0];
+      }
+      if (!anchor) continue;
+
+      const dot = anchor.indexOf('.');
+      const anchorId = anchor.slice(0, dot);
+      const anchorPin = anchor.slice(dot + 1);
+      const anchorLib = libOf(anchorId);
+      const anchorPlace = layout.get(anchorId);
+      if (!anchorLib || !anchorPlace) continue;
+      const anchorTerm = anchorLib.terminals.find((t) => t.id === anchorPin);
+      if (!anchorTerm) continue;
+
+      const anchorWorld = transformPoint(
+        [anchorTerm.x, anchorTerm.y],
+        anchorPlace,
       );
-      const upstreamOrient = transformOrientation(
-        upstreamLocal.orientation,
-        upstreamPlace,
+      const anchorOrient = transformOrientation(
+        anchorTerm.orientation,
+        anchorPlace,
       );
-      const exit = orientationVec(upstreamOrient);
+      const exit = orientationVec(anchorOrient);
+      const perp: [number, number] = [-exit[1], exit[0]];
 
-      for (const ref of group) {
-        if (ref === upstreamRefInGroup) continue;
-        const dotIdx = ref.indexOf('.');
-        if (dotIdx < 0) continue;
-        const downId = ref.slice(0, dotIdx);
-        const downPin = ref.slice(dotIdx + 1);
-        if (layout.has(downId) || visited.has(downId)) continue;
-        // Linkers handled in Stage 4; don't re-place them here even if also
-        // referenced by a regular `connections` entry.
-        if (linkerIds.has(downId)) continue;
-        const downLib = libOf(downId);
-        if (!downLib) continue;
-        const downLocal = downLib.terminals.find((t) => t.id === downPin);
-        if (!downLocal) continue;
+      // Deterministic distribution order.
+      unplacedUnique.sort((a, b) => a.elId.localeCompare(b.elId));
+      const widths = unplacedUnique.map((u) =>
+        Math.max(u.lib.width, MIN_TAP_SPACING),
+      );
+      const totalW = widths.reduce((sum, w) => sum + w, 0);
+      let cursor = -totalW / 2;
 
-        const targetWorld: [number, number] = [
-          upstreamWorld[0] + exit[0] * CHAIN_GAP,
-          upstreamWorld[1] + exit[1] * CHAIN_GAP,
-        ];
-        // Rotate the downstream so its connecting pin faces the upstream
-        // (i.e., world orientation = opposite of `exit`). Without this, an
-        // element whose pin sits in the "wrong" local quadrant for the
-        // chain direction (e.g., inverter t_ac at (-20, 0, 's') reached from
-        // a south-facing breaker) ends up with its body straddling the wire
-        // path — visually as if the symbol were upside-down.
-        const desiredDownOrient = OPPOSITE_ORIENT[upstreamOrient];
+      for (let i = 0; i < unplacedUnique.length; i++) {
+        const u = unplacedUnique[i];
+        const slotW = widths[i];
+        const slotCenter = cursor + slotW / 2;
+        cursor += slotW;
+
+        const desiredOrient = OPPOSITE_ORIENT[anchorOrient];
         const rot = rotationToAlignOrient(
-          downLocal.orientation,
-          desiredDownOrient,
+          u.localTerm.orientation,
+          desiredOrient,
         );
-        const rotatedPin = transformPoint([downLocal.x, downLocal.y], {
-          at: [0, 0],
-          rot,
-          mirror: false,
-        });
-        let at: [number, number] = [
+        const rotatedPin = transformPoint(
+          [u.localTerm.x, u.localTerm.y],
+          { at: [0, 0], rot, mirror: false },
+        );
+        const targetWorld: [number, number] = [
+          anchorWorld[0] + exit[0] * CHAIN_GAP + perp[0] * slotCenter,
+          anchorWorld[1] + exit[1] * CHAIN_GAP + perp[1] * slotCenter,
+        ];
+        const at: [number, number] = [
           snap(targetWorld[0] - rotatedPin[0]),
           snap(targetWorld[1] - rotatedPin[1]),
         ];
-        let placement: ResolvedPlacement = { at, rot, mirror: false };
-        let bbox = approxBbox(placement, downLib);
-        let safety = COLLISION_SAFETY_STEPS;
-        while (
-          placedBboxes.some((b) => bboxOverlaps(b, bbox)) &&
-          safety-- > 0
-        ) {
-          at = [snap(at[0] + exit[0] * GRID), snap(at[1] + exit[1] * GRID)];
-          placement = { at, rot, mirror: false };
-          bbox = approxBbox(placement, downLib);
-        }
-        layout.set(downId, placement);
-        placedBboxes.push(bbox);
-        visited.add(downId);
-        queue.push(downId);
+        layout.set(u.elId, { at, rot, mirror: false });
+        progressed = true;
       }
     }
   }
@@ -611,26 +709,4 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
 
 function snap(v: number): number {
   return Math.round(v / GRID) * GRID;
-}
-
-/**
- * Conservative world-frame bbox approximation: assumes the library's
- * `width × height` is centered on the placement origin. Library viewBoxes
- * usually offset from origin, so this can be loose by up to half-extent —
- * fine for nudge-until-clear collision avoidance.
- */
-function approxBbox(p: ResolvedPlacement, lib: LibraryEntry): BBox {
-  const rotated = p.rot === 90 || p.rot === 270;
-  const w = rotated ? lib.height : lib.width;
-  const h = rotated ? lib.width : lib.height;
-  return { x: p.at[0] - w / 2, y: p.at[1] - h / 2, w, h };
-}
-
-function bboxOverlaps(a: BBox, b: BBox): boolean {
-  return (
-    a.x < b.x + b.w &&
-    a.x + a.w > b.x &&
-    a.y < b.y + b.h &&
-    a.y + a.h > b.y
-  );
 }
