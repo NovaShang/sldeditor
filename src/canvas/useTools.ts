@@ -30,12 +30,14 @@ export function useTools(
     const onMove = (e: PointerEvent) => tool.onPointerMove?.(e, ctx);
     const onUp = (e: PointerEvent) => tool.onPointerUp?.(e, ctx);
     const onLeave = (e: PointerEvent) => tool.onPointerLeave?.(e, ctx);
+    const onDbl = (e: MouseEvent) => tool.onDoubleClick?.(e, ctx);
 
     host.addEventListener('pointerdown', onDown);
     host.addEventListener('pointermove', onMove);
     host.addEventListener('pointerup', onUp);
     host.addEventListener('pointercancel', onUp);
     host.addEventListener('pointerleave', onLeave);
+    host.addEventListener('dblclick', onDbl);
 
     return () => {
       host.removeEventListener('pointerdown', onDown);
@@ -43,6 +45,7 @@ export function useTools(
       host.removeEventListener('pointerup', onUp);
       host.removeEventListener('pointercancel', onUp);
       host.removeEventListener('pointerleave', onLeave);
+      host.removeEventListener('dblclick', onDbl);
       tool.onDeactivate?.(ctx);
       host.style.cursor = '';
     };

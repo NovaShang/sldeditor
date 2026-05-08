@@ -88,6 +88,8 @@ export interface EditorState {
   selectedAnnotation: AnnotationId | null;
   /** When non-null, that annotation is in inline-edit mode (contenteditable). */
   editingAnnotation: AnnotationId | null;
+  /** When non-null, that element's name is in inline-edit mode on the canvas. */
+  editingElement: ElementId | null;
 
   // ---- History ---------------------------------------------------------
   past: DiagramFile[];
@@ -126,6 +128,8 @@ export interface EditorState {
   setSelectedAnnotation: (id: AnnotationId | null) => void;
   /** Toggle inline edit mode for a free text annotation. */
   setEditingAnnotation: (id: AnnotationId | null) => void;
+  /** Toggle inline edit mode for an element's `name`. */
+  setEditingElement: (id: ElementId | null) => void;
 
   // ---- Clipboard actions ----------------------------------------------
   copySelection: () => void;
@@ -185,6 +189,7 @@ export const useEditorStore = create<EditorState>()(
   selectedNode: null,
   selectedAnnotation: null,
   editingAnnotation: null,
+  editingElement: null,
 
   past: [],
   future: [],
@@ -202,6 +207,7 @@ export const useEditorStore = create<EditorState>()(
       selectedNode: null,
       selectedAnnotation: null,
       editingAnnotation: null,
+      editingElement: null,
       wireFromTerminal: null,
       placeFromTerminal: null,
     }),
@@ -219,6 +225,7 @@ export const useEditorStore = create<EditorState>()(
       selectedNode: null,
       selectedAnnotation: null,
       editingAnnotation: null,
+      editingElement: null,
       wireFromTerminal: null,
       placeFromTerminal: null,
     }),
@@ -311,6 +318,7 @@ export const useEditorStore = create<EditorState>()(
       selectedNode: null,
       selectedAnnotation: null,
       editingAnnotation: null,
+      editingElement: null,
     }),
   setSelectedNode: (nodeId) =>
     set({
@@ -329,6 +337,15 @@ export const useEditorStore = create<EditorState>()(
     set({
       editingAnnotation: id,
       selectedAnnotation: id ?? get().selectedAnnotation,
+      editingElement: id ? null : get().editingElement,
+    }),
+  setEditingElement: (id) =>
+    set({
+      editingElement: id,
+      selection: id ? [id] : get().selection,
+      editingAnnotation: id ? null : get().editingAnnotation,
+      selectedAnnotation: id ? null : get().selectedAnnotation,
+      selectedNode: id ? null : get().selectedNode,
     }),
 
   copySelection: () => {

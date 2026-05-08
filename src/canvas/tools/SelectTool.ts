@@ -80,17 +80,13 @@ export const SelectTool: Tool = {
 
     // Free text annotation: takes priority over element / terminal because
     // the annotation rect can overlap them visually. Click selects + arms
-    // a drag; double-click enters edit mode (handled by the wrapper below).
+    // a drag; double-click (separate handler) enters edit mode.
     const annId = hitAnnotation(e.target);
     if (annId) {
       e.preventDefault();
       e.stopPropagation();
       const ann = store.diagram.annotations?.find((a) => a.id === annId);
       if (!ann) return;
-      if (e.detail >= 2) {
-        store.setEditingAnnotation(annId);
-        return;
-      }
       store.setSelectedAnnotation(annId);
       annDrag = {
         pointerId: e.pointerId,
@@ -325,6 +321,23 @@ export const SelectTool: Tool = {
       }
       publishMarquee(null);
       marquee = null;
+    }
+  },
+
+  onDoubleClick(e) {
+    const store = useEditorStore.getState();
+    const annId = hitAnnotation(e.target);
+    if (annId) {
+      e.preventDefault();
+      e.stopPropagation();
+      store.setEditingAnnotation(annId);
+      return;
+    }
+    const id = hitElement(e.target);
+    if (id) {
+      e.preventDefault();
+      e.stopPropagation();
+      store.setEditingElement(id);
     }
   },
 

@@ -28,4 +28,7 @@ export interface Tool {
   onPointerMove?(e: PointerEvent, ctx: ToolContext): void;
   onPointerUp?(e: PointerEvent, ctx: ToolContext): void;
   onPointerLeave?(e: PointerEvent, ctx: ToolContext): void;
+  /** Native `dblclick` — pointerdown's `detail` field isn't reliable for
+   *  double-click count, so tools that need it subscribe here separately. */
+  onDoubleClick?(e: MouseEvent, ctx: ToolContext): void;
 }

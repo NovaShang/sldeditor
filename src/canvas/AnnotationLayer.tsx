@@ -15,6 +15,7 @@
  * Default when unset: 'all'.
  */
 
+import { useEffect, useRef } from 'react';
 import { useEditorStore } from '../store';
 import type {
   LabelMode,
@@ -31,19 +32,30 @@ export function AnnotationLayer() {
   const mode: LabelMode = useEditorStore(
     (s) => s.diagram.meta?.labelMode ?? 'all',
   );
-
-  if (mode === 'off') return null;
+  const editingElement = useEditorStore((s) => s.editingElement);
 
   return (
     <g className="ole-annotation-layer" pointerEvents="none">
       {Array.from(elements.values()).map((re) => {
         const place = layout.get(re.element.id);
         if (!place || !re.libraryDef) return null;
-        const lines = labelLines(re, mode);
-        if (lines.length === 0) return null;
         const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
         const world = anchorWorld(anchor, place, re.libraryDef);
         const textAnchor = anchor.anchor ?? 'start';
+        if (editingElement === re.element.id) {
+          return (
+            <NameEditor
+              key={re.element.id}
+              elementId={re.element.id}
+              currentName={re.element.name?.trim() || re.element.id}
+              world={world}
+              anchor={textAnchor}
+            />
+          );
+        }
+        if (mode === 'off') return null;
+        const lines = labelLines(re, mode);
+        if (lines.length === 0) return null;
         return (
           <g
             key={re.element.id}
@@ -65,6 +77,107 @@ export function AnnotationLayer() {
         );
       })}
     </g>
+  );
+}
+
+const EDITOR_W = 200;
+const EDITOR_FS = 9;
+
+/**
+ * In-place editor for an element's `name`. Mounted at the same anchor as
+ * the structural label so the inline edit happens where the user expects
+ * to see the name. Empty content clears the override (label falls back to
+ * the element's ID); non-empty content sets `Element.name`.
+ */
+function NameEditor({
+  elementId,
+  currentName,
+  world,
+  anchor,
+}: {
+  elementId: string;
+  currentName: string;
+  world: [number, number];
+  anchor: 'start' | 'middle' | 'end';
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  }, [elementId]);
+
+  function commit(): void {
+    const store = useEditorStore.getState();
+    const el = store.diagram.elements.find((x) => x.id === elementId);
+    if (!el) {
+      store.setEditingElement(null);
+      return;
+    }
+    const text = (ref.current?.innerText ?? '').replace(/\u00a0/g, ' ').trim();
+    // Empty text clears the override; the structural label falls back to ID.
+    const next = text === '' || text === elementId ? undefined : text;
+    if (next !== el.name) store.updateElement(elementId, { name: next });
+    store.setEditingElement(null);
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
+    if (e.key === 'Escape' || (e.key === 'Enter' && !e.shiftKey)) {
+      e.preventDefault();
+      commit();
+      return;
+    }
+    e.stopPropagation();
+  }
+
+  // Position the foreignObject so the contentEditable's left edge matches
+  // the requested SVG text-anchor — text-anchor is glyph-relative, but our
+  // editor is a div without that semantic, so we translate by hand.
+  let x = world[0];
+  if (anchor === 'middle') x -= EDITOR_W / 2;
+  else if (anchor === 'end') x -= EDITOR_W;
+
+  return (
+    <foreignObject
+      x={x}
+      y={world[1] - EDITOR_FS}
+      width={EDITOR_W}
+      height={EDITOR_FS * 2.2}
+      className="ole-element-name-editor"
+    >
+      <div
+        ref={ref}
+        contentEditable
+        suppressContentEditableWarning
+        onBlur={commit}
+        onKeyDown={onKeyDown}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        style={{
+          fontSize: `${EDITOR_FS}px`,
+          fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+          color: 'var(--foreground)',
+          background: 'var(--canvas-bg)',
+          outline: '1px dashed var(--selection)',
+          padding: '0 2px',
+          display: 'inline-block',
+          minWidth: '20px',
+          lineHeight: 1.1,
+          textAlign:
+            anchor === 'middle' ? 'center' : anchor === 'end' ? 'right' : 'left',
+          whiteSpace: 'nowrap',
+          cursor: 'text',
+        }}
+      >
+        {currentName}
+      </div>
+    </foreignObject>
   );
 }
 

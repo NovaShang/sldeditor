@@ -20,11 +20,15 @@ export const TextTool: Tool = {
     if (e.button !== 0) return;
     const store = useEditorStore.getState();
 
+    // Clicking an existing annotation in text mode just selects it under
+    // the regular select tool — editing is reserved for double-click so
+    // single clicks don't accidentally trash content while repositioning.
     const existing = hitAnnotation(e.target);
     if (existing) {
       e.preventDefault();
       e.stopPropagation();
-      store.setEditingAnnotation(existing);
+      store.setActiveTool('select');
+      store.setSelectedAnnotation(existing);
       return;
     }
 

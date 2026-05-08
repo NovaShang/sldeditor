@@ -28,17 +28,16 @@ function isEditing(target: EventTarget | null): boolean {
 export function exitDrawingState(): void {
   const store = useEditorStore.getState();
   const tool = store.activeTool;
-  if (store.editingAnnotation) {
-    // Editing an annotation: blur the contentEditable so its onBlur commits.
+  if (store.editingAnnotation || store.editingElement) {
+    // Inline edit in progress: blur the contentEditable so its onBlur commits.
     if (typeof document !== 'undefined') {
       const ed = document.querySelector(
-        `.ole-free-annotation-edit-fo [data-annotation-id="${cssEscape(
-          store.editingAnnotation,
-        )}"], .ole-free-annotation-edit-fo div[contenteditable]`,
+        '.ole-free-annotation-edit-fo div[contenteditable], .ole-element-name-editor div[contenteditable]',
       ) as HTMLElement | null;
       ed?.blur();
     }
     store.setEditingAnnotation(null);
+    store.setEditingElement(null);
     return;
   }
   if (tool === 'wire' || tool === 'busbar' || tool === 'text') {
@@ -60,9 +59,6 @@ export function exitDrawingState(): void {
   }
 }
 
-function cssEscape(s: string): string {
-  return s.replace(/(["\\])/g, '\\$1');
-}
 
 export function useKeyboardShortcuts(): void {
   useEffect(() => {
