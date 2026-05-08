@@ -51,6 +51,11 @@ export type {
 export { useEditorStore } from './store';
 export type { EditorState } from './store';
 
+// ID allocator — for embedding apps (e.g. AI agents) that build elements
+// programmatically and need to mint stable kebab-case ids without colliding
+// with the existing diagram.
+export { newElementId } from './store/id-allocator';
+
 // Locale store — exposed so embedding apps can sync the editor's UI language
 // with their own i18n system.
 export { useLocale } from './i18n';

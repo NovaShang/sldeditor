@@ -31,8 +31,12 @@ export function RightPanel() {
 
   return (
     <aside
-      className="ole-glass absolute right-3 top-3 z-10 flex w-56 flex-col overflow-hidden rounded-2xl border border-border shadow-sm"
-      style={{ maxHeight: 'calc(100% - 1.5rem)' }}
+      className="ole-glass absolute z-10 flex w-56 flex-col overflow-hidden rounded-2xl border border-border shadow-sm"
+      style={{
+        top: 'calc(0.75rem + var(--ole-top-inset, 0px))',
+        right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
+        maxHeight: 'calc(100% - 1.5rem - var(--ole-top-inset, 0px))',
+      }}
     >
       <div className="flex items-center gap-1.5 border-b border-border/40 px-3 py-2">
         <span className="flex-1 truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
