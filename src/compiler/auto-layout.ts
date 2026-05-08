@@ -76,7 +76,7 @@ interface AutoLayoutInput {
 
 const BUS_X = 320;
 const BUS_Y0 = 220;
-const MIN_BUS_GAP_Y = 480;
+const MIN_BUS_GAP_Y = 260;
 const DEFAULT_BUS_SPAN = 720;
 const CHAIN_GAP = 60;
 const MIN_TAP_SPACING = 80;
@@ -143,6 +143,35 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       }
     }
   }
+
+  // Index raw connection groups by pin. Used both for chain-extent estimates
+  // (stage 3 / 4 — must be available before bus placement) and for the
+  // node-based stage-6 BFS.
+  const rawGroups: TerminalRef[][] = [];
+  for (const conn of connections) {
+    const terms = Array.isArray(conn) ? conn : conn.terminals;
+    if (terms.length < 2) continue;
+    rawGroups.push(terms);
+  }
+  for (const bus of buses) {
+    const tapKey = `${bus.id}.tap` as TerminalRef;
+    const taps = effectiveTaps.get(bus.id);
+    if (!taps || taps.length === 0) continue;
+    for (const t of taps) rawGroups.push([tapKey, t]);
+  }
+  const pinToGroups = new Map<TerminalRef, TerminalRef[][]>();
+  for (const group of rawGroups) {
+    for (const pin of group) {
+      const arr = pinToGroups.get(pin);
+      if (arr) arr.push(group);
+      else pinToGroups.set(pin, [group]);
+    }
+  }
+  const isBusPin = (ref: TerminalRef): boolean => {
+    const dot = ref.indexOf('.');
+    if (dot < 0) return false;
+    return busIds.has(ref.slice(0, dot));
+  };
 
   // ---- 1. Detect linker elements (tapped to ≥2 distinct buses) -----------
   const tapsByElement = new Map<ElementId, BusAttachment[]>();
@@ -324,12 +353,88 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
 
   // ---- 3. Place buses with dynamic Y gap ---------------------------------
-  // The gap is at least `MIN_BUS_GAP_Y` to leave room for the chain elements
-  // and labels that hang in between. With a linker we additionally honor its
-  // pin span so the linker can fit; if the span is larger than the minimum,
-  // the gap stretches to match. When the minimum is larger, the linker's
-  // far pin floats above the lower bus and auto-route draws a stub down to
-  // the bus (sourced from the bus.tap connection).
+  // The gap floors at `MIN_BUS_GAP_Y` and stretches to fit whatever sits in
+  // between: the linker's pin span plus the chain length on each side.
+  // chainExtentToBus walks the connection graph from a linker pin back to
+  // the bus, accumulating per-element pin-to-pin spans + per-edge CHAIN_GAP
+  // contributions — exactly what stage 5/6 will materialize. With this the
+  // gap auto-grows to fit a long chain (bus → disconnector → CT → breaker →
+  // transformer) instead of squashing it.
+  interface ChainResult {
+    extent: number;
+    /** The chain element directly tapped to the bus (for X-alignment). */
+    head?: ElementId;
+  }
+  const chainExtentToBus = (
+    linker: LinkerInfo,
+    busId: ElementId,
+    pinName: string,
+  ): ChainResult => {
+    const startRef = `${linker.elementId}.${pinName}` as TerminalRef;
+    const targetRef = `${busId}.tap` as TerminalRef;
+    const linkerLib = libOf(linker.elementId);
+    // Forbid the linker's other terminals so BFS doesn't re-enter through
+    // the device itself and short-circuit to the other bus.
+    const forbidden = new Set<TerminalRef>();
+    if (linkerLib) {
+      for (const t of linkerLib.terminals) {
+        if (t.id === pinName) continue;
+        forbidden.add(`${linker.elementId}.${t.id}` as TerminalRef);
+      }
+    }
+    const visited = new Set<TerminalRef>([startRef]);
+    const queue: { ref: TerminalRef; dist: number }[] = [
+      { ref: startRef, dist: 0 },
+    ];
+    const parent = new Map<TerminalRef, TerminalRef>();
+    const enqueue = (other: TerminalRef, ref: TerminalRef, addDist: number, dist: number) => {
+      visited.add(other);
+      parent.set(other, ref);
+      queue.push({ ref: other, dist: dist + addDist });
+    };
+    while (queue.length > 0) {
+      const { ref, dist } = queue.shift()!;
+      if (ref === targetRef) {
+        const prev = parent.get(targetRef);
+        let head: ElementId | undefined;
+        if (prev) {
+          const d = prev.indexOf('.');
+          if (d > 0) head = prev.slice(0, d);
+        }
+        return { extent: dist, head };
+      }
+      const dot = ref.indexOf('.');
+      if (dot < 0) continue;
+      const elId = ref.slice(0, dot);
+      const pin = ref.slice(dot + 1);
+      // Passthrough through a non-bus, non-linker element: enqueue its other
+      // terminals with the local pin-to-pin distance added.
+      if (!busIds.has(elId) && !linkerIds.has(elId)) {
+        const lib = libOf(elId);
+        const thisTerm = lib?.terminals.find((t) => t.id === pin);
+        if (lib && thisTerm) {
+          for (const otherTerm of lib.terminals) {
+            if (otherTerm.id === pin) continue;
+            const otherRef = `${elId}.${otherTerm.id}` as TerminalRef;
+            if (visited.has(otherRef) || forbidden.has(otherRef)) continue;
+            enqueue(otherRef, ref, Math.abs(thisTerm.y - otherTerm.y), dist);
+          }
+        }
+      }
+      // Cross to other pins via raw connections. Bus.tap edges land directly
+      // on the bus (zero distance); inter-element edges contribute CHAIN_GAP.
+      for (const g of pinToGroups.get(ref) ?? []) {
+        for (const other of g) {
+          if (other === ref) continue;
+          if (visited.has(other) || forbidden.has(other)) continue;
+          const isBusEdge = isBusPin(ref) || isBusPin(other);
+          enqueue(other, ref, isBusEdge ? 0 : CHAIN_GAP, dist);
+        }
+      }
+    }
+    return { extent: 0 };
+  };
+
   const gapBetween = (idA: ElementId, idB: ElementId): number => {
     const link = busLinks.get(idA)?.get(idB);
     if (!link) return MIN_BUS_GAP_Y;
@@ -341,7 +446,12 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const pinA = linkerLib.terminals.find((t) => t.id === pinAName);
     const pinB = linkerLib.terminals.find((t) => t.id === pinBName);
     if (!pinA || !pinB) return MIN_BUS_GAP_Y;
-    return Math.max(MIN_BUS_GAP_Y, Math.abs(pinB.y - pinA.y));
+    const pinSpan = Math.abs(pinB.y - pinA.y);
+    // idA is upper in busOrder, idB is lower. Each side may have a chain;
+    // measure both so the gap fits whichever is longer.
+    const upperChain = chainExtentToBus(link, idA, pinAName).extent;
+    const lowerChain = chainExtentToBus(link, idB, pinBName).extent;
+    return Math.max(MIN_BUS_GAP_Y, upperChain + pinSpan + lowerChain);
   };
 
   let curY = BUS_Y0;
@@ -362,62 +472,25 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     }
   }
 
-  // ---- 4. Place linker elements between their bus pair -------------------
-  for (const link of linkers) {
-    if (layout.has(link.elementId)) continue;
-    const linkerLib = libOf(link.elementId);
-    if (!linkerLib) continue;
-
-    // Buses this linker reaches, top-to-bottom by world Y. Need at least 2.
-    const reachedBuses = link.attachments
-      .map((a) => a.busId)
-      .filter((id) => layout.has(id))
-      .sort((a, b) => layout.get(a)!.at[1] - layout.get(b)!.at[1]);
-    if (reachedBuses.length < 2) continue;
-    const upperBusId = reachedBuses[0];
-    const lowerBusId = reachedBuses[1];
-    const upperPlace = layout.get(upperBusId)!;
-    const lowerPlace = layout.get(lowerBusId)!;
-
-    const upperPin = link.attachments.find((a) => a.busId === upperBusId)!.pin;
-    const lowerPin = link.attachments.find((a) => a.busId === lowerBusId)!.pin;
-    const upperLocal = linkerLib.terminals.find((t) => t.id === upperPin);
-    const lowerLocal = linkerLib.terminals.find((t) => t.id === lowerPin);
-    if (!upperLocal || !lowerLocal) continue;
-
-    // For rot=0, world.Y = at.Y + local.Y. We need:
-    //   upperLocal.y + at.y == upperBus.y  AND  lowerLocal.y + at.y == lowerBus.y
-    // → upperLocal.y - lowerLocal.y == upperBus.y - lowerBus.y < 0
-    // → upperLocal.y < lowerLocal.y. If the local order is reversed, rotate 180°.
-    const rot: 0 | 180 = upperLocal.y <= lowerLocal.y ? 0 : 180;
-
-    const xCenter = upperPlace.at[0];
-    const at: [number, number] =
-      rot === 0
-        ? [snap(xCenter - upperLocal.x), snap(upperPlace.at[1] - upperLocal.y)]
-        : [snap(xCenter + upperLocal.x), snap(upperPlace.at[1] + upperLocal.y)];
-
-    layout.set(link.elementId, { at, rot, mirror: false });
-
-    // Bus span sanity: ensure upper bus visually covers the linker's X.
-    // (lowerPlace is read-only from this branch; upper is what taps live on.)
-    void lowerPlace;
-  }
-
-  // ---- 5. Distribute remaining bus tap targets (width-aware, side-split) -
+  // ---- 4. Distribute bus taps along each bus span (width-aware, side-split)
+  // Runs BEFORE linker placement so the linker can align its X with the
+  // chain head element (the tap that anchors the chain leading up to it).
+  // Linkers themselves are skipped here — they get their own placement next.
   for (const bus of buses) {
     const tapRefs = effectiveTaps.get(bus.id);
     if (!tapRefs || tapRefs.length === 0) continue;
     const place = layout.get(bus.id);
     if (!place) continue;
 
-    // Skip taps already placed (linkers, or with explicit user layout).
+    // Skip taps already placed (user layout) or known to be linkers (which
+    // get bridged between two buses in stage 5 below).
     const remaining = tapRefs.flatMap((ref) => {
       const dot = ref.indexOf('.');
       if (dot < 0) return [];
       const elId = ref.slice(0, dot);
       const pin = ref.slice(dot + 1);
       if (layout.has(elId)) return [];
+      if (linkerIds.has(elId)) return [];
       const lib = libOf(elId);
       if (!lib) return [];
       const localTerm = lib.terminals.find((t) => t.id === pin);
@@ -477,6 +550,53 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     distribute(belowSide);
   }
 
+  // ---- 5. Place linker elements between their bus pair -------------------
+  // Anchored at the chain head's X (the tap that starts the chain leading
+  // up to this linker) so the body lines up with what's coming down from
+  // the upper bus, and offset down by the chain length so the chain
+  // elements (placed in stage 6) fit into the gap above the linker.
+  for (const link of linkers) {
+    if (layout.has(link.elementId)) continue;
+    const linkerLib = libOf(link.elementId);
+    if (!linkerLib) continue;
+
+    const reachedBuses = link.attachments
+      .map((a) => a.busId)
+      .filter((id) => layout.has(id))
+      .sort((a, b) => layout.get(a)!.at[1] - layout.get(b)!.at[1]);
+    if (reachedBuses.length < 2) continue;
+    const upperBusId = reachedBuses[0];
+    const upperPlace = layout.get(upperBusId)!;
+
+    const upperPin = link.attachments.find((a) => a.busId === upperBusId)!.pin;
+    const lowerPin = link.attachments.find((a) => a.busId === reachedBuses[1])!.pin;
+    const upperLocal = linkerLib.terminals.find((t) => t.id === upperPin);
+    const lowerLocal = linkerLib.terminals.find((t) => t.id === lowerPin);
+    if (!upperLocal || !lowerLocal) continue;
+
+    // For rot=0, upperLocal.y must be ≤ lowerLocal.y so the upper pin ends
+    // up above the lower pin in world space; flip 180° if reversed.
+    const rot: 0 | 180 = upperLocal.y <= lowerLocal.y ? 0 : 180;
+
+    const upperResult = chainExtentToBus(link, upperBusId, upperPin);
+    const upperPinWorldY = upperPlace.at[1] + upperResult.extent;
+
+    // Align with the chain head's X if there's a chain; otherwise center on
+    // the upper bus (covers the direct-tap-on-both-sides case).
+    let xCenter = upperPlace.at[0];
+    if (upperResult.head) {
+      const headPlace = layout.get(upperResult.head);
+      if (headPlace) xCenter = headPlace.at[0];
+    }
+
+    const at: [number, number] =
+      rot === 0
+        ? [snap(xCenter - upperLocal.x), snap(upperPinWorldY - upperLocal.y)]
+        : [snap(xCenter + upperLocal.x), snap(upperPinWorldY + upperLocal.y)];
+
+    layout.set(link.elementId, { at, rot, mirror: false });
+  }
+
   // ---- 6. Node-based parallel-branch placement --------------------------
   // The earlier implementation walked raw connection groups and chained
   // each downstream off whichever upstream was visited first. That blew up
@@ -492,25 +612,11 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   // iterate to a fixpoint so newly-placed elements can anchor further
   // chains. Bus-tap nodes use stage-5 placements; the synthetic `B*.tap`
   // pin is excluded from anchor candidates.
+  // Reuse the early `pinToGroups` map (built before stage 3) and feed it
+  // into a pin-level union-find for electrical-node detection.
   const uf = new UnionFind<TerminalRef>();
-  const rawGroups: TerminalRef[][] = [];
-  for (const conn of connections) {
-    const terms = Array.isArray(conn) ? conn : conn.terminals;
-    if (terms.length < 2) continue;
-    rawGroups.push(terms);
-    for (let i = 1; i < terms.length; i++) uf.union(terms[0], terms[i]);
-  }
-  for (const bus of buses) {
-    const tapKey = `${bus.id}.tap` as TerminalRef;
-    const taps = effectiveTaps.get(bus.id);
-    if (!taps || taps.length === 0) continue;
-    uf.add(tapKey);
-    for (const t of taps) {
-      uf.union(tapKey, t);
-      // Each tap is also a "raw group" so voting can credit a placed tap
-      // when an unplaced sibling co-references it.
-      rawGroups.push([tapKey, t]);
-    }
+  for (const group of rawGroups) {
+    for (let i = 1; i < group.length; i++) uf.union(group[0], group[i]);
   }
   for (const el of elements) {
     if (el.kind === 'busbar') {
@@ -528,23 +634,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const id = ref.slice(0, dot);
     return layout.has(id);
   };
-  const isBusPin = (ref: TerminalRef): boolean => {
-    const dot = ref.indexOf('.');
-    if (dot < 0) return false;
-    return busIds.has(ref.slice(0, dot));
-  };
-
-  // Index pin → list of raw groups containing it. Used for vote-based anchor
-  // selection so QE5 → QF2.t1 (not QF1.t1) when both are placed in the same
-  // bus-tap node.
-  const pinToGroups = new Map<TerminalRef, TerminalRef[][]>();
-  for (const group of rawGroups) {
-    for (const pin of group) {
-      const arr = pinToGroups.get(pin);
-      if (arr) arr.push(group);
-      else pinToGroups.set(pin, [group]);
-    }
-  }
 
   // Iterate to fixpoint: each pass places one "layer" of parallel branches.
   // Newly-placed elements expose their other terminals as anchors for the
