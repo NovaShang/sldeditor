@@ -76,7 +76,7 @@ interface AutoLayoutInput {
 
 const BUS_X = 320;
 const BUS_Y0 = 220;
-const MIN_BUS_GAP_Y = 260;
+const MIN_BUS_GAP_Y = 480;
 const DEFAULT_BUS_SPAN = 720;
 const CHAIN_GAP = 60;
 const MIN_TAP_SPACING = 80;
@@ -324,11 +324,12 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
 
   // ---- 3. Place buses with dynamic Y gap ---------------------------------
-  // No linker between two buses → use the default minimum spacing. With a
-  // linker, the spacing is dictated *exactly* by the linker's pin span so its
-  // terminals land on both buses (no floating wire stub). The linker body
-  // sits flush between the bars, which matches how real one-line diagrams
-  // render transformers.
+  // The gap is at least `MIN_BUS_GAP_Y` to leave room for the chain elements
+  // and labels that hang in between. With a linker we additionally honor its
+  // pin span so the linker can fit; if the span is larger than the minimum,
+  // the gap stretches to match. When the minimum is larger, the linker's
+  // far pin floats above the lower bus and auto-route draws a stub down to
+  // the bus (sourced from the bus.tap connection).
   const gapBetween = (idA: ElementId, idB: ElementId): number => {
     const link = busLinks.get(idA)?.get(idB);
     if (!link) return MIN_BUS_GAP_Y;
@@ -340,7 +341,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const pinA = linkerLib.terminals.find((t) => t.id === pinAName);
     const pinB = linkerLib.terminals.find((t) => t.id === pinBName);
     if (!pinA || !pinB) return MIN_BUS_GAP_Y;
-    return Math.abs(pinB.y - pinA.y);
+    return Math.max(MIN_BUS_GAP_Y, Math.abs(pinB.y - pinA.y));
   };
 
   let curY = BUS_Y0;
