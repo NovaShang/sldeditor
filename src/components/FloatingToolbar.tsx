@@ -1,9 +1,10 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useState } from 'react';
 import {
   Cable,
   Hand,
   LayoutGrid,
   Minus,
+  MoreHorizontal,
   MousePointer2,
   Redo2,
   Shapes,
@@ -11,6 +12,8 @@ import {
   Wand2,
 } from 'lucide-react';
 import { Tooltip } from './ui/tooltip';
+import { UpwardPopover } from './ui/upward-popover';
+import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { useT, type LocaleKey } from '../i18n';
 import { cn } from '../lib/utils';
 import { useEditorStore, type ToolId } from '../store';
@@ -54,14 +57,6 @@ const TOOLS: ToolDef[] = [
     iconOnly: true,
   },
   {
-    id: 'wire',
-    labelKey: 'tool.wire',
-    hotkey: 'W',
-    descriptionKey: 'tool.wireHint',
-    icon: Cable,
-    switchTo: 'wire',
-  },
-  {
     id: 'busbar',
     labelKey: 'tool.bus',
     hotkey: 'B',
@@ -76,6 +71,14 @@ const TOOLS: ToolDef[] = [
     descriptionKey: 'tool.placeHint',
     icon: Shapes,
     switchTo: 'place',
+  },
+  {
+    id: 'wire',
+    labelKey: 'tool.wire',
+    hotkey: 'W',
+    descriptionKey: 'tool.wireHint',
+    icon: Cable,
+    switchTo: 'wire',
   },
 ];
 
@@ -143,12 +146,19 @@ export function FloatingToolbar() {
   const future = useEditorStore((s) => s.future.length);
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
+  const tier = useEditorTier();
+  // Drop labels from `tight` (≥720 < 900) so the centered main toolbar stops
+  // colliding with the right-anchored ViewToolbar. The outline tab on the
+  // left still has room for its label until `compact`.
+  const forceIconOnly = atLeast(tier, 'tight');
+  const showHint = !atLeast(tier, 'dense');
+  const groupCollapsed = atLeast(tier, 'mini');
 
   const isToolActive = (def: ToolDef): boolean => active === def.switchTo;
 
   return (
     <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5">
-      <ToolHint />
+      {showHint && <ToolHint />}
       <div className="ole-glass flex flex-row items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
         {TOOLS.map((def) => {
           const Icon = def.icon;
@@ -164,7 +174,7 @@ export function FloatingToolbar() {
                 label={t(def.labelKey)}
                 hotkey={def.hotkey}
                 active={isActive}
-                iconOnly={def.iconOnly}
+                iconOnly={def.iconOnly || forceIconOnly}
                 description={tip}
                 onClick={() => {
                   setTool(def.switchTo, {
@@ -180,26 +190,32 @@ export function FloatingToolbar() {
           );
         })}
         <div aria-hidden className="mx-1 h-5 w-px bg-border" />
-        <ToolbarButton
-          icon={Undo2}
-          label={t('tool.undo')}
-          hotkey="⌘Z"
-          description={t('tool.undoHint')}
-          iconOnly
-          disabled={past === 0}
-          onClick={undo}
-        />
-        <ToolbarButton
-          icon={Redo2}
-          label={t('tool.redo')}
-          hotkey="⌘⇧Z"
-          description={t('tool.redoHint')}
-          iconOnly
-          disabled={future === 0}
-          onClick={redo}
-        />
-        <div aria-hidden className="mx-1 h-5 w-px bg-border" />
-        <LayoutMenuButton />
+        {groupCollapsed ? (
+          <OverflowMenuButton />
+        ) : (
+          <>
+            <ToolbarButton
+              icon={Undo2}
+              label={t('tool.undo')}
+              hotkey="⌘Z"
+              description={t('tool.undoHint')}
+              iconOnly
+              disabled={past === 0}
+              onClick={undo}
+            />
+            <ToolbarButton
+              icon={Redo2}
+              label={t('tool.redo')}
+              hotkey="⌘⇧Z"
+              description={t('tool.redoHint')}
+              iconOnly
+              disabled={future === 0}
+              onClick={redo}
+            />
+            <div aria-hidden className="mx-1 h-5 w-px bg-border" />
+            <LayoutMenuButton iconOnly={forceIconOnly} />
+          </>
+        )}
       </div>
     </div>
   );
@@ -278,92 +294,155 @@ function ToolbarButton({
   );
 }
 
-function LayoutMenuButton() {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Subscribe at field-level so disabled state stays live while menu is open.
+function useLayoutActions() {
   const elements = useEditorStore((s) => s.diagram.elements);
   const layout = useEditorStore((s) => s.diagram.layout);
   const selection = useEditorStore((s) => s.selection);
-
-  useEffect(() => {
-    if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    window.addEventListener('mousedown', onClick);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('mousedown', onClick);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
   const explicit = layout ?? {};
-  const hasAnyElement = elements.length > 0;
-  const hasArrangedAny = Object.keys(explicit).length > 0;
-  const hasGapsAll = elements.some((el) => !explicit[el.id]);
-  const hasSelection = selection.length > 0;
-  const selectionHasArranged = selection.some((id) => !!explicit[id]);
-  const selectionHasGaps = selection.some((id) => !explicit[id]);
+  return {
+    hasAnyElement: elements.length > 0,
+    hasArrangedAny: Object.keys(explicit).length > 0,
+    hasGapsAll: elements.some((el) => !explicit[el.id]),
+    hasSelection: selection.length > 0,
+    selectionHasArranged: selection.some((id) => !!explicit[id]),
+    selectionHasGaps: selection.some((id) => !explicit[id]),
+  };
+}
 
+function LayoutMenuButton({ iconOnly }: { iconOnly?: boolean }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  // Subscribe at field-level so disabled state stays live while menu is open.
+  const a = useLayoutActions();
   const run = (action: () => void) => () => {
     setOpen(false);
     action();
   };
-
   return (
-    <div ref={ref} className="relative">
-      <ToolbarButton
-        icon={Wand2}
-        label={t('layout.label')}
-        description={t('layout.hint')}
-        active={open}
-        onClick={() => setOpen((v) => !v)}
-      />
-      {open && (
-        <div
-          role="menu"
-          // Toolbar lives at bottom of screen — open menu upward.
-          className="ole-glass absolute bottom-full right-0 mb-1.5 min-w-52 rounded-md border border-border p-1 shadow-md"
-        >
-          <PopoverItem
-            onClick={run(() => useEditorStore.getState().autoArrangeAll())}
-            icon={<Wand2 />}
-            disabled={!hasAnyElement || !hasArrangedAny}
-          >
-            {t('layout.allAuto')}
-          </PopoverItem>
-          <PopoverItem
-            onClick={run(() => useEditorStore.getState().autoArrangeSelection())}
-            icon={<Wand2 />}
-            disabled={!hasSelection || !selectionHasArranged}
-          >
-            {t('layout.selAuto')}
-          </PopoverItem>
-          <div aria-hidden className="my-1 h-px bg-border" />
-          <PopoverItem
-            onClick={run(() => useEditorStore.getState().fillUnplacedAll())}
-            icon={<LayoutGrid />}
-            disabled={!hasGapsAll}
-          >
-            {t('layout.allFill')}
-          </PopoverItem>
-          <PopoverItem
-            onClick={run(() => useEditorStore.getState().fillUnplacedSelection())}
-            icon={<LayoutGrid />}
-            disabled={!hasSelection || !selectionHasGaps}
-          >
-            {t('layout.selFill')}
-          </PopoverItem>
-        </div>
-      )}
-    </div>
+    <UpwardPopover
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <ToolbarButton
+          icon={Wand2}
+          label={t('layout.label')}
+          description={t('layout.hint')}
+          active={open}
+          iconOnly={iconOnly}
+          onClick={() => setOpen((v) => !v)}
+        />
+      }
+    >
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().autoArrangeAll())}
+        icon={<Wand2 />}
+        disabled={!a.hasAnyElement || !a.hasArrangedAny}
+      >
+        {t('layout.allAuto')}
+      </PopoverItem>
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().autoArrangeSelection())}
+        icon={<Wand2 />}
+        disabled={!a.hasSelection || !a.selectionHasArranged}
+      >
+        {t('layout.selAuto')}
+      </PopoverItem>
+      <div aria-hidden className="my-1 h-px bg-border" />
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().fillUnplacedAll())}
+        icon={<LayoutGrid />}
+        disabled={!a.hasGapsAll}
+      >
+        {t('layout.allFill')}
+      </PopoverItem>
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().fillUnplacedSelection())}
+        icon={<LayoutGrid />}
+        disabled={!a.hasSelection || !a.selectionHasGaps}
+      >
+        {t('layout.selFill')}
+      </PopoverItem>
+    </UpwardPopover>
+  );
+}
+
+/**
+ * Mini-tier substitute for [Undo, Redo, Layout]: one icon button collapsing
+ * those three groups into a single popover. Layout actions are inlined here
+ * (not nested inside the popover via a sub-menu) so users only deal with one
+ * level of overlay on a tiny screen.
+ */
+function OverflowMenuButton() {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const past = useEditorStore((s) => s.past.length);
+  const future = useEditorStore((s) => s.future.length);
+  const undo = useEditorStore((s) => s.undo);
+  const redo = useEditorStore((s) => s.redo);
+  const a = useLayoutActions();
+  const run = (action: () => void) => () => {
+    setOpen(false);
+    action();
+  };
+  return (
+    <UpwardPopover
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <ToolbarButton
+          icon={MoreHorizontal}
+          label={t('tool.more')}
+          description={t('tool.moreHint')}
+          active={open}
+          iconOnly
+          onClick={() => setOpen((v) => !v)}
+        />
+      }
+    >
+      <PopoverItem
+        onClick={run(undo)}
+        icon={<Undo2 />}
+        disabled={past === 0}
+      >
+        {t('tool.undo')}
+      </PopoverItem>
+      <PopoverItem
+        onClick={run(redo)}
+        icon={<Redo2 />}
+        disabled={future === 0}
+      >
+        {t('tool.redo')}
+      </PopoverItem>
+      <div aria-hidden className="my-1 h-px bg-border" />
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().autoArrangeAll())}
+        icon={<Wand2 />}
+        disabled={!a.hasAnyElement || !a.hasArrangedAny}
+      >
+        {t('layout.allAuto')}
+      </PopoverItem>
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().autoArrangeSelection())}
+        icon={<Wand2 />}
+        disabled={!a.hasSelection || !a.selectionHasArranged}
+      >
+        {t('layout.selAuto')}
+      </PopoverItem>
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().fillUnplacedAll())}
+        icon={<LayoutGrid />}
+        disabled={!a.hasGapsAll}
+      >
+        {t('layout.allFill')}
+      </PopoverItem>
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().fillUnplacedSelection())}
+        icon={<LayoutGrid />}
+        disabled={!a.hasSelection || !a.selectionHasGaps}
+      >
+        {t('layout.selFill')}
+      </PopoverItem>
+    </UpwardPopover>
   );
 }
 
