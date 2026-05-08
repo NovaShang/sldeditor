@@ -25,6 +25,10 @@ import { useEditorStore } from '../store';
 import { snap } from './grid';
 
 const PROXIMITY_PX = 30;
+/** Below this squared distance from the source terminal, a place-from-terminal
+ *  release is treated as a "click" — the new element snaps so its chosen pin
+ *  lands on the source instead of following the cursor. */
+const CLICK_SLOP_SQ = 12 * 12;
 
 export interface DropResult {
   newElementId: ElementId;
@@ -207,11 +211,19 @@ export function resolvePlaceSource(
   return null;
 }
 
+const OPPOSITE: Record<Orientation, Orientation> = {
+  n: 's',
+  s: 'n',
+  e: 'w',
+  w: 'e',
+};
+
 /**
- * Pick which terminal of the new element should connect to the source. The
- * element is being placed centered at `placeAt` (cursor world coords); we
- * want the terminal whose *world* position lands closest to the source —
- * that's the natural endpoint for the connecting wire.
+ * Pick which terminal of the new element should connect to the source.
+ * Strategy: prefer a terminal whose orientation is opposite to the source's
+ * (the body then extends naturally *away* from the source). Tie-break by
+ * world distance to source. As a last resort (no opposite-orientation
+ * terminal exists in the library), fall back to closest-to-source.
  */
 export function pickConnectTerminal(
   lib: LibraryEntry,
@@ -222,10 +234,13 @@ export function pickConnectTerminal(
     // Library validation should prevent this, but degrade gracefully.
     return { id: 't', x: 0, y: 0, orientation: 'n' };
   }
-  let best = lib.terminals[0];
+  const wantOrient = OPPOSITE[source.orientation];
+  const opposites = lib.terminals.filter((t) => t.orientation === wantOrient);
+  const pool = opposites.length > 0 ? opposites : lib.terminals;
+  let best = pool[0];
   let bestDist = termWorldDist(best, placeAt, source.world);
-  for (let i = 1; i < lib.terminals.length; i++) {
-    const t = lib.terminals[i];
+  for (let i = 1; i < pool.length; i++) {
+    const t = pool[i];
     const d = termWorldDist(t, placeAt, source.world);
     if (d < bestDist) {
       bestDist = d;
@@ -263,10 +278,18 @@ export function dropElementFromTerminal(
   const source = resolvePlaceSource(sourceRef, cursorAt);
   if (!source) return null;
 
-  // Place the new element at the cursor (snapped); pick whichever of its
-  // terminals lands closest to the source as the connection point.
-  const placedAt: [number, number] = [snap(cursorAt[0]), snap(cursorAt[1])];
-  const chosen = pickConnectTerminal(lib, source, placedAt);
+  // If the user barely moved before releasing (i.e. clicked on the terminal
+  // instead of dragging), snap the new element so its chosen pin lands
+  // exactly on the source — body extends naturally in the opposite
+  // direction. Larger movements use the cursor as the placement anchor.
+  const dx = cursorAt[0] - source.world[0];
+  const dy = cursorAt[1] - source.world[1];
+  const treatAsClick = dx * dx + dy * dy <= CLICK_SLOP_SQ;
+  const cursorPlaceAt: [number, number] = [snap(cursorAt[0]), snap(cursorAt[1])];
+  const chosen = pickConnectTerminal(lib, source, cursorPlaceAt);
+  const placedAt: [number, number] = treatAsClick
+    ? [snap(source.world[0] - chosen.x), snap(source.world[1] - chosen.y)]
+    : cursorPlaceAt;
   const newId = newElementId(diagram, kind);
 
   store.dispatch((d) => {
