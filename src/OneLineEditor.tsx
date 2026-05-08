@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { EditorShell } from './components/EditorShell';
-import { useKeyboardShortcuts } from './canvas';
+import { fitToContentSoon, useKeyboardShortcuts } from './canvas';
 import type { DiagramFile } from './model';
 import { useEditorStore } from './store';
 
@@ -22,6 +22,14 @@ export function OneLineEditor({ className, diagram }: OneLineEditorProps) {
       useEditorStore.getState().setDiagram(diagram);
     }
   }, [diagram]);
+
+  // Reset the viewport to fit the diagram on first mount — covers both the
+  // fresh-seed path above and the case where persisted state rehydrated a
+  // diagram from a previous session. `fitToContentSoon` waits a few frames
+  // for the canvas DOM to attach.
+  useEffect(() => {
+    fitToContentSoon();
+  }, []);
 
   useKeyboardShortcuts();
 

@@ -6,4 +6,5 @@ export { transformAttr } from './transform-attr';
 export { hitElement, hitTerminal, hitNode } from './hit-test';
 export { getScale, subscribeScale } from './zoom-bus';
 export { getViewportApi, setViewportApi } from './viewport-bus';
+export { fitToContent, fitToContentSoon } from './fit-to-content';
 export type { Viewport, ViewportApi } from './useViewport';
