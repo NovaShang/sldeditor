@@ -28,7 +28,20 @@ function isEditing(target: EventTarget | null): boolean {
 export function exitDrawingState(): void {
   const store = useEditorStore.getState();
   const tool = store.activeTool;
-  if (tool === 'wire' || tool === 'busbar') {
+  if (store.editingAnnotation) {
+    // Editing an annotation: blur the contentEditable so its onBlur commits.
+    if (typeof document !== 'undefined') {
+      const ed = document.querySelector(
+        `.ole-free-annotation-edit-fo [data-annotation-id="${cssEscape(
+          store.editingAnnotation,
+        )}"], .ole-free-annotation-edit-fo div[contenteditable]`,
+      ) as HTMLElement | null;
+      ed?.blur();
+    }
+    store.setEditingAnnotation(null);
+    return;
+  }
+  if (tool === 'wire' || tool === 'busbar' || tool === 'text') {
     store.setActiveTool('select');
     return;
   }
@@ -38,9 +51,17 @@ export function exitDrawingState(): void {
     else store.setActiveTool('select');
     return;
   }
-  if (store.selectedNode || store.selection.length > 0) {
+  if (
+    store.selectedNode ||
+    store.selection.length > 0 ||
+    store.selectedAnnotation
+  ) {
     store.clearSelection();
   }
+}
+
+function cssEscape(s: string): string {
+  return s.replace(/(["\\])/g, '\\$1');
 }
 
 export function useKeyboardShortcuts(): void {
@@ -116,6 +137,10 @@ export function useKeyboardShortcuts(): void {
         case 'P':
           store.setActiveTool('place');
           return;
+        case 't':
+        case 'T':
+          store.setActiveTool('text');
+          return;
         case 'r':
         case 'R':
           if (store.selection.length > 0) {
@@ -132,7 +157,10 @@ export function useKeyboardShortcuts(): void {
           return;
         case 'Delete':
         case 'Backspace':
-          if (store.selectedNode) {
+          if (store.selectedAnnotation) {
+            e.preventDefault();
+            store.deleteAnnotation(store.selectedAnnotation);
+          } else if (store.selectedNode) {
             e.preventDefault();
             store.deleteSelectedNode();
           } else if (store.selection.length > 0) {

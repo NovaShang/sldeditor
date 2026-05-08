@@ -1,4 +1,5 @@
 export type {
+  AnnotationId,
   DiagramFile,
   DiagramMeta,
   DiagramVersion,
@@ -13,6 +14,7 @@ export type {
   Placement,
   Route,
   LabelMode,
+  TextAnnotation,
 } from './types';
 
 export type {

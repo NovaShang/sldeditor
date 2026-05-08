@@ -40,6 +40,26 @@ export interface DiagramFile {
   layout?: Record<ElementId, Placement>;
   /** Sparse: missing keys → auto-route. */
   routes?: Record<NodeId, Route>;
+  /** Free-floating text notes the user dropped on the canvas. Independent
+   *  of `elements` — annotations have no terminals and no connectivity. */
+  annotations?: TextAnnotation[];
+}
+
+/** Identifier for a free text annotation; minted by `newAnnotationId`. */
+export type AnnotationId = string;
+
+/**
+ * A free-floating text note placed on the canvas. Position is the text's
+ * top-left in canvas coordinates. Empty `text` is treated as deleted by the
+ * editor — the renderer does not paint it and the property panel offers no
+ * controls for one.
+ */
+export interface TextAnnotation {
+  id: AnnotationId;
+  at: [number, number];
+  text: string;
+  /** Optional override for the rendered font size in canvas units. */
+  fontSize?: number;
 }
 
 export interface DiagramMeta {

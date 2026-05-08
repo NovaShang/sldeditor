@@ -92,6 +92,8 @@ export const messages = {
     'tool.busHint': '画布上拖动一段母线，按下定起点、释放定终点',
     'tool.place': '元件',
     'tool.placeHint': '点击画布放置；或从端子/母线拖出，同时放置并连接',
+    'tool.text': '文字',
+    'tool.textHint': '点击画布放置一段文字注释；双击文字可重新编辑',
 
     'mode.selectWithSel': '拖动元件移动 · 拖端子连线 · 右键打开菜单',
     'mode.selectEmpty': '点选元件 · 拖动移动 · 框选多个 · 右键打开菜单',
@@ -103,6 +105,7 @@ export const messages = {
     'mode.placeNoKind': '从左侧元件库选择一种元件',
     'mode.placeFromTerm': '拖到目标位置释放，新元件将连接到起点端子',
     'mode.placeNormal': '点击空白放置；或从已有端子 / 母线拖出，同时放置并连接',
+    'mode.text': '点击画布放置文字；双击已有文字可编辑；选中后可拖动 / 删除',
     'mode.escSelect': 'Esc 清除选择',
     'mode.escOther': '右键 / Esc 取消',
 
@@ -263,6 +266,8 @@ export const messages = {
     'tool.busHint': 'Drag on the canvas — press to set start, release to set end',
     'tool.place': 'Place',
     'tool.placeHint': 'Click to place; or drag from a terminal/bus to place and connect',
+    'tool.text': 'Text',
+    'tool.textHint': 'Click the canvas to drop a text note; double-click an existing one to edit',
 
     'mode.selectWithSel': 'Drag elements · drag terminals to wire · right-click for menu',
     'mode.selectEmpty': 'Click to pick · drag to move · marquee for multiple · right-click for menu',
@@ -274,6 +279,7 @@ export const messages = {
     'mode.placeNoKind': 'Pick an element kind from the library on the left',
     'mode.placeFromTerm': 'Release at the target — the new element will connect back to the source terminal',
     'mode.placeNormal': 'Click empty space to place; or drag from a terminal / bus to place and connect',
+    'mode.text': 'Click to drop text · double-click to edit · drag selected to move · Del to remove',
     'mode.escSelect': 'Esc clears selection',
     'mode.escOther': 'Right-click / Esc to cancel',
 

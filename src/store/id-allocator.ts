@@ -46,3 +46,10 @@ export function newElementId(diagram: DiagramFile, kind: string): ElementId {
   while (used.has(`${prefix}${n}`)) n++;
   return `${prefix}${n}`;
 }
+
+export function newAnnotationId(diagram: DiagramFile): string {
+  const used = new Set((diagram.annotations ?? []).map((a) => a.id));
+  let n = 1;
+  while (used.has(`a${n}`)) n++;
+  return `a${n}`;
+}

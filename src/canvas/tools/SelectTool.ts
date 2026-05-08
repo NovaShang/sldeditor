@@ -12,10 +12,10 @@
 
 import { useEditorStore } from '../../store';
 import type { ResolvedPlacement } from '../../compiler';
-import type { ElementId, TerminalRef } from '../../model';
+import type { AnnotationId, ElementId, TerminalRef } from '../../model';
 import { libraryById } from '../../element-library';
 import { snap } from '../grid';
-import { hitElement, hitNode, hitTerminal } from '../hit-test';
+import { hitAnnotation, hitElement, hitNode, hitTerminal } from '../hit-test';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
 import { resolveWireTarget } from '../resolve-wire-target';
 import { transformAttr } from '../transform-attr';
@@ -45,9 +45,18 @@ interface WireDragState {
   fromRef: TerminalRef;
 }
 
+interface AnnotationDragState {
+  pointerId: number;
+  id: AnnotationId;
+  startSvg: [number, number];
+  origin: [number, number];
+  moved: boolean;
+}
+
 let drag: DragState | null = null;
 let marquee: MarqueeState | null = null;
 let wireDrag: WireDragState | null = null;
+let annDrag: AnnotationDragState | null = null;
 
 export const SelectTool: Tool = {
   id: 'select',
@@ -68,6 +77,31 @@ export const SelectTool: Tool = {
     }
 
     const store = useEditorStore.getState();
+
+    // Free text annotation: takes priority over element / terminal because
+    // the annotation rect can overlap them visually. Click selects + arms
+    // a drag; double-click enters edit mode (handled by the wrapper below).
+    const annId = hitAnnotation(e.target);
+    if (annId) {
+      e.preventDefault();
+      e.stopPropagation();
+      const ann = store.diagram.annotations?.find((a) => a.id === annId);
+      if (!ann) return;
+      if (e.detail >= 2) {
+        store.setEditingAnnotation(annId);
+        return;
+      }
+      store.setSelectedAnnotation(annId);
+      annDrag = {
+        pointerId: e.pointerId,
+        id: annId,
+        startSvg: ctx.viewport.screenToSvg(e.clientX, e.clientY),
+        origin: [ann.at[0], ann.at[1]],
+        moved: false,
+      };
+      ctx.hostEl.setPointerCapture(e.pointerId);
+      return;
+    }
 
     // If the user clicked a terminal on a currently-selected element, start a
     // wire drag — same gesture as the wire tool, but available without
@@ -154,6 +188,20 @@ export const SelectTool: Tool = {
   },
 
   onPointerMove(e, ctx) {
+    if (annDrag && e.pointerId === annDrag.pointerId) {
+      const cur = ctx.viewport.screenToSvg(e.clientX, e.clientY);
+      const dx = snap(cur[0] - annDrag.startSvg[0]);
+      const dy = snap(cur[1] - annDrag.startSvg[1]);
+      if (!annDrag.moved && (dx !== 0 || dy !== 0)) annDrag.moved = true;
+      // DOM-direct preview: update the wrapper group's transform so the
+      // drag stays smooth. The store mutation lands once on pointerup.
+      const node = ctx.hostEl.querySelector<SVGGElement>(
+        `[data-annotation-id="${cssEscape(annDrag.id)}"]`,
+      );
+      if (node) node.setAttribute('transform', `translate(${dx} ${dy})`);
+      return;
+    }
+
     if (wireDrag && e.pointerId === wireDrag.pointerId) {
       const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
       useEditorStore.getState().setCursorSvg(pt);
@@ -202,6 +250,27 @@ export const SelectTool: Tool = {
   },
 
   onPointerUp(e, ctx) {
+    if (annDrag && e.pointerId === annDrag.pointerId) {
+      if (ctx.hostEl.hasPointerCapture(e.pointerId)) {
+        ctx.hostEl.releasePointerCapture(e.pointerId);
+      }
+      const cur = ctx.viewport.screenToSvg(e.clientX, e.clientY);
+      const dx = snap(cur[0] - annDrag.startSvg[0]);
+      const dy = snap(cur[1] - annDrag.startSvg[1]);
+      const node = ctx.hostEl.querySelector<SVGGElement>(
+        `[data-annotation-id="${cssEscape(annDrag.id)}"]`,
+      );
+      // Reset the preview transform — store update will repaint at the new at.
+      if (node) node.removeAttribute('transform');
+      if (annDrag.moved && (dx !== 0 || dy !== 0)) {
+        useEditorStore.getState().updateAnnotation(annDrag.id, {
+          at: [annDrag.origin[0] + dx, annDrag.origin[1] + dy],
+        });
+      }
+      annDrag = null;
+      return;
+    }
+
     if (wireDrag && e.pointerId === wireDrag.pointerId) {
       const store = useEditorStore.getState();
       const from = wireDrag.fromRef;
@@ -262,6 +331,7 @@ export const SelectTool: Tool = {
   onDeactivate(ctx) {
     drag = null;
     marquee = null;
+    annDrag = null;
     if (wireDrag) {
       ctx.hostEl.classList.remove('tool-wire');
       const store = useEditorStore.getState();

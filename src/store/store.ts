@@ -23,6 +23,7 @@ import {
 } from '../compiler';
 import type { FileSession } from '../lib/file-io';
 import type {
+  AnnotationId,
   Connection,
   DiagramFile,
   Element,
@@ -31,8 +32,9 @@ import type {
   NodeId,
   Placement,
   TerminalRef,
+  TextAnnotation,
 } from '../model';
-import { newElementId } from './id-allocator';
+import { newAnnotationId, newElementId } from './id-allocator';
 
 const EMPTY_DIAGRAM: DiagramFile = { version: '1', elements: [] };
 const HISTORY_LIMIT = 100;
@@ -51,7 +53,7 @@ export interface ClipboardData {
   connections: Connection[];
 }
 
-export type ToolId = 'select' | 'pan' | 'wire' | 'place' | 'busbar';
+export type ToolId = 'select' | 'pan' | 'wire' | 'place' | 'busbar' | 'text';
 
 export interface EditorState {
   // ---- Document --------------------------------------------------------
@@ -81,6 +83,11 @@ export interface EditorState {
   /** Selected ConnectivityNode (set by clicking a wire). Mutually exclusive
    *  with `selection` — selecting an element clears it and vice versa. */
   selectedNode: NodeId | null;
+  /** Currently selected free text annotation. Mutually exclusive with
+   *  `selection` and `selectedNode`. */
+  selectedAnnotation: AnnotationId | null;
+  /** When non-null, that annotation is in inline-edit mode (contenteditable). */
+  editingAnnotation: AnnotationId | null;
 
   // ---- History ---------------------------------------------------------
   past: DiagramFile[];
@@ -115,6 +122,10 @@ export interface EditorState {
   clearSelection: () => void;
   /** Select (or deselect with `null`) a ConnectivityNode by clicking a wire. */
   setSelectedNode: (nodeId: NodeId | null) => void;
+  /** Select (or deselect with `null`) a free text annotation. */
+  setSelectedAnnotation: (id: AnnotationId | null) => void;
+  /** Toggle inline edit mode for a free text annotation. */
+  setEditingAnnotation: (id: AnnotationId | null) => void;
 
   // ---- Clipboard actions ----------------------------------------------
   copySelection: () => void;
@@ -150,6 +161,10 @@ export interface EditorState {
   addConnection: (a: TerminalRef, b: TerminalRef) => void;
   updateElement: (id: ElementId, patch: Partial<Element>) => void;
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
+  /** Drop a free text annotation at `at` (canvas coords); returns its id. */
+  addAnnotation: (at: [number, number], text?: string) => AnnotationId;
+  updateAnnotation: (id: AnnotationId, patch: Partial<TextAnnotation>) => void;
+  deleteAnnotation: (id: AnnotationId) => void;
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -168,6 +183,8 @@ export const useEditorStore = create<EditorState>()(
   cursorSvg: null,
   selection: [],
   selectedNode: null,
+  selectedAnnotation: null,
+  editingAnnotation: null,
 
   past: [],
   future: [],
@@ -183,6 +200,8 @@ export const useEditorStore = create<EditorState>()(
       future: [],
       selection: [],
       selectedNode: null,
+      selectedAnnotation: null,
+      editingAnnotation: null,
       wireFromTerminal: null,
       placeFromTerminal: null,
     }),
@@ -198,6 +217,8 @@ export const useEditorStore = create<EditorState>()(
       future: [],
       selection: [],
       selectedNode: null,
+      selectedAnnotation: null,
+      editingAnnotation: null,
       wireFromTerminal: null,
       placeFromTerminal: null,
     }),
@@ -268,7 +289,12 @@ export const useEditorStore = create<EditorState>()(
   setBusbarDrawStart: (pt) => set({ busbarDrawStart: pt }),
   setCursorSvg: (pt) => set({ cursorSvg: pt }),
 
-  setSelection: (ids) => set({ selection: dedupe(ids), selectedNode: null }),
+  setSelection: (ids) =>
+    set({
+      selection: dedupe(ids),
+      selectedNode: null,
+      selectedAnnotation: ids.length ? null : get().selectedAnnotation,
+    }),
   toggleInSelection: (id) => {
     const sel = get().selection;
     set({
@@ -276,11 +302,34 @@ export const useEditorStore = create<EditorState>()(
         ? sel.filter((x) => x !== id)
         : [...sel, id],
       selectedNode: null,
+      selectedAnnotation: null,
     });
   },
-  clearSelection: () => set({ selection: [], selectedNode: null }),
+  clearSelection: () =>
+    set({
+      selection: [],
+      selectedNode: null,
+      selectedAnnotation: null,
+      editingAnnotation: null,
+    }),
   setSelectedNode: (nodeId) =>
-    set({ selectedNode: nodeId, selection: nodeId ? [] : get().selection }),
+    set({
+      selectedNode: nodeId,
+      selection: nodeId ? [] : get().selection,
+      selectedAnnotation: nodeId ? null : get().selectedAnnotation,
+    }),
+  setSelectedAnnotation: (id) =>
+    set({
+      selectedAnnotation: id,
+      selection: id ? [] : get().selection,
+      selectedNode: id ? null : get().selectedNode,
+      editingAnnotation: id ? get().editingAnnotation : null,
+    }),
+  setEditingAnnotation: (id) =>
+    set({
+      editingAnnotation: id,
+      selectedAnnotation: id ?? get().selectedAnnotation,
+    }),
 
   copySelection: () => {
     const { selection, diagram, internal } = get();
@@ -634,6 +683,42 @@ export const useEditorStore = create<EditorState>()(
         layout: { ...(d.layout ?? {}), [id]: nextPlacement },
       };
     });
+  },
+
+  addAnnotation: (at, text = '') => {
+    const id = newAnnotationId(get().diagram);
+    get().dispatch((d) => {
+      const ann: TextAnnotation = { id, at, text };
+      return { ...d, annotations: [...(d.annotations ?? []), ann] };
+    });
+    return id;
+  },
+  updateAnnotation: (id, patch) => {
+    get().dispatch((d) => {
+      const list = d.annotations ?? [];
+      let changed = false;
+      const next = list.map((a) => {
+        if (a.id !== id) return a;
+        changed = true;
+        return { ...a, ...patch, id: a.id };
+      });
+      if (!changed) return d;
+      return { ...d, annotations: next };
+    });
+  },
+  deleteAnnotation: (id) => {
+    get().dispatch((d) => {
+      const list = d.annotations ?? [];
+      const next = list.filter((a) => a.id !== id);
+      if (next.length === list.length) return d;
+      return {
+        ...d,
+        annotations: next.length ? next : undefined,
+      };
+    });
+    if (get().selectedAnnotation === id) {
+      set({ selectedAnnotation: null, editingAnnotation: null });
+    }
   },
     }),
     {

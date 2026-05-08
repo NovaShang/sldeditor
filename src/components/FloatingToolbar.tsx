@@ -8,6 +8,7 @@ import {
   MousePointer2,
   Redo2,
   Shapes,
+  StickyNote,
   Undo2,
   Wand2,
 } from 'lucide-react';
@@ -80,6 +81,15 @@ const TOOLS: ToolDef[] = [
     icon: Cable,
     switchTo: 'wire',
   },
+  {
+    id: 'text',
+    labelKey: 'tool.text',
+    hotkey: 'T',
+    descriptionKey: 'tool.textHint',
+    icon: StickyNote,
+    switchTo: 'text',
+    iconOnly: true,
+  },
 ];
 
 /**
@@ -122,6 +132,10 @@ function ToolHint() {
       if (!placeKind) text = t('mode.placeNoKind');
       else if (placeFrom) text = t('mode.placeFromTerm');
       else text = t('mode.placeNormal');
+      cancelHint = true;
+      break;
+    case 'text':
+      text = t('mode.text');
       cancelHint = true;
       break;
   }

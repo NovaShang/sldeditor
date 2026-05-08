@@ -23,7 +23,7 @@ import type {
 } from '../model';
 import type { ResolvedElement, ResolvedPlacement } from '../compiler';
 
-const LINE_HEIGHT = 5;
+const LINE_HEIGHT = 9;
 
 export function AnnotationLayer() {
   const elements = useEditorStore((s) => s.internal.elements);

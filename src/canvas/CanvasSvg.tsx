@@ -26,6 +26,7 @@ import { useEditorStore } from '../store';
 import { setViewportApi } from './viewport-bus';
 import { dropElement } from './drop-on-bus';
 import { AnnotationLayer } from './AnnotationLayer';
+import { FreeAnnotationLayer } from './FreeAnnotationLayer';
 import { BusHandles } from './BusHandles';
 import { BusbarPreview } from './BusbarPreview';
 import { ElementLayer } from './ElementLayer';
@@ -248,6 +249,7 @@ export function CanvasSvg() {
           <WireLayer />
           <ElementLayer />
           <AnnotationLayer />
+          <FreeAnnotationLayer />
           <SelectionOverlay />
           <BusHandles />
           <TerminalLayer />

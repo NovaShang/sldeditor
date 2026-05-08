@@ -207,13 +207,39 @@
    the text readable when it crosses wires or symbols. */
 .ole-annotation-text {
   font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 4px;
+  font-size: 7px;
   fill: var(--foreground);
   paint-order: stroke;
   stroke: var(--canvas-bg);
-  stroke-width: 1.2px;
+  stroke-width: 2px;
   stroke-linejoin: round;
   user-select: none;
+  pointer-events: none;
+}
+
+/* Free text annotations — independent notes the user dropped via the text
+   tool. Idle annotations are non-interactive on the body itself; the wrapping
+   group's hit-rect (transparent) catches clicks for select / drag. */
+.ole-free-annotation-text {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  fill: var(--foreground);
+  paint-order: stroke;
+  stroke: var(--canvas-bg);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  user-select: none;
+  pointer-events: none;
+}
+.ole-free-annotation-hit {
+  pointer-events: auto;
+  cursor: move;
+}
+.ole-free-annotation-halo {
+  fill: none;
+  stroke: var(--selection);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 

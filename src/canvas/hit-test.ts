@@ -5,7 +5,7 @@
  */
 
 import { useEditorStore } from '../store';
-import type { ElementId, NodeId, TerminalRef } from '../model';
+import type { AnnotationId, ElementId, NodeId, TerminalRef } from '../model';
 
 function ancestor(target: EventTarget | null, attr: string): Element | null {
   if (!(target instanceof Element)) return null;
@@ -36,4 +36,11 @@ export function hitTerminal(target: EventTarget | null): TerminalRef | null {
 
 export function hitNode(target: EventTarget | null): NodeId | null {
   return ancestor(target, 'data-node-id')?.getAttribute('data-node-id') ?? null;
+}
+
+export function hitAnnotation(target: EventTarget | null): AnnotationId | null {
+  return (
+    ancestor(target, 'data-annotation-id')?.getAttribute('data-annotation-id') ??
+    null
+  );
 }
