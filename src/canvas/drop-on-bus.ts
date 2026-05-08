@@ -48,7 +48,13 @@ export function dropElement(kind: string, at: [number, number]): DropResult {
 
   const target = nearestBus(diagram, at);
   if (!target) {
-    const id = store.addElement(kind, at);
+    // Offset so the cursor lands on the element's tap-side pin (same one
+    // the place ghost previews) — feels like you're carrying the pin.
+    const cursorPin = pickPlaceCursorTerminal(lib);
+    const placedAt: [number, number] = cursorPin
+      ? [snap(at[0]) - cursorPin.x, snap(at[1]) - cursorPin.y]
+      : [snap(at[0]), snap(at[1])];
+    const id = store.addElement(kind, placedAt);
     return { newElementId: id, attachedToBus: false };
   }
 
@@ -142,6 +148,26 @@ function pickTapTerminal(lib: LibraryEntry, busAxis: 'x' | 'y'): string {
     busAxis === 'x' ? a.y - b.y : a.x - b.x,
   );
   return sorted[0].id;
+}
+
+/**
+ * The library terminal that should sit at the cursor while a free placement
+ * is in progress — same "tap-side" rule as `pickTapTerminal`, returned as a
+ * full terminal so callers can offset placement (or the place ghost) so the
+ * cursor visually holds that pin instead of the element's hotspot.
+ *
+ * Stretchable kinds (busbar) don't have a meaningful tap; for them we return
+ * null and callers should use the element's hotspot.
+ */
+export function pickPlaceCursorTerminal(
+  lib: LibraryEntry,
+): LibraryTerminal | null {
+  if (!lib || lib.stretchable || lib.terminals.length === 0) return null;
+  const busAxis = libraryById['busbar']?.stretchable?.axis ?? 'x';
+  const sorted = [...lib.terminals].sort((a, b) =>
+    busAxis === 'x' ? a.y - b.y : a.x - b.x,
+  );
+  return sorted[0];
 }
 
 /**
