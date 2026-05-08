@@ -21,9 +21,10 @@
     }
   ],
   "params": [
-    { "name": "S", "label": "容量", "type": "number", "unit": "MVA" },
-    { "name": "ratio", "label": "变比", "type": "string" }
+    { "name": "S", "label": "容量", "type": "number", "unit": "MVA", "showOnCanvas": true },
+    { "name": "ratio", "label": "变比", "type": "string", "showOnCanvas": true }
   ],
+  "label": { "x": 4, "y": -68, "anchor": "start" },
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_01.elmt",

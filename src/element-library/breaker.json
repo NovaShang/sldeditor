@@ -5,7 +5,7 @@
   "viewBox": "-7 -22 15 46",
   "width": 15,
   "height": 46,
-  "svg": "<polyline points=\"0,20 0,10 -5,-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"2\" y1=\"-8\" x2=\"-2\" y2=\"-12\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"2\" y1=\"-12\" x2=\"-2\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"2\" y=\"-10.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"4\" fill=\"#000000\">1</text><text x=\"3\" y=\"21.2\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"4\" fill=\"#000000\">2</text>",
+  "svg": "<polyline points=\"0,20 0,10 -5,-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"2\" y1=\"-8\" x2=\"-2\" y2=\"-12\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"2\" y1=\"-12\" x2=\"-2\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"2\" y=\"-10.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"6\" fill=\"#000000\">1</text><text x=\"3\" y=\"21.2\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"6\" fill=\"#000000\">2</text>",
   "terminals": [
     {
       "id": "t1",
@@ -28,6 +28,7 @@
       "label": "断开"
     }
   ],
+  "label": { "x": 6, "y": -2, "anchor": "start" },
   "source": {
     "kind": "elmt",
     "path": "11_singlepole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur1.elmt",

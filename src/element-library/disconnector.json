@@ -28,6 +28,7 @@
       "label": "断开"
     }
   ],
+  "label": { "x": 6, "y": -10, "anchor": "start" },
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_06.elmt",

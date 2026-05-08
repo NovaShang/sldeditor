@@ -50,7 +50,14 @@ export interface DiagramMeta {
   createdAt?: string;
   /** ISO 8601 timestamp. */
   updatedAt?: string;
+  /** Structural-label visibility on the canvas. Default `'all'`.
+   *  - `'off'`: hide all labels.
+   *  - `'id'`: only the element's name/ID.
+   *  - `'all'`: ID plus every param flagged `showOnCanvas` in the library. */
+  labelMode?: LabelMode;
 }
+
+export type LabelMode = 'off' | 'id' | 'all';
 
 /** Permitted value types for `Element.params`. */
 export type ParamValue = number | string | boolean;

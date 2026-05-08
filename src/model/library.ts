@@ -63,6 +63,20 @@ export interface LibraryParamField {
   label?: string;
   /** Display-only unit suffix, e.g. "kV", "MVA", "Ω". */
   unit?: string;
+  /** When true, the value (with unit) appears as a structural label on the
+   *  canvas next to the symbol — see `AnnotationLayer`. Off by default. */
+  showOnCanvas?: boolean;
+}
+
+/**
+ * Where a structural-label block (element ID + showOnCanvas params) anchors
+ * relative to the element's local frame. Used by `AnnotationLayer`.
+ */
+export interface LibraryLabelAnchor {
+  x: number;
+  y: number;
+  /** SVG `text-anchor`; defaults to `'start'` when omitted. */
+  anchor?: 'start' | 'middle' | 'end';
 }
 
 /**
@@ -97,5 +111,8 @@ export interface LibraryEntry {
    * this list) still render generically.
    */
   params?: LibraryParamField[];
+  /** Anchor for the structural label block (ID + showOnCanvas params). When
+   *  omitted, `AnnotationLayer` falls back to the right edge of the viewBox. */
+  label?: LibraryLabelAnchor;
   source: LibrarySource;
 }

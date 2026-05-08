@@ -12,6 +12,7 @@ export type {
   NamedConnection,
   Placement,
   Route,
+  LabelMode,
 } from './types';
 
 export type {
@@ -20,6 +21,7 @@ export type {
   LibraryStretchable,
   LibraryStateField,
   LibraryParamField,
+  LibraryLabelAnchor,
   LibrarySource,
   Orientation,
 } from './library';

@@ -69,6 +69,11 @@ export const messages = {
     'view.gridShowHint': '同时开启对齐吸附（拖动会贴到 10px 网格）',
     'view.gridHideAria': '隐藏网格并关闭吸附',
     'view.gridShowAria': '显示网格并开启吸附',
+    'view.label': '标签',
+    'view.labelOff': '关闭标签',
+    'view.labelId': '仅显示 ID',
+    'view.labelAll': 'ID + 参数',
+    'view.labelHint': '点击循环切换：关闭 → 仅 ID → ID + 参数',
 
     'library.title': '元件库',
     'library.empty': '没有匹配的元件',
@@ -113,6 +118,11 @@ export const messages = {
     'layout.selAuto': '重新自动布局选区',
     'layout.allFill': '填补未排版位置',
     'layout.selFill': '填补未排版选区',
+
+    'tool.more': '更多',
+    'tool.moreHint': '撤销 / 重做 / 布局',
+    'view.menu': '视图',
+    'view.menuHint': '缩放、适配、网格',
 
     'ctx.ariaNode': '选中连线操作',
     'ctx.ariaElement': '选中元件操作',
@@ -230,6 +240,11 @@ export const messages = {
     'view.gridShowHint': 'Also enables snap-to-grid (snaps to 10px on drag)',
     'view.gridHideAria': 'Hide grid and disable snap',
     'view.gridShowAria': 'Show grid and enable snap',
+    'view.label': 'Labels',
+    'view.labelOff': 'Hide labels',
+    'view.labelId': 'ID only',
+    'view.labelAll': 'ID + params',
+    'view.labelHint': 'Cycle: off → ID → ID + params',
 
     'library.title': 'Library',
     'library.empty': 'No matching elements',
@@ -274,6 +289,11 @@ export const messages = {
     'layout.selAuto': 'Auto-layout selection',
     'layout.allFill': 'Fill unplaced',
     'layout.selFill': 'Fill unplaced in selection',
+
+    'tool.more': 'More',
+    'tool.moreHint': 'Undo / redo / layout',
+    'view.menu': 'View',
+    'view.menuHint': 'Zoom, fit, grid',
 
     'ctx.ariaNode': 'Wire actions',
     'ctx.ariaElement': 'Element actions',

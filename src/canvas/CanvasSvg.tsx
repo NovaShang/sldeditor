@@ -25,6 +25,7 @@ import { useT } from '../i18n';
 import { useEditorStore } from '../store';
 import { setViewportApi } from './viewport-bus';
 import { dropElement } from './drop-on-bus';
+import { AnnotationLayer } from './AnnotationLayer';
 import { BusHandles } from './BusHandles';
 import { BusbarPreview } from './BusbarPreview';
 import { ElementLayer } from './ElementLayer';
@@ -45,6 +46,20 @@ const IS_MAC =
 const MOD = IS_MAC ? '⌘' : 'Ctrl+';
 const SHIFT = IS_MAC ? '⇧' : 'Shift+';
 
+/**
+ * Pick a world-space grid step (in snap units) so the rendered tile is at
+ * least ~18 screen px. Steps are multiples of the snap step (10) along a
+ * 1-2-5 series so every dot still lands on a snappable position.
+ */
+const GRID_STEPS = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+const MIN_SCREEN_STEP = 18;
+function pickGridStep(scale: number): number {
+  for (const w of GRID_STEPS) {
+    if (w * scale >= MIN_SCREEN_STEP) return w;
+  }
+  return GRID_STEPS[GRID_STEPS.length - 1];
+}
+
 export function CanvasSvg() {
   const t = useT();
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -57,17 +72,20 @@ export function CanvasSvg() {
     setViewportApi(viewport);
     return () => setViewportApi(null);
   }, [viewport]);
-  // Keep the dot grid locked to world coordinates so it pans / zooms with the
-  // canvas. Without this the grid lives in screen space and slides past the
-  // snap targets, which made placed elements look "off the grid".
+  // Dot grid: stays locked to world coordinates (so dots line up with snap
+  // targets) but the *visible* spacing adapts to zoom. Picking a world-step
+  // that's a multiple of the snap step (10) and large enough to render
+  // ≥ MIN_SCREEN_STEP screen pixels keeps the grid readable from 0.1× to 8×
+  // without dots either piling into a haze or growing into giant blobs.
   useEffect(() => {
     const sync = (vp: { tx: number; ty: number; scale: number }) => {
       const el = gridPatternRef.current;
       if (!el) return;
-      el.setAttribute(
-        'patternTransform',
-        `translate(${vp.tx} ${vp.ty}) scale(${vp.scale})`,
-      );
+      const worldStep = pickGridStep(vp.scale);
+      const screenStep = worldStep * vp.scale;
+      el.setAttribute('width', String(screenStep));
+      el.setAttribute('height', String(screenStep));
+      el.setAttribute('patternTransform', `translate(${vp.tx} ${vp.ty})`);
     };
     sync(viewport.getViewport());
     return viewport.subscribe(sync);
@@ -222,13 +240,14 @@ export function CanvasSvg() {
             {/* Dot at the cell corner so every visible dot lands on a snap
                 position (snap step = 10, pattern step = 20 → every dot is on
                 a multiple-of-20 snap point). */}
-            <circle cx={0} cy={0} r={1} fill="var(--canvas-grid-strong)" />
+            <circle cx={0} cy={0} r={2} fill="var(--canvas-grid-strong)" />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#ole-grid-dots)" />
         <g ref={groupRef} className="ole-viewport">
           <WireLayer />
           <ElementLayer />
+          <AnnotationLayer />
           <SelectionOverlay />
           <BusHandles />
           <TerminalLayer />

@@ -202,6 +202,21 @@
   cursor: crosshair;
 }
 
+/* Structural annotations — element ID + showOnCanvas params painted next
+   to each symbol by AnnotationLayer. White halo (paint-order: stroke) keeps
+   the text readable when it crosses wires or symbols. */
+.ole-annotation-text {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 4px;
+  fill: var(--foreground);
+  paint-order: stroke;
+  stroke: var(--canvas-bg);
+  stroke-width: 1.2px;
+  stroke-linejoin: round;
+  user-select: none;
+  pointer-events: none;
+}
+
 /* Hover an element → reveal its terminals (others stay hidden). The
    useHoverHighlight hook tags the cursor's element with .ole-hover-element-host
    and its terminals with .ole-hover-terminal-on; CSS finishes the look. */
@@ -238,7 +253,7 @@
    inherits the element's transform. */
 .ole-selection-rect {
   stroke: var(--selection);
-  stroke-width: 3;
+  stroke-width: 1.5;
   stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
@@ -247,7 +262,7 @@
 /* Wire preview during the wire tool. Anchor stays solid, line is dashed. */
 .ole-wire-preview-line {
   stroke: var(--selection);
-  stroke-width: 3;
+  stroke-width: 1.5;
   stroke-dasharray: 4 3;
   fill: none;
   vector-effect: non-scaling-stroke;
@@ -261,13 +276,13 @@
 .ole-wire-preview-target-ring {
   fill: color-mix(in oklch, var(--selection) 25%, transparent);
   stroke: var(--selection);
-  stroke-width: 3;
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
 .ole-wire-preview-target-dot {
   fill: var(--selection);
   stroke: var(--canvas-bg);
-  stroke-width: 2;
+  stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 
@@ -275,7 +290,7 @@
    bus rendering; endpoints rounded for a clear "draw line" affordance. */
 .ole-busbar-preview-line {
   stroke: var(--selection);
-  stroke-width: 6;
+  stroke-width: 3;
   stroke-linecap: round;
   stroke-dasharray: 6 4;
   fill: none;
@@ -286,17 +301,15 @@
   stroke: none;
 }
 
-/* Place ghost during the place tool — shape inherits all library colors. */
-.ole-place-ghost [stroke] {
-  vector-effect: non-scaling-stroke;
-}
+/* Place ghost during the place tool — shape inherits library colors and
+   stroke widths so the ghost visually equals the eventual element. */
 
 /* Bus stretch handles. Visible grips at each end of a selected stretchable
    element; cursor hints the drag axis. */
 .ole-bus-handle {
   fill: var(--canvas-bg);
   stroke: var(--selection);
-  stroke-width: 3;
+  stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
   cursor: ew-resize;
   pointer-events: auto;
@@ -309,7 +322,7 @@
 .ole-marquee {
   fill: color-mix(in oklch, var(--selection) 8%, transparent);
   stroke: var(--selection);
-  stroke-width: 2;
+  stroke-width: 1;
   stroke-dasharray: 3 3;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
@@ -322,13 +335,12 @@
 }
 .ole-wire {
   pointer-events: none;
-  vector-effect: non-scaling-stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .ole-wire[data-selected='true'] {
   stroke: var(--selection);
-  stroke-width: 7;
+  stroke-width: 3.5;
 }
 
 /* Invisible wide hit area underneath the visible wire — gives users a
@@ -345,16 +357,11 @@
   stroke: var(--selection);
 }
 
-/* Element strokes look the same at every zoom level — strokes don't grow when
-   zooming in. Library SVG fragments author at stroke-width="1"; we override
-   to 2 so the rendered glyph reads at typical UI density. */
-.ole-element [stroke] {
-  vector-effect: non-scaling-stroke;
-  stroke-width: 2;
-}
-.ole-element text {
-  font-size: 8px;
-}
+/* Diagram strokes scale with the canvas zoom — zooming in makes them
+   thicker, matching CAD conventions. Library SVG fragments author at
+   stroke-width="1" with their own per-symbol text sizes; we leave both
+   intact so default-zoom appearance is unchanged from authored intent
+   and grows on zoom. */
 
 /* Per-element hit target. `fill: transparent` (vs `none`) means the rect is
    invisible but still receives pointer events, so users can grab any part

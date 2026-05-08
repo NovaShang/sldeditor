@@ -1,15 +1,30 @@
 import { useEffect, useState } from 'react';
-import { Grid2x2, Maximize2, Minus, Plus } from 'lucide-react';
+import {
+  Grid2x2,
+  Maximize2,
+  Minus,
+  MoreHorizontal,
+  Plus,
+  Type,
+} from 'lucide-react';
 import { Button } from './ui/button';
 import { Tooltip } from './ui/tooltip';
-import { getViewportApi, getScale, subscribeScale } from '../canvas';
+import { UpwardPopover } from './ui/upward-popover';
+import {
+  fitToContent,
+  getViewportApi,
+  getScale,
+  subscribeScale,
+} from '../canvas';
+import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { useT } from '../i18n';
 import { cn } from '../lib/utils';
+import { useEditorStore } from '../store';
+import type { LabelMode } from '../model';
 
 const ZOOM_STEPS = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 6, 8] as const;
 const MIN_SCALE = 0.1;
 const MAX_SCALE = 8;
-const FIT_PADDING_PX = 60;
 
 const GRID_STORAGE_KEY = 'ole-grid';
 
@@ -77,53 +92,19 @@ function zoomOut(): void {
   zoomTo(next);
 }
 
-/**
- * Fit all rendered elements to the viewport with padding. Falls back to
- * a centered 100% reset when the canvas is empty.
- */
-function fitToContent(): void {
-  const api = getViewportApi();
-  const root = getCanvasRoot();
-  if (!api || !root) return;
-  const nodes = root.querySelectorAll('[data-element-id]');
-  const rect = root.getBoundingClientRect();
-  if (nodes.length === 0) {
-    api.setViewport({ tx: rect.width / 2, ty: rect.height / 2, scale: 1 });
-    return;
-  }
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const n of nodes) {
-    const r = (n as Element).getBoundingClientRect();
-    if (r.width === 0 && r.height === 0) continue;
-    if (r.left < minX) minX = r.left;
-    if (r.top < minY) minY = r.top;
-    if (r.right > maxX) maxX = r.right;
-    if (r.bottom > maxY) maxY = r.bottom;
-  }
-  if (minX === Infinity) return;
-  // Convert screen-bbox corners to current SVG coords; that bbox is what we
-  // want to fit to the host minus padding.
-  const [ax, ay] = api.screenToSvg(minX, minY);
-  const [bx, by] = api.screenToSvg(maxX, maxY);
-  const contentW = Math.max(bx - ax, 1);
-  const contentH = Math.max(by - ay, 1);
-  const targetScale = clamp(
-    Math.min(
-      (rect.width - FIT_PADDING_PX * 2) / contentW,
-      (rect.height - FIT_PADDING_PX * 2) / contentH,
-    ),
-    MIN_SCALE,
-    MAX_SCALE,
-  );
-  const cx = (ax + bx) / 2;
-  const cy = (ay + by) / 2;
-  api.setViewport({
-    tx: rect.width / 2 - targetScale * cx,
-    ty: rect.height / 2 - targetScale * cy,
-    scale: targetScale,
+const LABEL_CYCLE: Record<LabelMode, LabelMode> = {
+  off: 'id',
+  id: 'all',
+  all: 'off',
+};
+
+function cycleLabelMode(): void {
+  const store = useEditorStore.getState();
+  const cur = store.diagram.meta?.labelMode ?? 'all';
+  const next = LABEL_CYCLE[cur];
+  store.dispatch((d) => {
+    const meta = { ...(d.meta ?? {}), labelMode: next };
+    return { ...d, meta };
   });
 }
 
@@ -131,6 +112,15 @@ export function ViewToolbar() {
   const t = useT();
   const [scale, setScale] = useState(getScale);
   const [grid, setGrid] = useState<boolean>(() => readGrid());
+  const labelMode: LabelMode = useEditorStore(
+    (s) => s.diagram.meta?.labelMode ?? 'all',
+  );
+  const tier = useEditorTier();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dense = atLeast(tier, 'dense');
+  // Hide the zoom-% pill from `tight` (≥720 < 900) onward — that's where the
+  // centered FloatingToolbar starts colliding with this right-anchored bar.
+  const hidePercentPill = atLeast(tier, 'tight');
 
   useEffect(() => subscribeScale(setScale), []);
 
@@ -161,112 +151,206 @@ export function ViewToolbar() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const zoomOutBtn = (
+    <Tooltip
+      content={
+        <div className="space-y-0.5">
+          <div className="font-medium">{t('view.zoomOut')}</div>
+          <div className="text-muted-foreground">{t('view.zoomOutHint')}</div>
+        </div>
+      }
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={zoomOut}
+        aria-label={t('view.zoomOut')}
+      >
+        <Minus />
+      </Button>
+    </Tooltip>
+  );
+
+  const zoomDisplayBtn = (
+    <Tooltip
+      content={
+        <div className="space-y-0.5">
+          <div className="font-medium">{t('view.reset')}</div>
+          <div className="text-muted-foreground">
+            {t('view.current', { z: Math.round(scale * 100) })}
+          </div>
+        </div>
+      }
+    >
+      <button
+        type="button"
+        onClick={() => zoomTo(1)}
+        className="min-w-12 rounded-md px-2 py-1 text-center text-xs tabular-nums text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        aria-label={t('view.reset')}
+      >
+        {Math.round(scale * 100)}%
+      </button>
+    </Tooltip>
+  );
+
+  const zoomInBtn = (
+    <Tooltip
+      content={
+        <div className="space-y-0.5">
+          <div className="font-medium">{t('view.zoomIn')}</div>
+          <div className="text-muted-foreground">{t('view.zoomInHint')}</div>
+        </div>
+      }
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={zoomIn}
+        aria-label={t('view.zoomIn')}
+      >
+        <Plus />
+      </Button>
+    </Tooltip>
+  );
+
+  const fitBtn = (
+    <Tooltip
+      content={
+        <div className="space-y-0.5">
+          <div className="font-medium">{t('view.fit')}</div>
+          <div className="text-muted-foreground">{t('view.fitHint')}</div>
+        </div>
+      }
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={fitToContent}
+        aria-label={t('view.fit')}
+      >
+        <Maximize2 />
+      </Button>
+    </Tooltip>
+  );
+
+  const gridBtn = (
+    <Tooltip
+      content={
+        <div className="space-y-0.5">
+          <div>
+            <span className="font-medium">
+              {grid ? t('view.gridHide') : t('view.gridShow')}
+            </span>
+            <span className="ml-1.5 text-muted-foreground">
+              {t('view.gridHotkey')}
+            </span>
+          </div>
+          <div className="text-muted-foreground">
+            {grid ? t('view.gridHideHint') : t('view.gridShowHint')}
+          </div>
+        </div>
+      }
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setGrid((v) => !v)}
+        aria-label={grid ? t('view.gridHideAria') : t('view.gridShowAria')}
+        aria-pressed={grid}
+        className={cn(!grid && 'text-muted-foreground/60')}
+      >
+        <Grid2x2 />
+      </Button>
+    </Tooltip>
+  );
+
+  const labelBtn = (
+    <Tooltip
+      content={
+        <div className="space-y-0.5">
+          <div className="font-medium">
+            {labelMode === 'off'
+              ? t('view.labelOff')
+              : labelMode === 'id'
+                ? t('view.labelId')
+                : t('view.labelAll')}
+          </div>
+          <div className="text-muted-foreground">{t('view.labelHint')}</div>
+        </div>
+      }
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={cycleLabelMode}
+        aria-label={t('view.label')}
+        aria-pressed={labelMode !== 'off'}
+        className={cn(labelMode === 'off' && 'text-muted-foreground/60')}
+      >
+        <Type />
+      </Button>
+    </Tooltip>
+  );
+
+  if (dense) {
+    return (
+      <div className="absolute bottom-3 right-3 z-20">
+        <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
+          <UpwardPopover
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            trigger={
+              <Tooltip
+                content={
+                  <div className="space-y-0.5">
+                    <div className="font-medium">{t('view.menu')}</div>
+                    <div className="text-muted-foreground">
+                      {t('view.menuHint')}
+                    </div>
+                  </div>
+                }
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-label={t('view.menu')}
+                  aria-pressed={menuOpen}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </Tooltip>
+            }
+          >
+            <div className="flex flex-col gap-0.5">
+              {zoomDisplayBtn}
+              <div className="flex items-center gap-0.5">
+                {zoomOutBtn}
+                {zoomInBtn}
+              </div>
+              <div aria-hidden className="my-1 h-px bg-border" />
+              <div className="flex items-center gap-0.5">
+                {fitBtn}
+                {gridBtn}
+                {labelBtn}
+              </div>
+            </div>
+          </UpwardPopover>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="absolute bottom-3 right-3 z-20">
       <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
-        <Tooltip
-          content={
-            <div className="space-y-0.5">
-              <div className="font-medium">{t('view.zoomOut')}</div>
-              <div className="text-muted-foreground">
-                {t('view.zoomOutHint')}
-              </div>
-            </div>
-          }
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={zoomOut}
-            aria-label={t('view.zoomOut')}
-          >
-            <Minus />
-          </Button>
-        </Tooltip>
-        <Tooltip
-          content={
-            <div className="space-y-0.5">
-              <div className="font-medium">{t('view.reset')}</div>
-              <div className="text-muted-foreground">
-                {t('view.current', { z: Math.round(scale * 100) })}
-              </div>
-            </div>
-          }
-        >
-          <button
-            type="button"
-            onClick={() => zoomTo(1)}
-            className="min-w-12 rounded-md px-2 py-1 text-center text-xs tabular-nums text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            aria-label={t('view.reset')}
-          >
-            {Math.round(scale * 100)}%
-          </button>
-        </Tooltip>
-        <Tooltip
-          content={
-            <div className="space-y-0.5">
-              <div className="font-medium">{t('view.zoomIn')}</div>
-              <div className="text-muted-foreground">
-                {t('view.zoomInHint')}
-              </div>
-            </div>
-          }
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={zoomIn}
-            aria-label={t('view.zoomIn')}
-          >
-            <Plus />
-          </Button>
-        </Tooltip>
+        {zoomOutBtn}
+        {!hidePercentPill && zoomDisplayBtn}
+        {zoomInBtn}
         <div aria-hidden className="mx-1 h-4 w-px bg-border" />
-        <Tooltip
-          content={
-            <div className="space-y-0.5">
-              <div className="font-medium">{t('view.fit')}</div>
-              <div className="text-muted-foreground">{t('view.fitHint')}</div>
-            </div>
-          }
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={fitToContent}
-            aria-label={t('view.fit')}
-          >
-            <Maximize2 />
-          </Button>
-        </Tooltip>
-        <Tooltip
-          content={
-            <div className="space-y-0.5">
-              <div>
-                <span className="font-medium">
-                  {grid ? t('view.gridHide') : t('view.gridShow')}
-                </span>
-                <span className="ml-1.5 text-muted-foreground">
-                  {t('view.gridHotkey')}
-                </span>
-              </div>
-              <div className="text-muted-foreground">
-                {grid ? t('view.gridHideHint') : t('view.gridShowHint')}
-              </div>
-            </div>
-          }
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setGrid((v) => !v)}
-            aria-label={grid ? t('view.gridHideAria') : t('view.gridShowAria')}
-            aria-pressed={grid}
-            className={cn(!grid && 'text-muted-foreground/60')}
-          >
-            <Grid2x2 />
-          </Button>
-        </Tooltip>
+        {fitBtn}
+        {gridBtn}
+        {labelBtn}
       </div>
     </div>
   );
