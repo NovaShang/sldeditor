@@ -1,7 +1,9 @@
 import { ListTree, PanelBottomClose } from 'lucide-react';
 import { libraryById } from '../element-library';
+import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { usePanels } from '../hooks/use-panels';
 import { useT } from '../i18n';
+import { cn } from '../lib/utils';
 import { useEditorStore } from '../store';
 import type { Element } from '../model';
 
@@ -25,16 +27,21 @@ export function LeftPanel() {
 
 function CollapsedTab({ onClick }: { onClick: () => void }) {
   const t = useT();
+  const tier = useEditorTier();
+  const compact = atLeast(tier, 'compact');
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={t('outline.title')}
       title={t('outline.title')}
-      className="ole-glass flex h-12 items-center gap-2 rounded-2xl border border-border px-3 text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+      className={cn(
+        'ole-glass flex h-12 items-center rounded-2xl border border-border text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+        compact ? 'w-12 justify-center' : 'gap-2 px-3',
+      )}
     >
       <ListTree className="size-4 shrink-0" />
-      <span className="text-xs font-medium">{t('outline.title')}</span>
+      {!compact && <span className="text-xs font-medium">{t('outline.title')}</span>}
     </button>
   );
 }
@@ -43,6 +50,9 @@ function OutlinePanel({ onClose }: { onClose: () => void }) {
   const t = useT();
   const elements = useEditorStore((s) => s.diagram.elements);
   const libraryOpen = useEditorStore((s) => s.activeTool === 'place');
+  const tier = useEditorTier();
+  const compact = atLeast(tier, 'compact');
+  const dense = atLeast(tier, 'dense');
   // Use `height` (not `max-height`) so the panel always reserves space,
   // even when content is short. Default tall; library-open is shorter.
   const height = libraryOpen
@@ -50,7 +60,10 @@ function OutlinePanel({ onClose }: { onClose: () => void }) {
     : 'min(70vh, calc(100vh - 100px))';
   return (
     <aside
-      className="ole-glass flex w-64 flex-col overflow-hidden rounded-2xl border border-border shadow-sm"
+      className={cn(
+        'ole-glass flex flex-col overflow-hidden rounded-2xl border border-border shadow-sm',
+        compact ? 'w-52' : 'w-64',
+      )}
       style={{ height }}
     >
       <button
@@ -63,7 +76,7 @@ function OutlinePanel({ onClose }: { onClose: () => void }) {
         <span className="flex-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           {t('outline.title')}
         </span>
-        <CountChip>{elements.length}</CountChip>
+        {!dense && <CountChip>{elements.length}</CountChip>}
         <PanelBottomClose className="size-3.5 text-muted-foreground" />
       </button>
       <div className="flex-1 overflow-y-auto px-2 pb-2">
@@ -88,6 +101,8 @@ function OutlineRow({ element }: { element: Element }) {
   const selected = useEditorStore((s) => s.selection.includes(element.id));
   const setSelection = useEditorStore((s) => s.setSelection);
   const toggleInSelection = useEditorStore((s) => s.toggleInSelection);
+  const tier = useEditorTier();
+  const showId = !atLeast(tier, 'compact');
   const onClick = (e: React.MouseEvent) => {
     if (e.shiftKey || e.metaKey || e.ctrlKey) toggleInSelection(element.id);
     else setSelection([element.id]);
@@ -113,9 +128,11 @@ function OutlineRow({ element }: { element: Element }) {
       <span className="flex-1 truncate text-xs text-foreground/90 group-hover:text-accent-foreground">
         {element.name ?? element.id}
       </span>
-      <span className="font-mono text-[10px] text-muted-foreground/80">
-        {element.id}
-      </span>
+      {showId && (
+        <span className="font-mono text-[10px] text-muted-foreground/80">
+          {element.id}
+        </span>
+      )}
     </li>
   );
 }

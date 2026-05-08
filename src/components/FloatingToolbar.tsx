@@ -8,7 +8,7 @@ import {
   MousePointer2,
   Redo2,
   Shapes,
-  StickyNote,
+  Type,
   Undo2,
   Wand2,
 } from 'lucide-react';
@@ -86,7 +86,7 @@ const TOOLS: ToolDef[] = [
     labelKey: 'tool.text',
     hotkey: 'T',
     descriptionKey: 'tool.textHint',
-    icon: StickyNote,
+    icon: Type,
     switchTo: 'text',
     iconOnly: true,
   },

@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { CanvasSvg } from '../canvas';
 import { ElementHoverLabel } from '../canvas/ElementHoverLabel';
+import { useObservedWidth } from '../hooks/editor-tier';
+import { EditorTierProvider } from '../hooks/use-editor-tier';
 import { ContextMenuHost } from './ContextMenu';
 import { ContextualToolbar } from './ContextualToolbar';
 import { FloatingToolbar } from './FloatingToolbar';
@@ -68,18 +70,28 @@ function useFocusGuards() {
 
 export function EditorShell() {
   useFocusGuards();
+  const rootRef = useRef<HTMLDivElement>(null);
+  // Measured here (where the ref lives) so the layout effect runs *after*
+  // this component's own ref attaches. A child component's layout effect
+  // would fire before the parent's ref is set, so the first read is null.
+  const width = useObservedWidth(rootRef);
   return (
     <ContextMenuHost>
-      <div className="relative h-full w-full overflow-hidden bg-background text-foreground">
-        <CanvasSvg />
-        <LeftPanel />
-        <RightPanel />
-        <FloatingToolbar />
-        <ViewToolbar />
-        <ContextualToolbar />
-        <LibraryPopover />
-        <OnboardingCard />
-        <ElementHoverLabel />
+      <div
+        ref={rootRef}
+        className="relative h-full w-full overflow-hidden bg-background text-foreground"
+      >
+        <EditorTierProvider width={width}>
+          <CanvasSvg />
+          <LeftPanel />
+          <RightPanel />
+          <FloatingToolbar />
+          <ViewToolbar />
+          <ContextualToolbar />
+          <LibraryPopover />
+          <OnboardingCard />
+          <ElementHoverLabel />
+        </EditorTierProvider>
       </div>
     </ContextMenuHost>
   );

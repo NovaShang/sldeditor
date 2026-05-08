@@ -1,33 +1,30 @@
 /**
- * Empty-canvas onboarding card. Surfaces the canonical drawing flow:
+ * First-visit onboarding card. Surfaces the canonical drawing flow:
  * busbar first → drag elements off the bus → chain from terminals.
  *
- * Visibility:
- *   - Hidden once any element exists (the card competes with the work).
- *   - Hidden once the user clicks "got it" (persisted across reloads).
- *   - Hidden in non-select tools so it doesn't fight the library popover or
- *     active drawing previews.
+ * Visibility: shown until the user dismisses it (persisted to localStorage),
+ * regardless of whether the canvas is empty — the card and the sample
+ * diagram together form the first-impression. The wrapper is
+ * `pointer-events: none` so users can press-and-drag right through it
+ * (e.g., the busbar drag the card just told them to perform); only the
+ * dismiss controls accept clicks.
  */
 
 import { Cable, Minus, Shapes, X } from 'lucide-react';
 import { useOnboarding } from '../hooks/use-onboarding';
 import { useT } from '../i18n';
-import { useEditorStore } from '../store';
 
 export function OnboardingCard() {
   const t = useT();
   const dismissed = useOnboarding((s) => s.dismissed);
   const dismiss = useOnboarding((s) => s.dismiss);
-  const isEmpty = useEditorStore((s) => s.diagram.elements.length === 0);
-  const tool = useEditorStore((s) => s.activeTool);
-  const visible = isEmpty && !dismissed && (tool === 'select' || tool === 'pan');
-  if (!visible) return null;
+  if (dismissed) return null;
 
   return (
     <div
       role="dialog"
       aria-label={t('onboard.title')}
-      className="ole-glass pointer-events-auto absolute left-1/2 top-1/2 z-10 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border p-5 shadow-md"
+      className="ole-glass pointer-events-none absolute left-1/2 top-1/2 z-10 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border p-5 shadow-md"
     >
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">{t('onboard.title')}</h2>
@@ -35,7 +32,7 @@ export function OnboardingCard() {
           type="button"
           onClick={dismiss}
           aria-label={t('onboard.dismiss')}
-          className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          className="pointer-events-auto rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           <X className="size-3.5" />
         </button>
@@ -63,7 +60,7 @@ export function OnboardingCard() {
       <button
         type="button"
         onClick={dismiss}
-        className="mt-4 w-full rounded-md bg-primary py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+        className="pointer-events-auto mt-4 w-full rounded-md bg-primary py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
       >
         {t('onboard.dismiss')}
       </button>
