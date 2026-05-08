@@ -481,19 +481,112 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     return upperChain + pinSpan + lowerChain;
   };
 
+  // ---- Linker → upper-bus tap representative ----------------------------
+  // Each linker contributes one slot to its UPPER bus's tap distribution.
+  // For a transitive linker (chain on the upper side), that slot belongs to
+  // the chain head element — the tap closest to the bus. For a direct-tap
+  // linker the slot belongs to the linker itself. We record the mapping so
+  // both span computation and slot allocation know which entry is "really"
+  // a child-bus stand-in and need to be widened accordingly.
+  interface LinkerRep {
+    /** The downstream bus this slot leads to. */
+    lowerBusId: ElementId;
+  }
+  const linkerUpperRep = new Map<ElementId, LinkerRep>();
+  for (const link of linkers) {
+    const sortedAttachments = link.attachments
+      .slice()
+      .sort(
+        (a, b) => (busLevel.get(a.busId) ?? 0) - (busLevel.get(b.busId) ?? 0),
+      );
+    if (sortedAttachments.length < 2) continue;
+    const upperBusId = sortedAttachments[0].busId;
+    const lowerBusId = sortedAttachments[1].busId;
+    const upperPin = sortedAttachments[0].pin;
+    const result = chainExtentToBus(link, upperBusId, upperPin);
+    const repElId = result.head ?? link.elementId;
+    linkerUpperRep.set(repElId, { lowerBusId });
+  }
+
+  // ---- Bottom-up bus span computation -----------------------------------
+  // Each bus's span = max(BUS_MIN_SPAN, content width). Tap entries that
+  // stand in for a downstream bus claim that bus's span as their slot
+  // width, so two parallel children (two transformers feeding two
+  // downstream bars) reserve enough horizontal space on the parent for
+  // both children to sit side-by-side without overlapping.
+  const BUS_MIN_SPAN = 320;
+  const busSpan = new Map<ElementId, number>();
+  const isLinkerLowerSide = (
+    elId: ElementId,
+    busId: ElementId,
+  ): boolean => {
+    if (!linkerIds.has(elId)) return false;
+    const link = linkers.find((l) => l.elementId === elId);
+    const otherBusAtt = link?.attachments.find((a) => a.busId !== busId);
+    if (!otherBusAtt) return false;
+    const myLvl = busLevel.get(busId) ?? 0;
+    const otherLvl = busLevel.get(otherBusAtt.busId) ?? 0;
+    // Lower bus has the higher level number; if the linker's other end is
+    // at a lower level, this bus is the lower one and shouldn't allocate
+    // a slot for the linker (the upper bus owns it).
+    return otherLvl < myLvl;
+  };
+  const slotWidthFor = (
+    elId: ElementId,
+    libWidth: number,
+  ): number => {
+    const rep = linkerUpperRep.get(elId);
+    if (rep) {
+      const childSpan = busSpan.get(rep.lowerBusId);
+      if (childSpan !== undefined) {
+        return Math.max(libWidth, childSpan + MIN_TAP_SPACING);
+      }
+    }
+    return Math.max(libWidth, MIN_TAP_SPACING);
+  };
+  const computeSpan = (busId: ElementId, visiting: Set<ElementId>): number => {
+    if (busSpan.has(busId)) return busSpan.get(busId)!;
+    if (visiting.has(busId)) return BUS_MIN_SPAN; // cycle guard
+    visiting.add(busId);
+    const tapRefs = effectiveTaps.get(busId) ?? [];
+    let aboveW = 0;
+    let belowW = 0;
+    for (const ref of tapRefs) {
+      const dot = ref.indexOf('.');
+      if (dot < 0) continue;
+      const elId = ref.slice(0, dot);
+      const pin = ref.slice(dot + 1);
+      if (isLinkerLowerSide(elId, busId)) continue;
+      const lib = libOf(elId);
+      if (!lib) continue;
+      const localTerm = lib.terminals.find((t) => t.id === pin);
+      if (!localTerm) continue;
+      const rep = linkerUpperRep.get(elId);
+      if (rep) {
+        // Recurse so the child's span is known before we widen the slot.
+        computeSpan(rep.lowerBusId, visiting);
+      }
+      const slotW = slotWidthFor(elId, lib.width);
+      if (localTerm.y > 0) aboveW += slotW;
+      else belowW += slotW;
+    }
+    const span = Math.max(
+      BUS_MIN_SPAN,
+      Math.max(aboveW, belowW) + MIN_TAP_SPACING,
+    );
+    busSpan.set(busId, span);
+    visiting.delete(busId);
+    return span;
+  };
+  for (const bus of buses) computeSpan(bus.id, new Set());
+
   // ---- 3-5. Tier-based bus / tap / linker placement ---------------------
   // Walk levels top-down. For each level: pick a Y from the previous
   // level's Y plus the maximum parent-child gap; pick each bus's X (root =
-  // default; non-root = chain-head X of its parent linker so the linker
-  // body lines up with whatever's coming down from above); distribute that
-  // bus's taps; then place every linker whose lower bus is at this level
-  // (both endpoints are now placed and chain heads on both sides are known).
-  // For direct-tap linkers (the linker's pin appears in `<bus>.tap` with no
-  // chain in between), tap distribution still allocates them an X slot so
-  // each linker — and the bus it bridges to — gets its own column on the
-  // upper bus. The linker isn't fully placed here (Y comes from
-  // chainExtentToBus in placeLinker); only the slot X is recorded so
-  // downstream code can reference it.
+  // default; non-root = the parent linker's slot X on its upper bus, so
+  // children land in distinct columns); distribute that bus's taps; then
+  // place every linker whose lower bus is at this level (both endpoints
+  // are now placed and chain heads on both sides are known).
   const linkerSlotX = new Map<ElementId, number>();
 
   interface TapEntry {
@@ -515,6 +608,8 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       const elId = ref.slice(0, dot);
       const pin = ref.slice(dot + 1);
       if (layout.has(elId)) return [];
+      // Skip linker on its lower-bus side — the upper bus owns the slot.
+      if (isLinkerLowerSide(elId, bus.id)) return [];
       const lib = libOf(elId);
       if (!lib) return [];
       const localTerm = lib.terminals.find((t) => t.id === pin);
@@ -531,7 +626,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     }
 
     const sideTotalWidth = (group: TapEntry[]): number =>
-      group.reduce((s, r) => s + Math.max(r.lib.width, MIN_TAP_SPACING), 0);
+      group.reduce((s, r) => s + slotWidthFor(r.elId, r.lib.width), 0);
     const requiredSpan =
       Math.max(sideTotalWidth(aboveSide), sideTotalWidth(belowSide)) +
       MIN_TAP_SPACING;
@@ -542,7 +637,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
 
     const distribute = (group: TapEntry[]): void => {
       if (group.length === 0) return;
-      const widths = group.map((r) => Math.max(r.lib.width, MIN_TAP_SPACING));
+      const widths = group.map((r) => slotWidthFor(r.elId, r.lib.width));
       const totalW = widths.reduce((s, w) => s + w, 0);
       const usableSpan = Math.max(span, totalW);
       const slotGap = (usableSpan - totalW) / (group.length + 1);
@@ -676,14 +771,15 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         }
       }
       if (busX === undefined) {
-        busX = nextSiblingX;
-        nextSiblingX += DEFAULT_BUS_SPAN + SIBLING_X_GAP;
+        const ownSpan = busSpan.get(busId) ?? DEFAULT_BUS_SPAN;
+        busX = nextSiblingX + ownSpan / 2;
+        nextSiblingX += ownSpan + SIBLING_X_GAP;
       }
       layout.set(busId, {
         at: [snap(busX), snap(levelY)],
         rot: 0,
         mirror: false,
-        span: DEFAULT_BUS_SPAN,
+        span: busSpan.get(busId) ?? DEFAULT_BUS_SPAN,
       });
     }
 
