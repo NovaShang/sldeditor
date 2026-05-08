@@ -6,7 +6,7 @@
   "viewBox": "-22 -46 44 68",
   "width": 44,
   "height": 68,
-  "svg": "<circle cx=\"0\" cy=\"0\" r=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"0\" y=\"4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"11\">G</text><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-32\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-32\" x2=\"-10\" y2=\"-39\" fill=\"none\" stroke=\"black\" stroke-width=\"1.5\"/><line x1=\"0\" y1=\"-32\" x2=\"10\" y2=\"-39\" fill=\"none\" stroke=\"black\" stroke-width=\"1.5\"/><line x1=\"0\" y1=\"-32\" x2=\"0\" y2=\"-44\" fill=\"none\" stroke=\"black\" stroke-width=\"1.5\"/>",
+  "svg": "<circle cx=\"0\" cy=\"0\" r=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"0\" y=\"4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"16\">G</text><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-32\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-32\" x2=\"-10\" y2=\"-39\" fill=\"none\" stroke=\"black\" stroke-width=\"1.5\"/><line x1=\"0\" y1=\"-32\" x2=\"10\" y2=\"-39\" fill=\"none\" stroke=\"black\" stroke-width=\"1.5\"/><line x1=\"0\" y1=\"-32\" x2=\"0\" y2=\"-44\" fill=\"none\" stroke=\"black\" stroke-width=\"1.5\"/>",
   "terminals": [
     {
       "id": "t_bottom",

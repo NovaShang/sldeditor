@@ -5,7 +5,7 @@
   "viewBox": "-42 -42 44 44",
   "width": 44,
   "height": 44,
-  "svg": "<rect x=\"-40\" y=\"-40\" width=\"40\" height=\"40\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-24\" y=\"-8.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">G</text>",
+  "svg": "<rect x=\"-40\" y=\"-40\" width=\"40\" height=\"40\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-24\" y=\"-8.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"14\" fill=\"#000000\">G</text>",
   "terminals": [
     {
       "id": "t_bottom",
