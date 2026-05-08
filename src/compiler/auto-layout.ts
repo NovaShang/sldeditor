@@ -416,7 +416,14 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         let head: ElementId | undefined;
         if (prev) {
           const d = prev.indexOf('.');
-          if (d > 0) head = prev.slice(0, d);
+          if (d > 0) {
+            const headId = prev.slice(0, d);
+            // Direct-tap linker: the only path into bus.tap is from the
+            // linker's own pin. Skip self-as-head so callers fall through
+            // to the slot-based fallback (linkerSlotX) instead of trying
+            // to look up the linker's not-yet-known position.
+            if (headId !== linker.elementId) head = headId;
+          }
         }
         return { extent: dist, head };
       }
@@ -468,7 +475,10 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     // measure both so the gap fits whichever is longer.
     const upperChain = chainExtentToBus(link, idA, pinAName).extent;
     const lowerChain = chainExtentToBus(link, idB, pinBName).extent;
-    return Math.max(MIN_BUS_GAP_Y, upperChain + pinSpan + lowerChain);
+    // With a linker, fit the gap exactly to chain + pinSpan + chain so the
+    // linker's pins land on both buses (no floating stub). MIN_BUS_GAP_Y
+    // only floors the no-linker case (orphan tiers stacked at the bottom).
+    return upperChain + pinSpan + lowerChain;
   };
 
   // ---- 3-5. Tier-based bus / tap / linker placement ---------------------
@@ -478,35 +488,49 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   // body lines up with whatever's coming down from above); distribute that
   // bus's taps; then place every linker whose lower bus is at this level
   // (both endpoints are now placed and chain heads on both sides are known).
+  // For direct-tap linkers (the linker's pin appears in `<bus>.tap` with no
+  // chain in between), tap distribution still allocates them an X slot so
+  // each linker — and the bus it bridges to — gets its own column on the
+  // upper bus. The linker isn't fully placed here (Y comes from
+  // chainExtentToBus in placeLinker); only the slot X is recorded so
+  // downstream code can reference it.
+  const linkerSlotX = new Map<ElementId, number>();
+
+  interface TapEntry {
+    elId: ElementId;
+    lib: LibraryEntry;
+    localTerm: { id: string; x: number; y: number; orientation: Orientation };
+    isLinker: boolean;
+  }
+
   const distributeBusTaps = (bus: Element): void => {
     const tapRefs = effectiveTaps.get(bus.id);
     if (!tapRefs || tapRefs.length === 0) return;
     const place = layout.get(bus.id);
     if (!place) return;
 
-    const remaining = tapRefs.flatMap((ref) => {
+    const remaining: TapEntry[] = tapRefs.flatMap((ref): TapEntry[] => {
       const dot = ref.indexOf('.');
       if (dot < 0) return [];
       const elId = ref.slice(0, dot);
       const pin = ref.slice(dot + 1);
       if (layout.has(elId)) return [];
-      if (linkerIds.has(elId)) return [];
       const lib = libOf(elId);
       if (!lib) return [];
       const localTerm = lib.terminals.find((t) => t.id === pin);
       if (!localTerm) return [];
-      return [{ elId, lib, localTerm }];
+      return [{ elId, lib, localTerm, isLinker: linkerIds.has(elId) }];
     });
     if (remaining.length === 0) return;
 
-    const aboveSide: typeof remaining = [];
-    const belowSide: typeof remaining = [];
+    const aboveSide: TapEntry[] = [];
+    const belowSide: TapEntry[] = [];
     for (const r of remaining) {
       if (r.localTerm.y > 0) aboveSide.push(r);
       else belowSide.push(r);
     }
 
-    const sideTotalWidth = (group: typeof remaining): number =>
+    const sideTotalWidth = (group: TapEntry[]): number =>
       group.reduce((s, r) => s + Math.max(r.lib.width, MIN_TAP_SPACING), 0);
     const requiredSpan =
       Math.max(sideTotalWidth(aboveSide), sideTotalWidth(belowSide)) +
@@ -516,7 +540,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       layout.set(bus.id, { ...place, span });
     }
 
-    const distribute = (group: typeof remaining): void => {
+    const distribute = (group: TapEntry[]): void => {
       if (group.length === 0) return;
       const widths = group.map((r) => Math.max(r.lib.width, MIN_TAP_SPACING));
       const totalW = widths.reduce((s, w) => s + w, 0);
@@ -528,11 +552,18 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         const slotW = widths[i];
         const tapWorldX = cursor + slotW / 2;
         const tapWorldY = place.at[1];
-        layout.set(r.elId, {
-          at: [snap(tapWorldX - r.localTerm.x), snap(tapWorldY - r.localTerm.y)],
-          rot: 0,
-          mirror: false,
-        });
+        if (r.isLinker) {
+          // First-encounter wins: tier loop visits buses top-down, so the
+          // upper bus's slot is locked in first. The same linker reappears
+          // on the lower bus's tap (via its other pin) — ignore that slot.
+          if (!linkerSlotX.has(r.elId)) linkerSlotX.set(r.elId, tapWorldX);
+        } else {
+          layout.set(r.elId, {
+            at: [snap(tapWorldX - r.localTerm.x), snap(tapWorldY - r.localTerm.y)],
+            rot: 0,
+            mirror: false,
+          });
+        }
         cursor += slotW + slotGap;
       }
     };
@@ -563,10 +594,15 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const upperResult = chainExtentToBus(link, upperBusId, upperPin);
     const upperPinWorldY = upperPlace.at[1] + upperResult.extent;
 
+    // X precedence: chain-head's X (transitive linker) → tap-slot X
+    // (direct-tap linker, allocated by distributeBusTaps so siblings don't
+    // overlap) → upper bus center (no info available).
     let xCenter = upperPlace.at[0];
-    if (upperResult.head) {
-      const headPlace = layout.get(upperResult.head);
-      if (headPlace) xCenter = headPlace.at[0];
+    const headPlace = upperResult.head ? layout.get(upperResult.head) : undefined;
+    if (headPlace) {
+      xCenter = headPlace.at[0];
+    } else if (linkerSlotX.has(link.elementId)) {
+      xCenter = linkerSlotX.get(link.elementId)!;
     }
 
     const at: [number, number] =
@@ -626,11 +662,16 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
           const parentPin = link.attachments.find((a) => a.busId === parent)!.pin;
           const result = chainExtentToBus(link, parent, parentPin);
           if (result.head && layout.has(result.head)) {
+            // Transitive linker: child centers on the chain head's column.
             busX = layout.get(result.head)!.at[0];
-            break;
+          } else if (linkerSlotX.has(link.elementId)) {
+            // Direct-tap linker: child takes the slot allocated for it on
+            // the parent's tap distribution so parallel children land in
+            // separate columns instead of stacking on top of each other.
+            busX = linkerSlotX.get(link.elementId);
+          } else {
+            busX = layout.get(parent)!.at[0];
           }
-          // Parent linker exists but no chain → fall through to parent's X.
-          busX = layout.get(parent)!.at[0];
           break;
         }
       }
