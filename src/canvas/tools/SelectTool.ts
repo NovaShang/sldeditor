@@ -95,7 +95,7 @@ export const SelectTool: Tool = {
         origin: [ann.at[0], ann.at[1]],
         moved: false,
       };
-      ctx.hostEl.setPointerCapture(e.pointerId);
+      // Capture deferred to first real movement (see element-drag note).
       return;
     }
 
@@ -179,7 +179,9 @@ export const SelectTool: Tool = {
       originals,
       moved: false,
     };
-    ctx.hostEl.setPointerCapture(e.pointerId);
+    // Defer pointer capture until the user actually starts moving (in
+    // onPointerMove) — capturing on pointerdown can interfere with the
+    // browser synthesizing `dblclick` from a click pair on the same target.
     e.preventDefault();
   },
 
@@ -188,7 +190,12 @@ export const SelectTool: Tool = {
       const cur = ctx.viewport.screenToSvg(e.clientX, e.clientY);
       const dx = snap(cur[0] - annDrag.startSvg[0]);
       const dy = snap(cur[1] - annDrag.startSvg[1]);
-      if (!annDrag.moved && (dx !== 0 || dy !== 0)) annDrag.moved = true;
+      if (!annDrag.moved && (dx !== 0 || dy !== 0)) {
+        annDrag.moved = true;
+        if (!ctx.hostEl.hasPointerCapture(e.pointerId)) {
+          ctx.hostEl.setPointerCapture(e.pointerId);
+        }
+      }
       // DOM-direct preview: update the wrapper group's transform so the
       // drag stays smooth. The store mutation lands once on pointerup.
       const node = ctx.hostEl.querySelector<SVGGElement>(
@@ -220,7 +227,12 @@ export const SelectTool: Tool = {
       const cur = ctx.viewport.screenToSvg(e.clientX, e.clientY);
       const dx = snap(cur[0] - drag.startSvg[0]);
       const dy = snap(cur[1] - drag.startSvg[1]);
-      if (!drag.moved && (dx !== 0 || dy !== 0)) drag.moved = true;
+      if (!drag.moved && (dx !== 0 || dy !== 0)) {
+        drag.moved = true;
+        if (!ctx.hostEl.hasPointerCapture(e.pointerId)) {
+          ctx.hostEl.setPointerCapture(e.pointerId);
+        }
+      }
 
       const internal = useEditorStore.getState().internal;
       for (const [id, orig] of drag.originals) {
