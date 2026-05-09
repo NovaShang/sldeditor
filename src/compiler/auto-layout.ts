@@ -78,7 +78,13 @@ const BUS_X = 320;
 const BUS_Y0 = 220;
 const MIN_BUS_GAP_Y = 260;
 const DEFAULT_BUS_SPAN = 720;
-const CHAIN_GAP = 60;
+const CHAIN_GAP = 30;
+// Distance from a bus line to the first chain element's pin. The tap pin
+// is offset off the bus by this amount so the tap body doesn't sit flush
+// against the busbar — visually a short wire stub between bus and the
+// first switch, matching how real one-line diagrams are drawn. Mirrors
+// CHAIN_GAP so the bus→first and first→next gaps look uniform.
+const BUS_TAP_OFFSET = 30;
 const MIN_TAP_SPACING = 80;
 const GRID = 10;
 const FALLBACK_GRID_X0 = 60;
@@ -537,14 +543,15 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
           }
         }
       }
-      // Cross to other pins via raw connections. Bus.tap edges land directly
-      // on the bus (zero distance); inter-element edges contribute CHAIN_GAP.
+      // Cross to other pins via raw connections. Bus.tap edges contribute
+      // BUS_TAP_OFFSET (the wire stub between bus line and the tap pin);
+      // inter-element edges contribute CHAIN_GAP.
       for (const g of pinToGroups.get(ref) ?? []) {
         for (const other of g) {
           if (other === ref) continue;
           if (visited.has(other) || forbidden.has(other)) continue;
           const isBusEdge = isBusPin(ref) || isBusPin(other);
-          enqueue(other, ref, isBusEdge ? 0 : CHAIN_GAP, dist);
+          enqueue(other, ref, isBusEdge ? BUS_TAP_OFFSET : CHAIN_GAP, dist);
         }
       }
     }
@@ -789,7 +796,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       layout.set(bus.id, { ...place, span });
     }
 
-    const distribute = (group: TapEntry[]): void => {
+    const distribute = (group: TapEntry[], offsetSign: -1 | 1): void => {
       if (group.length === 0) return;
       // Sort by preferred X (chain endpoints reaching another already-placed
       // bus get pulled toward that bus's side; everyone else stays neutral
@@ -816,11 +823,14 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       const usableSpan = Math.max(span, totalW);
       const slotGap = (usableSpan - totalW) / (group.length + 1);
       let cursor = place.at[0] - usableSpan / 2 + slotGap;
+      // Push the tap pin off the bus by BUS_TAP_OFFSET (above buses are
+      // negative-Y direction, below buses are positive-Y); auto-route fills
+      // in the short wire stub between bus line and pin.
+      const tapWorldY = place.at[1] + offsetSign * BUS_TAP_OFFSET;
       for (let i = 0; i < group.length; i++) {
         const r = group[i];
         const slotW = widths[i];
         const tapWorldX = cursor + slotW / 2;
-        const tapWorldY = place.at[1];
         if (r.isLinker) {
           // First-encounter wins: tier loop visits buses top-down, so the
           // upper bus's slot is locked in first. The same linker reappears
@@ -836,8 +846,8 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         cursor += slotW + slotGap;
       }
     };
-    distribute(aboveSide);
-    distribute(belowSide);
+    distribute(aboveSide, -1);
+    distribute(belowSide, +1);
   };
 
   const placeLinker = (link: LinkerInfo): void => {
