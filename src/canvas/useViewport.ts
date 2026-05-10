@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useRef, type RefObject } from 'react';
+import { dispatchSyntheticPointerCancel } from './synthetic-pointer-cancel';
 import { publishScale } from './zoom-bus';
 
 export interface Viewport {
@@ -128,18 +129,7 @@ export function useViewport(
         // Synthetic pointercancel fires the tool's existing cleanup path.
         for (const id of touches.keys()) {
           if (id === e.pointerId) continue;
-          try {
-            host.dispatchEvent(
-              new PointerEvent('pointercancel', {
-                pointerId: id,
-                bubbles: true,
-                cancelable: true,
-                pointerType: 'touch',
-              }),
-            );
-          } catch {
-            /* synthetic event constructor unsupported — best-effort only */
-          }
+          dispatchSyntheticPointerCancel(host, id);
         }
         recomputePinchBaseline();
       }

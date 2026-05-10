@@ -37,6 +37,7 @@ import { TerminalLayer } from './TerminalLayer';
 import { WireLayer } from './WireLayer';
 import { WirePreview } from './WirePreview';
 import { hitElement, hitNode } from './hit-test';
+import { dispatchSyntheticPointerCancel } from './synthetic-pointer-cancel';
 import { exitDrawingState } from './useKeyboardShortcuts';
 import { useHoverHighlight } from './useHoverHighlight';
 import { useTools } from './useTools';
@@ -215,10 +216,8 @@ export function CanvasSvg() {
   } | null>(null);
 
   const cancelLongPress = useCallback(() => {
-    if (longPressTimer.current !== undefined) {
-      window.clearTimeout(longPressTimer.current);
-      longPressTimer.current = undefined;
-    }
+    window.clearTimeout(longPressTimer.current);
+    longPressTimer.current = undefined;
     longPressData.current = null;
   }, []);
 
@@ -241,18 +240,7 @@ export function CanvasSvg() {
       if (!data || !host) return;
       // Cancel the active tool's in-progress gesture so the long-press
       // doesn't double as a drag commit when the user releases.
-      try {
-        host.dispatchEvent(
-          new PointerEvent('pointercancel', {
-            pointerId: data.pointerId,
-            bubbles: true,
-            cancelable: true,
-            pointerType: 'touch',
-          }),
-        );
-      } catch {
-        /* synthetic-event constructor unsupported — best effort */
-      }
+      dispatchSyntheticPointerCancel(host, data.pointerId);
       openContextMenuAt(data.x, data.y, data.target);
     }, 500);
   };
