@@ -29,13 +29,18 @@ export function useTools(
     const onDown = (e: PointerEvent) => tool.onPointerDown?.(e, ctx);
     const onMove = (e: PointerEvent) => tool.onPointerMove?.(e, ctx);
     const onUp = (e: PointerEvent) => tool.onPointerUp?.(e, ctx);
+    // Pointercancel: if the tool defines its own cancel hook, use it (so it
+    // can roll back without committing the gesture). Otherwise treat it as
+    // a normal pointerup — the existing tools already handle that case.
+    const onCancel = (e: PointerEvent) =>
+      tool.onPointerCancel ? tool.onPointerCancel(e, ctx) : tool.onPointerUp?.(e, ctx);
     const onLeave = (e: PointerEvent) => tool.onPointerLeave?.(e, ctx);
     const onDbl = (e: MouseEvent) => tool.onDoubleClick?.(e, ctx);
 
     host.addEventListener('pointerdown', onDown);
     host.addEventListener('pointermove', onMove);
     host.addEventListener('pointerup', onUp);
-    host.addEventListener('pointercancel', onUp);
+    host.addEventListener('pointercancel', onCancel);
     host.addEventListener('pointerleave', onLeave);
     host.addEventListener('dblclick', onDbl);
 
@@ -43,7 +48,7 @@ export function useTools(
       host.removeEventListener('pointerdown', onDown);
       host.removeEventListener('pointermove', onMove);
       host.removeEventListener('pointerup', onUp);
-      host.removeEventListener('pointercancel', onUp);
+      host.removeEventListener('pointercancel', onCancel);
       host.removeEventListener('pointerleave', onLeave);
       host.removeEventListener('dblclick', onDbl);
       tool.onDeactivate?.(ctx);

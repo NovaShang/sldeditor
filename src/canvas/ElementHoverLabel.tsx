@@ -21,12 +21,20 @@ interface Anchor {
 const GAP_PX = 10;
 const SHOW_DELAY_MS = 100;
 
+// Coarse-pointer / no-hover devices (touch) get no hover tooltip — there's
+// no equivalent gesture for "hover an element to see its name" on touch.
+function isCoarsePointer(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia('(hover: none), (pointer: coarse)').matches;
+}
+
 export function ElementHoverLabel() {
   const [hoverId, setHoverId] = useState<ElementId | null>(getHoverElement());
   const [shown, setShown] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const labelRef = useRef<HTMLDivElement>(null);
   const showTimer = useRef<number | undefined>(undefined);
+  const [coarse] = useState(isCoarsePointer);
 
   // The hover signal can flicker as the cursor crosses element edges. The
   // delayed-show smooths that out without making the tooltip feel laggy on
@@ -87,6 +95,7 @@ export function ElementHoverLabel() {
     return () => cancelAnimationFrame(raf);
   }, [shown, hoverId]);
 
+  if (coarse) return null;
   if (!shown || !hoverId || !elementName) return null;
   const lib = libraryById[elementName.kind];
   const display = elementName.name ?? elementName.id;

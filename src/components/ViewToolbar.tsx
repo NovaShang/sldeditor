@@ -121,6 +121,15 @@ export function ViewToolbar() {
   // Hide the zoom-% pill from `tight` (≥720 < 900) onward — that's where the
   // centered FloatingToolbar starts colliding with this right-anchored bar.
   const hidePercentPill = atLeast(tier, 'tight');
+  // At `dense` and below the bottom row (LeftPanel + centered FloatingToolbar
+  // + ViewToolbar) no longer fits horizontally — the FloatingToolbar runs
+  // ~370px wide even with icon-only labels, and a phone in portrait is only
+  // 390–430px after side panels and safe-area insets. Lift the ViewToolbar
+  // above the FloatingToolbar so neither has to compete for horizontal room.
+  const stackAbove = atLeast(tier, 'dense');
+  const liftBottom = stackAbove
+    ? 'calc(4rem + var(--ole-bottom-inset, 0px))'
+    : 'calc(0.75rem + var(--ole-bottom-inset, 0px))';
 
   useEffect(() => subscribeScale(setScale), []);
 
@@ -294,7 +303,13 @@ export function ViewToolbar() {
 
   if (dense) {
     return (
-      <div className="absolute bottom-3 right-3 z-20">
+      <div
+      className="absolute z-20"
+      style={{
+        bottom: liftBottom,
+        right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
+      }}
+    >
         <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
           <UpwardPopover
             open={menuOpen}
@@ -342,7 +357,13 @@ export function ViewToolbar() {
   }
 
   return (
-    <div className="absolute bottom-3 right-3 z-20">
+    <div
+      className="absolute z-20"
+      style={{
+        bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px))',
+        right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
+      }}
+    >
       <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
         {zoomOutBtn}
         {!hidePercentPill && zoomDisplayBtn}

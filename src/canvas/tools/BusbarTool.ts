@@ -80,6 +80,14 @@ export const BusbarTool: Tool = {
     store.setCursorSvg(null);
   },
 
+  onPointerCancel() {
+    // Pinch-zoom hijack interrupted the draw; abandon the in-progress busbar
+    // rather than committing one at the synthetic cancel coordinates.
+    const store = useEditorStore.getState();
+    store.setBusbarDrawStart(null);
+    store.setCursorSvg(null);
+  },
+
   onDeactivate() {
     const store = useEditorStore.getState();
     store.setBusbarDrawStart(null);

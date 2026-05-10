@@ -88,6 +88,15 @@ export const PlaceTool: Tool = {
     store.setPlaceFromTerminal(null);
     store.setCursorSvg(null);
   },
+
+  onPointerCancel() {
+    // Pinch-zoom hijack interrupted the drag-place; drop the staged source
+    // terminal without committing a placement at the (likely synthetic)
+    // pointer-cancel coordinates.
+    const store = useEditorStore.getState();
+    store.setPlaceFromTerminal(null);
+    store.setCursorSvg(null);
+  },
 };
 
 function snap(v: number): number {

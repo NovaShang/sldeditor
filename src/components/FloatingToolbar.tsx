@@ -166,12 +166,18 @@ export function FloatingToolbar() {
   // left still has room for its label until `compact`.
   const forceIconOnly = atLeast(tier, 'tight');
   const showHint = !atLeast(tier, 'dense');
-  const groupCollapsed = atLeast(tier, 'mini');
+  // Collapse [Undo/Redo/Layout] into a single overflow button from `dense`
+  // (≤520px) — at iPhone-portrait widths the full row would otherwise
+  // overlap the bottom-left LeftPanel tab and the lifted ViewToolbar.
+  const groupCollapsed = atLeast(tier, 'dense');
 
   const isToolActive = (def: ToolDef): boolean => active === def.switchTo;
 
   return (
-    <div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5">
+    <div
+      className="absolute left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5"
+      style={{ bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px))' }}
+    >
       {showHint && <ToolHint />}
       <div className="ole-glass flex flex-row items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
         {TOOLS.map((def) => {

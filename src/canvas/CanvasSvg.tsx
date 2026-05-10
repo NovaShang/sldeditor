@@ -8,7 +8,7 @@
  * → wire preview → place ghost.
  */
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   BoxSelect,
   Clipboard,
@@ -93,6 +93,184 @@ export function CanvasSvg() {
   }, [viewport]);
   const contextMenu = useContextMenu();
 
+  // Open the contextual menu at a screen point, hit-testing the given target
+  // so the menu's selection-aware items (cut/copy/rotate/etc.) reflect what
+  // the user is pointing at. Shared by mouse right-click and touch long-press.
+  const openContextMenuAt = useCallback(
+    (clientX: number, clientY: number, target: EventTarget | null) => {
+      const store = useEditorStore.getState();
+      const tool = store.activeTool;
+      if (tool === 'wire' || tool === 'busbar' || tool === 'place') {
+        exitDrawingState();
+        return;
+      }
+      const elementId = hitElement(target);
+      if (elementId) {
+        if (!store.selection.includes(elementId)) {
+          store.setSelection([elementId]);
+        }
+      } else {
+        const nodeId = hitNode(target);
+        if (nodeId && store.selectedNode !== nodeId) {
+          store.setSelectedNode(nodeId);
+        }
+      }
+
+      const s = useEditorStore.getState();
+      const hasSelection = s.selection.length > 0;
+      const hasNodeSelection = s.selectedNode != null;
+      const hasClipboard = !!s.clipboard;
+      const hasAnyElement = s.diagram.elements.length > 0;
+      const items: ContextMenuEntry[] = [
+        {
+          label: t('menu.undo'),
+          shortcut: `${MOD}Z`,
+          icon: Undo2,
+          onSelect: () => useEditorStore.getState().undo(),
+          disabled: s.past.length === 0,
+        },
+        {
+          label: t('menu.redo'),
+          shortcut: `${MOD}${SHIFT}Z`,
+          icon: Redo2,
+          onSelect: () => useEditorStore.getState().redo(),
+          disabled: s.future.length === 0,
+        },
+        { type: 'separator' },
+        {
+          label: t('menu.cut'),
+          shortcut: `${MOD}X`,
+          icon: Scissors,
+          onSelect: () => useEditorStore.getState().cutSelection(),
+          disabled: !hasSelection,
+        },
+        {
+          label: t('menu.copy'),
+          shortcut: `${MOD}C`,
+          icon: Copy,
+          onSelect: () => useEditorStore.getState().copySelection(),
+          disabled: !hasSelection,
+        },
+        {
+          label: t('menu.paste'),
+          shortcut: `${MOD}V`,
+          icon: Clipboard,
+          onSelect: () => useEditorStore.getState().pasteClipboard(),
+          disabled: !hasClipboard,
+        },
+        { type: 'separator' },
+        {
+          label: t('menu.rotate'),
+          shortcut: 'R',
+          icon: RotateCw,
+          onSelect: () => useEditorStore.getState().rotateSelection(90),
+          disabled: !hasSelection,
+        },
+        {
+          label: t('menu.mirror'),
+          shortcut: 'M',
+          icon: FlipHorizontal,
+          onSelect: () => useEditorStore.getState().mirrorSelection(),
+          disabled: !hasSelection,
+        },
+        { type: 'separator' },
+        {
+          label: t('menu.selectAll'),
+          shortcut: `${MOD}A`,
+          icon: BoxSelect,
+          onSelect: () => {
+            const st = useEditorStore.getState();
+            st.setSelection(st.diagram.elements.map((x) => x.id));
+          },
+          disabled: !hasAnyElement,
+        },
+        { type: 'separator' },
+        {
+          label: hasNodeSelection && !hasSelection ? t('menu.disconnect') : t('menu.delete'),
+          shortcut: 'Del',
+          icon: Trash2,
+          destructive: true,
+          onSelect: () =>
+            hasNodeSelection && !hasSelection
+              ? useEditorStore.getState().deleteSelectedNode()
+              : useEditorStore.getState().deleteSelection(),
+          disabled: !hasSelection && !hasNodeSelection,
+        },
+      ];
+      contextMenu.open(clientX, clientY, items);
+    },
+    [contextMenu, t],
+  );
+
+  // Long-press → context menu (touch-only equivalent of right-click). On
+  // touch devices there is no right button, so we open the same menu after
+  // the user holds a single finger still for ~500ms. Significant movement
+  // or a second touch (pinch) cancels the timer.
+  const longPressTimer = useRef<number | undefined>(undefined);
+  const longPressData = useRef<{
+    pointerId: number;
+    x: number;
+    y: number;
+    target: EventTarget | null;
+  } | null>(null);
+
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimer.current !== undefined) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = undefined;
+    }
+    longPressData.current = null;
+  }, []);
+
+  const onPointerDownTouch = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'touch') return;
+    // Always reset any prior long-press tracking; a second finger arriving
+    // (pinch) will cancel via the synthetic pointercancel from useViewport.
+    cancelLongPress();
+    longPressData.current = {
+      pointerId: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      target: e.target,
+    };
+    const host = hostRef.current;
+    longPressTimer.current = window.setTimeout(() => {
+      const data = longPressData.current;
+      longPressData.current = null;
+      longPressTimer.current = undefined;
+      if (!data || !host) return;
+      // Cancel the active tool's in-progress gesture so the long-press
+      // doesn't double as a drag commit when the user releases.
+      try {
+        host.dispatchEvent(
+          new PointerEvent('pointercancel', {
+            pointerId: data.pointerId,
+            bubbles: true,
+            cancelable: true,
+            pointerType: 'touch',
+          }),
+        );
+      } catch {
+        /* synthetic-event constructor unsupported — best effort */
+      }
+      openContextMenuAt(data.x, data.y, data.target);
+    }, 500);
+  };
+
+  const onPointerMoveTouch = (e: React.PointerEvent) => {
+    const data = longPressData.current;
+    if (!data || e.pointerId !== data.pointerId) return;
+    const dx = e.clientX - data.x;
+    const dy = e.clientY - data.y;
+    if (Math.hypot(dx, dy) > 10) cancelLongPress();
+  };
+
+  const onPointerEndTouch = (e: React.PointerEvent) => {
+    const data = longPressData.current;
+    if (!data || e.pointerId !== data.pointerId) return;
+    cancelLongPress();
+  };
+
   const onDragOver = (e: React.DragEvent) => {
     if (e.dataTransfer.types.includes('application/x-oneline-kind')) {
       e.preventDefault();
@@ -110,112 +288,7 @@ export function CanvasSvg() {
 
   const onContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    const store = useEditorStore.getState();
-    // In drawing tools, right-click steps out of the current drawing state
-    // (mirrors Esc) instead of opening the contextual menu.
-    const tool = store.activeTool;
-    if (tool === 'wire' || tool === 'busbar' || tool === 'place') {
-      exitDrawingState();
-      return;
-    }
-    // If right-clicking an element that isn't part of the current selection,
-    // make it the selection — matches Figma / desktop-app convention.
-    const elementId = hitElement(e.target);
-    if (elementId) {
-      if (!store.selection.includes(elementId)) {
-        store.setSelection([elementId]);
-      }
-    } else {
-      // No element under cursor — try a wire instead, so right-clicking a
-      // wire surfaces wire-relevant operations.
-      const nodeId = hitNode(e.target);
-      if (nodeId && store.selectedNode !== nodeId) {
-        store.setSelectedNode(nodeId);
-      }
-    }
-
-    const s = useEditorStore.getState();
-    const hasSelection = s.selection.length > 0;
-    const hasNodeSelection = s.selectedNode != null;
-    const hasClipboard = !!s.clipboard;
-    const hasAnyElement = s.diagram.elements.length > 0;
-    const items: ContextMenuEntry[] = [
-      {
-        label: t('menu.undo'),
-        shortcut: `${MOD}Z`,
-        icon: Undo2,
-        onSelect: () => useEditorStore.getState().undo(),
-        disabled: s.past.length === 0,
-      },
-      {
-        label: t('menu.redo'),
-        shortcut: `${MOD}${SHIFT}Z`,
-        icon: Redo2,
-        onSelect: () => useEditorStore.getState().redo(),
-        disabled: s.future.length === 0,
-      },
-      { type: 'separator' },
-      {
-        label: t('menu.cut'),
-        shortcut: `${MOD}X`,
-        icon: Scissors,
-        onSelect: () => useEditorStore.getState().cutSelection(),
-        disabled: !hasSelection,
-      },
-      {
-        label: t('menu.copy'),
-        shortcut: `${MOD}C`,
-        icon: Copy,
-        onSelect: () => useEditorStore.getState().copySelection(),
-        disabled: !hasSelection,
-      },
-      {
-        label: t('menu.paste'),
-        shortcut: `${MOD}V`,
-        icon: Clipboard,
-        onSelect: () => useEditorStore.getState().pasteClipboard(),
-        disabled: !hasClipboard,
-      },
-      { type: 'separator' },
-      {
-        label: t('menu.rotate'),
-        shortcut: 'R',
-        icon: RotateCw,
-        onSelect: () => useEditorStore.getState().rotateSelection(90),
-        disabled: !hasSelection,
-      },
-      {
-        label: t('menu.mirror'),
-        shortcut: 'M',
-        icon: FlipHorizontal,
-        onSelect: () => useEditorStore.getState().mirrorSelection(),
-        disabled: !hasSelection,
-      },
-      { type: 'separator' },
-      {
-        label: t('menu.selectAll'),
-        shortcut: `${MOD}A`,
-        icon: BoxSelect,
-        onSelect: () => {
-          const st = useEditorStore.getState();
-          st.setSelection(st.diagram.elements.map((x) => x.id));
-        },
-        disabled: !hasAnyElement,
-      },
-      { type: 'separator' },
-      {
-        label: hasNodeSelection && !hasSelection ? t('menu.disconnect') : t('menu.delete'),
-        shortcut: 'Del',
-        icon: Trash2,
-        destructive: true,
-        onSelect: () =>
-          hasNodeSelection && !hasSelection
-            ? useEditorStore.getState().deleteSelectedNode()
-            : useEditorStore.getState().deleteSelection(),
-        disabled: !hasSelection && !hasNodeSelection,
-      },
-    ];
-    contextMenu.open(e.clientX, e.clientY, items);
+    openContextMenuAt(e.clientX, e.clientY, e.target);
   };
 
   return (
@@ -225,6 +298,10 @@ export function CanvasSvg() {
       onDragOver={onDragOver}
       onDrop={onDrop}
       onContextMenu={onContextMenu}
+      onPointerDown={onPointerDownTouch}
+      onPointerMove={onPointerMoveTouch}
+      onPointerUp={onPointerEndTouch}
+      onPointerCancel={onPointerEndTouch}
     >
       <svg
         className="ole-canvas-svg block h-full w-full"

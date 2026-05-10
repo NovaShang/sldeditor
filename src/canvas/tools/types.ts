@@ -27,6 +27,10 @@ export interface Tool {
   onPointerDown?(e: PointerEvent, ctx: ToolContext): void;
   onPointerMove?(e: PointerEvent, ctx: ToolContext): void;
   onPointerUp?(e: PointerEvent, ctx: ToolContext): void;
+  /** Called for `pointercancel` (gesture interrupted, e.g. by multi-touch
+   *  pinch hijack). If omitted, useTools falls back to `onPointerUp` —
+   *  define this when commit-on-up shouldn't fire on cancellation. */
+  onPointerCancel?(e: PointerEvent, ctx: ToolContext): void;
   onPointerLeave?(e: PointerEvent, ctx: ToolContext): void;
   /** Native `dblclick` — pointerdown's `detail` field isn't reliable for
    *  double-click count, so tools that need it subscribe here separately. */

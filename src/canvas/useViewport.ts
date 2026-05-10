@@ -78,6 +78,135 @@ export function useViewport(
     let panStartTy = 0;
     let spaceDown = false;
 
+    // ---- Multi-touch pinch / two-finger pan -----------------------------
+    // iPad/iPhone have no wheel events, so pinch-zoom + two-finger pan are
+    // the only way to navigate the canvas. We track every active touch
+    // pointer; once two are down we hijack all touch events (capture phase
+    // + stopPropagation) so the active tool stops receiving them and the
+    // viewport handles pan/zoom directly. Hijack lasts until all touches
+    // lift, so the trailing finger of a pinch never accidentally restarts
+    // a tool gesture.
+    const touches = new Map<number, { x: number; y: number }>();
+    interface PinchState {
+      startDist: number;
+      startScale: number;
+      startTx: number;
+      startTy: number;
+      startMidX: number;
+      startMidY: number;
+    }
+    let pinch: PinchState | null = null;
+    let touchHijack = false;
+
+    const recomputePinchBaseline = () => {
+      if (touches.size < 2) {
+        pinch = null;
+        return;
+      }
+      const pts = [...touches.values()];
+      const dx = pts[1].x - pts[0].x;
+      const dy = pts[1].y - pts[0].y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const rect = host.getBoundingClientRect();
+      pinch = {
+        startDist: dist,
+        startScale: vp.current.scale,
+        startTx: vp.current.tx,
+        startTy: vp.current.ty,
+        startMidX: (pts[0].x + pts[1].x) / 2 - rect.left,
+        startMidY: (pts[0].y + pts[1].y) / 2 - rect.top,
+      };
+    };
+
+    const onTouchPointerDownCap = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') return;
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touches.size >= 2 && !touchHijack) {
+        touchHijack = true;
+        // Cancel any in-progress single-touch tool gesture (drag, marquee,
+        // wire, etc.) so it doesn't keep mutating state while we pinch.
+        // Synthetic pointercancel fires the tool's existing cleanup path.
+        for (const id of touches.keys()) {
+          if (id === e.pointerId) continue;
+          try {
+            host.dispatchEvent(
+              new PointerEvent('pointercancel', {
+                pointerId: id,
+                bubbles: true,
+                cancelable: true,
+                pointerType: 'touch',
+              }),
+            );
+          } catch {
+            /* synthetic event constructor unsupported — best-effort only */
+          }
+        }
+        recomputePinchBaseline();
+      }
+      if (touchHijack) {
+        e.stopPropagation();
+        e.preventDefault();
+        try {
+          host.setPointerCapture(e.pointerId);
+        } catch {
+          /* capture may fail if the pointer was already released */
+        }
+      }
+    };
+
+    const onTouchPointerMoveCap = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') return;
+      if (!touches.has(e.pointerId)) return;
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (!touchHijack || !pinch) return;
+      e.stopPropagation();
+      const pts = [...touches.values()];
+      if (pts.length < 2) return;
+      const dx = pts[1].x - pts[0].x;
+      const dy = pts[1].y - pts[0].y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const rect = host.getBoundingClientRect();
+      const midX = (pts[0].x + pts[1].x) / 2 - rect.left;
+      const midY = (pts[0].y + pts[1].y) / 2 - rect.top;
+      const ratio = dist / pinch.startDist;
+      const next = clamp(pinch.startScale * ratio, MIN_SCALE, MAX_SCALE);
+      const k = next / pinch.startScale;
+      // Anchor zoom at the initial midpoint, then add the midpoint drift
+      // so the pinch also pans.
+      vp.current.tx =
+        pinch.startMidX - (pinch.startMidX - pinch.startTx) * k + (midX - pinch.startMidX);
+      vp.current.ty =
+        pinch.startMidY - (pinch.startMidY - pinch.startTy) * k + (midY - pinch.startMidY);
+      vp.current.scale = next;
+      apply();
+    };
+
+    const onTouchPointerUpCap = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') return;
+      if (!touches.has(e.pointerId)) return;
+      touches.delete(e.pointerId);
+      if (touchHijack) {
+        e.stopPropagation();
+        if (host.hasPointerCapture?.(e.pointerId)) {
+          try {
+            host.releasePointerCapture(e.pointerId);
+          } catch {
+            /* ignore */
+          }
+        }
+        // If a finger lifted but more than one is still down, recompute
+        // the pinch baseline so the next move continues smoothly.
+        if (touches.size >= 2) {
+          recomputePinchBaseline();
+        } else {
+          pinch = null;
+        }
+        if (touches.size === 0) {
+          touchHijack = false;
+        }
+      }
+    };
+
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const rect = host.getBoundingClientRect();
@@ -159,6 +288,13 @@ export function useViewport(
     host.addEventListener('pointermove', onPointerMove);
     host.addEventListener('pointerup', onPointerUp);
     host.addEventListener('pointercancel', onPointerUp);
+    // Touch handlers run in the capture phase so they can stopPropagation()
+    // and prevent the active tool from receiving the events while pinch is
+    // in progress.
+    host.addEventListener('pointerdown', onTouchPointerDownCap, { capture: true });
+    host.addEventListener('pointermove', onTouchPointerMoveCap, { capture: true });
+    host.addEventListener('pointerup', onTouchPointerUpCap, { capture: true });
+    host.addEventListener('pointercancel', onTouchPointerUpCap, { capture: true });
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
@@ -170,6 +306,10 @@ export function useViewport(
       host.removeEventListener('pointermove', onPointerMove);
       host.removeEventListener('pointerup', onPointerUp);
       host.removeEventListener('pointercancel', onPointerUp);
+      host.removeEventListener('pointerdown', onTouchPointerDownCap, { capture: true });
+      host.removeEventListener('pointermove', onTouchPointerMoveCap, { capture: true });
+      host.removeEventListener('pointerup', onTouchPointerUpCap, { capture: true });
+      host.removeEventListener('pointercancel', onTouchPointerUpCap, { capture: true });
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };

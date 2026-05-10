@@ -343,6 +343,66 @@ export const SelectTool: Tool = {
     }
   },
 
+  onPointerCancel(e, ctx) {
+    // Pinch-zoom hijack interrupted the gesture. Cleanly drop any in-flight
+    // drag/marquee/wire/annotation state without committing — we don't want
+    // to apply a move/marquee at the synthetic cancel coordinates.
+    if (annDrag && e.pointerId === annDrag.pointerId) {
+      const node = ctx.hostEl.querySelector<SVGGElement>(
+        `[data-annotation-id="${cssEscape(annDrag.id)}"]`,
+      );
+      if (node) node.removeAttribute('transform');
+      if (ctx.hostEl.hasPointerCapture?.(e.pointerId)) {
+        try {
+          ctx.hostEl.releasePointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
+        }
+      }
+      annDrag = null;
+    }
+    if (drag && e.pointerId === drag.pointerId) {
+      // Reset the live preview transforms so the elements snap back to
+      // their pre-drag placements (the store wasn't mutated yet).
+      const internal = useEditorStore.getState().internal;
+      for (const [id, orig] of drag.originals) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-element-id="${cssEscape(id)}"]`,
+        );
+        if (!node) continue;
+        const lib = internal.elements.get(id)?.libraryDef;
+        node.setAttribute('transform', transformAttr(orig, lib));
+      }
+      if (ctx.hostEl.hasPointerCapture?.(e.pointerId)) {
+        try {
+          ctx.hostEl.releasePointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
+        }
+      }
+      drag = null;
+    }
+    if (wireDrag && e.pointerId === wireDrag.pointerId) {
+      ctx.hostEl.classList.remove('tool-wire');
+      const store = useEditorStore.getState();
+      store.setWireFromTerminal(null);
+      store.setCursorSvg(null);
+      publishWireTarget(null);
+      wireDrag = null;
+    }
+    if (marquee && e.pointerId === marquee.pointerId) {
+      if (ctx.hostEl.hasPointerCapture?.(e.pointerId)) {
+        try {
+          ctx.hostEl.releasePointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
+        }
+      }
+      publishMarquee(null);
+      marquee = null;
+    }
+  },
+
   onDoubleClick(e) {
     const store = useEditorStore.getState();
     const annId = hitAnnotation(e.target);

@@ -2,6 +2,14 @@
 
 @layer base {
   :root {
+    /* Safe-area insets — populated from env() so iOS notch/home-indicator
+       are respected. Floating chrome reads these via CSS calc() so the same
+       layout still works on desktop where the values are 0. */
+    --ole-top-inset: env(safe-area-inset-top, 0px);
+    --ole-right-inset: env(safe-area-inset-right, 0px);
+    --ole-bottom-inset: env(safe-area-inset-bottom, 0px);
+    --ole-left-inset: env(safe-area-inset-left, 0px);
+
     --background: #f5f5f5;
     --foreground: #171717;
     --card: #ffffff;
@@ -82,6 +90,16 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* iOS: disable pull-to-refresh + over-scroll bounce so canvas pans don't
+   flash the browser chrome. Also kill the iOS tap-highlight rectangle and
+   the system text-selection callout that fires on long-press. */
+html,
+body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 /* Editor-specific exposes the live canvas scale to children for stroke-width
@@ -388,6 +406,50 @@
    stroke-width="1" with their own per-symbol text sizes; we leave both
    intact so default-zoom appearance is unchanged from authored intent
    and grows on zoom. */
+
+/* Touch / coarse-pointer adaptations.
+   - Terminals always visible: there's no hover, and the wire/place tools
+     would otherwise expose them only on hover.
+   - Hover-tint affordances (element/wire hit-area :hover) become sticky
+     after a tap on touch devices, so silence them.
+   - The hover tooltip (ElementHoverLabel) has no useful touch equivalent;
+     hiding via display:none keeps it out of the layout entirely. */
+@media (hover: none), (pointer: coarse) {
+  /* Bump floating-chrome icon buttons from 36px to 40px on touch — closer
+     to the Apple HIG 44pt target without breaking small-screen layouts.
+     Only applies to icon-only buttons inside .ole-glass surfaces (toolbars,
+     popovers, top bar); text buttons keep their layout. */
+  .ole-glass button.h-9.w-9,
+  .ole-glass [role='menuitem'].h-9.w-9 {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+  .ole-terminal {
+    display: inline;
+    pointer-events: auto;
+  }
+  .ole-element:hover .ole-element-hit {
+    fill: transparent;
+  }
+  .ole-wire-hit:hover + .ole-wire {
+    stroke: inherit;
+  }
+  .ole-element.ole-hover-element-host [stroke='black'],
+  .ole-element.ole-hover-element-host [stroke='#000'],
+  .ole-element.ole-hover-element-host [stroke='#000000'],
+  .ole-element.ole-hover-element-host [fill='black'],
+  .ole-element.ole-hover-element-host [fill='#000'],
+  .ole-element.ole-hover-element-host [fill='#000000'] {
+    stroke: inherit;
+    fill: inherit;
+  }
+  /* Bigger touch target on terminals so tap-to-wire is comfortable. */
+  .ole-canvas-root.tool-wire .ole-terminal,
+  .ole-canvas-root.tool-place .ole-terminal,
+  .ole-terminal[data-on-selected='true'] {
+    r: 5;
+  }
+}
 
 /* Per-element hit target. `fill: transparent` (vs `none`) means the rect is
    invisible but still receives pointer events, so users can grab any part

@@ -22,7 +22,13 @@ export function DemoTopBar() {
   const isDark = theme === 'dark';
 
   return (
-    <div className="absolute left-3 top-3 z-20">
+    <div
+      className="absolute z-20"
+      style={{
+        top: 'calc(0.75rem + var(--ole-top-inset, 0px))',
+        left: 'calc(0.75rem + var(--ole-left-inset, 0px))',
+      }}
+    >
       <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
         <FileMenu />
         <ExportMenu />

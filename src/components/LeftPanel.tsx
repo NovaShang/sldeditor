@@ -10,11 +10,23 @@ import type { Element } from '../model';
 export function LeftPanel() {
   const open = usePanels((s) => s.outlineOpen);
   const setOpen = usePanels((s) => s.setOutlineOpen);
+  const tier = useEditorTier();
+  // At dense+ the centered FloatingToolbar is wide enough to overlap the
+  // bottom-left LeftPanel tab. Lift the tab above the FloatingToolbar to
+  // keep both reachable on iPhone-class viewports.
+  const lift = atLeast(tier, 'dense');
+  const bottom = lift
+    ? 'calc(4rem + var(--ole-bottom-inset, 0px))'
+    : 'calc(0.75rem + var(--ole-bottom-inset, 0px))';
 
   return (
     <div
-      className="absolute bottom-3 left-3 z-10 flex flex-col items-start"
-      style={{ maxHeight: 'calc(100% - 1.5rem)' }}
+      className="absolute z-10 flex flex-col items-start"
+      style={{
+        bottom,
+        left: 'calc(0.75rem + var(--ole-left-inset, 0px))',
+        maxHeight: 'calc(100% - 1.5rem)',
+      }}
     >
       {open ? (
         <OutlinePanel onClose={() => setOpen(false)} />
