@@ -16,10 +16,24 @@
     }
   ],
   "params": [
-    { "name": "P", "label": "有功功率", "type": "number", "unit": "MW", "showOnCanvas": true },
-    { "name": "cosphi", "label": "功率因数", "type": "number" }
+    {
+      "name": "P",
+      "label": "有功功率",
+      "type": "number",
+      "unit": "MW",
+      "showOnCanvas": true
+    },
+    {
+      "name": "cosphi",
+      "label": "功率因数",
+      "type": "number"
+    }
   ],
-  "label": { "x": 6, "y": 0, "anchor": "start" },
+  "label": {
+    "x": 6,
+    "y": 0,
+    "anchor": "start"
+  },
   "source": {
     "kind": "inline"
   }

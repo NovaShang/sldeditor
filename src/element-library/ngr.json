@@ -16,7 +16,12 @@
     }
   ],
   "params": [
-    { "name": "R", "label": "电阻", "type": "number", "unit": "Ω" }
+    {
+      "name": "R",
+      "label": "电阻",
+      "type": "number",
+      "unit": "Ω"
+    }
   ],
   "source": {
     "kind": "inline"

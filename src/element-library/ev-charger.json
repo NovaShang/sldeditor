@@ -1,0 +1,21 @@
+{
+  "id": "ev-charger",
+  "name": "EV 充电桩",
+  "category": "load",
+  "description": "电动汽车充电站 / 充电桩。",
+  "viewBox": "-17 -27 34 49",
+  "width": 34,
+  "height": 49,
+  "svg": "<line x1=\"0\" y1=\"-25\" x2=\"0\" y2=\"-15\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><rect x=\"-15\" y=\"-15\" width=\"30\" height=\"35\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-9\" y=\"-8\" width=\"14\" height=\"6\" fill=\"none\" stroke=\"black\" stroke-width=\"0.8\"/><rect x=\"5\" y=\"-7\" width=\"2\" height=\"4\" fill=\"black\"/><text x=\"-9\" y=\"13\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"7\" fill=\"#000000\">EV</text>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -25,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

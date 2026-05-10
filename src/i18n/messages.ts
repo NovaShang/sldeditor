@@ -23,8 +23,9 @@ export const messages = {
     'topbar.lang.currentChinese': '当前：中文',
 
     'topbar.export.label': '导出',
-    'topbar.export.tooltip': 'SVG 矢量（可编辑）或 PNG 位图（2× 高清）',
+    'topbar.export.tooltip': 'SVG 矢量（可编辑）、PNG 位图（2× 高清）或 DXF（CAD）',
     'topbar.export.pngFailed': '导出 PNG 失败：{err}',
+    'topbar.export.dxfFailed': '导出 DXF 失败：{err}',
 
     'topbar.file.label': '文件',
     'topbar.file.tooltip': '打开本地 .json 图、保存、或另存为',
@@ -165,12 +166,16 @@ export const messages = {
 
     'cat.busbar': '母线 / 接线',
     'cat.switching': '开关',
+    'cat.protection': '保护',
+    'cat.motor-control': '电机控制',
     'cat.transformer': '变压器',
     'cat.instrument-transformer': '互感器',
+    'cat.measurement': '测量仪表',
     'cat.source': '电源',
     'cat.load': '负荷',
     'cat.compensation': '无功补偿',
-    'cat.protection': '保护',
+    'cat.grounding': '中性点接地',
+    'cat.renewable': '新能源 / 电力电子',
 
     'onboard.title': '上手三步',
     'onboard.step1.title': '画母线',
@@ -197,8 +202,9 @@ export const messages = {
     'topbar.lang.currentChinese': 'Current: Chinese',
 
     'topbar.export.label': 'Export',
-    'topbar.export.tooltip': 'SVG vector (editable) or PNG bitmap (2× HiDPI)',
+    'topbar.export.tooltip': 'SVG vector (editable), PNG bitmap (2× HiDPI), or DXF (CAD)',
     'topbar.export.pngFailed': 'PNG export failed: {err}',
+    'topbar.export.dxfFailed': 'DXF export failed: {err}',
 
     'topbar.file.label': 'File',
     'topbar.file.tooltip': 'Open a local .json diagram, save, or save as',
@@ -339,12 +345,16 @@ export const messages = {
 
     'cat.busbar': 'Busbar / wiring',
     'cat.switching': 'Switching',
+    'cat.protection': 'Protection',
+    'cat.motor-control': 'Motor control',
     'cat.transformer': 'Transformer',
     'cat.instrument-transformer': 'Instrument transformer',
+    'cat.measurement': 'Measurement',
     'cat.source': 'Source',
     'cat.load': 'Load',
     'cat.compensation': 'Compensation',
-    'cat.protection': 'Protection',
+    'cat.grounding': 'Grounding',
+    'cat.renewable': 'Renewables / power electronics',
 
     'onboard.title': 'Quick start',
     'onboard.step1.title': 'Draw a busbar',

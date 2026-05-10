@@ -21,7 +21,12 @@
     }
   ],
   "params": [
-    { "name": "E", "label": "容量", "type": "number", "unit": "kWh" }
+    {
+      "name": "E",
+      "label": "容量",
+      "type": "number",
+      "unit": "kWh"
+    }
   ],
   "source": {
     "kind": "elmt",

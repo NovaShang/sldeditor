@@ -28,7 +28,11 @@
       "label": "断开"
     }
   ],
-  "label": { "x": 6, "y": -2, "anchor": "start" },
+  "label": {
+    "x": 6,
+    "y": -2,
+    "anchor": "start"
+  },
   "source": {
     "kind": "elmt",
     "path": "11_singlepole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur1.elmt",

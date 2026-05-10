@@ -21,8 +21,17 @@
     }
   ],
   "params": [
-    { "name": "Q", "label": "无功容量", "type": "number", "unit": "Mvar" },
-    { "name": "stages", "label": "分组数", "type": "number" }
+    {
+      "name": "Q",
+      "label": "无功容量",
+      "type": "number",
+      "unit": "Mvar"
+    },
+    {
+      "name": "stages",
+      "label": "分组数",
+      "type": "number"
+    }
   ],
   "source": {
     "kind": "elmt",

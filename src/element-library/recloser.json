@@ -1,0 +1,35 @@
+{
+  "id": "recloser",
+  "name": "重合闸 (Recloser)",
+  "category": "protection",
+  "description": "中压自动重合闸开关。",
+  "viewBox": "-12 -32 36 64",
+  "width": 36,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-10\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"30\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"0\" x2=\"-8\" y2=\"-13\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-2\" y1=\"-8\" x2=\"2\" y2=\"-12\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-2\" y1=\"-12\" x2=\"2\" y2=\"-8\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><path d=\"M 13 -12 A 7 7 0 1 1 6 -5\" fill=\"none\" stroke=\"black\" stroke-width=\"0.8\"/><polygon points=\"4,-7 6,-5 8,-3\" fill=\"black\"/><text x=\"14\" y=\"6\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"6\" fill=\"#000000\">AR</text>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 30,
+      "orientation": "s"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

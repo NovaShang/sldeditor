@@ -1,0 +1,35 @@
+{
+  "id": "thermal-overload",
+  "name": "热过载继电器",
+  "category": "motor-control",
+  "description": "电机热过载保护继电器, 通常串接在接触器和电机之间。",
+  "viewBox": "-9 -32 19 64",
+  "width": 19,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-15\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><rect x=\"-7\" y=\"-15\" width=\"14\" height=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-4,-10 -1,-5 -4,0 -1,5 -4,10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"15\" x2=\"0\" y2=\"30\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 30,
+      "orientation": "s"
+    }
+  ],
+  "state": [
+    {
+      "name": "tripped",
+      "type": "boolean",
+      "default": false,
+      "label": "动作"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

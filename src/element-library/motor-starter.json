@@ -1,0 +1,29 @@
+{
+  "id": "motor-starter",
+  "name": "电机启动器",
+  "category": "motor-control",
+  "description": "电机启动器 (IEC 60617 通用符号)。",
+  "viewBox": "-22 -27 44 54",
+  "width": 44,
+  "height": 54,
+  "svg": "<rect x=\"-20\" y=\"-20\" width=\"40\" height=\"40\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-20,-20 0,-10 20,-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -25,
+      "orientation": "n"
+    },
+    {
+      "id": "t_bottom",
+      "x": 0,
+      "y": 25,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_14/en_60617_07_14_01.elmt",
+    "qetEnglishName": "Motor starter, general symbol"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "id": "rcd",
+  "name": "剩余电流装置 (RCD)",
+  "category": "protection",
+  "description": "不带过流保护的剩余电流断路器 (IEC 61008)。",
+  "viewBox": "-12 -22 19 44",
+  "width": 19,
+  "height": 44,
+  "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"2\" y1=\"-12\" x2=\"-2\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-2\" y1=\"-12\" x2=\"2\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"0,20 0,10 -7,-9\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"13\" rx=\"4.5\" ry=\"2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-4,0 -10,0 -10,13 -5,13\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\" stroke-dasharray=\"4 2\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -20,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "params": [
+    {
+      "name": "IDn",
+      "label": "剩余动作电流",
+      "type": "number",
+      "unit": "mA",
+      "default": 30
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "11_singlepole/200_fuses_protective_gears/50_residual_current_circuit_breaker/ddr1.elmt",
+    "qetEnglishName": "Residual Circuit Breaker with Overload"
+  }
+}

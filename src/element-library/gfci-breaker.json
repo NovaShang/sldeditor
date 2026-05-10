@@ -1,0 +1,52 @@
+{
+  "id": "gfci-breaker",
+  "name": "GFCI 断路器 (RCBO)",
+  "category": "protection",
+  "description": "剩余电流断路器带过流保护 (UL943 / IEC 61009)。北美 GFCI / 欧洲 RCBO。",
+  "viewBox": "-18 -22 22 44",
+  "width": 22,
+  "height": 44,
+  "svg": "<text x=\"-14\" y=\"13.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"6\" fill=\"#000000\">IΔ</text><line x1=\"2\" y1=\"-12\" x2=\"-2\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-2\" y1=\"-12\" x2=\"2\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-5,-10 0,10 0,20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-4\" y1=\"-4\" x2=\"-8\" y2=\"-4\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/><line x1=\"-8\" y1=\"-4\" x2=\"-8\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/><line x1=\"-13\" y1=\"-8\" x2=\"-8\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/><line x1=\"-13\" y1=\"-8\" x2=\"-13\" y2=\"-4\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/><line x1=\"-16\" y1=\"-4\" x2=\"-13\" y2=\"-4\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/><path d=\"M -8 1 A 2.5 3.5 0 0 0 -13 1\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/><line x1=\"-8\" y1=\"1\" x2=\"-2\" y2=\"1\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/><line x1=\"-16\" y1=\"1\" x2=\"-13\" y2=\"1\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -20,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "params": [
+    {
+      "name": "In",
+      "label": "额定电流",
+      "type": "number",
+      "unit": "A"
+    },
+    {
+      "name": "IDn",
+      "label": "剩余动作电流",
+      "type": "number",
+      "unit": "mA",
+      "default": 30
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "11_singlepole/200_fuses_protective_gears/50_residual_current_circuit_breaker/rcbo.elmt",
+    "qetEnglishName": "Residual Circuit Breaker with Overload"
+  }
+}

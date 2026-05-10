@@ -1,0 +1,45 @@
+{
+  "id": "dc-combiner",
+  "name": "直流汇流箱",
+  "category": "renewable",
+  "description": "光伏组串汇流箱 (4 路输入示例)。",
+  "viewBox": "-27 -32 54 64",
+  "width": 54,
+  "height": 64,
+  "svg": "<rect x=\"-25\" y=\"-15\" width=\"50\" height=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-18\" y1=\"-30\" x2=\"-18\" y2=\"-15\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"-6\" y1=\"-30\" x2=\"-6\" y2=\"-15\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"6\" y1=\"-30\" x2=\"6\" y2=\"-15\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"18\" y1=\"-30\" x2=\"18\" y2=\"-15\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"15\" x2=\"0\" y2=\"30\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><text x=\"-9\" y=\"5\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"7\" fill=\"#000000\">DC</text>",
+  "terminals": [
+    {
+      "id": "t_s1",
+      "x": -18,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t_s2",
+      "x": -6,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t_s3",
+      "x": 6,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t_s4",
+      "x": 18,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t_dc",
+      "x": 0,
+      "y": 30,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

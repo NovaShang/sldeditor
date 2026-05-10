@@ -23,7 +23,11 @@
       "label": "断开"
     }
   ],
-  "label": { "x": 12, "y": -8, "anchor": "start" },
+  "label": {
+    "x": 12,
+    "y": -8,
+    "anchor": "start"
+  },
   "source": {
     "kind": "inline"
   }

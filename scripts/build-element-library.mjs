@@ -11,7 +11,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,11 +43,14 @@ const MANIFEST = [
         '<line x1="-40" y1="0" x2="40" y2="0" stroke="black" stroke-width="3" stroke-linecap="round" fill="none"/>',
       bbox: { x1: -40, y1: -2, x2: 40, y2: 2 },
     },
-    terminals: [
-      { id: 't_left', x: -40, y: 0, orientation: 'w' },
-      { id: 't_right', x: 40, y: 0, orientation: 'e' },
+    // Single virtual `tap` terminal — the data model special-cases bus
+    // multi-attach via this name. Do NOT split into t_left/t_right.
+    terminals: [{ id: 'tap', x: 0, y: 0, orientation: 'n' }],
+    stretchable: { axis: 'x', minLength: 20, naturalSpan: 80 },
+    params: [
+      { name: 'Un', label: '额定电压', type: 'number', unit: 'kV', showOnCanvas: true },
     ],
-    stretchable: { axis: 'x', minLength: 20 },
+    label: { x: 0, y: -6, anchor: 'middle' },
   },
   {
     id: 'earth',
@@ -63,6 +66,9 @@ const MANIFEST = [
     category: 'switching',
     source: { kind: 'elmt', path: '11_singlepole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur1.elmt' },
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    label: { x: 6, y: -2, anchor: 'start' },
+    // QET ships the "1"/"2" pin numbers at font-size 4 — bump for legibility.
+    textFontSize: 6,
   },
   {
     id: 'disconnector',
@@ -70,6 +76,7 @@ const MANIFEST = [
     category: 'switching',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_06.elmt' },
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    label: { x: 6, y: -10, anchor: 'start' },
   },
   {
     id: 'earthing-switch',
@@ -91,6 +98,7 @@ const MANIFEST = [
       bbox: { x1: -10, y1: -30, x2: 10, y2: 30 },
     },
     terminals: [{ id: 't_top', x: 0, y: -30, orientation: 'n' }],
+    label: { x: 12, y: -8, anchor: 'start' },
   },
   {
     id: 'load-switch',
@@ -105,6 +113,7 @@ const MANIFEST = [
     category: 'switching',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_21/en_60617_07_21_01.elmt' },
     state: [{ name: 'blown', type: 'boolean', default: false, label: '熔断' }],
+    label: { x: 7, y: -2, anchor: 'start' },
   },
 
   // ---- 变压器 ----
@@ -114,6 +123,11 @@ const MANIFEST = [
     category: 'transformer',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_01.elmt' },
     dropPrimitive: dropFormLabel,
+    params: [
+      { name: 'S', label: '容量', type: 'number', unit: 'MVA', showOnCanvas: true },
+      { name: 'ratio', label: '变比', type: 'string', showOnCanvas: true },
+    ],
+    label: { x: 4, y: -68, anchor: 'start' },
   },
   {
     id: 'transformer-3w',
@@ -126,6 +140,7 @@ const MANIFEST = [
       { id: 't_low_left', x: -50, y: 0, orientation: 's' },
       { id: 't_low_right', x: 0, y: 0, orientation: 's' },
     ],
+    label: { x: 4, y: -64, anchor: 'start' },
   },
   {
     id: 'autotransformer',
@@ -159,6 +174,7 @@ const MANIFEST = [
     category: 'source',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_16/en_60617_06_16_01.elmt' },
     extraTerminals: [{ id: 't_bottom', x: -20, y: 0, orientation: 's' }],
+    textFontSize: 14,
   },
   {
     id: 'grid-source',
@@ -185,6 +201,7 @@ const MANIFEST = [
       { id: 't_left', x: -10, y: 0, orientation: 'w' },
       { id: 't_right', x: 15, y: 0, orientation: 'e' },
     ],
+    params: [{ name: 'E', label: '容量', type: 'number', unit: 'kWh' }],
   },
 
   // ---- 负荷 / 电机 ----
@@ -193,12 +210,14 @@ const MANIFEST = [
     name: '同步电动机',
     category: 'load',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_07/en_60617_06_07_02.elmt' },
+    textFontSize: 14,
   },
   {
     id: 'async-motor',
     name: '异步电动机',
     category: 'load',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_08/en_60617_06_08_01.elmt' },
+    textFontSize: 14,
   },
   {
     id: 'load',
@@ -214,6 +233,11 @@ const MANIFEST = [
       bbox: { x1: -6, y1: -20, x2: 6, y2: 22 },
     },
     terminals: [{ id: 't_top', x: 0, y: -20, orientation: 'n' }],
+    params: [
+      { name: 'P', label: '有功功率', type: 'number', unit: 'MW', showOnCanvas: true },
+      { name: 'cosphi', label: '功率因数', type: 'number' },
+    ],
+    label: { x: 6, y: 0, anchor: 'start' },
   },
 
   // ---- 无功 / 保护 ----
@@ -240,6 +264,10 @@ const MANIFEST = [
     category: 'compensation',
     source: { kind: 'elmt', path: '11_singlepole/395_electronics_semiconductors/20_capacitors/capacite.elmt' },
     extraTerminals: [{ id: 't_bottom', x: 0, y: 2, orientation: 's' }],
+    params: [
+      { name: 'Q', label: '无功容量', type: 'number', unit: 'Mvar' },
+      { name: 'stages', label: '分组数', type: 'number' },
+    ],
   },
   {
     id: 'arrester',
@@ -276,6 +304,7 @@ const MANIFEST = [
       bbox: { x1: -10, y1: -30, x2: 10, y2: 28 },
     },
     terminals: [{ id: 't_top', x: 0, y: -30, orientation: 'n' }],
+    params: [{ name: 'R', label: '电阻', type: 'number', unit: 'Ω' }],
   },
   {
     id: 'arc-suppression-coil',
@@ -307,6 +336,7 @@ const MANIFEST = [
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_18/en_60617_06_18_06.elmt' },
     // QET symbol has no terminals; PV exits through DC bus on the right edge.
     extraTerminals: [{ id: 't_dc', x: 50, y: 10, orientation: 'e' }],
+    textFontSize: 14,
   },
   {
     id: 'wind-turbine',
@@ -318,7 +348,7 @@ const MANIFEST = [
       svg: [
         // generator circle
         '<circle cx="0" cy="0" r="20" fill="none" stroke="black" stroke-width="1"/>',
-        '<text x="0" y="4" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11">G</text>',
+        '<text x="0" y="4" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="16">G</text>',
         // three-blade rotor (60° spaced lines from hub on top)
         '<line x1="0" y1="-20" x2="0" y2="-32" fill="none" stroke="black" stroke-width="1"/>',
         '<line x1="0" y1="-32" x2="-10" y2="-39" fill="none" stroke="black" stroke-width="1.5"/>',
@@ -359,6 +389,298 @@ const MANIFEST = [
       { id: 't_ac', x: -20, y: -40, orientation: 'n' },
       { id: 't_dc', x: -20, y: 0, orientation: 's' },
     ],
+    params: [{ name: 'S', label: '容量', type: 'number', unit: 'MVA' }],
+  },
+
+  // ---- 保护 / 剩余电流 ----
+  {
+    id: 'gfci-breaker',
+    name: 'GFCI 断路器 (RCBO)',
+    category: 'protection',
+    description: '剩余电流断路器带过流保护 (UL943 / IEC 61009)。北美 GFCI / 欧洲 RCBO。',
+    source: { kind: 'elmt', path: '11_singlepole/200_fuses_protective_gears/50_residual_current_circuit_breaker/rcbo.elmt' },
+    // QET source lists bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -20, orientation: 'n' },
+      { id: 't2', x: 0, y: 20, orientation: 's' },
+    ],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    params: [
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A' },
+      { name: 'IDn', label: '剩余动作电流', type: 'number', unit: 'mA', default: 30 },
+    ],
+  },
+  {
+    id: 'rcd',
+    name: '剩余电流装置 (RCD)',
+    category: 'protection',
+    description: '不带过流保护的剩余电流断路器 (IEC 61008)。',
+    source: { kind: 'elmt', path: '11_singlepole/200_fuses_protective_gears/50_residual_current_circuit_breaker/ddr1.elmt' },
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    params: [
+      { name: 'IDn', label: '剩余动作电流', type: 'number', unit: 'mA', default: 30 },
+    ],
+  },
+  {
+    id: 'recloser',
+    name: '重合闸 (Recloser)',
+    category: 'protection',
+    description: '中压自动重合闸开关。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<line x1="0" y1="-30" x2="0" y2="-10" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="0" x2="0" y2="30" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="0" x2="-8" y2="-13" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="-2" y1="-8" x2="2" y2="-12" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="-2" y1="-12" x2="2" y2="-8" stroke="black" stroke-width="1" fill="none"/>',
+        '<path d="M 13 -12 A 7 7 0 1 1 6 -5" fill="none" stroke="black" stroke-width="0.8"/>',
+        '<polygon points="4,-7 6,-5 8,-3" fill="black"/>',
+        '<text x="14" y="6" font-family="Liberation Sans, Arial, sans-serif" font-size="6" fill="#000000">AR</text>',
+      ].join(''),
+      bbox: { x1: -10, y1: -30, x2: 22, y2: 30 },
+    },
+    terminals: [
+      { id: 't1', x: 0, y: -30, orientation: 'n' },
+      { id: 't2', x: 0, y: 30, orientation: 's' },
+    ],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+  },
+
+  // ---- 计量 / 测量 ----
+  {
+    id: 'energy-meter',
+    name: '电能表 (Wh)',
+    category: 'measurement',
+    description: '有功电能表 (kWh) — 服务入口 / 子表。',
+    source: { kind: 'elmt', path: '11_singlepole/500_home_installation/40_meters/wattheuremetre_08-04-03_en60617.elmt' },
+  },
+  {
+    id: 'voltmeter',
+    name: '电压表 (V)',
+    category: 'measurement',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_02/en_60617_08_02_01.elmt' },
+    extraTerminals: [{ id: 't_top', x: 0, y: -40, orientation: 'n' }],
+  },
+  {
+    id: 'ammeter',
+    name: '电流表 (A)',
+    category: 'measurement',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<ellipse cx="0" cy="-20" rx="20" ry="20" fill="none" stroke="black" stroke-width="1"/>',
+        '<text x="0" y="-15" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="14">A</text>',
+      ].join(''),
+      bbox: { x1: -20, y1: -40, x2: 20, y2: 0 },
+    },
+    terminals: [{ id: 't_top', x: 0, y: -40, orientation: 'n' }],
+  },
+  {
+    id: 'wattmeter',
+    name: '功率表 (W)',
+    category: 'measurement',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_03/en_60617_08_03_01.elmt' },
+    extraTerminals: [{ id: 't_top', x: 0, y: -40, orientation: 'n' }],
+  },
+  {
+    id: 'frequency-meter',
+    name: '频率表 (Hz)',
+    category: 'measurement',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_02/en_60617_08_02_07.elmt' },
+    extraTerminals: [{ id: 't_top', x: 0, y: -40, orientation: 'n' }],
+  },
+
+  // ---- 电机控制 ----
+  {
+    id: 'contactor',
+    name: '接触器 (KM)',
+    category: 'motor-control',
+    description: '主回路接触器, 通常配热继电器和电机使用。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_02.elmt' },
+    // QET source lists bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n' },
+      { id: 't2', x: 0, y: 20, orientation: 's' },
+    ],
+    state: [{ name: 'open', type: 'boolean', default: true, label: '断开' }],
+  },
+  {
+    id: 'motor-starter',
+    name: '电机启动器',
+    category: 'motor-control',
+    description: '电机启动器 (IEC 60617 通用符号)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_14/en_60617_07_14_01.elmt' },
+    extraTerminals: [
+      { id: 't_top', x: 0, y: -25, orientation: 'n' },
+      { id: 't_bottom', x: 0, y: 25, orientation: 's' },
+    ],
+  },
+  {
+    id: 'thermal-overload',
+    name: '热过载继电器',
+    category: 'motor-control',
+    description: '电机热过载保护继电器, 通常串接在接触器和电机之间。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<line x1="0" y1="-30" x2="0" y2="-15" stroke="black" stroke-width="1" fill="none"/>',
+        '<rect x="-7" y="-15" width="14" height="30" fill="none" stroke="black" stroke-width="1"/>',
+        '<polyline points="-4,-10 -1,-5 -4,0 -1,5 -4,10" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="0" y1="15" x2="0" y2="30" stroke="black" stroke-width="1" fill="none"/>',
+      ].join(''),
+      bbox: { x1: -7, y1: -30, x2: 8, y2: 30 },
+    },
+    terminals: [
+      { id: 't1', x: 0, y: -30, orientation: 'n' },
+      { id: 't2', x: 0, y: 30, orientation: 's' },
+    ],
+    state: [{ name: 'tripped', type: 'boolean', default: false, label: '动作' }],
+  },
+  {
+    id: 'vfd',
+    name: '变频器 (VFD)',
+    category: 'motor-control',
+    description: 'Variable Frequency Drive — 异步电动机调速。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<rect x="-22" y="-20" width="44" height="40" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-22" y1="20" x2="22" y2="-20" stroke="black" stroke-width="1" fill="none"/>',
+        '<text x="-15" y="-5" font-family="Liberation Sans, Arial, sans-serif" font-size="9" fill="#000000">~</text>',
+        '<text x="6" y="14" font-family="Liberation Sans, Arial, sans-serif" font-size="9" fill="#000000">~f</text>',
+        '<line x1="0" y1="-40" x2="0" y2="-20" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="20" x2="0" y2="40" stroke="black" stroke-width="1" fill="none"/>',
+      ].join(''),
+      bbox: { x1: -22, y1: -40, x2: 22, y2: 40 },
+    },
+    terminals: [
+      { id: 't_in', x: 0, y: -40, orientation: 'n' },
+      { id: 't_out', x: 0, y: 40, orientation: 's' },
+    ],
+  },
+  {
+    id: 'soft-starter',
+    name: '软启动器',
+    category: 'motor-control',
+    description: '电机软启动器 (晶闸管降压启动)。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<rect x="-20" y="-20" width="40" height="40" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-12" y1="-12" x2="12" y2="12" stroke="black" stroke-width="1" fill="none"/>',
+        '<polygon points="4,8 12,12 8,4" fill="none" stroke="black" stroke-width="1"/>',
+        '<text x="-12" y="-2" font-family="Liberation Sans, Arial, sans-serif" font-size="6" fill="#000000">SS</text>',
+        '<line x1="0" y1="-40" x2="0" y2="-20" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="20" x2="0" y2="40" stroke="black" stroke-width="1" fill="none"/>',
+      ].join(''),
+      bbox: { x1: -20, y1: -40, x2: 20, y2: 40 },
+    },
+    terminals: [
+      { id: 't_in', x: 0, y: -40, orientation: 'n' },
+      { id: 't_out', x: 0, y: 40, orientation: 's' },
+    ],
+  },
+
+  // ---- 切换 / DC ----
+  {
+    id: 'transfer-switch',
+    name: '切换开关 (ATS)',
+    category: 'switching',
+    description: '双源切换开关 (Automatic / Manual Transfer Switch)。两个电源输入 + 一个负荷输出, 互锁不并联。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<line x1="-15" y1="-30" x2="-15" y2="-12" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="15" y1="-30" x2="15" y2="-12" stroke="black" stroke-width="1" fill="none"/>',
+        '<text x="-25" y="-20" font-family="Liberation Sans, Arial, sans-serif" font-size="6" fill="#000000">N</text>',
+        '<text x="19" y="-20" font-family="Liberation Sans, Arial, sans-serif" font-size="6" fill="#000000">E</text>',
+        '<circle cx="-15" cy="-10" r="1.5" fill="black"/>',
+        '<circle cx="15" cy="-10" r="1.5" fill="black"/>',
+        '<circle cx="0" cy="6" r="1.5" fill="black"/>',
+        '<line x1="-15" y1="-10" x2="0" y2="6" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="15" y1="-10" x2="0" y2="6" stroke="black" stroke-width="0.6" fill="none" stroke-dasharray="2 1.5"/>',
+        '<line x1="0" y1="6" x2="0" y2="30" stroke="black" stroke-width="1" fill="none"/>',
+      ].join(''),
+      bbox: { x1: -25, y1: -30, x2: 22, y2: 30 },
+    },
+    terminals: [
+      { id: 't_normal', x: -15, y: -30, orientation: 'n' },
+      { id: 't_emergency', x: 15, y: -30, orientation: 'n' },
+      { id: 't_load', x: 0, y: 30, orientation: 's' },
+    ],
+    state: [
+      { name: 'position', type: 'string', default: 'normal', label: '位置 (normal/emergency/off)' },
+    ],
+  },
+  {
+    id: 'dc-disconnector',
+    name: '直流隔离开关',
+    category: 'switching',
+    description: 'DC isolating switch — 光伏组串 / 储能 直流侧隔离。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<line x1="0" y1="-30" x2="0" y2="-12" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="0" x2="0" y2="30" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="0" x2="-8" y2="-15" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="6" y1="-4" x2="14" y2="-4" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="6" y1="-1" x2="9" y2="-1" stroke="black" stroke-width="0.8" fill="none"/>',
+        '<line x1="11" y1="-1" x2="14" y2="-1" stroke="black" stroke-width="0.8" fill="none"/>',
+      ].join(''),
+      bbox: { x1: -10, y1: -30, x2: 16, y2: 30 },
+    },
+    terminals: [
+      { id: 't1', x: 0, y: -30, orientation: 'n' },
+      { id: 't2', x: 0, y: 30, orientation: 's' },
+    ],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+  },
+  {
+    id: 'dc-combiner',
+    name: '直流汇流箱',
+    category: 'renewable',
+    description: '光伏组串汇流箱 (4 路输入示例)。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<rect x="-25" y="-15" width="50" height="30" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-18" y1="-30" x2="-18" y2="-15" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="-6" y1="-30" x2="-6" y2="-15" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="6" y1="-30" x2="6" y2="-15" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="18" y1="-30" x2="18" y2="-15" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="15" x2="0" y2="30" stroke="black" stroke-width="1" fill="none"/>',
+        '<text x="-9" y="5" font-family="Liberation Sans, Arial, sans-serif" font-size="7" fill="#000000">DC</text>',
+      ].join(''),
+      bbox: { x1: -25, y1: -30, x2: 25, y2: 30 },
+    },
+    terminals: [
+      { id: 't_s1', x: -18, y: -30, orientation: 'n' },
+      { id: 't_s2', x: -6, y: -30, orientation: 'n' },
+      { id: 't_s3', x: 6, y: -30, orientation: 'n' },
+      { id: 't_s4', x: 18, y: -30, orientation: 'n' },
+      { id: 't_dc', x: 0, y: 30, orientation: 's' },
+    ],
+  },
+
+  // ---- 充电 ----
+  {
+    id: 'ev-charger',
+    name: 'EV 充电桩',
+    category: 'load',
+    description: '电动汽车充电站 / 充电桩。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<line x1="0" y1="-25" x2="0" y2="-15" stroke="black" stroke-width="1" fill="none"/>',
+        '<rect x="-15" y="-15" width="30" height="35" fill="none" stroke="black" stroke-width="1"/>',
+        '<rect x="-9" y="-8" width="14" height="6" fill="none" stroke="black" stroke-width="0.8"/>',
+        '<rect x="5" y="-7" width="2" height="4" fill="black"/>',
+        '<text x="-9" y="13" font-family="Liberation Sans, Arial, sans-serif" font-size="7" fill="#000000">EV</text>',
+      ].join(''),
+      bbox: { x1: -15, y1: -25, x2: 15, y2: 20 },
+    },
+    terminals: [{ id: 't_top', x: 0, y: -25, orientation: 'n' }],
   },
 ];
 
@@ -612,14 +934,27 @@ function buildElement(entry) {
   const parsed = parseElmt(xml);
 
   const dropPredicate = entry.dropPrimitive || (() => false);
-  const visualPrims = parsed.primitives.filter((p) => p.tag !== 'terminal' && !dropPredicate(p));
+  const transform = entry.transformPrimitive || ((p) => p);
+  const visualPrims = parsed.primitives
+    .filter((p) => p.tag !== 'terminal' && !dropPredicate(p))
+    .map(transform);
   const terminalPrims = parsed.primitives.filter((p) => p.tag === 'terminal');
 
   let bbox = null;
   for (const p of visualPrims) bbox = unionBBox(bbox, primitiveBBox(p));
   if (!bbox) bbox = { x1: -10, y1: -10, x2: 10, y2: 10 };
 
-  const svgBody = visualPrims.map(primitiveToSvg).filter(Boolean).join('');
+  let svgBody = visualPrims.map(primitiveToSvg).filter(Boolean).join('');
+  // Post-process: rewrite all <text font-size="..."> in the output. Used for
+  // visibility tweaks where we want bigger glyphs without recomputing the
+  // QET-derived y baseline (the text label still lives at QET's intended
+  // position; only the rendered glyph height grows).
+  if (entry.textFontSize !== undefined) {
+    svgBody = svgBody.replace(
+      /font-size="\d+(?:\.\d+)?"/g,
+      `font-size="${entry.textFontSize}"`,
+    );
+  }
 
   const terminalsFromElmt = terminalPrims.map((p, i) => ({
     id: `t${i + 1}`,
@@ -655,20 +990,24 @@ function finalize(entry, { svgBody, bbox, terminals, sourceMeta }) {
     h: Math.ceil(bbox.y2 + pad) - Math.floor(bbox.y1 - pad),
   };
 
-  return {
+  // Drop optional fields when absent so JSON keys stay stable across builds.
+  const out = {
     id: entry.id,
     name: entry.name,
     category: entry.category,
-    description: entry.description,
-    viewBox: `${vb.x} ${vb.y} ${vb.w} ${vb.h}`,
-    width: vb.w,
-    height: vb.h,
-    svg: svgBody,
-    terminals,
-    stretchable: entry.stretchable,
-    state: entry.state,
-    source: sourceMeta,
   };
+  if (entry.description !== undefined) out.description = entry.description;
+  out.viewBox = `${vb.x} ${vb.y} ${vb.w} ${vb.h}`;
+  out.width = vb.w;
+  out.height = vb.h;
+  out.svg = svgBody;
+  out.terminals = terminals;
+  if (entry.stretchable) out.stretchable = entry.stretchable;
+  if (entry.state) out.state = entry.state;
+  if (entry.params) out.params = entry.params;
+  if (entry.label) out.label = entry.label;
+  out.source = sourceMeta;
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -710,4 +1049,10 @@ function main() {
   console.log(`\nWrote ${count} elements to ${path.relative(ROOT, OUT_DIR)}`);
 }
 
-main();
+// Only run main() when invoked directly (`node scripts/build-element-library.mjs`).
+// Importing this module from a test should be side-effect-free.
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+  main();
+}
+
+export { MANIFEST, buildElement };

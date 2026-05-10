@@ -1,0 +1,29 @@
+{
+  "id": "energy-meter",
+  "name": "电能表 (Wh)",
+  "category": "measurement",
+  "description": "有功电能表 (kWh) — 服务入口 / 子表。",
+  "viewBox": "-22 -36 44 72",
+  "width": 44,
+  "height": 72,
+  "svg": "<text x=\"-10\" y=\"19.2\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">Wh</text><rect x=\"-20\" y=\"-10\" width=\"40\" height=\"40\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-20\" y=\"-30\" width=\"40\" height=\"20\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -34,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 34,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "11_singlepole/500_home_installation/40_meters/wattheuremetre_08-04-03_en60617.elmt",
+    "qetEnglishName": "Watt hour meter (en_60617)"
+  }
+}

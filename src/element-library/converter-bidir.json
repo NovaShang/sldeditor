@@ -22,7 +22,12 @@
     }
   ],
   "params": [
-    { "name": "S", "label": "容量", "type": "number", "unit": "MVA" }
+    {
+      "name": "S",
+      "label": "容量",
+      "type": "number",
+      "unit": "MVA"
+    }
   ],
   "source": {
     "kind": "elmt",

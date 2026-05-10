@@ -1,0 +1,27 @@
+{
+  "id": "soft-starter",
+  "name": "软启动器",
+  "category": "motor-control",
+  "description": "电机软启动器 (晶闸管降压启动)。",
+  "viewBox": "-22 -42 44 84",
+  "width": 44,
+  "height": 84,
+  "svg": "<rect x=\"-20\" y=\"-20\" width=\"40\" height=\"40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-12\" y1=\"-12\" x2=\"12\" y2=\"12\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><polygon points=\"4,8 12,12 8,4\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-12\" y=\"-2\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"6\" fill=\"#000000\">SS</text><line x1=\"0\" y1=\"-40\" x2=\"0\" y2=\"-20\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"20\" x2=\"0\" y2=\"40\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/>",
+  "terminals": [
+    {
+      "id": "t_in",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t_out",
+      "x": 0,
+      "y": 40,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

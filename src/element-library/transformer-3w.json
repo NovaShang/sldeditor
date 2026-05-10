@@ -26,7 +26,11 @@
       "orientation": "s"
     }
   ],
-  "label": { "x": 4, "y": -64, "anchor": "start" },
+  "label": {
+    "x": 4,
+    "y": -64,
+    "anchor": "start"
+  },
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_04.elmt",

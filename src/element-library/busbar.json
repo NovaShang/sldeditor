@@ -21,9 +21,19 @@
     "naturalSpan": 80
   },
   "params": [
-    { "name": "Un", "label": "额定电压", "type": "number", "unit": "kV", "showOnCanvas": true }
+    {
+      "name": "Un",
+      "label": "额定电压",
+      "type": "number",
+      "unit": "kV",
+      "showOnCanvas": true
+    }
   ],
-  "label": { "x": 0, "y": -6, "anchor": "middle" },
+  "label": {
+    "x": 0,
+    "y": -6,
+    "anchor": "middle"
+  },
   "source": {
     "kind": "inline"
   }

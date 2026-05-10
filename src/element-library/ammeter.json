@@ -1,0 +1,20 @@
+{
+  "id": "ammeter",
+  "name": "电流表 (A)",
+  "category": "measurement",
+  "viewBox": "-22 -42 44 44",
+  "width": 44,
+  "height": 44,
+  "svg": "<ellipse cx=\"0\" cy=\"-20\" rx=\"20\" ry=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"0\" y=\"-15\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"14\">A</text>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

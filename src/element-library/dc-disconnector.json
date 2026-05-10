@@ -1,0 +1,35 @@
+{
+  "id": "dc-disconnector",
+  "name": "直流隔离开关",
+  "category": "switching",
+  "description": "DC isolating switch — 光伏组串 / 储能 直流侧隔离。",
+  "viewBox": "-12 -32 30 64",
+  "width": 30,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-12\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"30\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"0\" x2=\"-8\" y2=\"-15\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"6\" y1=\"-4\" x2=\"14\" y2=\"-4\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"6\" y1=\"-1\" x2=\"9\" y2=\"-1\" stroke=\"black\" stroke-width=\"0.8\" fill=\"none\"/><line x1=\"11\" y1=\"-1\" x2=\"14\" y2=\"-1\" stroke=\"black\" stroke-width=\"0.8\" fill=\"none\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 30,
+      "orientation": "s"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

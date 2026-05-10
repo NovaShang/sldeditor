@@ -1,0 +1,22 @@
+{
+  "id": "wattmeter",
+  "name": "功率表 (W)",
+  "category": "measurement",
+  "viewBox": "-22 -42 44 44",
+  "width": 44,
+  "height": 44,
+  "svg": "<rect x=\"-20\" y=\"-40\" width=\"40\" height=\"40\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-6\" y=\"-8.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">W</text>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_08/en_60617_08_03/en_60617_08_03_01.elmt",
+    "qetEnglishName": "Recording wattmeter"
+  }
+}

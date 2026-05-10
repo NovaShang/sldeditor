@@ -28,7 +28,11 @@
       "label": "熔断"
     }
   ],
-  "label": { "x": 7, "y": -2, "anchor": "start" },
+  "label": {
+    "x": 7,
+    "y": -2,
+    "anchor": "start"
+  },
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_07/en_60617_07_21/en_60617_07_21_01.elmt",
