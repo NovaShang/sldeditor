@@ -66,7 +66,14 @@ export type { Locale } from './i18n';
 export { FileMenu } from './components/FileMenu';
 export { ExportMenu } from './components/ExportMenu';
 
+// Viewport helpers — embedders that perform programmatic edits (AI tool
+// calls, importing from another format, etc.) can call `fitToContentSoon`
+// to reset the canvas to fit the new diagram once the DOM updates settle.
+export { fitToContent, fitToContentSoon } from './canvas/fit-to-content';
+
 // Image export primitives — exposed so consumers (e.g. cloud apps with their
 // own naming/persistence) can build their own export UI on top of the same
 // SVG/PNG pipeline the bundled ExportMenu uses.
 export { buildExportSvg, downloadSvg, downloadPng } from './lib/export-image';
+export { buildExportDxf, downloadDxf } from './lib/export-dxf';
+export type { DxfExportOptions } from './lib/export-dxf';
