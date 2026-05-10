@@ -5,10 +5,11 @@
  * etc.). Exported alongside `FileMenu` for embedding apps.
  */
 
-import { Download, FileImage, FileType } from 'lucide-react';
+import { Download, FileBox, FileImage, FileType } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { useT } from '../i18n';
+import { downloadDxf } from '../lib/export-dxf';
 import { downloadPng, downloadSvg } from '../lib/export-image';
 import { useEditorStore } from '../store';
 
@@ -33,17 +34,26 @@ export function ExportMenu() {
     };
   }, [open]);
 
-  const exportAs = (kind: 'svg' | 'png') => () => {
+  const exportAs = (kind: 'svg' | 'png' | 'dxf') => () => {
     setOpen(false);
     const { internal, diagram, fileSession } = useEditorStore.getState();
     const baseName =
       fileSession?.name?.replace(/\.json$/i, '') ?? diagram.meta?.title ?? 'diagram';
     const opts = { title: diagram.meta?.title };
     if (kind === 'svg') downloadSvg(internal, `${baseName}.svg`, opts);
-    else
+    else if (kind === 'png')
       downloadPng(internal, `${baseName}.png`, { ...opts, scale: 2 }).catch((err) => {
         console.error(err);
         alert(t('topbar.export.pngFailed', { err: (err as Error).message }));
+      });
+    else
+      downloadDxf(internal, `${baseName}.dxf`, {
+        ...opts,
+        labelMode: diagram.meta?.labelMode,
+        annotations: diagram.annotations,
+      }).catch((err) => {
+        console.error(err);
+        alert(t('topbar.export.dxfFailed', { err: (err as Error).message }));
       });
   };
 
@@ -82,6 +92,15 @@ export function ExportMenu() {
           >
             <FileImage />
             <span className="flex-1">PNG (2×)</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={exportAs('dxf')}
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground [&>svg]:size-4"
+          >
+            <FileBox />
+            <span className="flex-1">DXF</span>
           </button>
         </div>
       )}
