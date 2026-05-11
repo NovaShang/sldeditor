@@ -121,11 +121,7 @@
     ["QF_T1.t2", "CT_T1.t1"],
     ["CT_T1.t2", "T1.t1"],
 
-    {
-      "node": "n_t1_neutral_35kv",
-      "name": "1#主变 35kV 中性点",
-      "terminals": ["GT_T1.t1", "NGR_T1.t_top"]
-    },
+    ["GT_T1.t1", "NGR_T1.t_top"],
 
     ["FBL_35.t2", "GND_FBL_35.t1"],
 

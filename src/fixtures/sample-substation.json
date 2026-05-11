@@ -68,11 +68,7 @@
     ["QS_T1.t2", "QF_T1.t1"],
     ["QF_T1.t2", "T1.t1"],
 
-    {
-      "node": "n_t1_neutral",
-      "name": "1#主变中性点",
-      "terminals": ["T1.t2", "GND_T1.t1"]
-    },
+    ["T1.t2", "GND_T1.t1"],
 
     ["FBL1.t2", "GND_FBL1.t1"],
 

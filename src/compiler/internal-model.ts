@@ -40,9 +40,6 @@ export interface TerminalGeometry {
 
 export interface ConnectivityNode {
   id: NodeId;
-  /** Optional human-given name (from `NamedConnection.name`). */
-  name?: string;
-  /** All terminals on this node, including those originating from `bus.tap`. */
   terminals: TerminalRef[];
 }
 
@@ -64,7 +61,8 @@ export interface Diagnostic {
  */
 export interface InternalRoute {
   paths: [number, number][][];
-  manual?: boolean;
+  /** True if this came from `DiagramFile.routes` (user-edited); false = auto-routed. */
+  userEdited?: boolean;
 }
 
 export interface InternalModel {

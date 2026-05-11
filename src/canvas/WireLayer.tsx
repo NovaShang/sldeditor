@@ -32,7 +32,7 @@ export function WireLayer() {
             <polyline
               key={`${nodeId}#${i}`}
               data-node-id={nodeId}
-              data-manual={route.manual ? 'true' : undefined}
+              data-manual={route.userEdited ? 'true' : undefined}
               data-selected={selectedNode === nodeId ? 'true' : undefined}
               className="ole-wire"
               points={points}

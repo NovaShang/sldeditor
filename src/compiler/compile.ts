@@ -1,13 +1,14 @@
 /**
- * DiagramFile → InternalModel. Pipeline mirrors `docs/data-model.md` §8:
+ * DiagramFile → InternalModel. Pipeline:
  *
  *   1. Resolve elements + library
  *   2. Validate IDs / pins (errors → diagnostics; pipeline keeps going)
- *   3. Expand `bus.tap` shorthand into connection groups
- *   4. Union-find over all connection groups → ConnectivityNode set
- *   5. Auto-layout for elements without a `Placement`
- *   6. Compute world-frame terminal geometry
- *   7. Auto-route each ConnectivityNode unless the user supplied a path
+ *   3. Union-find over connection groups → ConnectivityNode set with
+ *      deterministic ids (sorted terminals hashed) so `routes[nodeId]`
+ *      keys are stable across saves
+ *   4. Auto-layout for elements without a `Placement`
+ *   5. Compute world-frame terminal geometry
+ *   6. Auto-route each ConnectivityNode unless the user supplied a path
  */
 
 import { t } from '../i18n';
@@ -24,7 +25,6 @@ import { LIBRARY } from './library-index';
 import {
   emptyInternalModel,
   resolvePlacement,
-  type ConnectivityNode,
   type InternalModel,
   type ResolvedPlacement,
 } from './internal-model';
@@ -33,11 +33,26 @@ import { UnionFind } from './union-find';
 
 interface ConnGroup {
   terminals: TerminalRef[];
-  /** Optional explicit node ID supplied by the author. */
-  node?: NodeId;
-  /** Optional human name supplied by the author. */
-  name?: string;
   pointer: string;
+}
+
+/**
+ * Stable, content-derived node id. Same set of terminals always maps to the
+ * same NodeId across compile runs and across save/load cycles, so user-edited
+ * `routes[nodeId]` overrides stay attached after reload.
+ */
+function deterministicNodeId(members: TerminalRef[]): NodeId {
+  // FNV-1a 32-bit on the sorted, joined refs. Plenty of entropy for typical
+  // diagram sizes (<10k nodes); collisions only cause a route override to
+  // attach to the wrong node, never wrong electrical behavior.
+  const sorted = [...members].sort();
+  const text = sorted.join('|');
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return `n_${(h >>> 0).toString(36)}`;
 }
 
 export function compile(diagram: DiagramFile): InternalModel {
@@ -68,35 +83,11 @@ export function compile(diagram: DiagramFile): InternalModel {
     m.elements.set(el.id, { element: el, libraryDef: libDef });
   });
 
-  // ---- 2. Build connection groups (incl. bus.tap expansion) -------------
-  const groups: ConnGroup[] = [];
-
-  diagram.elements.forEach((el, idx) => {
-    if (el.kind !== 'busbar' || !Array.isArray(el.tap) || el.tap.length === 0) return;
-    const lib = LIBRARY.get('busbar');
-    if (!lib) return;
-    const busTerms = lib.terminals.map(
-      (t) => `${el.id}.${t.id}` as TerminalRef,
-    );
-    groups.push({
-      terminals: [...busTerms, ...el.tap],
-      pointer: `/elements/${idx}/tap`,
-    });
-  });
-
-  (diagram.connections ?? []).forEach((c, i) => {
-    const pointer = `/connections/${i}`;
-    if (Array.isArray(c)) {
-      groups.push({ terminals: c, pointer });
-    } else {
-      groups.push({
-        terminals: c.terminals,
-        node: c.node,
-        name: c.name,
-        pointer,
-      });
-    }
-  });
+  // ---- 2. Build connection groups ---------------------------------------
+  const groups: ConnGroup[] = (diagram.connections ?? []).map((c, i) => ({
+    terminals: c,
+    pointer: `/connections/${i}`,
+  }));
 
   // ---- 3. Validate terminal references ----------------------------------
   const validRef = (ref: TerminalRef, pointer: string): boolean => {
@@ -208,34 +199,9 @@ export function compile(diagram: DiagramFile): InternalModel {
     for (let i = 1; i < g.terminals.length; i++) uf.union(g.terminals[0], g.terminals[i]);
   }
 
-  // Pre-assign user-named node IDs to their roots so the iteration below
-  // doesn't overwrite them. The `reservedIds` set lets the auto-counter skip
-  // any ID a user already chose (e.g. the user named one node "n5", we don't
-  // want auto-generation to also produce "n5").
-  const rootToId = new Map<TerminalRef, NodeId>();
-  for (const g of validGroups) {
-    if (g.node && g.terminals.length > 0) {
-      rootToId.set(uf.find(g.terminals[0]), g.node);
-    }
-  }
-  const reservedIds = new Set<NodeId>(rootToId.values());
-
-  let nodeCounter = 0;
-  for (const [root, members] of uf.groups()) {
-    let id = rootToId.get(root);
-    if (!id) {
-      do {
-        id = `n${++nodeCounter}`;
-      } while (reservedIds.has(id));
-    }
-    const node: ConnectivityNode = { id, terminals: members };
-    for (const g of validGroups) {
-      if (g.name && g.terminals.length > 0 && uf.find(g.terminals[0]) === root) {
-        node.name = g.name;
-        break;
-      }
-    }
-    m.nodes.set(id, node);
+  for (const [, members] of uf.groups()) {
+    const id = deterministicNodeId(members);
+    m.nodes.set(id, { id, terminals: members });
     for (const ref of members) m.terminalToNode.set(ref, id);
   }
 
@@ -258,7 +224,7 @@ export function compile(diagram: DiagramFile): InternalModel {
   for (const node of m.nodes.values()) {
     const userRoute = userRoutes[node.id];
     if (userRoute) {
-      m.routes.set(node.id, { paths: [userRoute.path], manual: userRoute.manual });
+      m.routes.set(node.id, { paths: [userRoute.path], userEdited: true });
     } else {
       m.routes.set(node.id, autoRoute(node, m));
     }

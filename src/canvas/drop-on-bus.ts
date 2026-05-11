@@ -76,23 +76,20 @@ export function dropElement(kind: string, at: [number, number]): DropResult {
   // Add the new element with its placement, then mutate bus.tap to include the
   // new tap reference. We do both inside a single `dispatch` so it's one
   // undo step.
+  // Add the new element + placement + a connection group binding its tap
+  // pin to the bus's virtual `.tap` ref. All three changes happen inside a
+  // single `dispatch` so it's one undo step.
   store.dispatch((d) => {
     const newElement: Element = { id: newId, kind };
     const placement: Placement = { at: placedAt };
-    const tapRef = `${newId}.${tapPin}` as TerminalRef;
-    const elements = [...d.elements];
-    const idx = elements.findIndex((e) => e.id === bus.id);
-    if (idx >= 0) {
-      const cur = elements[idx];
-      elements[idx] = {
-        ...cur,
-        tap: [...(cur.tap ?? []), tapRef],
-      };
-    }
-    elements.push(newElement);
+    const tapConn: TerminalRef[] = [
+      `${bus.id}.tap` as TerminalRef,
+      `${newId}.${tapPin}` as TerminalRef,
+    ];
     return {
       ...d,
-      elements,
+      elements: [...d.elements, newElement],
+      connections: [...(d.connections ?? []), tapConn],
       layout: { ...(d.layout ?? {}), [newId]: placement },
     };
   });
@@ -322,28 +319,14 @@ export function dropElementFromTerminal(
     const newElement: Element = { id: newId, kind };
     const placement: Placement = { at: placedAt };
     const newPinRef = `${newId}.${chosen.id}` as TerminalRef;
-    const elements = [...d.elements];
-    if (source.isBusTap && source.busElementId) {
-      const idx = elements.findIndex((e) => e.id === source.busElementId);
-      if (idx >= 0) {
-        const cur = elements[idx];
-        elements[idx] = {
-          ...cur,
-          tap: [...(cur.tap ?? []), newPinRef],
-        };
-      }
-      elements.push(newElement);
-      return {
-        ...d,
-        elements,
-        layout: { ...(d.layout ?? {}), [newId]: placement },
-      };
-    }
-    elements.push(newElement);
+    const tieRef =
+      source.isBusTap && source.busElementId
+        ? (`${source.busElementId}.tap` as TerminalRef)
+        : sourceRef;
     return {
       ...d,
-      elements,
-      connections: [...(d.connections ?? []), [sourceRef, newPinRef]],
+      elements: [...d.elements, newElement],
+      connections: [...(d.connections ?? []), [tieRef, newPinRef]],
       layout: { ...(d.layout ?? {}), [newId]: placement },
     };
   });

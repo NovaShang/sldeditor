@@ -14,7 +14,6 @@ export type {
   TerminalRef,
   ParamValue,
   Connection,
-  NamedConnection,
   Placement,
   Route,
   LibraryEntry,

@@ -28,7 +28,6 @@ import type {
   DiagramFile,
   Element,
   ElementId,
-  NamedConnection,
   NodeId,
   Placement,
   TerminalRef,
@@ -372,14 +371,7 @@ export const useEditorStore = create<EditorState>()(
 
     const elements = diagram.elements
       .filter((e) => sel.has(e.id))
-      .map((e) => {
-        const cloned = structuredClone(e);
-        if (cloned.tap) {
-          cloned.tap = cloned.tap.filter((ref) => sel.has(elementOf(ref)));
-          if (cloned.tap.length === 0) delete cloned.tap;
-        }
-        return cloned;
-      });
+      .map((e) => structuredClone(e));
 
     const placements: Record<ElementId, Placement> = {};
     for (const id of selection) {
@@ -443,7 +435,6 @@ export const useEditorStore = create<EditorState>()(
       const newElements: Element[] = clipboard.elements.map((e) => {
         const cloned = structuredClone(e);
         cloned.id = idMap.get(e.id)!;
-        if (cloned.tap) cloned.tap = cloned.tap.map(remapTerminal);
         return cloned;
       });
 
@@ -457,14 +448,9 @@ export const useEditorStore = create<EditorState>()(
         };
       }
 
-      const newConns: Connection[] = clipboard.connections.map((c) => {
-        if (Array.isArray(c)) return c.map(remapTerminal);
-        // Drop the named node id — let the compiler mint a fresh one to avoid
-        // colliding with the still-extant original.
-        const { node: _node, ...rest } = c as NamedConnection;
-        void _node;
-        return { ...rest, terminals: c.terminals.map(remapTerminal) };
-      });
+      const newConns: Connection[] = clipboard.connections.map((c) =>
+        c.map(remapTerminal),
+      );
 
       const mergedConns = [...(d.connections ?? []), ...newConns];
       return {
@@ -619,23 +605,11 @@ export const useEditorStore = create<EditorState>()(
       // Drop any connection that touches the node (connections are union-find
       // groups, so by definition every member of the group lives in the same
       // node — `some` is sufficient).
-      const connections = (d.connections ?? []).filter((c) => {
-        const terms = Array.isArray(c) ? c : c.terminals;
-        return !terms.some((t) => memberSet.has(t));
-      });
-      // Strip bus.tap entries that landed in this node.
-      const elements = d.elements.map((el) => {
-        if (el.kind !== 'busbar' || !Array.isArray(el.tap)) return el;
-        const filtered = el.tap.filter((ref) => !memberSet.has(ref));
-        if (filtered.length === el.tap.length) return el;
-        const next: Element = { ...el };
-        if (filtered.length > 0) next.tap = filtered;
-        else delete next.tap;
-        return next;
-      });
+      const connections = (d.connections ?? []).filter(
+        (c) => !c.some((t) => memberSet.has(t)),
+      );
       return {
         ...d,
-        elements,
         connections: connections.length ? connections : undefined,
         layout: Object.keys(layout).length ? layout : undefined,
       };
@@ -787,13 +761,11 @@ function dedupe<T>(arr: T[]): T[] {
 }
 
 function connectionTerminals(c: Connection): TerminalRef[] {
-  return Array.isArray(c) ? c : c.terminals;
+  return c;
 }
 
 function filterConnection(c: Connection, removed: Set<ElementId>): Connection {
-  const keep = (ref: TerminalRef) => !removed.has(elementOf(ref));
-  if (Array.isArray(c)) return c.filter(keep);
-  return { ...c, terminals: c.terminals.filter(keep) };
+  return c.filter((ref) => !removed.has(elementOf(ref)));
 }
 
 function elementOf(ref: TerminalRef): ElementId {

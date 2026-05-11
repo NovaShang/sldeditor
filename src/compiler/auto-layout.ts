@@ -144,50 +144,30 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   const buses: Element[] = elements.filter((e) => e.kind === 'busbar');
   const busIds = new Set(buses.map((b) => b.id));
 
-  // Effective tap map: TerminalRefs of devices attached to each bus, sourced
-  // from BOTH the `bus.tap[]` sugar AND explicit connections that mention
-  // `<busId>.tap`. Auto-layout uses this single source of truth so adding/
-  // removing the sugar form doesn't break placement.
+  // Per-bus tap list. Sourced from any connection group containing
+  // `<busId>.tap` — co-members of that group are the tap devices.
   const effectiveTaps = new Map<ElementId, TerminalRef[]>();
   const pushTap = (busId: ElementId, ref: TerminalRef) => {
     const arr = effectiveTaps.get(busId) ?? [];
     arr.push(ref);
     effectiveTaps.set(busId, arr);
   };
-  for (const bus of buses) {
-    if (Array.isArray(bus.tap)) {
-      for (const ref of bus.tap) pushTap(bus.id, ref);
-    }
-  }
   for (const conn of connections) {
-    const terms = Array.isArray(conn) ? conn : conn.terminals;
-    for (const ref of terms) {
+    for (const ref of conn) {
       const dot = ref.indexOf('.');
       if (dot < 0) continue;
       const busId = ref.slice(0, dot);
       const pin = ref.slice(dot + 1);
       if (pin !== 'tap' || !busIds.has(busId)) continue;
-      for (const other of terms) {
+      for (const other of conn) {
         if (other !== ref) pushTap(busId, other);
       }
     }
   }
 
-  // Index raw connection groups by pin. Used both for chain-extent estimates
-  // (stage 3 / 4 — must be available before bus placement) and for the
-  // node-based stage-6 BFS.
-  const rawGroups: TerminalRef[][] = [];
-  for (const conn of connections) {
-    const terms = Array.isArray(conn) ? conn : conn.terminals;
-    if (terms.length < 2) continue;
-    rawGroups.push(terms);
-  }
-  for (const bus of buses) {
-    const tapKey = `${bus.id}.tap` as TerminalRef;
-    const taps = effectiveTaps.get(bus.id);
-    if (!taps || taps.length === 0) continue;
-    for (const t of taps) rawGroups.push([tapKey, t]);
-  }
+  // Index raw connection groups by pin. Used for chain-extent estimates and
+  // the node-based stage-6 BFS.
+  const rawGroups: TerminalRef[][] = connections.filter((c) => c.length >= 2);
   const pinToGroups = new Map<TerminalRef, TerminalRef[][]>();
   for (const group of rawGroups) {
     for (const pin of group) {
@@ -246,11 +226,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   // if at least two distinct buses are reachable. This recovers the linker
   // semantics without flooding every chained switch into the linker set —
   // we only consider category 'transformer'.
-  const allGroups: TerminalRef[][] = [];
-  for (const c of connections) {
-    const ts = Array.isArray(c) ? c : c.terminals;
-    if (ts.length >= 2) allGroups.push(ts);
-  }
+  const allGroups: TerminalRef[][] = connections.filter((c) => c.length >= 2);
   for (const bus of buses) {
     const refs = effectiveTaps.get(bus.id);
     if (!refs || refs.length === 0) continue;

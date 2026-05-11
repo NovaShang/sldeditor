@@ -266,7 +266,6 @@ function NodePanel({ nodeId }: { nodeId: string }) {
           {t('props.node')}
         </div>
         <div className="font-mono text-[12px]">
-          {node.name ? `${node.name} · ` : ''}
           {node.id}
         </div>
         <div className="text-[11px] text-muted-foreground">

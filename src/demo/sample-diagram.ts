@@ -19,7 +19,6 @@ export const SAMPLE_DIAGRAM: DiagramFile = {
       kind: 'busbar',
       name: '10kV-I',
       params: { Un: 10 },
-      tap: ['QS_in.t2', 'QF1.t1', 'QF2.t1'],
     },
 
     { id: 'L_in', kind: 'grid-source', name: '进线' },
@@ -35,6 +34,9 @@ export const SAMPLE_DIAGRAM: DiagramFile = {
   ],
   connections: [
     ['L_in.t_bottom', 'QS_in.t1'],
+    ['B1.tap', 'QS_in.t2'],
+    ['B1.tap', 'QF1.t1'],
+    ['B1.tap', 'QF2.t1'],
     ['QF1.t2', 'QS1.t1'],
     ['QS1.t2', 'L1.t_top'],
     ['QF2.t2', 'QS2.t1'],
