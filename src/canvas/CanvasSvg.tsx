@@ -205,8 +205,12 @@ export function CanvasSvg() {
 
   // Long-press → context menu (touch-only equivalent of right-click). On
   // touch devices there is no right button, so we open the same menu after
-  // the user holds a single finger still for ~500ms. Significant movement
-  // or a second touch (pinch) cancels the timer.
+  // the user holds a single finger still for ~700ms. The movement threshold
+  // matches PanTool's tap threshold so a slow pan can't accidentally hover
+  // long enough to fire the menu mid-drag. A second touch (pinch) cancels
+  // via the synthetic pointercancel from useViewport.
+  const LONG_PRESS_MS = 700;
+  const LONG_PRESS_MOVE_PX = 4;
   const longPressTimer = useRef<number | undefined>(undefined);
   const longPressData = useRef<{
     pointerId: number;
@@ -223,8 +227,6 @@ export function CanvasSvg() {
 
   const onPointerDownTouch = (e: React.PointerEvent) => {
     if (e.pointerType !== 'touch') return;
-    // Always reset any prior long-press tracking; a second finger arriving
-    // (pinch) will cancel via the synthetic pointercancel from useViewport.
     cancelLongPress();
     longPressData.current = {
       pointerId: e.pointerId,
@@ -242,7 +244,7 @@ export function CanvasSvg() {
       // doesn't double as a drag commit when the user releases.
       dispatchSyntheticPointerCancel(host, data.pointerId);
       openContextMenuAt(data.x, data.y, data.target);
-    }, 500);
+    }, LONG_PRESS_MS);
   };
 
   const onPointerMoveTouch = (e: React.PointerEvent) => {
@@ -250,7 +252,7 @@ export function CanvasSvg() {
     if (!data || e.pointerId !== data.pointerId) return;
     const dx = e.clientX - data.x;
     const dy = e.clientY - data.y;
-    if (Math.hypot(dx, dy) > 10) cancelLongPress();
+    if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_PX) cancelLongPress();
   };
 
   const onPointerEndTouch = (e: React.PointerEvent) => {
