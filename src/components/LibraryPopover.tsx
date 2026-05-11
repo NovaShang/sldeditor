@@ -5,7 +5,7 @@
  * the place state and the popover stay in lockstep.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import {
   CATEGORY_ORDER,
@@ -94,7 +94,7 @@ export function LibraryPopover() {
   // place mode is active *and* no element is armed yet. Picking an entry
   // arms `placeKind` and hides the picker so the canvas is clear for the
   // placement gesture; PlaceTool clears `placeKind` after each drop on
-  // touch (`disarmPlaceIfTouch`), so the picker reappears for the next pick.
+  // touch (`disarmPlaceOnPhone`), so the picker reappears for the next pick.
   if (!open) return null;
   if (sheet && placeKind != null) return null;
   // Phone-class layout: fill the canvas area between the top bar and the
@@ -137,13 +137,13 @@ export function LibraryPopover() {
             <X className="size-3.5" />
           </button>
         </div>
-        <LibraryBody />
+        <LibraryBody sheet={sheet} />
       </aside>
     </div>
   );
 }
 
-function LibraryBody() {
+function LibraryBody({ sheet }: { sheet: boolean }) {
   const t = useT();
   const libT = useLibT();
   const [query, setQuery] = useState('');
@@ -225,7 +225,7 @@ function LibraryBody() {
                 </summary>
                 <ul className="mt-0.5 space-y-px">
                   {entries.map((entry) => (
-                    <ElementRow key={entry.id} entry={entry} />
+                    <ElementRow key={entry.id} entry={entry} sheet={sheet} />
                   ))}
                 </ul>
               </details>
@@ -270,7 +270,13 @@ function SearchBox({
   );
 }
 
-function ElementRow({ entry }: { entry: LibraryEntry }) {
+function ElementRow({
+  entry,
+  sheet,
+}: {
+  entry: LibraryEntry;
+  sheet: boolean;
+}) {
   const t = useT();
   const libT = useLibT();
   const name = libT(`${entry.id}.name`, entry.name);
@@ -279,6 +285,20 @@ function ElementRow({ entry }: { entry: LibraryEntry }) {
   const armed = useEditorStore(
     (s) => s.activeTool === 'place' && s.placeKind === entry.id,
   );
+  // On phone the library re-opens between every drop, so highlight the most
+  // recently placed kind and scroll it into view — keeps "drop another of
+  // the same" cheap without forcing the user to re-find it in the list.
+  const recent = useEditorStore(
+    (s) =>
+      sheet &&
+      s.activeTool === 'place' &&
+      s.placeKind == null &&
+      s.lastPlaceKind === entry.id,
+  );
+  const ref = useRef<HTMLLIElement | null>(null);
+  useEffect(() => {
+    if (recent) ref.current?.scrollIntoView({ block: 'nearest' });
+  }, [recent]);
 
   const onDragStart = (e: React.DragEvent<HTMLLIElement>) => {
     e.dataTransfer.effectAllowed = 'copy';
@@ -309,8 +329,13 @@ function ElementRow({ entry }: { entry: LibraryEntry }) {
 
   return (
     <li
+      ref={ref}
       className={`group flex cursor-grab items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-accent active:cursor-grabbing ${
-        armed ? 'bg-accent ring-1 ring-[var(--selection)]/60' : ''
+        armed
+          ? 'bg-accent ring-1 ring-[var(--selection)]/60'
+          : recent
+            ? 'ring-1 ring-[var(--selection)]/30'
+            : ''
       }`}
       draggable
       onDragStart={onDragStart}

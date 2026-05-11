@@ -21,7 +21,7 @@
 import { useEditorStore } from '../../store';
 import { dropElement, dropElementFromTerminal } from '../drop-on-bus';
 import { hitTerminal } from '../hit-test';
-import { disarmPlaceIfTouch } from '../touch';
+import { disarmPlaceOnPhone } from '../touch';
 import type { Tool } from './types';
 
 const GRID = 10;
@@ -34,7 +34,7 @@ const GRID = 10;
 // canvas first.
 let disarmOnUp = false;
 function scheduleDisarm(): void {
-  setTimeout(() => disarmPlaceIfTouch(), 0);
+  setTimeout(() => disarmPlaceOnPhone(), 0);
 }
 
 export const PlaceTool: Tool = {

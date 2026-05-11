@@ -1,6 +1,8 @@
 import { Fragment, useState } from 'react';
 import {
   Cable,
+  Clipboard,
+  Copy,
   Hand,
   LayoutGrid,
   ListTree,
@@ -8,6 +10,7 @@ import {
   MoreHorizontal,
   MousePointer2,
   Redo2,
+  Scissors,
   Shapes,
   Type,
   Undo2,
@@ -454,6 +457,8 @@ function OverflowMenuButton({ stacked }: { stacked?: boolean }) {
   const future = useEditorStore((s) => s.future.length);
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
+  const hasSelection = useEditorStore((s) => s.selection.length > 0);
+  const hasClipboard = useEditorStore((s) => s.clipboard != null);
   const a = useLayoutActions();
   const run = (action: () => void) => () => {
     setOpen(false);
@@ -488,6 +493,28 @@ function OverflowMenuButton({ stacked }: { stacked?: boolean }) {
         disabled={future === 0}
       >
         {t('tool.redo')}
+      </PopoverItem>
+      <div aria-hidden className="my-1 h-px bg-border" />
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().cutSelection())}
+        icon={<Scissors />}
+        disabled={!hasSelection}
+      >
+        {t('menu.cut')}
+      </PopoverItem>
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().copySelection())}
+        icon={<Copy />}
+        disabled={!hasSelection}
+      >
+        {t('menu.copy')}
+      </PopoverItem>
+      <PopoverItem
+        onClick={run(() => useEditorStore.getState().pasteClipboard())}
+        icon={<Clipboard />}
+        disabled={!hasClipboard}
+      >
+        {t('menu.paste')}
       </PopoverItem>
       <div aria-hidden className="my-1 h-px bg-border" />
       <PopoverItem
