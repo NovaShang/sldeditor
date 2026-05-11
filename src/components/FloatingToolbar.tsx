@@ -3,6 +3,7 @@ import {
   Cable,
   Hand,
   LayoutGrid,
+  ListTree,
   Minus,
   MoreHorizontal,
   MousePointer2,
@@ -15,9 +16,11 @@ import {
 import { Tooltip } from './ui/tooltip';
 import { UpwardPopover } from './ui/upward-popover';
 import { atLeast, useEditorTier } from '../hooks/editor-tier';
+import { usePanels } from '../hooks/use-panels';
 import { useT, type LocaleKey } from '../i18n';
 import { cn } from '../lib/utils';
 import { useEditorStore, type ToolId } from '../store';
+import { ViewMenuButton } from './ViewToolbar';
 
 interface ToolDef {
   id: string;
@@ -166,10 +169,17 @@ export function FloatingToolbar() {
   // left still has room for its label until `compact`.
   const forceIconOnly = atLeast(tier, 'tight');
   const showHint = !atLeast(tier, 'dense');
-  // Collapse [Undo/Redo/Layout] into a single overflow button from `dense`
-  // (≤520px) — at iPhone-portrait widths the full row would otherwise
-  // overlap the bottom-left LeftPanel tab and the lifted ViewToolbar.
-  const groupCollapsed = atLeast(tier, 'dense');
+  // Phone-class layout (`dense` and below): the outline tab and the view
+  // toolbar disappear and their entry points are embedded directly into this
+  // pill as a tab-bar-style row, so the whole bottom chrome stays on a single
+  // visual row. The [Undo/Redo/Layout] group also collapses into one overflow
+  // button to keep the bar narrow. Pan and text are dropped from the main bar
+  // — pinch + two-finger pan replace the pan tool on touch, and text
+  // annotation is rare enough on a phone to hide it.
+  const unifiedBar = atLeast(tier, 'dense');
+  const visibleTools = unifiedBar
+    ? TOOLS.filter((def) => def.id !== 'pan' && def.id !== 'text')
+    : TOOLS;
 
   const isToolActive = (def: ToolDef): boolean => active === def.switchTo;
 
@@ -179,8 +189,14 @@ export function FloatingToolbar() {
       style={{ bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px))' }}
     >
       {showHint && <ToolHint />}
-      <div className="ole-glass flex flex-row items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
-        {TOOLS.map((def) => {
+      <div
+        className={cn(
+          'ole-glass flex flex-row items-center rounded-2xl border border-border shadow-sm',
+          unifiedBar ? 'gap-0.5 p-1' : 'gap-0.5 p-1.5',
+        )}
+      >
+        {unifiedBar && <OutlineToggleButton stacked />}
+        {visibleTools.map((def) => {
           const Icon = def.icon;
           const isActive = isToolActive(def);
           const tip =
@@ -194,7 +210,8 @@ export function FloatingToolbar() {
                 label={t(def.labelKey)}
                 hotkey={def.hotkey}
                 active={isActive}
-                iconOnly={def.iconOnly || forceIconOnly}
+                iconOnly={!unifiedBar && (def.iconOnly || forceIconOnly)}
+                stacked={unifiedBar}
                 description={tip}
                 onClick={() => {
                   setTool(def.switchTo, {
@@ -203,15 +220,17 @@ export function FloatingToolbar() {
                   });
                 }}
               />
-              {def.groupBreakAfter && (
+              {def.groupBreakAfter && !unifiedBar && (
                 <div aria-hidden className="mx-1 h-5 w-px bg-border" />
               )}
             </Fragment>
           );
         })}
-        <div aria-hidden className="mx-1 h-5 w-px bg-border" />
-        {groupCollapsed ? (
-          <OverflowMenuButton />
+        {!unifiedBar && (
+          <div aria-hidden className="mx-1 h-5 w-px bg-border" />
+        )}
+        {unifiedBar ? (
+          <OverflowMenuButton stacked />
         ) : (
           <>
             <ToolbarButton
@@ -236,14 +255,41 @@ export function FloatingToolbar() {
             <LayoutMenuButton iconOnly={forceIconOnly} />
           </>
         )}
+        {unifiedBar && <ViewMenuButton stacked />}
       </div>
     </div>
   );
 }
 
 /**
+ * Embedded outline-toggle entry point used by the unified bottom bar at
+ * `dense` and below. Mirrors the floating LeftPanel tab's role (toggles the
+ * outline panel), but renders inline inside the FloatingToolbar pill so the
+ * bottom chrome stays on one row at phone widths.
+ */
+function OutlineToggleButton({ stacked }: { stacked?: boolean }) {
+  const t = useT();
+  const open = usePanels((s) => s.outlineOpen);
+  const toggle = usePanels((s) => s.toggleOutline);
+  return (
+    <ToolbarButton
+      icon={ListTree}
+      label={t('outline.title')}
+      active={open}
+      iconOnly
+      stacked={stacked}
+      onClick={toggle}
+    />
+  );
+}
+
+/**
  * Toolbar button: icon + label, with a small hotkey hint pinned to the
  * top-left corner. Active = filled (primary). Disabled = dimmed.
+ *
+ * `stacked` is the phone-class variant — icon on top, label underneath,
+ * no hotkey badge (touch users don't have a keyboard). Used by the unified
+ * bottom bar at `dense` and below to look like an iOS/Material tab bar.
  */
 function ToolbarButton({
   icon: Icon,
@@ -252,6 +298,7 @@ function ToolbarButton({
   active,
   disabled,
   iconOnly,
+  stacked,
   onClick,
   description,
 }: {
@@ -261,6 +308,7 @@ function ToolbarButton({
   active?: boolean;
   disabled?: boolean;
   iconOnly?: boolean;
+  stacked?: boolean;
   onClick: () => void;
   description?: React.ReactNode;
 }) {
@@ -284,8 +332,11 @@ function ToolbarButton({
         aria-label={label}
         aria-pressed={active}
         className={cn(
-          'flex h-9 items-center gap-1.5 rounded-md text-xs font-medium transition-colors',
-          iconOnly ? 'w-9 justify-center' : 'px-2.5',
+          'rounded-md font-medium transition-colors',
+          stacked
+            ? 'flex h-12 w-12 flex-col items-center justify-center gap-0.5 text-[10px] leading-tight'
+            : 'flex h-9 items-center gap-1.5 text-xs',
+          !stacked && (iconOnly ? 'w-9 justify-center' : 'px-2.5'),
           active
             ? 'bg-primary text-primary-foreground'
             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
@@ -294,7 +345,7 @@ function ToolbarButton({
       >
         <span className="relative inline-flex shrink-0">
           <Icon className="size-4" />
-          {hotkey && (
+          {hotkey && !stacked && (
             <span
               aria-hidden
               className={cn(
@@ -308,7 +359,11 @@ function ToolbarButton({
             </span>
           )}
         </span>
-        {!iconOnly && <span>{label}</span>}
+        {stacked ? (
+          <span className="max-w-full truncate">{label}</span>
+        ) : (
+          !iconOnly && <span>{label}</span>
+        )}
       </button>
     </Tooltip>
   );
@@ -392,7 +447,7 @@ function LayoutMenuButton({ iconOnly }: { iconOnly?: boolean }) {
  * (not nested inside the popover via a sub-menu) so users only deal with one
  * level of overlay on a tiny screen.
  */
-function OverflowMenuButton() {
+function OverflowMenuButton({ stacked }: { stacked?: boolean }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const past = useEditorStore((s) => s.past.length);
@@ -415,6 +470,7 @@ function OverflowMenuButton() {
           description={t('tool.moreHint')}
           active={open}
           iconOnly
+          stacked={stacked}
           onClick={() => setOpen((v) => !v)}
         />
       }

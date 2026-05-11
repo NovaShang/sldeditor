@@ -11,6 +11,7 @@ import {
   CATEGORY_ORDER,
   libraryByCategory,
 } from '../element-library';
+import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { usePanels } from '../hooks/use-panels';
 import { useT, type LocaleKey } from '../i18n';
 import { useLibT } from '../i18n/library';
@@ -73,6 +74,8 @@ export function LibraryPopover() {
   const open = useEditorStore((s) => s.activeTool === 'place');
   const setTool = useEditorStore((s) => s.setActiveTool);
   const outlineOpen = usePanels((s) => s.outlineOpen);
+  const tier = useEditorTier();
+  const sheet = atLeast(tier, 'dense');
   // Insets so the popover never reaches the floating chrome:
   //  - top: leave room for the TopBar     (12px gutter + 48px toolbar + 8px margin)
   //  - bottom: leave room for the bottom-toolbars / outline button
@@ -83,17 +86,33 @@ export function LibraryPopover() {
   const BOTTOM_INSET = outlineOpen
     ? 'calc(40vh + 20px)'
     : '68px';
-  const maxHeight = `calc(100vh - ${TOP_INSET}px - ${BOTTOM_INSET})`;
+  const maxHeight = sheet
+    ? 'min(50vh, calc(100vh - 9rem))'
+    : `calc(100vh - ${TOP_INSET}px - ${BOTTOM_INSET})`;
   if (!open) return null;
+  // Phone-class layout: anchor as a full-width bottom sheet just above the
+  // unified bottom bar so the canvas above stays visible. Wider viewports
+  // keep the classic 288px left-anchored dock.
+  const wrapperStyle: React.CSSProperties = sheet
+    ? {
+        left: 'calc(0.75rem + var(--ole-left-inset, 0px))',
+        right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
+        bottom: 'calc(4rem + var(--ole-bottom-inset, 0px) + 0.75rem)',
+      }
+    : { top: TOP_INSET };
   return (
     <div
-      className="absolute left-3 z-20"
-      style={{ top: TOP_INSET }}
+      className={sheet ? 'absolute z-20' : 'absolute left-3 z-20'}
+      style={wrapperStyle}
       role="dialog"
       aria-label={t('library.title')}
     >
       <aside
-        className="ole-glass flex w-72 flex-col overflow-hidden rounded-2xl border border-border shadow-md"
+        className={
+          sheet
+            ? 'ole-glass flex w-full flex-col overflow-hidden rounded-2xl border border-border shadow-md'
+            : 'ole-glass flex w-72 flex-col overflow-hidden rounded-2xl border border-border shadow-md'
+        }
         style={{ maxHeight }}
       >
         <div className="flex items-center gap-1.5 border-b border-border/40 px-3 py-2">

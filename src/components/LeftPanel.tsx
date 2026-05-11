@@ -11,19 +11,33 @@ export function LeftPanel() {
   const open = usePanels((s) => s.outlineOpen);
   const setOpen = usePanels((s) => s.setOutlineOpen);
   const tier = useEditorTier();
-  // At dense+ the centered FloatingToolbar is wide enough to overlap the
-  // bottom-left LeftPanel tab. Lift the tab above the FloatingToolbar to
-  // keep both reachable on iPhone-class viewports.
-  const lift = atLeast(tier, 'dense');
-  const bottom = lift
-    ? 'calc(4rem + var(--ole-bottom-inset, 0px))'
-    : 'calc(0.75rem + var(--ole-bottom-inset, 0px))';
+  const dense = atLeast(tier, 'dense');
+
+  // At dense+ the collapsed tab is replaced by an outline button embedded
+  // directly into the FloatingToolbar bottom bar. The outline panel itself
+  // still lives here but switches to a full-width bottom sheet anchored just
+  // above that bar so it doesn't compete for horizontal room with the canvas.
+  if (dense) {
+    if (!open) return null;
+    return (
+      <div
+        className="absolute z-10"
+        style={{
+          left: 'calc(0.75rem + var(--ole-left-inset, 0px))',
+          right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
+          bottom: 'calc(4rem + var(--ole-bottom-inset, 0px) + 0.75rem)',
+        }}
+      >
+        <OutlinePanel onClose={() => setOpen(false)} sheet />
+      </div>
+    );
+  }
 
   return (
     <div
       className="absolute z-10 flex flex-col items-start"
       style={{
-        bottom,
+        bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px))',
         left: 'calc(0.75rem + var(--ole-left-inset, 0px))',
         maxHeight: 'calc(100% - 1.5rem)',
       }}
@@ -58,7 +72,13 @@ function CollapsedTab({ onClick }: { onClick: () => void }) {
   );
 }
 
-function OutlinePanel({ onClose }: { onClose: () => void }) {
+function OutlinePanel({
+  onClose,
+  sheet,
+}: {
+  onClose: () => void;
+  sheet?: boolean;
+}) {
   const t = useT();
   const elements = useEditorStore((s) => s.diagram.elements);
   const libraryOpen = useEditorStore((s) => s.activeTool === 'place');
@@ -66,15 +86,19 @@ function OutlinePanel({ onClose }: { onClose: () => void }) {
   const compact = atLeast(tier, 'compact');
   const dense = atLeast(tier, 'dense');
   // Use `height` (not `max-height`) so the panel always reserves space,
-  // even when content is short. Default tall; library-open is shorter.
-  const height = libraryOpen
-    ? 'min(40vh, calc(100vh - 200px))'
-    : 'min(70vh, calc(100vh - 100px))';
+  // even when content is short. In sheet mode it sizes by the parent's
+  // left/right anchor — we just cap the height so the canvas above stays
+  // visible.
+  const height = sheet
+    ? 'min(50vh, calc(100vh - 9rem))'
+    : libraryOpen
+      ? 'min(40vh, calc(100vh - 200px))'
+      : 'min(70vh, calc(100vh - 100px))';
   return (
     <aside
       className={cn(
         'ole-glass flex flex-col overflow-hidden rounded-2xl border border-border shadow-sm',
-        compact ? 'w-52' : 'w-64',
+        sheet ? 'w-full' : compact ? 'w-52' : 'w-64',
       )}
       style={{ height }}
     >

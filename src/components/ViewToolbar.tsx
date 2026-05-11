@@ -16,7 +16,7 @@ import {
   getScale,
   subscribeScale,
 } from '../canvas';
-import { atLeast, useEditorTier } from '../hooks/editor-tier';
+import { atLeast, useEditorTier, type Tier } from '../hooks/editor-tier';
 import { useT } from '../i18n';
 import { cn } from '../lib/utils';
 import { useEditorStore } from '../store';
@@ -108,30 +108,14 @@ function cycleLabelMode(): void {
   });
 }
 
-export function ViewToolbar() {
-  const t = useT();
-  const [scale, setScale] = useState(getScale);
+/**
+ * Grid state + side effects. Lives wherever the view menu is mounted (the
+ * standalone ViewToolbar at wider widths, or the embedded ViewMenuButton at
+ * dense+). Owns the keyboard `G` shortcut so it works regardless of whether
+ * the popover happens to be open.
+ */
+function useGridState(): [boolean, React.Dispatch<React.SetStateAction<boolean>>] {
   const [grid, setGrid] = useState<boolean>(() => readGrid());
-  const labelMode: LabelMode = useEditorStore(
-    (s) => s.diagram.meta?.labelMode ?? 'all',
-  );
-  const tier = useEditorTier();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const dense = atLeast(tier, 'dense');
-  // Hide the zoom-% pill from `tight` (≥720 < 900) onward — that's where the
-  // centered FloatingToolbar starts colliding with this right-anchored bar.
-  const hidePercentPill = atLeast(tier, 'tight');
-  // At `dense` and below the bottom row (LeftPanel + centered FloatingToolbar
-  // + ViewToolbar) no longer fits horizontally — the FloatingToolbar runs
-  // ~370px wide even with icon-only labels, and a phone in portrait is only
-  // 390–430px after side panels and safe-area insets. Lift the ViewToolbar
-  // above the FloatingToolbar so neither has to compete for horizontal room.
-  const stackAbove = atLeast(tier, 'dense');
-  const liftBottom = stackAbove
-    ? 'calc(4rem + var(--ole-bottom-inset, 0px))'
-    : 'calc(0.75rem + var(--ole-bottom-inset, 0px))';
-
-  useEffect(() => subscribeScale(setScale), []);
 
   useEffect(() => {
     const root = getCanvasRoot();
@@ -139,7 +123,6 @@ export function ViewToolbar() {
     writeGrid(grid);
   }, [grid]);
 
-  // Keyboard: G toggles grid (ignoring when typing into inputs).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -160,7 +143,12 @@ export function ViewToolbar() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const zoomOutBtn = (
+  return [grid, setGrid];
+}
+
+function ZoomOutBtn() {
+  const t = useT();
+  return (
     <Tooltip
       content={
         <div className="space-y-0.5">
@@ -179,8 +167,36 @@ export function ViewToolbar() {
       </Button>
     </Tooltip>
   );
+}
 
-  const zoomDisplayBtn = (
+function ZoomInBtn() {
+  const t = useT();
+  return (
+    <Tooltip
+      content={
+        <div className="space-y-0.5">
+          <div className="font-medium">{t('view.zoomIn')}</div>
+          <div className="text-muted-foreground">{t('view.zoomInHint')}</div>
+        </div>
+      }
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={zoomIn}
+        aria-label={t('view.zoomIn')}
+      >
+        <Plus />
+      </Button>
+    </Tooltip>
+  );
+}
+
+function ZoomDisplayBtn() {
+  const t = useT();
+  const [scale, setScale] = useState(getScale);
+  useEffect(() => subscribeScale(setScale), []);
+  return (
     <Tooltip
       content={
         <div className="space-y-0.5">
@@ -201,28 +217,11 @@ export function ViewToolbar() {
       </button>
     </Tooltip>
   );
+}
 
-  const zoomInBtn = (
-    <Tooltip
-      content={
-        <div className="space-y-0.5">
-          <div className="font-medium">{t('view.zoomIn')}</div>
-          <div className="text-muted-foreground">{t('view.zoomInHint')}</div>
-        </div>
-      }
-    >
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={zoomIn}
-        aria-label={t('view.zoomIn')}
-      >
-        <Plus />
-      </Button>
-    </Tooltip>
-  );
-
-  const fitBtn = (
+function FitBtn() {
+  const t = useT();
+  return (
     <Tooltip
       content={
         <div className="space-y-0.5">
@@ -241,8 +240,17 @@ export function ViewToolbar() {
       </Button>
     </Tooltip>
   );
+}
 
-  const gridBtn = (
+function GridBtn({
+  grid,
+  setGrid,
+}: {
+  grid: boolean;
+  setGrid: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const t = useT();
+  return (
     <Tooltip
       content={
         <div className="space-y-0.5">
@@ -272,8 +280,14 @@ export function ViewToolbar() {
       </Button>
     </Tooltip>
   );
+}
 
-  const labelBtn = (
+function LabelBtn() {
+  const t = useT();
+  const labelMode: LabelMode = useEditorStore(
+    (s) => s.diagram.meta?.labelMode ?? 'all',
+  );
+  return (
     <Tooltip
       content={
         <div className="space-y-0.5">
@@ -300,78 +314,114 @@ export function ViewToolbar() {
       </Button>
     </Tooltip>
   );
+}
 
-  if (dense) {
-    return (
-      <div
-      className="absolute z-20"
-      style={{
-        bottom: liftBottom,
-        right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
-      }}
+/**
+ * View menu collapsed into a single popover trigger. Designed to be embedded
+ * inline inside another bar (no outer positioning). Used by FloatingToolbar
+ * at `dense` and below, where it stands in for the standalone ViewToolbar.
+ *
+ * `stacked` switches the trigger to the unified-bar's tab-bar look (icon on
+ * top, "视图" label below) so it matches the other phone-class buttons.
+ */
+export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
+  const t = useT();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [grid, setGrid] = useGridState();
+  const tipContent = (
+    <div className="space-y-0.5">
+      <div className="font-medium">{t('view.menu')}</div>
+      <div className="text-muted-foreground">{t('view.menuHint')}</div>
+    </div>
+  );
+  const triggerBtn = stacked ? (
+    <Tooltip content={tipContent}>
+      <button
+        type="button"
+        onClick={() => setMenuOpen((v) => !v)}
+        aria-label={t('view.menu')}
+        aria-pressed={menuOpen}
+        className={cn(
+          'flex h-12 w-12 flex-col items-center justify-center gap-0.5 rounded-md text-[10px] font-medium leading-tight transition-colors',
+          menuOpen
+            ? 'bg-primary text-primary-foreground'
+            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+        )}
+      >
+        <MoreHorizontal className="size-4" />
+        <span className="max-w-full truncate">{t('view.menu')}</span>
+      </button>
+    </Tooltip>
+  ) : (
+    <Tooltip content={tipContent}>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setMenuOpen((v) => !v)}
+        aria-label={t('view.menu')}
+        aria-pressed={menuOpen}
+      >
+        <MoreHorizontal />
+      </Button>
+    </Tooltip>
+  );
+  return (
+    <UpwardPopover
+      open={menuOpen}
+      onOpenChange={setMenuOpen}
+      trigger={triggerBtn}
     >
-        <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
-          <UpwardPopover
-            open={menuOpen}
-            onOpenChange={setMenuOpen}
-            trigger={
-              <Tooltip
-                content={
-                  <div className="space-y-0.5">
-                    <div className="font-medium">{t('view.menu')}</div>
-                    <div className="text-muted-foreground">
-                      {t('view.menuHint')}
-                    </div>
-                  </div>
-                }
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setMenuOpen((v) => !v)}
-                  aria-label={t('view.menu')}
-                  aria-pressed={menuOpen}
-                >
-                  <MoreHorizontal />
-                </Button>
-              </Tooltip>
-            }
-          >
-            <div className="flex flex-col gap-0.5">
-              {zoomDisplayBtn}
-              <div className="flex items-center gap-0.5">
-                {zoomOutBtn}
-                {zoomInBtn}
-              </div>
-              <div aria-hidden className="my-1 h-px bg-border" />
-              <div className="flex items-center gap-0.5">
-                {fitBtn}
-                {gridBtn}
-                {labelBtn}
-              </div>
-            </div>
-          </UpwardPopover>
+      <div className="flex flex-col gap-0.5">
+        <ZoomDisplayBtn />
+        <div className="flex items-center gap-0.5">
+          <ZoomOutBtn />
+          <ZoomInBtn />
+        </div>
+        <div aria-hidden className="my-1 h-px bg-border" />
+        <div className="flex items-center gap-0.5">
+          <FitBtn />
+          <GridBtn grid={grid} setGrid={setGrid} />
+          <LabelBtn />
         </div>
       </div>
-    );
-  }
+    </UpwardPopover>
+  );
+}
+
+/**
+ * Bottom-right view toolbar. Above `dense` (>520px) it renders an expanded
+ * row with explicit zoom controls. At `dense` and below it returns null —
+ * its content is rendered as an embedded ViewMenuButton inside the unified
+ * FloatingToolbar bottom bar so the chrome stays on a single line.
+ */
+export function ViewToolbar() {
+  const tier = useEditorTier();
+  if (atLeast(tier, 'dense')) return null;
+  return <ViewToolbarExpanded tier={tier} />;
+}
+
+function ViewToolbarExpanded({ tier }: { tier: Tier }) {
+  // Hide the zoom-% pill from `tight` (≥720 < 900) onward — that's where the
+  // centered FloatingToolbar starts colliding with this right-anchored bar.
+  const hidePercentPill = atLeast(tier, 'tight');
+  const [grid, setGrid] = useGridState();
 
   return (
     <div
       className="absolute z-20"
       style={{
         bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px))',
-        right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
+        right: 'calc(0.75rem + env(safe-area-inset-right, 0px))',
       }}
     >
       <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">
-        {zoomOutBtn}
-        {!hidePercentPill && zoomDisplayBtn}
-        {zoomInBtn}
+        <ZoomOutBtn />
+        {!hidePercentPill && <ZoomDisplayBtn />}
+        <ZoomInBtn />
         <div aria-hidden className="mx-1 h-4 w-px bg-border" />
-        {fitBtn}
-        {gridBtn}
-        {labelBtn}
+        <FitBtn />
+        <GridBtn grid={grid} setGrid={setGrid} />
+        <LabelBtn />
       </div>
     </div>
   );
