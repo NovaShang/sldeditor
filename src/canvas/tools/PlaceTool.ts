@@ -21,10 +21,21 @@
 import { useEditorStore } from '../../store';
 import { dropElement, dropElementFromTerminal } from '../drop-on-bus';
 import { hitTerminal } from '../hit-test';
-import { exitToPanIfTouch } from '../touch';
+import { disarmPlaceIfTouch } from '../touch';
 import type { Tool } from './types';
 
 const GRID = 10;
+
+// On touch, the click-to-drop path commits in onPointerDown. Disarming
+// `placeKind` there reopens the LibraryPopover mid-gesture, and the
+// synthesized click event for the same tap then hit-tests against the
+// freshly-rendered library item — arming a different kind. Defer the
+// disarm to a macrotask after pointerup so the click dispatches to the
+// canvas first.
+let disarmOnUp = false;
+function scheduleDisarm(): void {
+  setTimeout(() => disarmPlaceIfTouch(), 0);
+}
 
 export const PlaceTool: Tool = {
   id: 'place',
@@ -38,6 +49,7 @@ export const PlaceTool: Tool = {
     const store = useEditorStore.getState();
     store.setPlaceFromTerminal(null);
     store.setCursorSvg(null);
+    disarmOnUp = false;
   },
 
   onPointerDown(e, ctx) {
@@ -66,7 +78,7 @@ export const PlaceTool: Tool = {
 
     const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
     dropElement(placeKind, pt);
-    exitToPanIfTouch();
+    disarmOnUp = true;
   },
 
   onPointerMove(e, ctx) {
@@ -77,13 +89,19 @@ export const PlaceTool: Tool = {
   onPointerUp(e, ctx) {
     const store = useEditorStore.getState();
     const from = store.placeFromTerminal;
-    if (!from) return;
-    store.setPlaceFromTerminal(null);
-    const { placeKind } = store;
-    if (!placeKind) return;
-    const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
-    dropElementFromTerminal(placeKind, from, pt);
-    exitToPanIfTouch();
+    if (from) {
+      store.setPlaceFromTerminal(null);
+      const { placeKind } = store;
+      if (!placeKind) return;
+      const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
+      dropElementFromTerminal(placeKind, from, pt);
+      scheduleDisarm();
+      return;
+    }
+    if (disarmOnUp) {
+      disarmOnUp = false;
+      scheduleDisarm();
+    }
   },
 
   onPointerLeave() {
@@ -99,6 +117,7 @@ export const PlaceTool: Tool = {
     const store = useEditorStore.getState();
     store.setPlaceFromTerminal(null);
     store.setCursorSvg(null);
+    disarmOnUp = false;
   },
 };
 

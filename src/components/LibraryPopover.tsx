@@ -72,6 +72,7 @@ function writePaletteCollapsed(s: Set<string>) {
 export function LibraryPopover() {
   const t = useT();
   const open = useEditorStore((s) => s.activeTool === 'place');
+  const placeKind = useEditorStore((s) => s.placeKind);
   const setTool = useEditorStore((s) => s.setActiveTool);
   const outlineOpen = usePanels((s) => s.outlineOpen);
   const tier = useEditorTier();
@@ -87,14 +88,21 @@ export function LibraryPopover() {
     ? 'calc(40vh + 20px)'
     : '68px';
   const maxHeight = sheet
-    ? 'min(50vh, calc(100vh - 9rem))'
+    ? undefined
     : `calc(100vh - ${TOP_INSET}px - ${BOTTOM_INSET})`;
+  // Phone-class flow: the library is a full-canvas picker that pops up while
+  // place mode is active *and* no element is armed yet. Picking an entry
+  // arms `placeKind` and hides the picker so the canvas is clear for the
+  // placement gesture; PlaceTool clears `placeKind` after each drop on
+  // touch (`disarmPlaceIfTouch`), so the picker reappears for the next pick.
   if (!open) return null;
-  // Phone-class layout: anchor as a full-width bottom sheet just above the
-  // unified bottom bar so the canvas above stays visible. Wider viewports
-  // keep the classic 288px left-anchored dock.
+  if (sheet && placeKind != null) return null;
+  // Phone-class layout: fill the canvas area between the top bar and the
+  // unified bottom bar. Wider viewports keep the classic 288px left-anchored
+  // dock.
   const wrapperStyle: React.CSSProperties = sheet
     ? {
+        top: `calc(${TOP_INSET}px + var(--ole-top-inset, 0px))`,
         left: 'calc(0.75rem + var(--ole-left-inset, 0px))',
         right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
         bottom: 'calc(4rem + var(--ole-bottom-inset, 0px) + 0.75rem)',
@@ -110,10 +118,10 @@ export function LibraryPopover() {
       <aside
         className={
           sheet
-            ? 'ole-glass flex w-full flex-col overflow-hidden rounded-2xl border border-border shadow-md'
+            ? 'ole-glass flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border shadow-md'
             : 'ole-glass flex w-72 flex-col overflow-hidden rounded-2xl border border-border shadow-md'
         }
-        style={{ maxHeight }}
+        style={maxHeight ? { maxHeight } : undefined}
       >
         <div className="flex items-center gap-1.5 border-b border-border/40 px-3 py-2">
           <span className="flex-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -121,7 +129,7 @@ export function LibraryPopover() {
           </span>
           <button
             type="button"
-            onClick={() => setTool('select')}
+            onClick={() => setTool(sheet ? 'pan' : 'select')}
             className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             aria-label={t('common.close')}
             title={t('common.close')}

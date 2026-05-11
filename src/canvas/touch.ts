@@ -21,3 +21,14 @@ export function exitToPanIfTouch(): void {
   if (!isCoarsePointer()) return;
   useEditorStore.getState().setActiveTool('pan');
 }
+
+/**
+ * On a coarse-pointer device, drop the currently armed place kind without
+ * leaving place mode. PlaceTool calls this after each successful placement
+ * so the LibraryPopover (hidden while armed on mobile) reappears for the
+ * next pick. Sticky `lastPlaceKind` is preserved by `setPlaceKind(null)`.
+ */
+export function disarmPlaceIfTouch(): void {
+  if (!isCoarsePointer()) return;
+  useEditorStore.getState().setPlaceKind(null);
+}
