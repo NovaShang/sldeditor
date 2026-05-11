@@ -37,7 +37,11 @@ export function ContextualToolbar() {
 
     const isElementMode = selection.length > 0;
     const isNodeMode = !isElementMode && selectedNode != null;
-    const visible = (isElementMode || isNodeMode) && activeTool === 'select';
+    // Pan tool absorbs single-tap selection on touch (see PanTool), so it
+    // should surface the same contextual actions that the select tool does.
+    const visible =
+      (isElementMode || isNodeMode) &&
+      (activeTool === 'select' || activeTool === 'pan');
     if (!visible) {
       el.style.display = 'none';
       return;

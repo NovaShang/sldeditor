@@ -173,12 +173,12 @@ export function FloatingToolbar() {
   // toolbar disappear and their entry points are embedded directly into this
   // pill as a tab-bar-style row, so the whole bottom chrome stays on a single
   // visual row. The [Undo/Redo/Layout] group also collapses into one overflow
-  // button to keep the bar narrow. Pan and text are dropped from the main bar
-  // — pinch + two-finger pan replace the pan tool on touch, and text
-  // annotation is rare enough on a phone to hide it.
+  // button to keep the bar narrow. Select and text are dropped from the main
+  // bar — Pan is the default on touch and absorbs single-tap selection (see
+  // PanTool), and text annotation is rare enough on a phone to hide.
   const unifiedBar = atLeast(tier, 'dense');
   const visibleTools = unifiedBar
-    ? TOOLS.filter((def) => def.id !== 'pan' && def.id !== 'text')
+    ? TOOLS.filter((def) => def.id !== 'select' && def.id !== 'text')
     : TOOLS;
 
   const isToolActive = (def: ToolDef): boolean => active === def.switchTo;

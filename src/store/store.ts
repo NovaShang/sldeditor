@@ -41,6 +41,23 @@ const HISTORY_LIMIT = 100;
 const PASTE_OFFSET = 20;
 
 /**
+ * Touch/coarse-pointer devices default to the pan tool: it doubles as a
+ * one-finger selector (tap an element to select, tap empty space to clear)
+ * while still letting one-finger drag pan the canvas, which is what users
+ * expect from map-like apps. Desktop keeps `select` as the default since the
+ * mouse has a precise tip and pan is always available via Space-hold.
+ * Returning users keep whatever tool they last persisted.
+ */
+function defaultTool(): ToolId {
+  if (typeof window === 'undefined') return 'select';
+  try {
+    return window.matchMedia('(pointer: coarse)').matches ? 'pan' : 'select';
+  } catch {
+    return 'select';
+  }
+}
+
+/**
  * Self-contained snapshot of a copied selection. Placements are pre-resolved
  * (auto-layout positions baked in) so paste survives later edits to the
  * source diagram. Connections only include those whose terminals are all
@@ -178,7 +195,7 @@ export const useEditorStore = create<EditorState>()(
   internal: compile(EMPTY_DIAGRAM),
   fileSession: null,
 
-  activeTool: 'select',
+  activeTool: defaultTool(),
   placeKind: null,
   lastPlaceKind: null,
   wireFromTerminal: null,
