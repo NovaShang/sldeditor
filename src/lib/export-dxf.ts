@@ -74,11 +74,18 @@ export function buildExportDxf(
   w.beginEntities();
 
   // Wires (already in world coordinates).
-  for (const route of model.routes.values()) {
-    for (const path of route.paths) {
-      if (path.length < 2) continue;
-      w.lwpolyline(LAYER_WIRES, path.map(worldToDxf), false);
-    }
+  for (const r of model.wireRenders.values()) {
+    if (r.path.length < 2) continue;
+    w.lwpolyline(LAYER_WIRES, r.path.map(worldToDxf), false);
+  }
+
+  // Buses (drawn after wires so the heavier bar sits on top).
+  for (const { geometry } of model.buses.values()) {
+    const { axis, at, span } = geometry;
+    const half = span / 2;
+    const a: [number, number] = axis === 'x' ? [at[0] - half, at[1]] : [at[0], at[1] - half];
+    const b: [number, number] = axis === 'x' ? [at[0] + half, at[1]] : [at[0], at[1] + half];
+    w.lwpolyline(LAYER_WIRES, [a, b].map(worldToDxf), false);
   }
 
   // Element symbols.
@@ -86,7 +93,7 @@ export function buildExportDxf(
     const place = model.layout.get(re.element.id);
     const lib = re.libraryDef;
     if (!place || !lib) continue;
-    emitLibrarySvg(w, lib.svg, place, lib);
+    emitLibrarySvg(w, lib.svg, place);
   }
 
   // Element structural labels (ID + showOnCanvas params).
@@ -153,7 +160,6 @@ function emitLibrarySvg(
   w: DxfWriter,
   svg: string,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): void {
   // Wrap so DOMParser sees a single root element.
   const wrapped = `<svg xmlns="http://www.w3.org/2000/svg">${svg}</svg>`;
@@ -165,28 +171,28 @@ function emitLibrarySvg(
     const tag = el.tagName.toLowerCase();
     switch (tag) {
       case 'line':
-        emitLine(w, el, place, lib);
+        emitLine(w, el, place);
         break;
       case 'polyline':
-        emitPoly(w, el, place, lib, false);
+        emitPoly(w, el, place, false);
         break;
       case 'polygon':
-        emitPoly(w, el, place, lib, true);
+        emitPoly(w, el, place, true);
         break;
       case 'rect':
-        emitRect(w, el, place, lib);
+        emitRect(w, el, place);
         break;
       case 'circle':
-        emitCircle(w, el, place, lib);
+        emitCircle(w, el, place);
         break;
       case 'ellipse':
-        emitEllipse(w, el, place, lib);
+        emitEllipse(w, el, place);
         break;
       case 'path':
-        emitPath(w, el, place, lib);
+        emitPath(w, el, place);
         break;
       case 'text':
-        emitText(w, el, place, lib);
+        emitText(w, el, place);
         break;
       default:
         break;
@@ -198,14 +204,13 @@ function emitLine(
   w: DxfWriter,
   el: Element,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): void {
   const x1 = numAttr(el, 'x1');
   const y1 = numAttr(el, 'y1');
   const x2 = numAttr(el, 'x2');
   const y2 = numAttr(el, 'y2');
-  const a = worldToDxf(localToWorld([x1, y1], place, lib));
-  const b = worldToDxf(localToWorld([x2, y2], place, lib));
+  const a = worldToDxf(localToWorld([x1, y1], place));
+  const b = worldToDxf(localToWorld([x2, y2], place));
   w.line(LAYER_ELEMENTS, a, b);
 }
 
@@ -213,12 +218,11 @@ function emitPoly(
   w: DxfWriter,
   el: Element,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
   closed: boolean,
 ): void {
   const pts = parsePoints(el.getAttribute('points') ?? '');
   if (pts.length < 2) return;
-  const out = pts.map((p) => worldToDxf(localToWorld(p, place, lib)));
+  const out = pts.map((p) => worldToDxf(localToWorld(p, place)));
   w.lwpolyline(LAYER_ELEMENTS, out, closed);
 }
 
@@ -226,7 +230,6 @@ function emitRect(
   w: DxfWriter,
   el: Element,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): void {
   const x = numAttr(el, 'x');
   const y = numAttr(el, 'y');
@@ -238,7 +241,7 @@ function emitRect(
     [x + ww, y + hh],
     [x, y + hh],
   ];
-  const out = corners.map((p) => worldToDxf(localToWorld(p, place, lib)));
+  const out = corners.map((p) => worldToDxf(localToWorld(p, place)));
   w.lwpolyline(LAYER_ELEMENTS, out, true);
 }
 
@@ -246,37 +249,28 @@ function emitCircle(
   w: DxfWriter,
   el: Element,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): void {
   const cx = numAttr(el, 'cx');
   const cy = numAttr(el, 'cy');
   const r = numAttr(el, 'r');
-  // Stretch may scale a circle non-uniformly into an ellipse; sample then.
-  const sx = stretchFactor(lib, place, 'x');
-  const sy = stretchFactor(lib, place, 'y');
-  if (Math.abs(sx - sy) > 1e-6) {
-    sampleEllipse(w, cx, cy, r, r, place, lib);
-    return;
-  }
-  const center = worldToDxf(localToWorld([cx, cy], place, lib));
-  w.circle(LAYER_ELEMENTS, center, r * sx);
+  const center = worldToDxf(localToWorld([cx, cy], place));
+  w.circle(LAYER_ELEMENTS, center, r);
 }
 
 function emitEllipse(
   w: DxfWriter,
   el: Element,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): void {
   const cx = numAttr(el, 'cx');
   const cy = numAttr(el, 'cy');
   const rx = numAttr(el, 'rx');
   const ry = numAttr(el, 'ry');
   if (Math.abs(rx - ry) < 1e-6) {
-    emitCircleRaw(w, cx, cy, rx, place, lib);
+    emitCircleRaw(w, cx, cy, rx, place);
     return;
   }
-  sampleEllipse(w, cx, cy, rx, ry, place, lib);
+  sampleEllipse(w, cx, cy, rx, ry, place);
 }
 
 function emitCircleRaw(
@@ -285,16 +279,9 @@ function emitCircleRaw(
   cy: number,
   r: number,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): void {
-  const sx = stretchFactor(lib, place, 'x');
-  const sy = stretchFactor(lib, place, 'y');
-  if (Math.abs(sx - sy) > 1e-6) {
-    sampleEllipse(w, cx, cy, r, r, place, lib);
-    return;
-  }
-  const center = worldToDxf(localToWorld([cx, cy], place, lib));
-  w.circle(LAYER_ELEMENTS, center, r * sx);
+  const center = worldToDxf(localToWorld([cx, cy], place));
+  w.circle(LAYER_ELEMENTS, center, r);
 }
 
 function sampleEllipse(
@@ -304,14 +291,13 @@ function sampleEllipse(
   rx: number,
   ry: number,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): void {
   const pts: [number, number][] = [];
   for (let i = 0; i < ELLIPSE_SAMPLES; i++) {
     const t = (i / ELLIPSE_SAMPLES) * Math.PI * 2;
     pts.push(
       worldToDxf(
-        localToWorld([cx + rx * Math.cos(t), cy + ry * Math.sin(t)], place, lib),
+        localToWorld([cx + rx * Math.cos(t), cy + ry * Math.sin(t)], place),
       ),
     );
   }
@@ -322,14 +308,13 @@ function emitText(
   w: DxfWriter,
   el: Element,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): void {
   const x = numAttr(el, 'x');
   const y = numAttr(el, 'y');
   const fs = parseFloat(el.getAttribute('font-size') ?? '') || TEXT_FONT_SIZE_DEFAULT;
   const txt = (el.textContent ?? '').trim();
   if (!txt) return;
-  const p = worldToDxf(localToWorld([x, y], place, lib));
+  const p = worldToDxf(localToWorld([x, y], place));
   // place.rot is CCW in math frame (see transforms.ts); after flipping Y we
   // are in DXF's CCW frame, so the same numeric angle maps directly.
   w.text(LAYER_ELEMENTS, p, txt, fs, place.rot, place.mirror);
@@ -343,7 +328,6 @@ function emitPath(
   w: DxfWriter,
   el: Element,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): void {
   const d = el.getAttribute('d') ?? '';
   const cmds = tokenizePath(d);
@@ -355,7 +339,7 @@ function emitPath(
     if (buffer.length >= 2) {
       w.lwpolyline(
         LAYER_ELEMENTS,
-        buffer.map((p) => worldToDxf(localToWorld(p, place, lib))),
+        buffer.map((p) => worldToDxf(localToWorld(p, place))),
         false,
       );
     }
@@ -495,29 +479,12 @@ function arcEndpointToCenter(
 function localToWorld(
   local: [number, number],
   place: ResolvedPlacement,
-  lib: LibraryEntry,
 ): [number, number] {
-  const sx = stretchFactor(lib, place, 'x');
-  const sy = stretchFactor(lib, place, 'y');
-  return transformPoint([local[0] * sx, local[1] * sy], place);
+  return transformPoint(local, place);
 }
 
 function worldToDxf(p: [number, number]): [number, number] {
   return [p[0], -p[1]];
-}
-
-function stretchFactor(
-  lib: LibraryEntry,
-  place: ResolvedPlacement,
-  axis: 'x' | 'y',
-): number {
-  const stretch = lib.stretchable;
-  if (!stretch || stretch.axis !== axis || !place.span) return 1;
-  if (lib.terminals.length < 2) return 1;
-  const vs = lib.terminals.map((t) => (axis === 'x' ? t.x : t.y));
-  const ref = Math.max(...vs) - Math.min(...vs);
-  if (ref <= 0) return 1;
-  return place.span / ref;
 }
 
 function numAttr(el: Element, name: string): number {
@@ -566,16 +533,10 @@ function parseViewBox(s: string): { x: number; y: number; w: number; h: number }
 function anchorWorld(
   anchor: LibraryLabelAnchor,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
+  _lib: LibraryEntry,
 ): [number, number] {
   let x = anchor.x;
   let y = anchor.y;
-  const stretch = lib.stretchable;
-  if (stretch && place.span) {
-    const k = place.span / stretch.naturalSpan;
-    if (stretch.axis === 'x') x *= k;
-    else y *= k;
-  }
   if (place.mirror) x = -x;
   switch (place.rot) {
     case 90:

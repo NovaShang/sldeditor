@@ -52,6 +52,7 @@ export function exitDrawingState(): void {
   }
   if (
     store.selectedNode ||
+    store.selectedWire ||
     store.selection.length > 0 ||
     store.selectedAnnotation
   ) {
@@ -156,6 +157,9 @@ export function useKeyboardShortcuts(): void {
           if (store.selectedAnnotation) {
             e.preventDefault();
             store.deleteAnnotation(store.selectedAnnotation);
+          } else if (store.selectedWire) {
+            e.preventDefault();
+            store.deleteSelectedWire();
           } else if (store.selectedNode) {
             e.preventDefault();
             store.deleteSelectedNode();

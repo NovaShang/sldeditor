@@ -1,2 +1,7 @@
 export { useEditorStore, type EditorState, type ToolId } from './store';
-export { newElementId } from './id-allocator';
+export {
+  newAnnotationId,
+  newBusId,
+  newElementId,
+  wireIdFromEnds,
+} from './id-allocator';

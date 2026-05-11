@@ -1,18 +1,18 @@
 /**
  * Pub/sub for the in-progress wire target. WireTool publishes the current
- * candidate (a real terminal or a bus virtual-tap projection); WirePreview
+ * candidate (a real terminal or a bus body projection); WirePreview
  * subscribes and renders an indicator so the user sees *where* a release
  * would land before they release.
  */
 
-import type { TerminalRef } from '../model';
+import type { WireEnd } from '../model';
 
 export interface WireTarget {
-  ref: TerminalRef;
+  ref: WireEnd;
   /** World-frame coords of where the connection will physically attach. */
   world: [number, number];
-  /** True when the target is a bus virtual `tap` (not a literal terminal). */
-  isBusTap: boolean;
+  /** True when the target is a bare bus id. */
+  isBus: boolean;
 }
 
 type Listener = (target: WireTarget | null) => void;

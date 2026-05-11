@@ -217,18 +217,11 @@ function parseViewBox(s: string): { x: number; y: number; w: number; h: number }
 function anchorWorld(
   anchor: LibraryLabelAnchor,
   place: ResolvedPlacement,
-  lib: LibraryEntry,
+  _lib: LibraryEntry,
 ): [number, number] {
   let x = anchor.x;
   let y = anchor.y;
 
-  // Stretch (only meaningful for stretchable kinds with an explicit span).
-  const stretch = lib.stretchable;
-  if (stretch && place.span) {
-    const k = place.span / stretch.naturalSpan;
-    if (stretch.axis === 'x') x *= k;
-    else y *= k;
-  }
   // Mirror flips local x.
   if (place.mirror) x = -x;
   // Rotation (90° steps).

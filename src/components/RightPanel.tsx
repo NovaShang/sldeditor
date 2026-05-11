@@ -11,25 +11,31 @@ export function RightPanel() {
   const libT = useLibT();
   const selection = useEditorStore((s) => s.selection);
   const selectedNode = useEditorStore((s) => s.selectedNode);
+  const selectedWire = useEditorStore((s) => s.selectedWire);
   const elements = useEditorStore((s) => s.diagram.elements);
+  const buses = useEditorStore((s) => s.diagram.buses);
   const tier = useEditorTier();
-  // On narrow viewports the panel competes with the host's top chrome
-  // (e.g., DemoTopBar). Trim its width so both can coexist on iPhone.
   const compactWidth = atLeast(tier, 'dense');
 
-  // Hidden when nothing selected — the contextual toolbar handles transient
-  // actions; the right panel exists only to edit the selected target.
-  if (selection.length === 0 && !selectedNode) return null;
+  if (selection.length === 0 && !selectedNode && !selectedWire) return null;
 
   let title = t('props.title');
   let count: number | null = null;
-  if (selectedNode) {
+  if (selectedWire) {
+    title = t('props.wire');
+  } else if (selectedNode) {
     title = t('props.node');
   } else if (selection.length === 1) {
-    const el = elements.find((e) => e.id === selection[0]);
-    if (el) {
-      const lib = libraryById[el.kind];
-      title = lib ? libT(`${lib.id}.name`, lib.name) : el.kind;
+    const id = selection[0];
+    const bus = (buses ?? []).find((b) => b.id === id);
+    if (bus) {
+      title = bus.name ?? t('props.bus');
+    } else {
+      const el = elements.find((e) => e.id === id);
+      if (el) {
+        const lib = libraryById[el.kind];
+        title = lib ? libT(`${lib.id}.name`, lib.name) : el.kind;
+      }
     }
   } else {
     count = selection.length;

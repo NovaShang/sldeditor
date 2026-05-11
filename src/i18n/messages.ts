@@ -46,14 +46,18 @@ export const messages = {
 
     'props.title': '属性',
     'props.node': '电气节点',
+    'props.wire': '连线',
+    'props.bus': '母线',
     'props.nSelected': '{n} 选中',
     'props.empty': '未选中',
     'props.multi': '已选中 {n} 个元件',
     'props.name': '名称',
     'props.note': '备注',
     'props.nodeNotFound': '电气节点 {id} 不存在',
+    'props.wireNotFound': '连线 {id} 不存在',
     'props.nodeStats': '{terminals} 个端子 · {elements} 个元件',
     'props.selectElement': '选中 {label}',
+    'props.selectWholeNode': '选中整个电气节点',
 
     'view.zoomOut': '缩小',
     'view.zoomOutHint': '按预设档位缩小；也可滚轮 ↓ 或 ⌘−',
@@ -128,7 +132,8 @@ export const messages = {
     'view.menu': '视图',
     'view.menuHint': '缩放、适配、网格',
 
-    'ctx.ariaNode': '选中连线操作',
+    'ctx.ariaNode': '选中节点操作',
+    'ctx.ariaWire': '选中连线操作',
     'ctx.ariaElement': '选中元件操作',
     'ctx.rotate': '旋转 90°',
     'ctx.rotateHint': '顺时针旋转选中元件，连线随端子自动重排',
@@ -137,6 +142,7 @@ export const messages = {
     'ctx.mirrorHint': '左右翻转选中元件',
     'ctx.delete': '删除',
     'ctx.deleteHintNode': '断开此电气节点上的所有连接（保留元件）',
+    'ctx.deleteHintWire': '移除这一根连线（其它同节点连线保留）',
     'ctx.deleteHintElement': '移除选中元件及其连接的连线',
 
     'menu.undo': '撤销',
@@ -225,14 +231,18 @@ export const messages = {
 
     'props.title': 'Properties',
     'props.node': 'Electrical node',
+    'props.wire': 'Wire',
+    'props.bus': 'Bus',
     'props.nSelected': '{n} selected',
     'props.empty': 'Nothing selected',
     'props.multi': '{n} elements selected',
     'props.name': 'Name',
     'props.note': 'Note',
     'props.nodeNotFound': 'Electrical node {id} not found',
+    'props.wireNotFound': 'Wire {id} not found',
     'props.nodeStats': '{terminals} terminals · {elements} elements',
     'props.selectElement': 'Select {label}',
+    'props.selectWholeNode': 'Select whole electrical node',
 
     'view.zoomOut': 'Zoom out',
     'view.zoomOutHint': 'Step zoom out; also wheel ↓ or ⌘−',
@@ -307,7 +317,8 @@ export const messages = {
     'view.menu': 'View',
     'view.menuHint': 'Zoom, fit, grid',
 
-    'ctx.ariaNode': 'Wire actions',
+    'ctx.ariaNode': 'Node actions',
+    'ctx.ariaWire': 'Wire actions',
     'ctx.ariaElement': 'Element actions',
     'ctx.rotate': 'Rotate 90°',
     'ctx.rotateHint': 'Rotate selection clockwise; wires re-route through new terminals',
@@ -316,6 +327,7 @@ export const messages = {
     'ctx.mirrorHint': 'Flip selection left-right',
     'ctx.delete': 'Delete',
     'ctx.deleteHintNode': 'Disconnect every wire on this node (elements stay)',
+    'ctx.deleteHintWire': 'Remove only this wire (siblings on the same node stay)',
     'ctx.deleteHintElement': 'Remove the selection and its wires',
 
     'menu.undo': 'Undo',

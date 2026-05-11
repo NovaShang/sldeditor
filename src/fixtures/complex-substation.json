@@ -21,13 +21,6 @@
     { "id": "QS_L2_I",  "kind": "disconnector", "name": "L2-1", "state": { "open": true } },
     { "id": "QS_L2_II", "kind": "disconnector", "name": "L2-2" },
 
-    {
-      "id": "BI", "kind": "busbar", "name": "220kV-I", "params": { "Un": 220 }
-    },
-    {
-      "id": "BII", "kind": "busbar", "name": "220kV-II", "params": { "Un": 220 }
-    },
-
     { "id": "QS_BT_I",  "kind": "disconnector", "name": "母联 BT-1" },
     { "id": "QF_BT",    "kind": "breaker",      "name": "母联 BT-Q" },
     { "id": "QS_BT_II", "kind": "disconnector", "name": "母联 BT-2" },
@@ -48,10 +41,6 @@
       "id": "T1", "kind": "transformer-2w", "name": "1#主变",
       "note": "240MVA YNd11，2024-Q3 大修后投运",
       "params": { "S": 240, "ratio": "220/35" }
-    },
-
-    {
-      "id": "B35", "kind": "busbar", "name": "35kV", "params": { "Un": 35 }
     },
 
     { "id": "GT_T1",  "kind": "grounding-transformer", "name": "35kV 接地变" },
@@ -99,55 +88,87 @@
     { "id": "PV1",   "kind": "pv",           "name": "光伏阵列 (2MWp)" }
   ],
 
-  "connections": [
-    ["GRID1.t_bottom", "QS_L1.t1"],
-    ["QS_L1.t2", "QF_L1.t1"],
-    ["QF_L1.t2", "QS_L1_I.t1", "QS_L1_II.t1"],
+  "buses": [
+    { "id": "BI",  "name": "220kV-I",  "params": { "Un": 220 } },
+    { "id": "BII", "name": "220kV-II", "params": { "Un": 220 } },
+    { "id": "B35", "name": "35kV",     "params": { "Un": 35 } }
+  ],
 
-    ["GRID2.t_bottom", "QS_L2.t1"],
-    ["QS_L2.t2", "QF_L2.t1"],
-    ["QF_L2.t2", "QS_L2_I.t1", "QS_L2_II.t1"],
+  "wires": [
+    { "id": "w_grid1_qs_l1",    "ends": ["GRID1.t_bottom", "QS_L1.t1"] },
+    { "id": "w_qs_l1_qf_l1",    "ends": ["QS_L1.t2", "QF_L1.t1"] },
+    { "id": "w_qf_l1_qs_l1_i",  "ends": ["QF_L1.t2", "QS_L1_I.t1"] },
+    { "id": "w_qf_l1_qs_l1_ii", "ends": ["QF_L1.t2", "QS_L1_II.t1"] },
 
-    ["QS_BT_I.t2", "QF_BT.t1"],
-    ["QF_BT.t2", "QS_BT_II.t2"],
+    { "id": "w_grid2_qs_l2",    "ends": ["GRID2.t_bottom", "QS_L2.t1"] },
+    { "id": "w_qs_l2_qf_l2",    "ends": ["QS_L2.t2", "QF_L2.t1"] },
+    { "id": "w_qf_l2_qs_l2_i",  "ends": ["QF_L2.t2", "QS_L2_I.t1"] },
+    { "id": "w_qf_l2_qs_l2_ii", "ends": ["QF_L2.t2", "QS_L2_II.t1"] },
 
-    ["FBL_I.t2", "GND_FBL_I.t1"],
-    ["FBL_II.t2", "GND_FBL_II.t1"],
+    { "id": "w_qs_bt_i_qf_bt",  "ends": ["QS_BT_I.t2", "QF_BT.t1"] },
+    { "id": "w_qf_bt_qs_bt_ii", "ends": ["QF_BT.t2", "QS_BT_II.t2"] },
 
-    ["BI.tap",  "QS_L1_I.t2",  "QS_L2_I.t2",  "QS_BT_I.t1",  "PT_I.t1",  "FBL_I.t1",  "QS_T1_I.t1"],
-    ["BII.tap", "QS_L1_II.t2", "QS_L2_II.t2", "QS_BT_II.t1", "PT_II.t1", "FBL_II.t1", "QS_T1_II.t1"],
+    { "id": "w_fbl_i_gnd",      "ends": ["FBL_I.t2", "GND_FBL_I.t1"] },
+    { "id": "w_fbl_ii_gnd",     "ends": ["FBL_II.t2", "GND_FBL_II.t1"] },
 
-    ["QS_T1_I.t2", "QS_T1_II.t2", "QF_T1.t1"],
-    ["QF_T1.t2", "CT_T1.t1"],
-    ["CT_T1.t2", "T1.t1"],
+    { "id": "w_bi_qs_l1_i",     "ends": ["BI", "QS_L1_I.t2"] },
+    { "id": "w_bi_qs_l2_i",     "ends": ["BI", "QS_L2_I.t2"] },
+    { "id": "w_bi_qs_bt_i",     "ends": ["BI", "QS_BT_I.t1"] },
+    { "id": "w_bi_pt_i",        "ends": ["BI", "PT_I.t1"] },
+    { "id": "w_bi_fbl_i",       "ends": ["BI", "FBL_I.t1"] },
+    { "id": "w_bi_qs_t1_i",     "ends": ["BI", "QS_T1_I.t1"] },
 
-    ["GT_T1.t1", "NGR_T1.t_top"],
+    { "id": "w_bii_qs_l1_ii",   "ends": ["BII", "QS_L1_II.t2"] },
+    { "id": "w_bii_qs_l2_ii",   "ends": ["BII", "QS_L2_II.t2"] },
+    { "id": "w_bii_qs_bt_ii",   "ends": ["BII", "QS_BT_II.t1"] },
+    { "id": "w_bii_pt_ii",      "ends": ["BII", "PT_II.t1"] },
+    { "id": "w_bii_fbl_ii",     "ends": ["BII", "FBL_II.t1"] },
+    { "id": "w_bii_qs_t1_ii",   "ends": ["BII", "QS_T1_II.t1"] },
 
-    ["FBL_35.t2", "GND_FBL_35.t1"],
+    { "id": "w_qs_t1_i_qf_t1",  "ends": ["QS_T1_I.t2", "QF_T1.t1"] },
+    { "id": "w_qs_t1_ii_qf_t1", "ends": ["QS_T1_II.t2", "QF_T1.t1"] },
+    { "id": "w_qf_t1_ct_t1",    "ends": ["QF_T1.t2", "CT_T1.t1"] },
+    { "id": "w_ct_t1_t1",       "ends": ["CT_T1.t2", "T1.t1"] },
 
-    ["B35.tap", "T1.t2", "GT_T1.t2", "PT_35.t1", "FBL_35.t1", "QS_F1.t1", "QS_F2.t1", "QS_M.t1", "QS_C.t1", "QS_R.t1", "QS_BAT.t1", "QS_PV.t1"],
+    { "id": "w_gt_t1_ngr",      "ends": ["GT_T1.t1", "NGR_T1.t_top"] },
 
-    ["QS_F1.t2", "QF_F1.t1"], ["QF_F1.t2", "LD1.t_top"],
-    ["QS_F2.t2", "QF_F2.t1"], ["QF_F2.t2", "LD2.t_top"],
+    { "id": "w_fbl_35_gnd",     "ends": ["FBL_35.t2", "GND_FBL_35.t1"] },
 
-    ["QS_M.t2", "QF_M.t1"],
-    ["QF_M.t2", "CT_M.t1"],
-    ["CT_M.t2", "MOT.t3"],
+    { "id": "w_b35_t1",         "ends": ["B35", "T1.t2"] },
+    { "id": "w_b35_gt_t1",      "ends": ["B35", "GT_T1.t2"] },
+    { "id": "w_b35_pt_35",      "ends": ["B35", "PT_35.t1"] },
+    { "id": "w_b35_fbl_35",     "ends": ["B35", "FBL_35.t1"] },
+    { "id": "w_b35_qs_f1",      "ends": ["B35", "QS_F1.t1"] },
+    { "id": "w_b35_qs_f2",      "ends": ["B35", "QS_F2.t1"] },
+    { "id": "w_b35_qs_m",       "ends": ["B35", "QS_M.t1"] },
+    { "id": "w_b35_qs_c",       "ends": ["B35", "QS_C.t1"] },
+    { "id": "w_b35_qs_r",       "ends": ["B35", "QS_R.t1"] },
+    { "id": "w_b35_qs_bat",     "ends": ["B35", "QS_BAT.t1"] },
+    { "id": "w_b35_qs_pv",      "ends": ["B35", "QS_PV.t1"] },
 
-    ["QS_C.t2", "QF_C.t1"],
-    ["QF_C.t2", "C1.t1"],
-    ["C1.t_bottom", "GND_C1.t1"],
+    { "id": "w_qs_f1_qf_f1",    "ends": ["QS_F1.t2", "QF_F1.t1"] },
+    { "id": "w_qf_f1_ld1",      "ends": ["QF_F1.t2", "LD1.t_top"] },
+    { "id": "w_qs_f2_qf_f2",    "ends": ["QS_F2.t2", "QF_F2.t1"] },
+    { "id": "w_qf_f2_ld2",      "ends": ["QF_F2.t2", "LD2.t_top"] },
 
-    ["QS_R.t2", "QF_R.t1"],
-    ["QF_R.t2", "SR1.t1"],
-    ["SR1.t_bottom", "GND_R1.t1"],
+    { "id": "w_qs_m_qf_m",      "ends": ["QS_M.t2", "QF_M.t1"] },
+    { "id": "w_qf_m_ct_m",      "ends": ["QF_M.t2", "CT_M.t1"] },
+    { "id": "w_ct_m_mot",       "ends": ["CT_M.t2", "MOT.t3"] },
 
-    ["QS_BAT.t2", "QF_BAT.t1"],
-    ["QF_BAT.t2", "PCS.t_ac"],
-    ["PCS.t_dc", "BAT.t_left"],
+    { "id": "w_qs_c_qf_c",      "ends": ["QS_C.t2", "QF_C.t1"] },
+    { "id": "w_qf_c_c1",        "ends": ["QF_C.t2", "C1.t1"] },
+    { "id": "w_c1_gnd",         "ends": ["C1.t_bottom", "GND_C1.t1"] },
 
-    ["QS_PV.t2", "QF_PV.t1"],
-    ["QF_PV.t2", "INV1.t_ac"],
-    ["INV1.t_dc", "PV1.t_dc"]
+    { "id": "w_qs_r_qf_r",      "ends": ["QS_R.t2", "QF_R.t1"] },
+    { "id": "w_qf_r_sr1",       "ends": ["QF_R.t2", "SR1.t1"] },
+    { "id": "w_sr1_gnd",        "ends": ["SR1.t_bottom", "GND_R1.t1"] },
+
+    { "id": "w_qs_bat_qf_bat",  "ends": ["QS_BAT.t2", "QF_BAT.t1"] },
+    { "id": "w_qf_bat_pcs",     "ends": ["QF_BAT.t2", "PCS.t_ac"] },
+    { "id": "w_pcs_bat",        "ends": ["PCS.t_dc", "BAT.t_left"] },
+
+    { "id": "w_qs_pv_qf_pv",    "ends": ["QS_PV.t2", "QF_PV.t1"] },
+    { "id": "w_qf_pv_inv1",     "ends": ["QF_PV.t2", "INV1.t_ac"] },
+    { "id": "w_inv1_pv1",       "ends": ["INV1.t_dc", "PV1.t_dc"] }
   ]
 }

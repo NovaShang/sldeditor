@@ -2,7 +2,7 @@
   "version": "1",
   "meta": {
     "title": "110/35kV 单母线变电站（开发测试用例）",
-    "description": "练手 fixture：进线 + 主变 + 35kV 母线 + 两条馈线 + 容性补偿。覆盖 B.tap 多端引用、N 元组、命名节点、稀疏 layout、手动 route、open 开关。",
+    "description": "练手 fixture：进线 + 主变 + 35kV 母线 + 两条馈线 + 容性补偿。",
     "author": "dev-fixture",
     "createdAt": "2026-05-07T00:00:00Z",
     "updatedAt": "2026-05-07T00:00:00Z"
@@ -16,11 +16,6 @@
     { "id": "QS02", "kind": "disconnector", "name": "02" },
     { "id": "CT1",  "kind": "ct",           "name": "进线 CT" },
 
-    {
-      "id": "B1", "kind": "busbar", "name": "110kV-I",
-      "params": { "Un": 110 }
-    },
-
     { "id": "PT1",   "kind": "pt",          "name": "母线 PT" },
 
     { "id": "QS_T1", "kind": "disconnector", "name": "主变高压侧刀闸" },
@@ -31,11 +26,6 @@
       "params": { "S": 240, "ratio": "110/35" }
     },
     { "id": "GND_T1", "kind": "earth", "name": "T1 中性点接地" },
-
-    {
-      "id": "B2", "kind": "busbar", "name": "35kV",
-      "params": { "Un": 35 }
-    },
 
     { "id": "FBL1",   "kind": "arrester", "name": "母线避雷器" },
     { "id": "GND_FBL1", "kind": "earth" },
@@ -56,29 +46,46 @@
     { "id": "GND_C1", "kind": "earth" }
   ],
 
-  "connections": [
-    ["GRID.t_bottom", "QS01.t1"],
-    ["QS01.t2", "QF01.t1"],
-    ["QF01.t2", "QS02.t1"],
+  "buses": [
+    {
+      "id": "B1", "name": "110kV-I", "params": { "Un": 110 },
+      "layout": { "at": [400, 320], "span": 600 }
+    },
+    {
+      "id": "B2", "name": "35kV", "params": { "Un": 35 },
+      "layout": { "at": [400, 620], "span": 600 }
+    }
+  ],
 
-    ["CT1.t1", "QS02.t2"],
+  "wires": [
+    { "id": "w_grid_qs01",      "ends": ["GRID.t_bottom", "QS01.t1"] },
+    { "id": "w_qs01_qf01",      "ends": ["QS01.t2", "QF01.t1"] },
+    { "id": "w_qf01_qs02",      "ends": ["QF01.t2", "QS02.t1"] },
+    { "id": "w_qs02_ct1",       "ends": ["QS02.t2", "CT1.t1"] },
+    { "id": "w_b1_ct1",         "ends": ["B1", "CT1.t2"] },
+    { "id": "w_b1_qs_t1",       "ends": ["B1", "QS_T1.t1"] },
+    { "id": "w_b1_pt1",         "ends": ["B1", "PT1.t1"] },
 
-    ["B1.tap", "QS02.t2", "CT1.t2", "QS_T1.t1", "PT1.t1"],
+    { "id": "w_qs_t1_qf_t1",    "ends": ["QS_T1.t2", "QF_T1.t1"] },
+    { "id": "w_qf_t1_t1",       "ends": ["QF_T1.t2", "T1.t1"] },
+    { "id": "w_t1_gnd",         "ends": ["T1.t2", "GND_T1.t1"] },
 
-    ["QS_T1.t2", "QF_T1.t1"],
-    ["QF_T1.t2", "T1.t1"],
+    { "id": "w_fbl1_gnd",       "ends": ["FBL1.t2", "GND_FBL1.t1"] },
 
-    ["T1.t2", "GND_T1.t1"],
+    { "id": "w_b2_t1",          "ends": ["B2", "T1.t2"] },
+    { "id": "w_b2_fbl1",        "ends": ["B2", "FBL1.t1"] },
+    { "id": "w_b2_qs_f1",       "ends": ["B2", "QS_F1.t1"] },
+    { "id": "w_b2_qs_f2",       "ends": ["B2", "QS_F2.t1"] },
+    { "id": "w_b2_qs_c1",       "ends": ["B2", "QS_C1.t1"] },
 
-    ["FBL1.t2", "GND_FBL1.t1"],
+    { "id": "w_qs_f1_qf_f1",    "ends": ["QS_F1.t2", "QF_F1.t1"] },
+    { "id": "w_qf_f1_ld1",      "ends": ["QF_F1.t2", "LD1.t_top"] },
+    { "id": "w_qs_f2_qf_f2",    "ends": ["QS_F2.t2", "QF_F2.t1"] },
+    { "id": "w_qf_f2_ld2",      "ends": ["QF_F2.t2", "LD2.t_top"] },
 
-    ["B2.tap", "T1.t2", "FBL1.t1", "QS_F1.t1", "QS_F2.t1", "QS_C1.t1"],
-
-    ["QS_F1.t2", "QF_F1.t1"], ["QF_F1.t2", "LD1.t_top"],
-    ["QS_F2.t2", "QF_F2.t1"], ["QF_F2.t2", "LD2.t_top"],
-
-    ["QS_C1.t2", "QF_C1.t1"], ["QF_C1.t2", "C1.t1"],
-    ["C1.t_bottom", "GND_C1.t1"]
+    { "id": "w_qs_c1_qf_c1",    "ends": ["QS_C1.t2", "QF_C1.t1"] },
+    { "id": "w_qf_c1_c1",       "ends": ["QF_C1.t2", "C1.t1"] },
+    { "id": "w_c1_gnd",         "ends": ["C1.t_bottom", "GND_C1.t1"] }
   ],
 
   "layout": {
@@ -87,21 +94,11 @@
     "QF01":   { "at": [200, 140] },
     "QS02":   { "at": [200, 200] },
     "CT1":    { "at": [200, 260] },
-    "B1":     { "at": [400, 320], "span": 600 },
     "PT1":    { "at": [600, 380] },
 
     "QS_T1":  { "at": [200, 380] },
     "QF_T1":  { "at": [200, 440] },
     "T1":     { "at": [200, 520] },
-    "GND_T1": { "at": [280, 520] },
-
-    "B2":     { "at": [400, 620], "span": 600 }
-  },
-
-  "routes": {
-    "n_t1_neutral": {
-      "path": [[200, 580], [280, 580], [280, 520]],
-      "manual": true
-    }
+    "GND_T1": { "at": [280, 520] }
   }
 }

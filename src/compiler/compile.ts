@@ -2,46 +2,48 @@
  * DiagramFile → InternalModel. Pipeline:
  *
  *   1. Resolve elements + library
- *   2. Validate IDs / pins (errors → diagnostics; pipeline keeps going)
- *   3. Union-find over connection groups → ConnectivityNode set with
- *      deterministic ids (sorted terminals hashed) so `routes[nodeId]`
- *      keys are stable across saves
- *   4. Auto-layout for elements without a `Placement`
+ *   2. Resolve buses (geometry from `Bus.layout` or auto-layout below)
+ *   3. Validate wire endpoints (errors → diagnostics; pipeline keeps going)
+ *   4. Auto-layout for devices without `Placement` and buses without layout
  *   5. Compute world-frame terminal geometry
- *   6. Auto-route each ConnectivityNode unless the user supplied a path
+ *   6. Union-find on wires → ConnectivityNode set with deterministic ids
+ *      (sorted endpoints hashed) so `routes[nodeId]` keys stay stable
+ *      across saves
+ *   7. Auto-route each ConnectivityNode unless the user supplied a path
  */
 
 import { t } from '../i18n';
 import type {
+  Bus,
+  BusId,
   DiagramFile,
   Element,
   ElementId,
   NodeId,
   TerminalRef,
+  Wire,
+  WireEnd,
 } from '../model';
 import { autoLayout } from './auto-layout';
-import { autoRoute } from './auto-route';
+import { routeWire } from './auto-route';
 import { LIBRARY } from './library-index';
 import {
   emptyInternalModel,
   resolvePlacement,
+  busAxisFromRot,
+  type BusGeometry,
   type InternalModel,
   type ResolvedPlacement,
 } from './internal-model';
 import { transformOrientation, transformPoint } from './transforms';
 import { UnionFind } from './union-find';
 
-interface ConnGroup {
-  terminals: TerminalRef[];
-  pointer: string;
-}
-
 /**
- * Stable, content-derived node id. Same set of terminals always maps to the
+ * Stable, content-derived node id. Same set of endpoints always maps to the
  * same NodeId across compile runs and across save/load cycles, so user-edited
  * `routes[nodeId]` overrides stay attached after reload.
  */
-function deterministicNodeId(members: TerminalRef[]): NodeId {
+function deterministicNodeId(members: WireEnd[]): NodeId {
   // FNV-1a 32-bit on the sorted, joined refs. Plenty of entropy for typical
   // diagram sizes (<10k nodes); collisions only cause a route override to
   // attach to the wrong node, never wrong electrical behavior.
@@ -54,6 +56,8 @@ function deterministicNodeId(members: TerminalRef[]): NodeId {
   }
   return `n_${(h >>> 0).toString(36)}`;
 }
+
+const DEFAULT_BUS_SPAN = 320;
 
 export function compile(diagram: DiagramFile): InternalModel {
   const m = emptyInternalModel();
@@ -83,26 +87,47 @@ export function compile(diagram: DiagramFile): InternalModel {
     m.elements.set(el.id, { element: el, libraryDef: libDef });
   });
 
-  // ---- 2. Build connection groups ---------------------------------------
-  const groups: ConnGroup[] = (diagram.connections ?? []).map((c, i) => ({
-    terminals: c,
-    pointer: `/connections/${i}`,
-  }));
+  // ---- 2. Resolve buses (preliminary; layout filled by auto-layout) -----
+  const busById = new Map<BusId, Bus>();
+  const userBusLayout = new Map<BusId, BusGeometry>();
+  (diagram.buses ?? []).forEach((bus, idx) => {
+    if (elementById.has(bus.id) || busById.has(bus.id)) {
+      m.diagnostics.push({
+        code: 'E001',
+        severity: 'error',
+        message: t('compile.duplicateId', { id: bus.id }),
+        pointer: `/buses/${idx}`,
+      });
+      return;
+    }
+    busById.set(bus.id, bus);
+    if (bus.layout) {
+      const rot = bus.layout.rot ?? 0;
+      userBusLayout.set(bus.id, {
+        at: bus.layout.at,
+        span: bus.layout.span,
+        rot,
+        axis: busAxisFromRot(rot),
+      });
+    }
+  });
 
-  // ---- 3. Validate terminal references ----------------------------------
-  const validRef = (ref: TerminalRef, pointer: string): boolean => {
-    const dot = ref.indexOf('.');
+  // ---- 3. Validate wire endpoints ---------------------------------------
+  const isBus = (end: WireEnd): boolean => !end.includes('.') && busById.has(end);
+  const validEnd = (end: WireEnd, pointer: string): boolean => {
+    if (isBus(end)) return true;
+    const dot = end.indexOf('.');
     if (dot <= 0) {
       m.diagnostics.push({
         code: 'E003',
         severity: 'error',
-        message: t('compile.invalidTermRef', { ref }),
+        message: t('compile.invalidTermRef', { ref: end }),
         pointer,
       });
       return false;
     }
-    const elemId = ref.slice(0, dot);
-    const pin = ref.slice(dot + 1);
+    const elemId = end.slice(0, dot);
+    const pin = end.slice(dot + 1);
     const re = m.elements.get(elemId);
     if (!re) {
       m.diagnostics.push({
@@ -132,22 +157,13 @@ export function compile(diagram: DiagramFile): InternalModel {
     return true;
   };
 
-  const validGroups: ConnGroup[] = [];
-  for (const g of groups) {
-    const valid = g.terminals.filter((r) => validRef(r, g.pointer));
-    if (valid.length < 2) {
-      if (g.terminals.length === 1) {
-        m.diagnostics.push({
-          code: 'W002',
-          severity: 'warning',
-          message: `${g.pointer} ${t('compile.singleTerminal')}`,
-          pointer: g.pointer,
-        });
-      }
-      continue;
-    }
-    validGroups.push({ ...g, terminals: valid });
-  }
+  const validWires: Wire[] = [];
+  (diagram.wires ?? []).forEach((w, i) => {
+    const pointer = `/wires/${i}`;
+    const a = validEnd(w.ends[0], pointer);
+    const b = validEnd(w.ends[1], pointer);
+    if (a && b) validWires.push(w);
+  });
 
   // ---- 4. Auto-layout ----------------------------------------------------
   const userLayout = new Map<ElementId, ResolvedPlacement>();
@@ -163,12 +179,34 @@ export function compile(diagram: DiagramFile): InternalModel {
         });
     }
   }
-  m.layout = autoLayout({
+  const layoutResult = autoLayout({
     elements: diagram.elements,
-    connections: diagram.connections ?? [],
+    buses: diagram.buses ?? [],
+    wires: validWires,
     library: LIBRARY,
     userLayout,
+    userBusLayout,
   });
+  m.layout = layoutResult.devices;
+  for (const [busId, geom] of layoutResult.buses) {
+    const bus = busById.get(busId);
+    if (!bus) continue;
+    m.buses.set(busId, { bus, geometry: geom });
+  }
+  // Any bus that still has no geometry (auto-layout couldn't position it)
+  // gets a default. Defensive — shouldn't happen with non-empty wires.
+  for (const [busId, bus] of busById) {
+    if (m.buses.has(busId)) continue;
+    m.buses.set(busId, {
+      bus,
+      geometry: {
+        at: bus.layout?.at ?? [0, 0],
+        span: bus.layout?.span ?? DEFAULT_BUS_SPAN,
+        rot: bus.layout?.rot ?? 0,
+        axis: busAxisFromRot(bus.layout?.rot ?? 0),
+      },
+    });
+  }
 
   // ---- 5. Compute terminal geometry --------------------------------------
   for (const re of m.elements.values()) {
@@ -192,20 +230,20 @@ export function compile(diagram: DiagramFile): InternalModel {
     m.elementToTerminals.set(re.element.id, refs);
   }
 
-  // ---- 6. Union-find on validated groups --------------------------------
-  const uf = new UnionFind<TerminalRef>();
-  for (const g of validGroups) {
-    g.terminals.forEach((r) => uf.add(r));
-    for (let i = 1; i < g.terminals.length; i++) uf.union(g.terminals[0], g.terminals[i]);
+  // ---- 6. Union-find over wires -----------------------------------------
+  const uf = new UnionFind<WireEnd>();
+  for (const w of validWires) {
+    uf.add(w.ends[0]);
+    uf.add(w.ends[1]);
+    uf.union(w.ends[0], w.ends[1]);
   }
-
   for (const [, members] of uf.groups()) {
     const id = deterministicNodeId(members);
     m.nodes.set(id, { id, terminals: members });
-    for (const ref of members) m.terminalToNode.set(ref, id);
+    for (const end of members) m.terminalToNode.set(end, id);
   }
 
-  // Warn about isolated elements (none of their terminals appears in any node).
+  // Warn about isolated elements / buses (no terminal in any node).
   for (const re of m.elements.values()) {
     const refs = m.elementToTerminals.get(re.element.id) ?? [];
     if (refs.length === 0) continue;
@@ -218,18 +256,25 @@ export function compile(diagram: DiagramFile): InternalModel {
       });
     }
   }
-
-  // ---- 7. Routes (user-provided override; otherwise auto-route) ---------
-  const userRoutes = diagram.routes ?? {};
-  for (const node of m.nodes.values()) {
-    const userRoute = userRoutes[node.id];
-    if (userRoute) {
-      m.routes.set(node.id, { paths: [userRoute.path], userEdited: true });
-    } else {
-      m.routes.set(node.id, autoRoute(node, m));
+  for (const busId of m.buses.keys()) {
+    if (!m.terminalToNode.has(busId)) {
+      m.diagnostics.push({
+        code: 'W001',
+        severity: 'warning',
+        message: t('compile.elementUnconnected', { id: busId }),
+      });
     }
+  }
+
+  // ---- 7. Per-wire rendering (Wire.path override; otherwise routeWire) ---
+  for (const w of validWires) {
+    if (w.path && w.path.length >= 2) {
+      m.wireRenders.set(w.id, { wireId: w.id, path: w.path, userEdited: true });
+      continue;
+    }
+    const r = routeWire(w, m);
+    if (r) m.wireRenders.set(w.id, r);
   }
 
   return m;
 }
-

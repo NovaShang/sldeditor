@@ -4,7 +4,7 @@
  * Mutation rule: the only way to change `diagram` is `dispatch(mutator)`.
  * `dispatch` snapshots the previous diagram onto an undo stack, applies the
  * mutation, recompiles, and clears the redo stack. Targeted helpers
- * (`moveElements`, `addConnection`, …) are thin wrappers around `dispatch`.
+ * (`moveElements`, `addWire`, …) are thin wrappers around `dispatch`.
  *
  * Selection / tool / cursor state lives in the store too, but does *not*
  * participate in the undo stack — Figma convention: ephemeral UI state
@@ -20,33 +20,35 @@ import {
   compile,
   type InternalModel,
   type ResolvedPlacement,
+  type BusGeometry,
 } from '../compiler';
 import type { FileSession } from '../lib/file-io';
 import type {
   AnnotationId,
-  Connection,
+  Bus,
+  BusId,
+  BusLayout,
   DiagramFile,
   Element,
   ElementId,
   NodeId,
   Placement,
-  TerminalRef,
   TextAnnotation,
+  Wire,
+  WireEnd,
+  WireId,
 } from '../model';
-import { newAnnotationId, newElementId } from './id-allocator';
+import {
+  newAnnotationId,
+  newBusId,
+  newElementId,
+  wireIdFromEnds,
+} from './id-allocator';
 
 const EMPTY_DIAGRAM: DiagramFile = { version: '1', elements: [] };
 const HISTORY_LIMIT = 100;
 const PASTE_OFFSET = 20;
 
-/**
- * Touch/coarse-pointer devices default to the pan tool: it doubles as a
- * one-finger selector (tap an element to select, tap empty space to clear)
- * while still letting one-finger drag pan the canvas, which is what users
- * expect from map-like apps. Desktop keeps `select` as the default since the
- * mouse has a precise tip and pan is always available via Space-hold.
- * Returning users keep whatever tool they last persisted.
- */
 function defaultTool(): ToolId {
   if (typeof window === 'undefined') return 'select';
   try {
@@ -59,14 +61,15 @@ function defaultTool(): ToolId {
 /**
  * Self-contained snapshot of a copied selection. Placements are pre-resolved
  * (auto-layout positions baked in) so paste survives later edits to the
- * source diagram. Connections only include those whose terminals are all
- * within the selection — partial connections are dropped, matching what
- * users expect from "copy this group of elements".
+ * source diagram. Wires only include those whose endpoints are all within
+ * the selection.
  */
 export interface ClipboardData {
   elements: Element[];
+  buses: Bus[];
   placements: Record<ElementId, Placement>;
-  connections: Connection[];
+  busLayouts: Record<BusId, BusLayout>;
+  wires: Wire[];
 }
 
 export type ToolId = 'select' | 'pan' | 'wire' | 'place' | 'busbar' | 'text';
@@ -75,36 +78,25 @@ export interface EditorState {
   // ---- Document --------------------------------------------------------
   diagram: DiagramFile;
   internal: InternalModel;
-  /** Currently associated on-disk file (set by open / save), if any. */
   fileSession: FileSession | null;
 
   // ---- Ephemeral UI state ---------------------------------------------
   activeTool: ToolId;
-  /** When `activeTool === 'place'`, the kind to drop on click. */
   placeKind: string | null;
-  /** Sticky memory of the last kind picked from the library — survives Esc /
-   *  tool switches so re-entering place mode auto-arms the user's previous
-   *  pick. Updated whenever `setPlaceKind` is called with a non-null kind. */
   lastPlaceKind: string | null;
-  /** When `activeTool === 'wire'` and the user has clicked one terminal. */
-  wireFromTerminal: TerminalRef | null;
-  /** When `activeTool === 'place'` and the user pressed down on a terminal,
-   *  starting a drag-from-terminal placement. */
-  placeFromTerminal: TerminalRef | null;
-  /** When `activeTool === 'busbar'` and the user has pressed pointer down. */
+  wireFromTerminal: WireEnd | null;
+  placeFromTerminal: WireEnd | null;
   busbarDrawStart: [number, number] | null;
-  /** Cursor in SVG coordinates; updated by tools' onPointerMove. */
   cursorSvg: [number, number] | null;
+  /** Selected devices and/or buses (shared id namespace). */
   selection: ElementId[];
-  /** Selected ConnectivityNode (set by clicking a wire). Mutually exclusive
-   *  with `selection` — selecting an element clears it and vice versa. */
+  /** Selected single wire (mutually exclusive with selection/selectedNode). */
+  selectedWire: WireId | null;
+  /** Selected ConnectivityNode — used for "select the whole electrical
+   *  node" operations. Mutually exclusive with the others. */
   selectedNode: NodeId | null;
-  /** Currently selected free text annotation. Mutually exclusive with
-   *  `selection` and `selectedNode`. */
   selectedAnnotation: AnnotationId | null;
-  /** When non-null, that annotation is in inline-edit mode (contenteditable). */
   editingAnnotation: AnnotationId | null;
-  /** When non-null, that element's name is in inline-edit mode on the canvas. */
   editingElement: ElementId | null;
 
   // ---- History ---------------------------------------------------------
@@ -113,16 +105,13 @@ export interface EditorState {
 
   // ---- Clipboard (ephemeral, not in history) --------------------------
   clipboard: ClipboardData | null;
-  /** Bumped on each paste so successive pastes step further from origin. */
   clipboardPasteIndex: number;
 
   // ---- Mutation API ----------------------------------------------------
-  /** Replace the entire diagram, clearing history (used for open/load). */
   setDiagram: (diagram: DiagramFile) => void;
   setFileSession: (session: FileSession | null) => void;
   loadDiagramFromFile: (diagram: DiagramFile, session: FileSession) => void;
 
-  /** Apply a function to produce the next diagram, with undo support. */
   dispatch: (mutator: (d: DiagramFile) => DiagramFile, label?: string) => void;
   undo: () => void;
   redo: () => void;
@@ -130,21 +119,18 @@ export interface EditorState {
   // ---- UI actions ------------------------------------------------------
   setActiveTool: (tool: ToolId, opts?: { placeKind?: string | null }) => void;
   setPlaceKind: (kind: string | null) => void;
-  setWireFromTerminal: (ref: TerminalRef | null) => void;
-  setPlaceFromTerminal: (ref: TerminalRef | null) => void;
+  setWireFromTerminal: (ref: WireEnd | null) => void;
+  setPlaceFromTerminal: (ref: WireEnd | null) => void;
   setBusbarDrawStart: (pt: [number, number] | null) => void;
   setCursorSvg: (pt: [number, number] | null) => void;
 
   setSelection: (ids: ElementId[]) => void;
   toggleInSelection: (id: ElementId) => void;
   clearSelection: () => void;
-  /** Select (or deselect with `null`) a ConnectivityNode by clicking a wire. */
+  setSelectedWire: (id: WireId | null) => void;
   setSelectedNode: (nodeId: NodeId | null) => void;
-  /** Select (or deselect with `null`) a free text annotation. */
   setSelectedAnnotation: (id: AnnotationId | null) => void;
-  /** Toggle inline edit mode for a free text annotation. */
   setEditingAnnotation: (id: AnnotationId | null) => void;
-  /** Toggle inline edit mode for an element's `name`. */
   setEditingElement: (id: ElementId | null) => void;
 
   // ---- Clipboard actions ----------------------------------------------
@@ -153,23 +139,17 @@ export interface EditorState {
   pasteClipboard: () => void;
 
   // ---- Auto-layout actions --------------------------------------------
-  /** Drop all explicit placements; let the compiler re-derive everything. */
   autoArrangeAll: () => void;
-  /** Drop explicit placements for selected elements only. */
   autoArrangeSelection: () => void;
-  /** Bake compiler-computed positions for any unplaced element into d.layout. */
   fillUnplacedAll: () => void;
-  /** Same as fillUnplacedAll but scoped to current selection. */
   fillUnplacedSelection: () => void;
 
   // ---- Document edit shortcuts ----------------------------------------
   moveElements: (deltas: Map<ElementId, [number, number]>) => void;
   deleteSelection: () => void;
-  /**
-   * Drop every connection (and bus.tap entry) that touches the currently
-   * selected ConnectivityNode — effectively "delete this wire". Elements
-   * stay; only the connectivity disappears.
-   */
+  /** Drop a single wire by id. */
+  deleteSelectedWire: () => void;
+  /** Drop every wire touching the currently selected ConnectivityNode. */
   deleteSelectedNode: () => void;
   rotateSelection: (deltaDegrees: 90 | -90 | 180) => void;
   mirrorSelection: () => void;
@@ -178,10 +158,16 @@ export interface EditorState {
     at: [number, number],
     extra?: Partial<Element>,
   ) => ElementId;
-  addConnection: (a: TerminalRef, b: TerminalRef) => void;
+  addBus: (
+    at: [number, number],
+    span: number,
+    rot?: 0 | 90 | 180 | 270,
+  ) => BusId;
+  /** Append a wire between two endpoints (idempotent — duplicate is a no-op). */
+  addWire: (a: WireEnd, b: WireEnd) => void;
   updateElement: (id: ElementId, patch: Partial<Element>) => void;
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
-  /** Drop a free text annotation at `at` (canvas coords); returns its id. */
+  updateBus: (id: BusId, patch: Partial<BusLayout>) => void;
   addAnnotation: (at: [number, number], text?: string) => AnnotationId;
   updateAnnotation: (id: AnnotationId, patch: Partial<TextAnnotation>) => void;
   deleteAnnotation: (id: AnnotationId) => void;
@@ -202,6 +188,7 @@ export const useEditorStore = create<EditorState>()(
   busbarDrawStart: null,
   cursorSvg: null,
   selection: [],
+  selectedWire: null,
   selectedNode: null,
   selectedAnnotation: null,
   editingAnnotation: null,
@@ -220,6 +207,7 @@ export const useEditorStore = create<EditorState>()(
       past: [],
       future: [],
       selection: [],
+      selectedWire: null,
       selectedNode: null,
       selectedAnnotation: null,
       editingAnnotation: null,
@@ -238,6 +226,7 @@ export const useEditorStore = create<EditorState>()(
       past: [],
       future: [],
       selection: [],
+      selectedWire: null,
       selectedNode: null,
       selectedAnnotation: null,
       editingAnnotation: null,
@@ -289,7 +278,6 @@ export const useEditorStore = create<EditorState>()(
 
   setActiveTool: (tool, opts) => {
     const cur = get();
-    // Resolve placeKind for place mode: explicit > existing armed > last-used.
     let placeKind: string | null;
     if (opts?.placeKind !== undefined) placeKind = opts.placeKind;
     else if (tool === 'place') placeKind = cur.placeKind ?? cur.lastPlaceKind;
@@ -315,15 +303,15 @@ export const useEditorStore = create<EditorState>()(
   setSelection: (ids) =>
     set({
       selection: dedupe(ids),
+      selectedWire: null,
       selectedNode: null,
       selectedAnnotation: ids.length ? null : get().selectedAnnotation,
     }),
   toggleInSelection: (id) => {
     const sel = get().selection;
     set({
-      selection: sel.includes(id)
-        ? sel.filter((x) => x !== id)
-        : [...sel, id],
+      selection: sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id],
+      selectedWire: null,
       selectedNode: null,
       selectedAnnotation: null,
     });
@@ -331,21 +319,31 @@ export const useEditorStore = create<EditorState>()(
   clearSelection: () =>
     set({
       selection: [],
+      selectedWire: null,
       selectedNode: null,
       selectedAnnotation: null,
       editingAnnotation: null,
       editingElement: null,
     }),
+  setSelectedWire: (id) =>
+    set({
+      selectedWire: id,
+      selection: id ? [] : get().selection,
+      selectedNode: null,
+      selectedAnnotation: id ? null : get().selectedAnnotation,
+    }),
   setSelectedNode: (nodeId) =>
     set({
       selectedNode: nodeId,
       selection: nodeId ? [] : get().selection,
+      selectedWire: null,
       selectedAnnotation: nodeId ? null : get().selectedAnnotation,
     }),
   setSelectedAnnotation: (id) =>
     set({
       selectedAnnotation: id,
       selection: id ? [] : get().selection,
+      selectedWire: id ? null : get().selectedWire,
       selectedNode: id ? null : get().selectedNode,
       editingAnnotation: id ? get().editingAnnotation : null,
     }),
@@ -361,6 +359,7 @@ export const useEditorStore = create<EditorState>()(
       selection: id ? [id] : get().selection,
       editingAnnotation: id ? null : get().editingAnnotation,
       selectedAnnotation: id ? null : get().selectedAnnotation,
+      selectedWire: id ? null : get().selectedWire,
       selectedNode: id ? null : get().selectedNode,
     }),
 
@@ -373,25 +372,38 @@ export const useEditorStore = create<EditorState>()(
       .filter((e) => sel.has(e.id))
       .map((e) => structuredClone(e));
 
+    const buses = (diagram.buses ?? [])
+      .filter((b) => sel.has(b.id))
+      .map((b) => structuredClone(b));
+
     const placements: Record<ElementId, Placement> = {};
     for (const id of selection) {
-      const explicit = diagram.layout?.[id];
-      if (explicit) {
-        placements[id] = structuredClone(explicit);
-        continue;
+      if (sel.has(id) && !internal.buses.has(id)) {
+        const explicit = diagram.layout?.[id];
+        if (explicit) {
+          placements[id] = structuredClone(explicit);
+          continue;
+        }
+        const resolved = internal.layout.get(id);
+        if (resolved) placements[id] = compactPlacement(resolved);
       }
-      const resolved = internal.layout.get(id);
-      if (resolved) placements[id] = compactPlacement(resolved);
     }
 
-    const connections = (diagram.connections ?? [])
-      .filter((c) =>
-        connectionTerminals(c).every((ref) => sel.has(elementOf(ref))),
+    const busLayouts: Record<BusId, BusLayout> = {};
+    for (const id of selection) {
+      const rb = internal.buses.get(id);
+      if (!rb) continue;
+      busLayouts[id] = compactBusLayout(rb.geometry);
+    }
+
+    const wires = (diagram.wires ?? [])
+      .filter((w) =>
+        w.ends.every((e) => sel.has(endOwner(e))),
       )
-      .map((c) => structuredClone(c));
+      .map((w) => structuredClone(w));
 
     set({
-      clipboard: { elements, placements, connections },
+      clipboard: { elements, buses, placements, busLayouts, wires },
       clipboardPasteIndex: 0,
     });
   },
@@ -405,13 +417,12 @@ export const useEditorStore = create<EditorState>()(
 
   pasteClipboard: () => {
     const { clipboard, clipboardPasteIndex, diagram } = get();
-    if (!clipboard || clipboard.elements.length === 0) return;
+    if (!clipboard) return;
+    if (clipboard.elements.length === 0 && clipboard.buses.length === 0) return;
     const step = clipboardPasteIndex + 1;
     const dx = PASTE_OFFSET * step;
     const dy = PASTE_OFFSET * step;
 
-    // Pre-allocate new IDs against a synthetic growing diagram so paste-time
-    // collisions across the clipboard batch are avoided.
     const idMap = new Map<ElementId, ElementId>();
     let working = diagram;
     for (const el of clipboard.elements) {
@@ -422,19 +433,40 @@ export const useEditorStore = create<EditorState>()(
         elements: [...working.elements, { id: newId, kind: el.kind }],
       };
     }
+    for (const bus of clipboard.buses) {
+      const newId = newBusId(working);
+      idMap.set(bus.id, newId);
+      working = {
+        ...working,
+        buses: [...(working.buses ?? []), { id: newId }],
+      };
+    }
 
-    const remapTerminal = (ref: TerminalRef): TerminalRef => {
-      const dot = ref.indexOf('.');
-      const elId = dot < 0 ? ref : ref.slice(0, dot);
-      const remapped = idMap.get(elId);
-      if (!remapped) return ref;
-      return (dot < 0 ? remapped : `${remapped}${ref.slice(dot)}`) as TerminalRef;
+    const remapEnd = (end: WireEnd): WireEnd => {
+      const dot = end.indexOf('.');
+      const head = dot < 0 ? end : end.slice(0, dot);
+      const remapped = idMap.get(head);
+      if (!remapped) return end;
+      return (dot < 0 ? remapped : `${remapped}${end.slice(dot)}`) as WireEnd;
     };
 
     get().dispatch((d) => {
       const newElements: Element[] = clipboard.elements.map((e) => {
         const cloned = structuredClone(e);
         cloned.id = idMap.get(e.id)!;
+        return cloned;
+      });
+
+      const newBuses: Bus[] = clipboard.buses.map((b) => {
+        const cloned = structuredClone(b);
+        cloned.id = idMap.get(b.id)!;
+        const layout = clipboard.busLayouts[b.id];
+        if (layout) {
+          cloned.layout = {
+            ...layout,
+            at: [layout.at[0] + dx, layout.at[1] + dy],
+          };
+        }
         return cloned;
       });
 
@@ -448,16 +480,24 @@ export const useEditorStore = create<EditorState>()(
         };
       }
 
-      const newConns: Connection[] = clipboard.connections.map((c) =>
-        c.map(remapTerminal),
-      );
+      const newWires: Wire[] = clipboard.wires.map((w) => {
+        const ends: [WireEnd, WireEnd] = [
+          remapEnd(w.ends[0]),
+          remapEnd(w.ends[1]),
+        ];
+        return { id: wireIdFromEnds(ends[0], ends[1]), ends };
+      });
 
-      const mergedConns = [...(d.connections ?? []), ...newConns];
+      const wires = mergeWires(d.wires ?? [], newWires);
+
       return {
         ...d,
         elements: [...d.elements, ...newElements],
-        connections: mergedConns.length ? mergedConns : undefined,
-        layout: newLayout,
+        buses: newBuses.length
+          ? [...(d.buses ?? []), ...newBuses]
+          : d.buses,
+        wires: wires.length ? wires : undefined,
+        layout: Object.keys(newLayout).length ? newLayout : undefined,
       };
     });
 
@@ -469,10 +509,17 @@ export const useEditorStore = create<EditorState>()(
 
   autoArrangeAll: () => {
     get().dispatch((d) => {
-      if (!d.layout || Object.keys(d.layout).length === 0) return d;
+      const hasDeviceLayout = d.layout && Object.keys(d.layout).length > 0;
+      const hasBusLayout = (d.buses ?? []).some((b) => b.layout);
+      if (!hasDeviceLayout && !hasBusLayout) return d;
       const { layout: _layout, ...rest } = d;
       void _layout;
-      return rest;
+      const buses = d.buses?.map((b) => {
+        const { layout: _bl, ...bRest } = b;
+        void _bl;
+        return bRest;
+      });
+      return { ...rest, buses };
     });
   },
 
@@ -481,36 +528,73 @@ export const useEditorStore = create<EditorState>()(
     if (selection.length === 0) return;
     const drop = new Set(selection);
     get().dispatch((d) => {
-      if (!d.layout) return d;
-      const next: Record<ElementId, Placement> = {};
       let changed = false;
-      for (const [id, p] of Object.entries(d.layout)) {
-        if (drop.has(id)) {
-          changed = true;
-          continue;
+      let layout = d.layout;
+      if (layout) {
+        const next: Record<ElementId, Placement> = {};
+        for (const [id, p] of Object.entries(layout)) {
+          if (drop.has(id)) {
+            changed = true;
+            continue;
+          }
+          next[id] = p;
         }
-        next[id] = p;
+        if (changed) layout = Object.keys(next).length ? next : undefined;
+      }
+      let buses = d.buses;
+      if (buses) {
+        const next = buses.map((b) => {
+          if (drop.has(b.id) && b.layout) {
+            changed = true;
+            const { layout: _bl, ...rest } = b;
+            void _bl;
+            return rest;
+          }
+          return b;
+        });
+        if (changed) buses = next;
       }
       if (!changed) return d;
-      return {
-        ...d,
-        layout: Object.keys(next).length ? next : undefined,
-      };
+      return { ...d, layout, buses };
     });
   },
 
   fillUnplacedAll: () => {
-    const internalLayout = get().internal.layout;
+    const internal = get().internal;
     get().dispatch((d) => {
       const explicit = d.layout ?? {};
       const additions: Record<ElementId, Placement> = {};
       for (const el of d.elements) {
         if (explicit[el.id]) continue;
-        const resolved = internalLayout.get(el.id);
+        const resolved = internal.layout.get(el.id);
         if (resolved) additions[el.id] = compactPlacement(resolved);
       }
-      if (Object.keys(additions).length === 0) return d;
-      return { ...d, layout: { ...explicit, ...additions } };
+      const busesNeedLayout: { idx: number; bus: Bus }[] = [];
+      (d.buses ?? []).forEach((b, idx) => {
+        if (b.layout) return;
+        if (internal.buses.has(b.id)) busesNeedLayout.push({ idx, bus: b });
+      });
+      if (
+        Object.keys(additions).length === 0 &&
+        busesNeedLayout.length === 0
+      ) {
+        return d;
+      }
+      let buses = d.buses;
+      if (busesNeedLayout.length > 0 && buses) {
+        buses = buses.map((b) => {
+          const rb = internal.buses.get(b.id);
+          if (!b.layout && rb) {
+            return { ...b, layout: compactBusLayout(rb.geometry) };
+          }
+          return b;
+        });
+      }
+      return {
+        ...d,
+        layout: { ...explicit, ...additions },
+        buses,
+      };
     });
   },
 
@@ -520,33 +604,72 @@ export const useEditorStore = create<EditorState>()(
     get().dispatch((d) => {
       const explicit = d.layout ?? {};
       const additions: Record<ElementId, Placement> = {};
+      const busesPatch = new Map<BusId, BusLayout>();
       for (const id of selection) {
-        if (explicit[id]) continue;
-        const resolved = internal.layout.get(id);
-        if (resolved) additions[id] = compactPlacement(resolved);
+        if (internal.buses.has(id)) {
+          const rb = internal.buses.get(id)!;
+          if (!d.buses?.find((b) => b.id === id && b.layout)) {
+            busesPatch.set(id, compactBusLayout(rb.geometry));
+          }
+        } else {
+          if (explicit[id]) continue;
+          const resolved = internal.layout.get(id);
+          if (resolved) additions[id] = compactPlacement(resolved);
+        }
       }
-      if (Object.keys(additions).length === 0) return d;
-      return { ...d, layout: { ...explicit, ...additions } };
+      if (Object.keys(additions).length === 0 && busesPatch.size === 0) {
+        return d;
+      }
+      let buses = d.buses;
+      if (busesPatch.size > 0 && buses) {
+        buses = buses.map((b) =>
+          busesPatch.has(b.id) ? { ...b, layout: busesPatch.get(b.id)! } : b,
+        );
+      }
+      return {
+        ...d,
+        layout: { ...explicit, ...additions },
+        buses,
+      };
     });
   },
 
   moveElements: (deltas) => {
     if (deltas.size === 0) return;
-    const internalLayout = get().internal.layout;
+    const internal = get().internal;
     get().dispatch((d) => {
       const layout = { ...(d.layout ?? {}) };
+      const busPatches = new Map<BusId, [number, number]>();
       for (const [id, delta] of deltas) {
-        // Auto-placed elements aren't in `d.layout` yet — bake the compiler's
-        // full resolved placement (span/rot/mirror, not just `at`) so a drag
-        // doesn't strip auto-computed properties like a busbar's span.
-        const resolved = internalLayout.get(id);
-        const base: Placement = layout[id] ?? (resolved ? compactPlacement(resolved) : { at: [0, 0] });
+        if (internal.buses.has(id)) {
+          busPatches.set(id, delta);
+          continue;
+        }
+        const resolved = internal.layout.get(id);
+        const base: Placement =
+          layout[id] ?? (resolved ? compactPlacement(resolved) : { at: [0, 0] });
         layout[id] = {
           ...base,
           at: [base.at[0] + delta[0], base.at[1] + delta[1]],
         };
       }
-      return { ...d, layout };
+      let buses = d.buses;
+      if (busPatches.size > 0) {
+        buses = (d.buses ?? []).map((b) => {
+          const delta = busPatches.get(b.id);
+          if (!delta) return b;
+          const cur =
+            b.layout ?? compactBusLayout(internal.buses.get(b.id)!.geometry);
+          return {
+            ...b,
+            layout: {
+              ...cur,
+              at: [cur.at[0] + delta[0], cur.at[1] + delta[1]],
+            },
+          };
+        });
+      }
+      return { ...d, layout, buses };
     });
   },
 
@@ -556,20 +679,38 @@ export const useEditorStore = create<EditorState>()(
     const ids = new Set(selection);
     get().dispatch((d) => {
       const elements = d.elements.filter((e) => !ids.has(e.id));
-      const connections = (d.connections ?? [])
-        .map((c) => filterConnection(c, ids))
-        .filter((c) => connectionTerminals(c).length >= 2);
+      const buses = (d.buses ?? []).filter((b) => !ids.has(b.id));
+      const wires = (d.wires ?? []).filter(
+        (w) => !ids.has(endOwner(w.ends[0])) && !ids.has(endOwner(w.ends[1])),
+      );
       const layout = d.layout
-        ? Object.fromEntries(Object.entries(d.layout).filter(([k]) => !ids.has(k)))
+        ? Object.fromEntries(
+            Object.entries(d.layout).filter(([k]) => !ids.has(k)),
+          )
         : undefined;
       return {
         ...d,
         elements,
-        connections: connections.length ? connections : undefined,
+        buses: buses.length ? buses : undefined,
+        wires: wires.length ? wires : undefined,
         layout: layout && Object.keys(layout).length ? layout : undefined,
       };
     });
     set({ selection: [] });
+  },
+
+  deleteSelectedWire: () => {
+    const { selectedWire } = get();
+    if (!selectedWire) return;
+    get().dispatch((d) => {
+      const wires = (d.wires ?? []).filter((w) => w.id !== selectedWire);
+      if (wires.length === (d.wires ?? []).length) return d;
+      return {
+        ...d,
+        wires: wires.length ? wires : undefined,
+      };
+    });
+    set({ selectedWire: null });
   },
 
   deleteSelectedNode: () => {
@@ -577,16 +718,12 @@ export const useEditorStore = create<EditorState>()(
     if (!selectedNode) return;
     const node = internal.nodes.get(selectedNode);
     if (!node) return;
-    const memberSet = new Set<string>(node.terminals);
+    const memberSet = new Set<WireEnd>(node.terminals);
 
-    // Elements that lose a connection here. Auto-placed ones would otherwise
-    // jump to a fallback position once the connection that anchored them is
-    // gone — bake their current resolved coords into `layout` first so they
-    // stay where the user sees them.
     const affectedElementIds = new Set<ElementId>();
-    for (const ref of node.terminals) {
-      const dot = ref.indexOf('.');
-      if (dot > 0) affectedElementIds.add(ref.slice(0, dot));
+    for (const end of node.terminals) {
+      const dot = end.indexOf('.');
+      if (dot > 0) affectedElementIds.add(end.slice(0, dot));
     }
 
     get().dispatch((d) => {
@@ -598,19 +735,15 @@ export const useEditorStore = create<EditorState>()(
         const placement: Placement = { at: resolved.at };
         if (resolved.rot) placement.rot = resolved.rot;
         if (resolved.mirror) placement.mirror = resolved.mirror;
-        if (resolved.span !== undefined) placement.span = resolved.span;
         layout[id] = placement;
       }
 
-      // Drop any connection that touches the node (connections are union-find
-      // groups, so by definition every member of the group lives in the same
-      // node — `some` is sufficient).
-      const connections = (d.connections ?? []).filter(
-        (c) => !c.some((t) => memberSet.has(t)),
+      const wires = (d.wires ?? []).filter(
+        (w) => !memberSet.has(w.ends[0]) && !memberSet.has(w.ends[1]),
       );
       return {
         ...d,
-        connections: connections.length ? connections : undefined,
+        wires: wires.length ? wires : undefined,
         layout: Object.keys(layout).length ? layout : undefined,
       };
     });
@@ -622,12 +755,30 @@ export const useEditorStore = create<EditorState>()(
     if (selection.length === 0) return;
     get().dispatch((d) => {
       const layout = { ...(d.layout ?? {}) };
+      const busPatches = new Map<BusId, 0 | 90 | 180 | 270>();
       for (const id of selection) {
+        if (internal.buses.has(id)) {
+          const rb = internal.buses.get(id)!;
+          const cur =
+            d.buses?.find((b) => b.id === id)?.layout?.rot ?? rb.geometry.rot;
+          const next = (((cur ?? 0) + deltaDegrees) % 360 + 360) % 360;
+          busPatches.set(id, next as 0 | 90 | 180 | 270);
+          continue;
+        }
         const cur = layout[id] ?? { at: internal.layout.get(id)?.at ?? [0, 0] };
         const next = (((cur.rot ?? 0) + deltaDegrees) % 360 + 360) % 360;
         layout[id] = { ...cur, rot: next as 0 | 90 | 180 | 270 };
       }
-      return { ...d, layout };
+      let buses = d.buses;
+      if (busPatches.size > 0) {
+        buses = (d.buses ?? []).map((b) => {
+          if (!busPatches.has(b.id)) return b;
+          const cur =
+            b.layout ?? compactBusLayout(internal.buses.get(b.id)!.geometry);
+          return { ...b, layout: { ...cur, rot: busPatches.get(b.id)! } };
+        });
+      }
+      return { ...d, layout, buses };
     });
   },
 
@@ -637,6 +788,7 @@ export const useEditorStore = create<EditorState>()(
     get().dispatch((d) => {
       const layout = { ...(d.layout ?? {}) };
       for (const id of selection) {
+        if (internal.buses.has(id)) continue; // buses don't mirror
         const cur = layout[id] ?? { at: internal.layout.get(id)?.at ?? [0, 0] };
         layout[id] = { ...cur, mirror: !(cur.mirror ?? false) };
       }
@@ -645,6 +797,9 @@ export const useEditorStore = create<EditorState>()(
   },
 
   addElement: (kind, at, extra) => {
+    if (kind === 'busbar') {
+      return get().addBus(at, 320);
+    }
     const id = newElementId(get().diagram, kind);
     get().dispatch((d) => {
       const newElement: Element = { id, kind, ...(extra ?? {}) };
@@ -658,12 +813,33 @@ export const useEditorStore = create<EditorState>()(
     return id;
   },
 
-  addConnection: (a, b) => {
+  addBus: (at, span, rot) => {
+    const id = newBusId(get().diagram);
+    get().dispatch((d) => {
+      const bus: Bus = {
+        id,
+        layout: rot !== undefined ? { at, span, rot } : { at, span },
+      };
+      return {
+        ...d,
+        buses: [...(d.buses ?? []), bus],
+      };
+    });
+    set({ selection: [id] });
+    return id;
+  },
+
+  addWire: (a, b) => {
     if (a === b) return;
-    get().dispatch((d) => ({
-      ...d,
-      connections: [...(d.connections ?? []), [a, b]],
-    }));
+    const id = wireIdFromEnds(a, b);
+    get().dispatch((d) => {
+      const existing = d.wires ?? [];
+      if (existing.some((w) => w.id === id)) return d;
+      return {
+        ...d,
+        wires: [...existing, { id, ends: [a, b] }],
+      };
+    });
   },
 
   updateElement: (id, patch) => {
@@ -682,14 +858,33 @@ export const useEditorStore = create<EditorState>()(
         ...(patch.mirror !== undefined
           ? { mirror: patch.mirror }
           : cur?.mirror ? { mirror: cur.mirror } : {}),
-        ...(patch.span !== undefined
-          ? { span: patch.span }
-          : cur?.span !== undefined ? { span: cur.span } : {}),
       };
       return {
         ...d,
         layout: { ...(d.layout ?? {}), [id]: nextPlacement },
       };
+    });
+  },
+
+  updateBus: (id, patch) => {
+    get().dispatch((d) => {
+      const buses = (d.buses ?? []).map((b) => {
+        if (b.id !== id) return b;
+        const internal = get().internal;
+        const cur =
+          b.layout ?? (internal.buses.has(id)
+            ? compactBusLayout(internal.buses.get(id)!.geometry)
+            : { at: [0, 0] as [number, number], span: 320 });
+        const next: BusLayout = {
+          at: patch.at ?? cur.at,
+          span: patch.span ?? cur.span,
+          ...(patch.rot !== undefined
+            ? { rot: patch.rot }
+            : cur.rot ? { rot: cur.rot } : {}),
+        };
+        return { ...b, layout: next };
+      });
+      return { ...d, buses };
     });
   },
 
@@ -731,20 +926,14 @@ export const useEditorStore = create<EditorState>()(
     }),
     {
       name: 'ole-editor',
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
-      // Persist only the document and a couple of UI prefs. `internal` is
-      // re-derived from `diagram`; `fileSession` holds non-serializable
-      // FileSystemFileHandle; selection / cursor / wire-from / undo history
-      // are transient by design.
       partialize: (s) => ({
         diagram: s.diagram,
         activeTool: s.activeTool,
         placeKind: s.placeKind,
         lastPlaceKind: s.lastPlaceKind,
       }),
-      // After rehydration, recompile the internal model so the canvas
-      // matches the restored diagram.
       onRehydrateStorage: () => (state) => {
         if (state?.diagram) state.internal = compile(state.diagram);
       },
@@ -760,17 +949,21 @@ function dedupe<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));
 }
 
-function connectionTerminals(c: Connection): TerminalRef[] {
-  return c;
+function endOwner(end: WireEnd): ElementId {
+  const dot = end.indexOf('.');
+  return dot < 0 ? end : end.slice(0, dot);
 }
 
-function filterConnection(c: Connection, removed: Set<ElementId>): Connection {
-  return c.filter((ref) => !removed.has(elementOf(ref)));
-}
-
-function elementOf(ref: TerminalRef): ElementId {
-  const dot = ref.indexOf('.');
-  return dot < 0 ? ref : ref.slice(0, dot);
+/** Concatenate two wire lists, dropping duplicates (by content-hash id). */
+function mergeWires(a: Wire[], b: Wire[]): Wire[] {
+  const seen = new Set<WireId>(a.map((w) => w.id));
+  const out = a.slice();
+  for (const w of b) {
+    if (seen.has(w.id)) continue;
+    seen.add(w.id);
+    out.push(w);
+  }
+  return out;
 }
 
 /**
@@ -783,6 +976,13 @@ function compactPlacement(rp: ResolvedPlacement): Placement {
     at: [rp.at[0], rp.at[1]],
     ...(rp.rot ? { rot: rp.rot } : {}),
     ...(rp.mirror ? { mirror: rp.mirror } : {}),
-    ...(rp.span !== undefined ? { span: rp.span } : {}),
+  };
+}
+
+function compactBusLayout(g: BusGeometry): BusLayout {
+  return {
+    at: [g.at[0], g.at[1]],
+    span: g.span,
+    ...(g.rot ? { rot: g.rot } : {}),
   };
 }

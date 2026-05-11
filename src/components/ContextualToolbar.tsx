@@ -23,11 +23,13 @@ export function ContextualToolbar() {
   const t = useT();
   const selection = useEditorStore((s) => s.selection);
   const selectedNode = useEditorStore((s) => s.selectedNode);
+  const selectedWire = useEditorStore((s) => s.selectedWire);
   const activeTool = useEditorStore((s) => s.activeTool);
   const rotate = useEditorStore((s) => s.rotateSelection);
   const mirror = useEditorStore((s) => s.mirrorSelection);
   const del = useEditorStore((s) => s.deleteSelection);
   const delNode = useEditorStore((s) => s.deleteSelectedNode);
+  const delWire = useEditorStore((s) => s.deleteSelectedWire);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -36,11 +38,10 @@ export function ContextualToolbar() {
     if (!el) return;
 
     const isElementMode = selection.length > 0;
-    const isNodeMode = !isElementMode && selectedNode != null;
-    // Pan tool absorbs single-tap selection on touch (see PanTool), so it
-    // should surface the same contextual actions that the select tool does.
+    const isWireMode = !isElementMode && selectedWire != null;
+    const isNodeMode = !isElementMode && !isWireMode && selectedNode != null;
     const visible =
-      (isElementMode || isNodeMode) &&
+      (isElementMode || isWireMode || isNodeMode) &&
       (activeTool === 'select' || activeTool === 'pan');
     if (!visible) {
       el.style.display = 'none';
@@ -71,6 +72,11 @@ export function ContextualToolbar() {
           );
           if (node) accept(node.getBoundingClientRect());
         }
+      } else if (isWireMode && selectedWire) {
+        const w = document.querySelector(
+          `polyline.ole-wire[data-wire-id="${CSS.escape(selectedWire)}"]`,
+        );
+        if (w) accept((w as Element).getBoundingClientRect());
       } else if (isNodeMode && selectedNode) {
         const wires = document.querySelectorAll(
           `polyline.ole-wire[data-node-id="${CSS.escape(selectedNode)}"]`,
@@ -96,18 +102,26 @@ export function ContextualToolbar() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [selection, selectedNode, activeTool]);
+  }, [selection, selectedNode, selectedWire, activeTool]);
 
-  const isNodeMode = selection.length === 0 && selectedNode != null;
+  const isWireMode = selection.length === 0 && selectedWire != null;
+  const isNodeMode = selection.length === 0 && !isWireMode && selectedNode != null;
+  const hideTransform = isNodeMode || isWireMode;
 
   return (
     <div
       ref={ref}
       role="toolbar"
-      aria-label={isNodeMode ? t('ctx.ariaNode') : t('ctx.ariaElement')}
+      aria-label={
+        isWireMode
+          ? t('ctx.ariaWire')
+          : isNodeMode
+            ? t('ctx.ariaNode')
+            : t('ctx.ariaElement')
+      }
       className="ole-glass pointer-events-auto fixed left-0 top-0 z-30 hidden items-center gap-0.5 rounded-2xl border border-border p-1 shadow-md"
     >
-      {!isNodeMode && (
+      {!hideTransform && (
         <>
           <Tooltip
             content={
@@ -162,7 +176,11 @@ export function ContextualToolbar() {
               <span className="ml-1.5 text-muted-foreground">Del</span>
             </div>
             <div className="text-muted-foreground">
-              {isNodeMode ? t('ctx.deleteHintNode') : t('ctx.deleteHintElement')}
+              {isWireMode
+                ? t('ctx.deleteHintWire')
+                : isNodeMode
+                  ? t('ctx.deleteHintNode')
+                  : t('ctx.deleteHintElement')}
             </div>
           </div>
         }
@@ -171,7 +189,9 @@ export function ContextualToolbar() {
           variant="ghost"
           size="icon"
           className="size-7 text-destructive hover:text-destructive"
-          onClick={() => (isNodeMode ? delNode() : del())}
+          onClick={() =>
+            isWireMode ? delWire() : isNodeMode ? delNode() : del()
+          }
           aria-label={t('ctx.delete')}
         >
           <Trash2 />

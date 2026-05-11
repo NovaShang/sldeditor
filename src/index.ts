@@ -4,25 +4,30 @@ export { OneLineEditor } from './OneLineEditor';
 export type { OneLineEditorProps } from './OneLineEditor';
 
 export type {
+  Bus,
+  BusId,
+  BusLayout,
   DiagramFile,
   DiagramMeta,
   DiagramVersion,
   Element,
   ElementId,
-  PinName,
-  NodeId,
-  TerminalRef,
-  ParamValue,
-  Connection,
-  Placement,
-  Route,
   LibraryEntry,
-  LibraryTerminal,
-  LibraryStretchable,
-  LibraryStateField,
+  LibraryLabelAnchor,
   LibraryParamField,
   LibrarySource,
+  LibraryStateField,
+  LibraryStretchable,
+  LibraryTerminal,
+  NodeId,
   Orientation,
+  ParamValue,
+  PinName,
+  Placement,
+  TerminalRef,
+  Wire,
+  WireEnd,
+  WireId,
 } from './model';
 
 // Compiler / runtime model — exported so library consumers can build their
@@ -38,22 +43,29 @@ export {
   orientationVec,
 } from './compiler';
 export type {
+  BusGeometry,
   ConnectivityNode,
   Diagnostic,
   InternalModel,
-  InternalRoute,
+  ResolvedBus,
   ResolvedElement,
   ResolvedPlacement,
   TerminalGeometry,
+  WireRender,
 } from './compiler';
 
 export { useEditorStore } from './store';
 export type { EditorState } from './store';
 
 // ID allocator — for embedding apps (e.g. AI agents) that build elements
-// programmatically and need to mint stable kebab-case ids without colliding
-// with the existing diagram.
-export { newElementId } from './store/id-allocator';
+// programmatically and need to mint stable ids without colliding with the
+// existing diagram. `wireIdFromEnds` produces deterministic content-hash
+// WireIds so the same endpoint pair always maps to the same id.
+export {
+  newBusId,
+  newElementId,
+  wireIdFromEnds,
+} from './store/id-allocator';
 
 // Locale store — exposed so embedding apps can sync the editor's UI language
 // with their own i18n system.

@@ -21,9 +21,17 @@ export function WirePreview() {
 
   useEffect(() => subscribeWireTarget(setTarget), []);
 
+  const buses = useEditorStore((s) => s.internal.buses);
   if (!fromRef || !cursor) return null;
-  const from = terminals.get(fromRef);
-  if (!from) return null;
+  // `fromRef` may be a real terminal or a bare bus id — resolve world coords
+  // from whichever map matches.
+  let fromWorld: [number, number] | undefined;
+  if (fromRef.includes('.')) {
+    fromWorld = terminals.get(fromRef as `${string}.${string}`)?.world;
+  } else {
+    fromWorld = buses.get(fromRef)?.geometry.at;
+  }
+  if (!fromWorld) return null;
 
   // If we have a valid target, end the dashed line on it (snaps preview to
   // the actual landing point). Otherwise follow the raw cursor.
@@ -33,15 +41,15 @@ export function WirePreview() {
   return (
     <g className="ole-wire-preview" pointerEvents="none">
       <line
-        x1={from.world[0]}
-        y1={from.world[1]}
+        x1={fromWorld[0]}
+        y1={fromWorld[1]}
         x2={endX}
         y2={endY}
         className="ole-wire-preview-line"
       />
       <circle
-        cx={from.world[0]}
-        cy={from.world[1]}
+        cx={fromWorld[0]}
+        cy={fromWorld[1]}
         r={4}
         className="ole-wire-preview-anchor"
       />
@@ -50,13 +58,13 @@ export function WirePreview() {
           <circle
             cx={target.world[0]}
             cy={target.world[1]}
-            r={target.isBusTap ? 7 : 8}
+            r={target.isBus ? 7 : 8}
             className="ole-wire-preview-target-ring"
           />
           <circle
             cx={target.world[0]}
             cy={target.world[1]}
-            r={target.isBusTap ? 3 : 4}
+            r={target.isBus ? 3 : 4}
             className="ole-wire-preview-target-dot"
           />
         </>

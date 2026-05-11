@@ -12,10 +12,9 @@
 
 import { useEditorStore } from '../../store';
 import type { ResolvedPlacement } from '../../compiler';
-import type { AnnotationId, ElementId, TerminalRef } from '../../model';
-import { libraryById } from '../../element-library';
+import type { AnnotationId, ElementId, WireEnd } from '../../model';
 import { snap } from '../grid';
-import { hitAnnotation, hitElement, hitNode, hitTerminal } from '../hit-test';
+import { hitAnnotation, hitElement, hitNode, hitTerminal, hitWire } from '../hit-test';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
 import { resolveWireTarget } from '../resolve-wire-target';
 import { transformAttr } from '../transform-attr';
@@ -42,7 +41,7 @@ interface MarqueeState {
 
 interface WireDragState {
   pointerId: number;
-  fromRef: TerminalRef;
+  fromRef: WireEnd;
 }
 
 interface AnnotationDragState {
@@ -133,12 +132,19 @@ export const SelectTool: Tool = {
     const id = hitElement(e.target);
 
     if (!id) {
-      // Click on a wire → select its ConnectivityNode (no marquee, no
-      // element selection change beyond the implicit clear).
-      const nodeId = hitNode(e.target);
-      if (nodeId) {
+      // Click on a wire → select that single Wire. Alt-click selects the
+      // whole electrical node (every wire sharing the same potential).
+      const wireId = hitWire(e.target);
+      if (wireId) {
         e.preventDefault();
-        store.setSelectedNode(nodeId);
+        if (e.altKey) {
+          const nodeId = hitNode(e.target);
+          if (nodeId) {
+            store.setSelectedNode(nodeId);
+            return;
+          }
+        }
+        store.setSelectedWire(wireId);
         return;
       }
 
@@ -241,18 +247,16 @@ export const SelectTool: Tool = {
         }
       }
 
-      const internal = useEditorStore.getState().internal;
       for (const [id, orig] of drag.originals) {
         const node = ctx.hostEl.querySelector<SVGGElement>(
           `[data-element-id="${cssEscape(id)}"]`,
         );
         if (!node) continue;
-        const lib = internal.elements.get(id)?.libraryDef;
         const next: ResolvedPlacement = {
           ...orig,
           at: [orig.at[0] + dx, orig.at[1] + dy],
         };
-        node.setAttribute('transform', transformAttr(next, lib));
+        node.setAttribute('transform', transformAttr(next));
       }
       return;
     }
@@ -295,7 +299,7 @@ export const SelectTool: Tool = {
       store.setCursorSvg(null);
       publishWireTarget(null);
       const ref = hitTerminal(e.target);
-      if (ref && ref !== from) store.addConnection(from, ref);
+      if (ref && ref !== from) store.addWire(from, ref);
       return;
     }
 
@@ -364,14 +368,12 @@ export const SelectTool: Tool = {
     if (drag && e.pointerId === drag.pointerId) {
       // Reset the live preview transforms so the elements snap back to
       // their pre-drag placements (the store wasn't mutated yet).
-      const internal = useEditorStore.getState().internal;
       for (const [id, orig] of drag.originals) {
         const node = ctx.hostEl.querySelector<SVGGElement>(
           `[data-element-id="${cssEscape(id)}"]`,
         );
         if (!node) continue;
-        const lib = internal.elements.get(id)?.libraryDef;
-        node.setAttribute('transform', transformAttr(orig, lib));
+        node.setAttribute('transform', transformAttr(orig));
       }
       if (ctx.hostEl.hasPointerCapture?.(e.pointerId)) {
         try {
@@ -458,23 +460,11 @@ function elementsInRect(rect: MarqueeRect): ElementId[] {
     if (!place) continue;
     const vb = parseViewBox(re.libraryDef.viewBox);
     if (!vb) continue;
-    const lib = libraryById[re.element.kind];
-    const stretch = lib?.stretchable;
-    let sx = 1;
-    let sy = 1;
-    if (stretch && place.span && lib) {
-      const refLen = stretchReference(lib, stretch.axis);
-      if (refLen > 0) {
-        const k = place.span / refLen;
-        if (stretch.axis === 'x') sx = k;
-        else sy = k;
-      }
-    }
     const corners: [number, number][] = [
-      [vb.x * sx, vb.y * sy],
-      [(vb.x + vb.w) * sx, vb.y * sy],
-      [vb.x * sx, (vb.y + vb.h) * sy],
-      [(vb.x + vb.w) * sx, (vb.y + vb.h) * sy],
+      [vb.x, vb.y],
+      [vb.x + vb.w, vb.y],
+      [vb.x, vb.y + vb.h],
+      [vb.x + vb.w, vb.y + vb.h],
     ].map(([x, y]) => transformLocalCorner([x, y], place));
 
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -491,6 +481,23 @@ function elementsInRect(rect: MarqueeRect): ElementId[] {
       minY <= rect.y + rect.h
     ) {
       hits.push(re.element.id);
+    }
+  }
+  // Buses: a horizontal/vertical segment is a tight rect.
+  for (const { bus, geometry } of internal.buses.values()) {
+    const { axis, at, span } = geometry;
+    const half = span / 2;
+    const minX = axis === 'x' ? at[0] - half : at[0];
+    const maxX = axis === 'x' ? at[0] + half : at[0];
+    const minY = axis === 'x' ? at[1] : at[1] - half;
+    const maxY = axis === 'x' ? at[1] : at[1] + half;
+    if (
+      maxX >= rect.x &&
+      minX <= rect.x + rect.w &&
+      maxY >= rect.y &&
+      minY <= rect.y + rect.h
+    ) {
+      hits.push(bus.id);
     }
   }
   return hits;
@@ -522,15 +529,6 @@ function parseViewBox(s: string) {
   const parts = s.trim().split(/\s+/).map(Number);
   if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return null;
   return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
-}
-
-function stretchReference(
-  lib: { terminals: { x: number; y: number }[] },
-  axis: 'x' | 'y',
-): number {
-  if (lib.terminals.length < 2) return 0;
-  const vs = lib.terminals.map((t) => (axis === 'x' ? t.x : t.y));
-  return Math.max(...vs) - Math.min(...vs);
 }
 
 function cssEscape(s: string): string {

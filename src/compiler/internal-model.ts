@@ -4,6 +4,8 @@
  */
 
 import type {
+  Bus,
+  BusId,
   Element,
   ElementId,
   LibraryEntry,
@@ -11,6 +13,7 @@ import type {
   Orientation,
   Placement,
   TerminalRef,
+  WireEnd,
 } from '../model';
 
 /** Element + the resolved library record for its `kind`. */
@@ -20,12 +23,24 @@ export interface ResolvedElement {
   libraryDef?: LibraryEntry;
 }
 
-/** Placement after defaults applied (rot=0, mirror=false). `span` carried through. */
+/** Placement after defaults applied (rot=0, mirror=false). Devices only. */
 export interface ResolvedPlacement {
   at: [number, number];
   rot: 0 | 90 | 180 | 270;
   mirror: boolean;
-  span?: number;
+}
+
+/** Bus geometry resolved at compile time. `axis` derived from `rot`. */
+export interface BusGeometry {
+  at: [number, number];
+  span: number;
+  rot: 0 | 90 | 180 | 270;
+  axis: 'x' | 'y';
+}
+
+export interface ResolvedBus {
+  bus: Bus;
+  geometry: BusGeometry;
 }
 
 export interface TerminalGeometry {
@@ -40,7 +55,8 @@ export interface TerminalGeometry {
 
 export interface ConnectivityNode {
   id: NodeId;
-  terminals: TerminalRef[];
+  /** Mixed: device terminal refs (`X.Y`) and bare bus ids (`X`). */
+  terminals: WireEnd[];
 }
 
 /** Compile-time issue. Non-fatal; renderer keeps drawing. */
@@ -54,24 +70,25 @@ export interface Diagnostic {
 }
 
 /**
- * Internal route representation. Supports multiple polylines per node so a
- * bus node can stub each external terminal independently. The serialized
- * `Route.path` (single polyline) maps to `paths: [path]` on import; on export
- * we'll only persist the user-edited paths anyway.
+ * Per-wire rendered path. One polyline per visible wire in the diagram.
+ * Selection / hit-test / user-route override all key on `wireId`.
  */
-export interface InternalRoute {
-  paths: [number, number][][];
-  /** True if this came from `DiagramFile.routes` (user-edited); false = auto-routed. */
+export interface WireRender {
+  wireId: import('../model').WireId;
+  path: [number, number][];
+  /** True if this came from `Wire.path` (user-edited); false = auto-routed. */
   userEdited?: boolean;
 }
 
 export interface InternalModel {
   elements: Map<ElementId, ResolvedElement>;
+  buses: Map<BusId, ResolvedBus>;
   terminals: Map<TerminalRef, TerminalGeometry>;
   nodes: Map<NodeId, ConnectivityNode>;
   layout: Map<ElementId, ResolvedPlacement>;
-  routes: Map<NodeId, InternalRoute>;
-  terminalToNode: Map<TerminalRef, NodeId>;
+  /** Rendered polyline per wire id. */
+  wireRenders: Map<import('../model').WireId, WireRender>;
+  terminalToNode: Map<WireEnd, NodeId>;
   elementToTerminals: Map<ElementId, TerminalRef[]>;
   diagnostics: Diagnostic[];
 }
@@ -79,10 +96,11 @@ export interface InternalModel {
 export function emptyInternalModel(): InternalModel {
   return {
     elements: new Map(),
+    buses: new Map(),
     terminals: new Map(),
     nodes: new Map(),
     layout: new Map(),
-    routes: new Map(),
+    wireRenders: new Map(),
     terminalToNode: new Map(),
     elementToTerminals: new Map(),
     diagnostics: [],
@@ -94,6 +112,9 @@ export function resolvePlacement(p?: Placement): ResolvedPlacement {
     at: p?.at ?? [0, 0],
     rot: p?.rot ?? 0,
     mirror: p?.mirror ?? false,
-    span: p?.span,
   };
+}
+
+export function busAxisFromRot(rot: 0 | 90 | 180 | 270): 'x' | 'y' {
+  return rot === 90 || rot === 270 ? 'y' : 'x';
 }

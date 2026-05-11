@@ -70,8 +70,7 @@ export const BusbarTool: Tool = {
     }
 
     const store = useEditorStore.getState();
-    const id = store.addElement('busbar', at);
-    store.updatePlacement(id, { rot, span });
+    store.addBus(at, span, rot);
   },
 
   onPointerLeave() {

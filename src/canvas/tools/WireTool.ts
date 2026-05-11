@@ -83,7 +83,7 @@ export const WireTool: Tool = {
 
     const ref = hitTerminal(e.target);
     if (!ref || ref === from) return;
-    store.addConnection(from, ref);
+    store.addWire(from, ref);
   },
 
   onPointerLeave() {

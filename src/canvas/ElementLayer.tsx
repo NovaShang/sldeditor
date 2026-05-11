@@ -115,7 +115,7 @@ export function ElementLayer() {
             data-element-id={re.element.id}
             data-selected={isSelected ? 'true' : undefined}
             data-node-related={isNodeRelated ? 'true' : undefined}
-            transform={transformAttr(place, re.libraryDef)}
+            transform={transformAttr(place)}
             className="ole-element"
           >
             <HitRect lib={re.libraryDef} />

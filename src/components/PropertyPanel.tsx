@@ -11,11 +11,14 @@ import { useT } from '../i18n';
 import { useLibT } from '../i18n/library';
 import { useEditorStore } from '../store';
 import type {
+  Bus,
+  BusId,
   Element,
   ElementId,
   LibraryParamField,
   LibraryStateField,
   ParamValue,
+  WireId,
 } from '../model';
 import { cn } from '../lib/utils';
 
@@ -23,8 +26,11 @@ export function PropertyPanel() {
   const t = useT();
   const selection = useEditorStore((s) => s.selection);
   const elements = useEditorStore((s) => s.diagram.elements);
+  const buses = useEditorStore((s) => s.diagram.buses);
   const selectedNode = useEditorStore((s) => s.selectedNode);
+  const selectedWire = useEditorStore((s) => s.selectedWire);
 
+  if (selectedWire) return <WirePanel wireId={selectedWire} />;
   if (selectedNode) return <NodePanel nodeId={selectedNode} />;
 
   if (selection.length === 0) {
@@ -44,6 +50,8 @@ export function PropertyPanel() {
   }
 
   const id = selection[0];
+  const bus = (buses ?? []).find((b) => b.id === id);
+  if (bus) return <BusInspector bus={bus} />;
   const element = elements.find((e) => e.id === id);
   if (!element) return null;
   const lib = libraryById[element.kind];
@@ -223,6 +231,139 @@ function ParamField({
       value={value}
       onCommit={(v) => onCommit(v.trim() === '' ? undefined : v)}
     />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bus inspector — selected bus shows name + Un + span (read-only span).
+// ---------------------------------------------------------------------------
+
+function BusInspector({ bus }: { bus: Bus }) {
+  const t = useT();
+  const id = bus.id;
+  const onName = (v: string) => {
+    const name = v.trim();
+    updateBusEntry(id, { name: name === '' ? undefined : name });
+  };
+  return (
+    <div className="flex flex-col gap-2.5 overflow-y-auto px-3 py-3 text-xs">
+      <TextRow
+        label={t('props.name')}
+        value={bus.name ?? ''}
+        placeholder={bus.id}
+        onCommit={onName}
+      />
+      <TextAreaRow
+        label={t('props.note')}
+        value={bus.note ?? ''}
+        onCommit={(v) =>
+          updateBusEntry(id, { note: v.trim() === '' ? undefined : v.trim() })
+        }
+      />
+      <BusParams bus={bus} />
+    </div>
+  );
+}
+
+function BusParams({ bus }: { bus: Bus }) {
+  const onCommit = (key: string, next: ParamValue | undefined) => {
+    const params = { ...(bus.params ?? {}) };
+    if (next === undefined || next === '') delete params[key];
+    else params[key] = next;
+    updateBusEntry(bus.id, {
+      params: Object.keys(params).length > 0 ? params : undefined,
+    });
+  };
+  const cur = bus.params ?? {};
+  return (
+    <div className="mt-1 flex flex-col gap-1.5 border-t border-border/40 pt-2.5">
+      <NumberRow
+        label="Un"
+        value={typeof cur.Un === 'number' ? cur.Un : 0}
+        unit="kV"
+        onCommit={(v) => onCommit('Un', v)}
+      />
+    </div>
+  );
+}
+
+function updateBusEntry(id: BusId, patch: Partial<Bus>) {
+  useEditorStore.getState().dispatch((d) => {
+    const buses = (d.buses ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b));
+    return { ...d, buses };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Wire inspector — shows the two endpoints and a "select whole node" action.
+// ---------------------------------------------------------------------------
+
+function WirePanel({ wireId }: { wireId: WireId }) {
+  const t = useT();
+  const wires = useEditorStore((s) => s.diagram.wires);
+  const elements = useEditorStore((s) => s.diagram.elements);
+  const buses = useEditorStore((s) => s.diagram.buses);
+  const terminalToNode = useEditorStore((s) => s.internal.terminalToNode);
+  const setSelectedNode = useEditorStore((s) => s.setSelectedNode);
+  const wire = (wires ?? []).find((w) => w.id === wireId);
+  if (!wire) {
+    return (
+      <div className="px-4 py-5 text-center text-xs text-muted-foreground">
+        {t('props.wireNotFound', { id: wireId })}
+      </div>
+    );
+  }
+  const nodeId = terminalToNode.get(wire.ends[0]);
+  const elemById = new Map(elements.map((e) => [e.id, e]));
+  const busById = new Map((buses ?? []).map((b) => [b.id, b]));
+  const describeEnd = (end: string): { id: string; label: string; pin?: string } => {
+    if (!end.includes('.')) {
+      const b = busById.get(end);
+      return { id: end, label: b?.name ?? end };
+    }
+    const dot = end.indexOf('.');
+    const elId = end.slice(0, dot);
+    const pin = end.slice(dot + 1);
+    const el = elemById.get(elId);
+    return { id: elId, label: el?.name ?? elId, pin };
+  };
+  const a = describeEnd(wire.ends[0]);
+  const b = describeEnd(wire.ends[1]);
+  return (
+    <div className="flex flex-col gap-3 px-3 py-3 text-xs">
+      <div className="space-y-1">
+        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          {t('props.wire')}
+        </div>
+        <div className="font-mono text-[12px]">{wire.id}</div>
+      </div>
+      <ul className="space-y-0.5 border-t border-border/40 pt-2">
+        {[a, b].map((e, i) => (
+          <li
+            key={i}
+            className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 hover:bg-accent"
+            onClick={() => useEditorStore.getState().setSelection([e.id])}
+          >
+            <span className="flex-1 truncate font-mono text-[11px]">{e.id}</span>
+            <span className="truncate text-[10px] text-muted-foreground">{e.label}</span>
+            {e.pin && (
+              <span className="font-mono text-[10px] text-muted-foreground/80">
+                {e.pin}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      {nodeId && (
+        <button
+          type="button"
+          className="self-start rounded-md border border-border/60 px-2 py-1 text-[11px] text-muted-foreground hover:bg-accent"
+          onClick={() => setSelectedNode(nodeId)}
+        >
+          {t('props.selectWholeNode')}
+        </button>
+      )}
+    </div>
   );
 }
 

@@ -5,10 +5,8 @@
  * etc.) out of the file and crops tightly around the actual content.
  */
 
-import { libraryById } from '../element-library';
 import { transformAttr } from '../canvas/transform-attr';
-import { transformPoint, type InternalModel, type ResolvedPlacement } from '../compiler';
-import type { LibraryEntry } from '../model';
+import { transformPoint, type InternalModel } from '../compiler';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PADDING = 24;
@@ -52,23 +50,33 @@ export function buildExportSvg(
 
   // Wires first (rendered behind elements).
   out.push('  <g fill="none" stroke="black" stroke-width="1">');
-  for (const [, route] of model.routes) {
-    for (const path of route.paths) {
-      if (path.length < 2) continue;
-      const pts = path.map(([px, py]) => `${px},${py}`).join(' ');
-      out.push(`    <polyline points="${pts}"/>`);
-    }
+  for (const r of model.wireRenders.values()) {
+    if (r.path.length < 2) continue;
+    const pts = r.path.map(([px, py]) => `${px},${py}`).join(' ');
+    out.push(`    <polyline points="${pts}"/>`);
   }
   out.push('  </g>');
 
-  // Elements.
+  // Buses.
+  for (const { bus, geometry } of model.buses.values()) {
+    const { axis, at, span } = geometry;
+    const half = span / 2;
+    const x1 = axis === 'x' ? at[0] - half : at[0];
+    const y1 = axis === 'x' ? at[1] : at[1] - half;
+    const x2 = axis === 'x' ? at[0] + half : at[0];
+    const y2 = axis === 'x' ? at[1] : at[1] + half;
+    out.push(
+      `  <line id="${escapeXml(bus.id)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+    );
+  }
+
+  // Devices.
   for (const re of model.elements.values()) {
     if (!re.libraryDef) continue;
     const place = model.layout.get(re.element.id);
     if (!place) continue;
-    const lib = libraryById[re.element.kind];
     out.push(
-      `  <g id="${escapeXml(re.element.id)}" transform="${transformAttr(place, lib)}">`,
+      `  <g id="${escapeXml(re.element.id)}" transform="${transformAttr(place)}">`,
     );
     out.push(`    ${re.libraryDef.svg}`);
     out.push('  </g>');
@@ -100,26 +108,30 @@ function computeContentBbox(model: InternalModel): Bbox {
       update(place.at[0], place.at[1]);
       continue;
     }
-    // Stretchable elements (busbars) scale their viewBox along the stretch
-    // axis by `span / referenceLength`. Apply that pre-rotation so the bbox
-    // matches the rendered transform from `transformAttr`.
-    const sx = stretchFactor(lib, place, 'x');
-    const sy = stretchFactor(lib, place, 'y');
     const corners: Array<[number, number]> = [
-      [vb.x * sx, vb.y * sy],
-      [(vb.x + vb.w) * sx, vb.y * sy],
-      [vb.x * sx, (vb.y + vb.h) * sy],
-      [(vb.x + vb.w) * sx, (vb.y + vb.h) * sy],
+      [vb.x, vb.y],
+      [vb.x + vb.w, vb.y],
+      [vb.x, vb.y + vb.h],
+      [vb.x + vb.w, vb.y + vb.h],
     ];
     for (const c of corners) {
       const [wx, wy] = transformPoint(c, place);
       update(wx, wy);
     }
   }
-  for (const route of model.routes.values()) {
-    for (const path of route.paths) {
-      for (const [x, y] of path) update(x, y);
+  for (const { geometry } of model.buses.values()) {
+    const { axis, at, span } = geometry;
+    const half = span / 2;
+    if (axis === 'x') {
+      update(at[0] - half, at[1]);
+      update(at[0] + half, at[1]);
+    } else {
+      update(at[0], at[1] - half);
+      update(at[0], at[1] + half);
     }
+  }
+  for (const r of model.wireRenders.values()) {
+    for (const [x, y] of r.path) update(x, y);
   }
   if (minX === Infinity) {
     minX = 0;
@@ -128,20 +140,6 @@ function computeContentBbox(model: InternalModel): Bbox {
     maxY = 0;
   }
   return { minX, minY, maxX, maxY };
-}
-
-function stretchFactor(
-  lib: LibraryEntry,
-  place: ResolvedPlacement,
-  axis: 'x' | 'y',
-): number {
-  const stretch = lib.stretchable;
-  if (!stretch || stretch.axis !== axis || !place.span) return 1;
-  if (lib.terminals.length < 2) return 1;
-  const vs = lib.terminals.map((t) => (axis === 'x' ? t.x : t.y));
-  const ref = Math.max(...vs) - Math.min(...vs);
-  if (ref <= 0) return 1;
-  return place.span / ref;
 }
 
 function parseViewBox(

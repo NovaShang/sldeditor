@@ -3,13 +3,14 @@
  *
  * Strategy (hierarchy-aware):
  *   1. Identify "linkers" — elements connecting ≥2 distinct buses. Three
- *      passes: (a) direct `<bus>.tap` membership; (b) transitive BFS for
- *      category='transformer' elements wired through chains of switches —
- *      the BFS finds *all* reachable buses, so a transformer feeding two
- *      parallel HV bars (BI + BII via a Y of disconnectors) registers as
- *      a 3-bus linker; (c) breakers that bridge two buses through chains
- *      with no transformer in path are flagged as horizontal linkers
- *      (bus ties / couplers).
+ *      passes: (a) direct bus tap (the element is an electrical-node co-
+ *      member of ≥2 buses); (b) transitive BFS for category='transformer'
+ *      elements wired through chains of switches — the BFS finds *all*
+ *      reachable buses, so a transformer feeding two parallel HV bars
+ *      (BI + BII via a Y of disconnectors) registers as a 3-bus linker;
+ *      (c) breakers that bridge two buses through chains with no
+ *      transformer in path are flagged as horizontal linkers (bus
+ *      ties / couplers).
  *   2. Tier assignment via BFS from source-tapped buses. Vertical linkers
  *      (transformers) step a level; horizontal linkers (bus ties) keep
  *      the level unchanged so same-voltage buses share a Y. Disconnected
@@ -17,21 +18,17 @@
  *   3. Bottom-up bus span propagation. Each bus's span = max(BUS_MIN_SPAN,
  *      total slot width + edge margin). Tap slots that stand in for a
  *      downstream bus (vertical linker chain head, or the linker itself
- *      for direct-tap) claim the child bus's span + spacing, so two
- *      parallel children reserve enough horizontal real estate that they
- *      don't overlap.
+ *      for direct-tap) claim the child bus's span + spacing.
  *   4. Tier-walking placement: at each level pick the Y from previous
  *      level + max parent-child gap; pick each bus's X (root → default
  *      or sibling-spread; non-root → midpoint of all parent linkers'
  *      chain-head X, so a 3-bus child naturally lands between its
  *      upstream parents); distribute the bus's taps with slot ordering
- *      biased by `tapPreferredX` (chain endpoints reaching another
- *      placed bus get pulled toward that side, with a wider-first
- *      tiebreak so narrow taps reach the actual edges); place vertical
- *      linkers (anchored to the upper-side chain heads' midpoint, with
- *      Y-junction chain alignment so the chain between merge node and
- *      linker sits cleanly on the linker's column); place horizontal
- *      linkers (rotated 90°/270° between the two same-level buses).
+ *      biased by `tapPreferredX`; place vertical linkers (anchored to
+ *      the upper-side chain heads' midpoint, with Y-junction chain
+ *      alignment so the chain between merge node and linker sits cleanly
+ *      on the linker's column); place horizontal linkers (rotated
+ *      90°/270° between the two same-level buses).
  *   5. Resolve electrical nodes via union-find. For each node with placed
  *      and unplaced members, vote on an anchor (placed pin most directly
  *      co-referenced) and lay out the remaining elements as parallel
@@ -45,14 +42,21 @@
  */
 
 import type {
-  Connection,
+  Bus,
+  BusId,
   Element,
   ElementId,
   LibraryEntry,
   Orientation,
   TerminalRef,
+  Wire,
+  WireEnd,
 } from '../model';
-import type { ResolvedPlacement } from './internal-model';
+import {
+  busAxisFromRot,
+  type BusGeometry,
+  type ResolvedPlacement,
+} from './internal-model';
 import { orientationVec, transformOrientation, transformPoint } from './transforms';
 import { UnionFind } from './union-find';
 
@@ -64,12 +68,6 @@ const OPPOSITE_ORIENT: Record<Orientation, Orientation> = {
   w: 'e',
 };
 
-/**
- * Pick rot ∈ {0, 90, 180, 270} so a local-frame pin oriented `localO` ends up
- * pointing `worldO` after placement. Used to flip downstream chain elements so
- * their connecting pin faces the upstream wire (otherwise body extends into
- * the path and looks reversed).
- */
 function rotationToAlignOrient(
   localO: Orientation,
   worldO: Orientation,
@@ -81,10 +79,18 @@ function rotationToAlignOrient(
 }
 
 interface AutoLayoutInput {
+  /** Devices only. Buses are in `buses`. */
   elements: Element[];
-  connections: Connection[];
+  buses: Bus[];
+  wires: Wire[];
   library: ReadonlyMap<string, LibraryEntry>;
   userLayout: ReadonlyMap<ElementId, ResolvedPlacement>;
+  userBusLayout: ReadonlyMap<BusId, BusGeometry>;
+}
+
+export interface AutoLayoutOutput {
+  devices: Map<ElementId, ResolvedPlacement>;
+  buses: Map<BusId, BusGeometry>;
 }
 
 const BUS_X = 320;
@@ -92,11 +98,7 @@ const BUS_Y0 = 220;
 const MIN_BUS_GAP_Y = 260;
 const DEFAULT_BUS_SPAN = 720;
 const CHAIN_GAP = 30;
-// Distance from a bus line to the first chain element's pin. The tap pin
-// is offset off the bus by this amount so the tap body doesn't sit flush
-// against the busbar — visually a short wire stub between bus and the
-// first switch, matching how real one-line diagrams are drawn. Mirrors
-// CHAIN_GAP so the bus→first and first→next gaps look uniform.
+// Distance from a bus line to the first chain element's pin.
 const BUS_TAP_OFFSET = 30;
 const MIN_TAP_SPACING = 80;
 const GRID = 10;
@@ -109,31 +111,26 @@ const FALLBACK_GRID_COLS = 8;
 const SOURCE_CATEGORIES = new Set(['source', 'renewable']);
 
 interface BusAttachment {
-  busId: ElementId;
+  busId: BusId;
   pin: string;
 }
 
 interface LinkerInfo {
   elementId: ElementId;
   attachments: BusAttachment[];
-  /**
-   * `vertical`: connects buses at different voltage levels (transformer).
-   * Drives level transitions in bus-level BFS and Y-gap calculation.
-   *
-   * `horizontal`: bus-tie style coupling between same-voltage buses
-   * (typically a chain of switches with a breaker in the middle). Buses on
-   * either side stay at the same level. The chain elements are placed as
-   * regular taps; this entry exists for level-tracking only.
-   */
   orientation: 'vertical' | 'horizontal';
 }
 
-export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlacement> {
-  const { elements, connections, library, userLayout } = input;
+export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
+  const { elements, buses: busList, wires, library, userLayout, userBusLayout } = input;
+
   const layout = new Map<ElementId, ResolvedPlacement>(userLayout);
+  const busLayout = new Map<BusId, BusGeometry>(userBusLayout);
 
   const elementById = new Map<ElementId, Element>();
   for (const el of elements) elementById.set(el.id, el);
+  const busById = new Map<BusId, Bus>();
+  for (const b of busList) busById.set(b.id, b);
 
   const libOf = (id: ElementId): LibraryEntry | undefined => {
     const el = elementById.get(id);
@@ -141,59 +138,70 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     return library.get(el.kind);
   };
 
-  const buses: Element[] = elements.filter((e) => e.kind === 'busbar');
-  const busIds = new Set(buses.map((b) => b.id));
+  const busIds = new Set<BusId>(busList.map((b) => b.id));
+  const isBus = (end: WireEnd): boolean => busIds.has(end);
 
-  // Per-bus tap list. Sourced from any connection group containing
-  // `<busId>.tap` — co-members of that group are the tap devices.
-  const effectiveTaps = new Map<ElementId, TerminalRef[]>();
-  const pushTap = (busId: ElementId, ref: TerminalRef) => {
-    const arr = effectiveTaps.get(busId) ?? [];
-    arr.push(ref);
-    effectiveTaps.set(busId, arr);
-  };
-  for (const conn of connections) {
-    for (const ref of conn) {
-      const dot = ref.indexOf('.');
-      if (dot < 0) continue;
-      const busId = ref.slice(0, dot);
-      const pin = ref.slice(dot + 1);
-      if (pin !== 'tap' || !busIds.has(busId)) continue;
-      for (const other of conn) {
-        if (other !== ref) pushTap(busId, other);
-      }
+  // ---- 0. Union-find on wires → electrical nodes ------------------------
+  // Members of a node are a mix of `TerminalRef` ("X.Y", device pins) and
+  // bare bus ids ("X", hyperedge nodes).
+  const uf = new UnionFind<WireEnd>();
+  for (const w of wires) {
+    uf.add(w.ends[0]);
+    uf.add(w.ends[1]);
+    uf.union(w.ends[0], w.ends[1]);
+  }
+  for (const el of elements) {
+    const lib = library.get(el.kind);
+    if (!lib) continue;
+    for (const t of lib.terminals) uf.add(`${el.id}.${t.id}` as TerminalRef);
+  }
+  for (const bus of busList) uf.add(bus.id);
+
+  const nodeGroups: WireEnd[][] = [];
+  for (const [, members] of uf.groups()) {
+    if (members.length >= 2) nodeGroups.push(members);
+  }
+
+  // For each end, the single node it belongs to (wrapped in the outer
+  // array so iteration shape matches the legacy `[][]` form). `g.length
+  // >= 3` then means "merge node" exactly as before.
+  const pinToGroups = new Map<WireEnd, WireEnd[][]>();
+  for (const group of nodeGroups) {
+    for (const m of group) pinToGroups.set(m, [group]);
+  }
+
+  // Per-bus tap list: for each bus, the other members of its electrical
+  // node. Picked up by stage 1 (linker detection), stage 4 (root buses),
+  // and the bus-span / tap-distribution passes.
+  const effectiveTaps = new Map<BusId, WireEnd[]>();
+  for (const group of nodeGroups) {
+    const busMembers = group.filter(isBus);
+    if (busMembers.length === 0) continue;
+    for (const busMember of busMembers) {
+      const others = group.filter((m) => m !== busMember);
+      const arr = effectiveTaps.get(busMember) ?? [];
+      arr.push(...others);
+      effectiveTaps.set(busMember, arr);
     }
   }
 
-  // Index raw connection groups by pin. Used for chain-extent estimates and
-  // the node-based stage-6 BFS.
-  const rawGroups: TerminalRef[][] = connections.filter((c) => c.length >= 2);
-  const pinToGroups = new Map<TerminalRef, TerminalRef[][]>();
-  for (const group of rawGroups) {
-    for (const pin of group) {
-      const arr = pinToGroups.get(pin);
-      if (arr) arr.push(group);
-      else pinToGroups.set(pin, [group]);
-    }
-  }
-  const isBusPin = (ref: TerminalRef): boolean => {
-    const dot = ref.indexOf('.');
-    if (dot < 0) return false;
-    return busIds.has(ref.slice(0, dot));
-  };
-
-  // ---- 1. Detect linker elements (tapped to ≥2 distinct buses) -----------
+  // ---- 1. Detect linker elements (in node-co-membership with ≥2 buses) ---
   const tapsByElement = new Map<ElementId, BusAttachment[]>();
-  for (const bus of buses) {
-    const refs = effectiveTaps.get(bus.id);
-    if (!refs) continue;
-    for (const ref of refs) {
-      const dot = ref.indexOf('.');
+  for (const group of nodeGroups) {
+    const busMembers = group.filter(isBus);
+    if (busMembers.length === 0) continue;
+    for (const end of group) {
+      if (isBus(end)) continue;
+      const dot = end.indexOf('.');
       if (dot < 0) continue;
-      const elId = ref.slice(0, dot);
-      const pin = ref.slice(dot + 1);
+      const elId = end.slice(0, dot);
+      const pin = end.slice(dot + 1);
       const arr = tapsByElement.get(elId) ?? [];
-      arr.push({ busId: bus.id, pin });
+      for (const busId of busMembers) {
+        if (!arr.some((a) => a.busId === busId && a.pin === pin)) {
+          arr.push({ busId, pin });
+        }
+      }
       tapsByElement.set(elId, arr);
     }
   }
@@ -216,42 +224,27 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
 
   // ---- 1b. Transitive linker detection for transformer-family elements ---
-  // The strict tapsByElement check above only catches elements that are
-  // *directly* in two `<bus>.tap` groups. Most fixtures actually wire
-  // transformers through a chain of switches/breakers (T1.t1 → QF → QS →
-  // B1.tap), which leaves `T1` looking like a single-bus device.
-  //
-  // We rebuild a per-terminal connection graph, BFS from each terminal of a
-  // candidate transformer (forbidding its own *other* terminals), and check
-  // if at least two distinct buses are reachable. This recovers the linker
-  // semantics without flooding every chained switch into the linker set —
-  // we only consider category 'transformer'.
-  const allGroups: TerminalRef[][] = connections.filter((c) => c.length >= 2);
-  for (const bus of buses) {
-    const refs = effectiveTaps.get(bus.id);
-    if (!refs || refs.length === 0) continue;
-    allGroups.push([`${bus.id}.tap` as TerminalRef, ...refs]);
-  }
-  const refAdj = new Map<TerminalRef, Set<TerminalRef>>();
-  const addRefEdge = (a: TerminalRef, b: TerminalRef) => {
+  // The direct check above only catches elements *directly* sharing a node
+  // with two buses. Most fixtures actually wire transformers through a
+  // chain of switches/breakers (T1.t1 → QF → QS → B1), so T1 looks like a
+  // single-bus device. We rebuild a per-end connection graph and BFS from
+  // each terminal of a candidate transformer, checking reachability to ≥2
+  // buses.
+  const refAdj = new Map<WireEnd, Set<WireEnd>>();
+  const addRefEdge = (a: WireEnd, b: WireEnd) => {
     if (a === b) return;
     if (!refAdj.has(a)) refAdj.set(a, new Set());
     if (!refAdj.has(b)) refAdj.set(b, new Set());
     refAdj.get(a)!.add(b);
     refAdj.get(b)!.add(a);
   };
-  for (const group of allGroups) {
-    for (let i = 0; i < group.length; i++) {
-      for (let j = i + 1; j < group.length; j++) {
-        addRefEdge(group[i], group[j]);
-      }
-    }
+  for (const w of wires) {
+    addRefEdge(w.ends[0], w.ends[1]);
   }
-  // Treat each non-bus element as a passthrough between its terminals so BFS
-  // can walk QF.t1 → QF.t2 (different connection groups but same physical
-  // device) on its way to the next bus.
+  // Treat each device as a passthrough between its terminals so BFS can
+  // walk QF.t1 → QF.t2 (different wires but same physical device) on its
+  // way to the next bus.
   for (const el of elements) {
-    if (el.kind === 'busbar') continue;
     const lib = library.get(el.kind);
     if (!lib || lib.terminals.length < 2) continue;
     const refs = lib.terminals.map(
@@ -265,7 +258,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
 
   for (const el of elements) {
-    if (el.kind === 'busbar') continue;
     if (linkerIds.has(el.id)) continue;
     const lib = library.get(el.kind);
     if (!lib || lib.category !== 'transformer') continue;
@@ -277,25 +269,19 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     // pin -> ALL reachable buses (not just first). Crucial for 3-bus
     // configurations like a transformer whose HV side reaches two parallel
     // 220 kV bars (BI + BII) through a Y of disconnectors.
-    const busesPerPin = new Map<string, Set<ElementId>>();
+    const busesPerPin = new Map<string, Set<BusId>>();
     for (const startRef of myRefs) {
       const startPin = startRef.slice(el.id.length + 1);
       busesPerPin.set(startPin, new Set());
-      const forbidden = new Set(myRefs.filter((r) => r !== startRef));
-      const visited = new Set<TerminalRef>([startRef]);
-      const queue: TerminalRef[] = [startRef];
+      const forbidden = new Set<WireEnd>(myRefs.filter((r) => r !== startRef));
+      const visited = new Set<WireEnd>([startRef]);
+      const queue: WireEnd[] = [startRef];
       while (queue.length > 0) {
         const cur = queue.shift()!;
-        const dot = cur.indexOf('.');
-        if (dot > 0) {
-          const elemId = cur.slice(0, dot);
-          const pinName = cur.slice(dot + 1);
-          if (busIds.has(elemId) && pinName === 'tap') {
-            // Record but don't expand bus.tap further — we want every bus
-            // reachable from this terminal, not the buses' other taps.
-            busesPerPin.get(startPin)!.add(elemId);
-            continue;
-          }
+        if (isBus(cur)) {
+          busesPerPin.get(startPin)!.add(cur);
+          // Don't expand bus further — every bus reachable, not other taps.
+          continue;
         }
         const neighbors = refAdj.get(cur);
         if (!neighbors) continue;
@@ -306,7 +292,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         }
       }
     }
-    const distinctBuses = new Set<ElementId>();
+    const distinctBuses = new Set<BusId>();
     for (const buses of busesPerPin.values()) {
       for (const b of buses) distinctBuses.add(b);
     }
@@ -320,15 +306,69 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     }
   }
 
+  // ---- 1b'. Reclassify direct-tap horizontal linkers as vertical --------
+  // Stage 1 defaults non-transformer direct-tap linkers to 'horizontal',
+  // which suits a true bus tie between same-voltage bars. But the same
+  // structure appears in the common main-panel-feeding-subpanel case (a
+  // breaker directly tapped to both the main bus and the subpanel bus),
+  // where the relationship is hierarchical, not lateral.
+  //
+  // Heuristic: if exactly one of the linker's buses can reach a source
+  // element WITHOUT traversing this linker, the linker is a feeder
+  // (vertical) — the stranded bus is downstream. If both sides are
+  // independently sourced, it's a real bus tie and stays horizontal.
+  const reachesSourceBypassing = (
+    startBusId: BusId,
+    linkerId: ElementId,
+  ): boolean => {
+    const linkerLib = libOf(linkerId);
+    const blocked: WireEnd[] = linkerLib
+      ? linkerLib.terminals.map((t) => `${linkerId}.${t.id}` as TerminalRef)
+      : [];
+    const startRef = startBusId as WireEnd;
+    const visited = new Set<WireEnd>([startRef, ...blocked]);
+    const queue: WireEnd[] = [startRef];
+    while (queue.length > 0) {
+      const cur = queue.shift()!;
+      const dot = cur.indexOf('.');
+      if (dot > 0) {
+        const elemId = cur.slice(0, dot);
+        const el = elementById.get(elemId);
+        if (el) {
+          const cat = library.get(el.kind)?.category;
+          if (cat && SOURCE_CATEGORIES.has(cat)) return true;
+        }
+      }
+      const neighbors = refAdj.get(cur);
+      if (!neighbors) continue;
+      for (const nb of neighbors) {
+        if (visited.has(nb)) continue;
+        visited.add(nb);
+        queue.push(nb);
+      }
+    }
+    return false;
+  };
+
+  for (const link of linkers) {
+    if (link.orientation !== 'horizontal') continue;
+    const busesInLink = new Set(link.attachments.map((a) => a.busId));
+    let reachable = 0;
+    for (const bid of busesInLink) {
+      if (reachesSourceBypassing(bid, link.elementId)) reachable++;
+    }
+    if (reachable === 1) {
+      link.orientation = 'vertical';
+      linkerIds.add(link.elementId);
+    }
+  }
+
   // ---- 1c. Transitive horizontal-linker detection (bus-tie breakers) -----
   // A breaker bridging two buses through chains on each side — without a
   // transformer in either chain — is a bus tie / bus coupler. Detection is
-  // restricted to category='switching', kind='breaker' to avoid flooding
-  // the linker set with every disconnector in a chain. The chain elements
-  // themselves are placed via stage 4/6 normal flow; this entry only
-  // exists so bus-level BFS knows the two buses are at the same level.
+  // restricted to kind='breaker' to avoid flooding the linker set with every
+  // disconnector in a chain.
   for (const el of elements) {
-    if (el.kind === 'busbar') continue;
     if (linkerIds.has(el.id)) continue;
     if (el.kind !== 'breaker') continue;
     const lib = library.get(el.kind);
@@ -337,23 +377,18 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const myRefs = lib.terminals.map(
       (t) => `${el.id}.${t.id}` as TerminalRef,
     );
-    const busPerPin = new Map<string, ElementId>();
+    const busPerPin = new Map<string, BusId>();
 
     for (const startRef of myRefs) {
       const startPin = startRef.slice(el.id.length + 1);
-      const forbidden = new Set(myRefs.filter((r) => r !== startRef));
-      const visited = new Set<TerminalRef>([startRef]);
-      const queue: TerminalRef[] = [startRef];
+      const forbidden = new Set<WireEnd>(myRefs.filter((r) => r !== startRef));
+      const visited = new Set<WireEnd>([startRef]);
+      const queue: WireEnd[] = [startRef];
       while (queue.length > 0) {
         const cur = queue.shift()!;
-        const dot = cur.indexOf('.');
-        if (dot > 0) {
-          const elemId = cur.slice(0, dot);
-          const pinName = cur.slice(dot + 1);
-          if (busIds.has(elemId) && pinName === 'tap') {
-            busPerPin.set(startPin, elemId);
-            break;
-          }
+        if (isBus(cur)) {
+          busPerPin.set(startPin, cur);
+          break;
         }
         const neighbors = refAdj.get(cur);
         if (!neighbors) continue;
@@ -392,9 +427,8 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
 
   // ---- 2. Topo-order buses ----------------------------------------------
-  // Adjacency: bus → map of (otherBus → linker that connects them).
-  const busLinks = new Map<ElementId, Map<ElementId, LinkerInfo>>();
-  for (const b of buses) busLinks.set(b.id, new Map());
+  const busLinks = new Map<BusId, Map<BusId, LinkerInfo>>();
+  for (const b of busList) busLinks.set(b.id, new Map());
   for (const link of linkers) {
     const ids = Array.from(new Set(link.attachments.map((a) => a.busId)));
     for (const a of ids) {
@@ -409,11 +443,12 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     return cat ? SOURCE_CATEGORIES.has(cat) : false;
   };
 
-  const rootBuses: ElementId[] = [];
-  for (const bus of buses) {
+  const rootBuses: BusId[] = [];
+  for (const bus of busList) {
     const refs = effectiveTaps.get(bus.id);
     if (!refs) continue;
     for (const ref of refs) {
+      if (isBus(ref)) continue;
       const dot = ref.indexOf('.');
       if (dot < 0) continue;
       const otherId = ref.slice(0, dot);
@@ -424,16 +459,12 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       }
     }
   }
-  if (rootBuses.length === 0 && buses.length > 0) rootBuses.push(buses[0].id);
+  if (rootBuses.length === 0 && busList.length > 0) rootBuses.push(busList[0].id);
 
-  // Tier assignment: BFS from each root bus. Vertical linkers step down a
-  // level (parent → child); horizontal linkers (bus ties) keep both buses
-  // at the same level. Two buses connected only via a horizontal linker
-  // therefore land side-by-side at the same Y rather than stacked.
-  const busLevel = new Map<ElementId, number>();
+  const busLevel = new Map<BusId, number>();
   for (const r of rootBuses) busLevel.set(r, 0);
   {
-    const bfsQ: ElementId[] = [...rootBuses];
+    const bfsQ: BusId[] = [...rootBuses];
     while (bfsQ.length > 0) {
       const id = bfsQ.shift()!;
       const lvl = busLevel.get(id)!;
@@ -448,16 +479,15 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       }
     }
   }
-  // Disconnected buses fall to a level beyond the deepest reachable one.
-  for (const bus of buses) {
+  for (const bus of busList) {
     if (busLevel.has(bus.id)) continue;
     const maxLvl = busLevel.size === 0
       ? -1
       : Math.max(...Array.from(busLevel.values()));
     busLevel.set(bus.id, maxLvl + 1);
   }
-  const levelToBuses = new Map<number, ElementId[]>();
-  for (const bus of buses) {
+  const levelToBuses = new Map<number, BusId[]>();
+  for (const bus of busList) {
     const lvl = busLevel.get(bus.id)!;
     const arr = levelToBuses.get(lvl) ?? [];
     arr.push(bus.id);
@@ -465,14 +495,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
   const sortedLevels = [...levelToBuses.keys()].sort((a, b) => a - b);
 
-  // ---- 3. Place buses with dynamic Y gap ---------------------------------
-  // The gap floors at `MIN_BUS_GAP_Y` and stretches to fit whatever sits in
-  // between: the linker's pin span plus the chain length on each side.
-  // chainExtentToBus walks the connection graph from a linker pin back to
-  // the bus, accumulating per-element pin-to-pin spans + per-edge CHAIN_GAP
-  // contributions — exactly what stage 5/6 will materialize. With this the
-  // gap auto-grows to fit a long chain (bus → disconnector → CT → breaker →
-  // transformer) instead of squashing it.
+  // ---- 3. Chain-extent helper -------------------------------------------
   interface ChainResult {
     extent: number;
     /** The chain element directly tapped to the bus (for X-alignment). */
@@ -480,27 +503,25 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
   const chainExtentToBus = (
     linker: LinkerInfo,
-    busId: ElementId,
+    busId: BusId,
     pinName: string,
   ): ChainResult => {
     const startRef = `${linker.elementId}.${pinName}` as TerminalRef;
-    const targetRef = `${busId}.tap` as TerminalRef;
+    const targetRef = busId as WireEnd;
     const linkerLib = libOf(linker.elementId);
-    // Forbid the linker's other terminals so BFS doesn't re-enter through
-    // the device itself and short-circuit to the other bus.
-    const forbidden = new Set<TerminalRef>();
+    const forbidden = new Set<WireEnd>();
     if (linkerLib) {
       for (const t of linkerLib.terminals) {
         if (t.id === pinName) continue;
         forbidden.add(`${linker.elementId}.${t.id}` as TerminalRef);
       }
     }
-    const visited = new Set<TerminalRef>([startRef]);
-    const queue: { ref: TerminalRef; dist: number }[] = [
+    const visited = new Set<WireEnd>([startRef]);
+    const queue: { ref: WireEnd; dist: number }[] = [
       { ref: startRef, dist: 0 },
     ];
-    const parent = new Map<TerminalRef, TerminalRef>();
-    const enqueue = (other: TerminalRef, ref: TerminalRef, addDist: number, dist: number) => {
+    const parent = new Map<WireEnd, WireEnd>();
+    const enqueue = (other: WireEnd, ref: WireEnd, addDist: number, dist: number) => {
       visited.add(other);
       parent.set(other, ref);
       queue.push({ ref: other, dist: dist + addDist });
@@ -514,22 +535,23 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
           const d = prev.indexOf('.');
           if (d > 0) {
             const headId = prev.slice(0, d);
-            // Direct-tap linker: the only path into bus.tap is from the
-            // linker's own pin. Skip self-as-head so callers fall through
-            // to the slot-based fallback (linkerSlotX) instead of trying
-            // to look up the linker's not-yet-known position.
+            // Direct-tap linker: skip self-as-head so callers fall through
+            // to the slot-based fallback (linkerSlotX).
             if (headId !== linker.elementId) head = headId;
           }
         }
         return { extent: dist, head };
       }
       const dot = ref.indexOf('.');
-      if (dot < 0) continue;
+      if (dot < 0) {
+        // Bare bus id reached (not the target): don't expand through it.
+        continue;
+      }
       const elId = ref.slice(0, dot);
       const pin = ref.slice(dot + 1);
       // Passthrough through a non-bus, non-linker element: enqueue its other
       // terminals with the local pin-to-pin distance added.
-      if (!busIds.has(elId) && !linkerIds.has(elId)) {
+      if (!isBus(elId) && !linkerIds.has(elId)) {
         const lib = libOf(elId);
         const thisTerm = lib?.terminals.find((t) => t.id === pin);
         if (lib && thisTerm) {
@@ -541,14 +563,14 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
           }
         }
       }
-      // Cross to other pins via raw connections. Bus.tap edges contribute
-      // BUS_TAP_OFFSET (the wire stub between bus line and the tap pin);
-      // inter-element edges contribute CHAIN_GAP.
+      // Cross to other ends via electrical-node membership. Edges incident
+      // to a bus end contribute BUS_TAP_OFFSET (the wire stub between bus
+      // line and the tap pin); inter-element edges contribute CHAIN_GAP.
       for (const g of pinToGroups.get(ref) ?? []) {
         for (const other of g) {
           if (other === ref) continue;
           if (visited.has(other) || forbidden.has(other)) continue;
-          const isBusEdge = isBusPin(ref) || isBusPin(other);
+          const isBusEdge = isBus(ref) || isBus(other);
           enqueue(other, ref, isBusEdge ? BUS_TAP_OFFSET : CHAIN_GAP, dist);
         }
       }
@@ -556,10 +578,8 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     return { extent: 0 };
   };
 
-  const gapBetween = (idA: ElementId, idB: ElementId): number => {
+  const gapBetween = (idA: BusId, idB: BusId): number => {
     const link = busLinks.get(idA)?.get(idB);
-    // Horizontal linkers (bus ties) sit at the same level — they don't
-    // contribute a vertical Y-gap at all. Treat them as no-link here.
     if (!link || link.orientation === 'horizontal') return MIN_BUS_GAP_Y;
     const linkerLib = libOf(link.elementId);
     if (!linkerLib) return MIN_BUS_GAP_Y;
@@ -570,33 +590,17 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const pinB = linkerLib.terminals.find((t) => t.id === pinBName);
     if (!pinA || !pinB) return MIN_BUS_GAP_Y;
     const pinSpan = Math.abs(pinB.y - pinA.y);
-    // idA is upper in busOrder, idB is lower. Each side may have a chain;
-    // measure both so the gap fits whichever is longer.
     const upperChain = chainExtentToBus(link, idA, pinAName).extent;
     const lowerChain = chainExtentToBus(link, idB, pinBName).extent;
-    // With a linker, fit the gap exactly to chain + pinSpan + chain so the
-    // linker's pins land on both buses (no floating stub). MIN_BUS_GAP_Y
-    // only floors the no-linker case (orphan tiers stacked at the bottom).
     return upperChain + pinSpan + lowerChain;
   };
 
   // ---- Linker → upper-bus tap representative ----------------------------
-  // Each linker contributes one slot to its UPPER bus's tap distribution.
-  // For a transitive linker (chain on the upper side), that slot belongs to
-  // the chain head element — the tap closest to the bus. For a direct-tap
-  // linker the slot belongs to the linker itself. We record the mapping so
-  // both span computation and slot allocation know which entry is "really"
-  // a child-bus stand-in and need to be widened accordingly.
   interface LinkerRep {
-    /** The downstream bus this slot leads to. */
-    lowerBusId: ElementId;
+    lowerBusId: BusId;
   }
   const linkerUpperRep = new Map<ElementId, LinkerRep>();
   for (const link of linkers) {
-    // Only vertical linkers contribute downstream-bus span to the parent's
-    // tap distribution. Horizontal (bus tie) linkers don't have a "child"
-    // — both sides are siblings at the same level — and they're rendered
-    // as regular chain elements anyway.
     if (link.orientation !== 'vertical') continue;
     const sortedAttachments = link.attachments
       .slice()
@@ -613,16 +617,11 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
 
   // ---- Bottom-up bus span computation -----------------------------------
-  // Each bus's span = max(BUS_MIN_SPAN, content width). Tap entries that
-  // stand in for a downstream bus claim that bus's span as their slot
-  // width, so two parallel children (two transformers feeding two
-  // downstream bars) reserve enough horizontal space on the parent for
-  // both children to sit side-by-side without overlapping.
   const BUS_MIN_SPAN = 320;
-  const busSpan = new Map<ElementId, number>();
+  const busSpan = new Map<BusId, number>();
   const isLinkerLowerSide = (
     elId: ElementId,
-    busId: ElementId,
+    busId: BusId,
   ): boolean => {
     if (!linkerIds.has(elId)) return false;
     const link = linkers.find((l) => l.elementId === elId);
@@ -630,9 +629,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     if (!otherBusAtt) return false;
     const myLvl = busLevel.get(busId) ?? 0;
     const otherLvl = busLevel.get(otherBusAtt.busId) ?? 0;
-    // Lower bus has the higher level number; if the linker's other end is
-    // at a lower level, this bus is the lower one and shouldn't allocate
-    // a slot for the linker (the upper bus owns it).
     return otherLvl < myLvl;
   };
   const slotWidthFor = (
@@ -648,7 +644,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     }
     return Math.max(libWidth, MIN_TAP_SPACING);
   };
-  const computeSpan = (busId: ElementId, visiting: Set<ElementId>): number => {
+  const computeSpan = (busId: BusId, visiting: Set<BusId>): number => {
     if (busSpan.has(busId)) return busSpan.get(busId)!;
     if (visiting.has(busId)) return BUS_MIN_SPAN; // cycle guard
     visiting.add(busId);
@@ -656,6 +652,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     let aboveW = 0;
     let belowW = 0;
     for (const ref of tapRefs) {
+      if (isBus(ref)) continue;
       const dot = ref.indexOf('.');
       if (dot < 0) continue;
       const elId = ref.slice(0, dot);
@@ -667,7 +664,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       if (!localTerm) continue;
       const rep = linkerUpperRep.get(elId);
       if (rep) {
-        // Recurse so the child's span is known before we widen the slot.
         computeSpan(rep.lowerBusId, visiting);
       }
       const slotW = slotWidthFor(elId, lib.width);
@@ -682,15 +678,9 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     visiting.delete(busId);
     return span;
   };
-  for (const bus of buses) computeSpan(bus.id, new Set());
+  for (const bus of busList) computeSpan(bus.id, new Set());
 
   // ---- 3-5. Tier-based bus / tap / linker placement ---------------------
-  // Walk levels top-down. For each level: pick a Y from the previous
-  // level's Y plus the maximum parent-child gap; pick each bus's X (root =
-  // default; non-root = the parent linker's slot X on its upper bus, so
-  // children land in distinct columns); distribute that bus's taps; then
-  // place every linker whose lower bus is at this level (both endpoints
-  // are now placed and chain heads on both sides are known).
   const linkerSlotX = new Map<ElementId, number>();
 
   interface TapEntry {
@@ -701,12 +691,10 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
 
   // Find the X of the closest other-bus that this tap reaches via the
-  // connection graph (passing through any chain element). Returned only if
-  // that bus has already been placed. Used to bias slot ordering so chain
-  // endpoints (bus-tie or cross-bay arms) land on the bus side closest to
-  // their counterpart, shrinking the wire that auto-route has to draw.
+  // electrical-node graph. Returned only if that bus has already been
+  // placed.
   const tapPreferredX = (
-    busId: ElementId,
+    busId: BusId,
     tapEl: ElementId,
     tapPin: string,
   ): number | undefined => {
@@ -717,18 +705,13 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       .filter((t) => t.id !== tapPin)
       .map((t) => `${tapEl}.${t.id}` as TerminalRef);
     if (startRefs.length === 0) return undefined;
-    const visited = new Set<TerminalRef>([tapRef, ...startRefs]);
-    const queue: TerminalRef[] = startRefs.slice();
+    const visited = new Set<WireEnd>([tapRef, ...startRefs]);
+    const queue: WireEnd[] = startRefs.slice();
     while (queue.length > 0) {
       const cur = queue.shift()!;
-      const dot = cur.indexOf('.');
-      if (dot > 0) {
-        const elemId = cur.slice(0, dot);
-        const pinName = cur.slice(dot + 1);
-        if (busIds.has(elemId) && pinName === 'tap' && elemId !== busId) {
-          const place = layout.get(elemId);
-          return place ? place.at[0] : undefined;
-        }
+      if (isBus(cur) && cur !== busId) {
+        const geom = busLayout.get(cur);
+        return geom ? geom.at[0] : undefined;
       }
       for (const g of pinToGroups.get(cur) ?? []) {
         for (const other of g) {
@@ -737,9 +720,10 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
           queue.push(other);
         }
       }
+      const dot = cur.indexOf('.');
       if (dot > 0) {
         const elemId = cur.slice(0, dot);
-        if (!busIds.has(elemId)) {
+        if (!isBus(elemId)) {
           const lib = libOf(elemId);
           if (lib) {
             for (const t of lib.terminals) {
@@ -755,20 +739,20 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     return undefined;
   };
 
-  const distributeBusTaps = (bus: Element): void => {
-    const tapRefs = effectiveTaps.get(bus.id);
+  const distributeBusTaps = (busId: BusId): void => {
+    const tapRefs = effectiveTaps.get(busId);
     if (!tapRefs || tapRefs.length === 0) return;
-    const place = layout.get(bus.id);
-    if (!place) return;
+    const geom = busLayout.get(busId);
+    if (!geom) return;
 
     const remaining: TapEntry[] = tapRefs.flatMap((ref): TapEntry[] => {
+      if (isBus(ref)) return [];
       const dot = ref.indexOf('.');
       if (dot < 0) return [];
       const elId = ref.slice(0, dot);
       const pin = ref.slice(dot + 1);
       if (layout.has(elId)) return [];
-      // Skip linker on its lower-bus side — the upper bus owns the slot.
-      if (isLinkerLowerSide(elId, bus.id)) return [];
+      if (isLinkerLowerSide(elId, busId)) return [];
       const lib = libOf(elId);
       if (!lib) return [];
       const localTerm = lib.terminals.find((t) => t.id === pin);
@@ -789,29 +773,27 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const requiredSpan =
       Math.max(sideTotalWidth(aboveSide), sideTotalWidth(belowSide)) +
       MIN_TAP_SPACING;
-    const span = Math.max(place.span ?? DEFAULT_BUS_SPAN, requiredSpan);
-    if (span !== place.span) {
-      layout.set(bus.id, { ...place, span });
+    const span = Math.max(geom.span, requiredSpan);
+    if (span !== geom.span) {
+      busLayout.set(busId, { ...geom, span });
     }
+    const finalGeom = busLayout.get(busId)!;
 
     const distribute = (group: TapEntry[], offsetSign: -1 | 1): void => {
       if (group.length === 0) return;
-      // Sort by preferred X (chain endpoints reaching another already-placed
-      // bus get pulled toward that bus's side; everyone else stays neutral
-      // around the bus center).
       const prefByEl = new Map<ElementId, number>();
       for (const r of group) {
-        const px = tapPreferredX(bus.id, r.elId, r.localTerm.id);
+        const px = tapPreferredX(busId, r.elId, r.localTerm.id);
         if (px !== undefined) prefByEl.set(r.elId, px);
       }
       group.sort((a, b) => {
-        const ax = prefByEl.get(a.elId) ?? place.at[0];
-        const bx = prefByEl.get(b.elId) ?? place.at[0];
+        const ax = prefByEl.get(a.elId) ?? finalGeom.at[0];
+        const bx = prefByEl.get(b.elId) ?? finalGeom.at[0];
         if (ax !== bx) return ax - bx;
-        // Among same-preference taps, wider slots go first so they sit
-        // toward the bus center; narrow ones get pushed to the extreme.
-        // That way a small bus-tie disconnector lands on the actual edge
-        // even when a wide transformer-feeding slot wants the same side.
+        // Same-preference taps: wider slots toward bus center, narrow ones
+        // pushed to the extreme. Lets a small bus-tie disconnector land on
+        // the actual edge even when a wide transformer-feeding slot wants
+        // the same side.
         const aw = slotWidthFor(a.elId, a.lib.width);
         const bw = slotWidthFor(b.elId, b.lib.width);
         return bw - aw;
@@ -820,19 +802,13 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       const totalW = widths.reduce((s, w) => s + w, 0);
       const usableSpan = Math.max(span, totalW);
       const slotGap = (usableSpan - totalW) / (group.length + 1);
-      let cursor = place.at[0] - usableSpan / 2 + slotGap;
-      // Push the tap pin off the bus by BUS_TAP_OFFSET (above buses are
-      // negative-Y direction, below buses are positive-Y); auto-route fills
-      // in the short wire stub between bus line and pin.
-      const tapWorldY = place.at[1] + offsetSign * BUS_TAP_OFFSET;
+      let cursor = finalGeom.at[0] - usableSpan / 2 + slotGap;
+      const tapWorldY = finalGeom.at[1] + offsetSign * BUS_TAP_OFFSET;
       for (let i = 0; i < group.length; i++) {
         const r = group[i];
         const slotW = widths[i];
         const tapWorldX = cursor + slotW / 2;
         if (r.isLinker) {
-          // First-encounter wins: tier loop visits buses top-down, so the
-          // upper bus's slot is locked in first. The same linker reappears
-          // on the lower bus's tap (via its other pin) — ignore that slot.
           if (!linkerSlotX.has(r.elId)) linkerSlotX.set(r.elId, tapWorldX);
         } else {
           layout.set(r.elId, {
@@ -850,18 +826,12 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
 
   const placeLinker = (link: LinkerInfo): void => {
     if (layout.has(link.elementId)) return;
-    // Horizontal linkers (bus ties) flow through stage 4/6 as regular chain
-    // elements — they don't get explicit between-bus placement. Skip.
     if (link.orientation === 'horizontal') return;
     const linkerLib = libOf(link.elementId);
     if (!linkerLib) return;
 
-    // Sort by bus level (smallest = upper). For 3-bus linkers (e.g., a
-    // transformer whose HV side reaches BI *and* BII), pick the lowest
-    // level as "upper anchor" and the highest as "lower". The other
-    // upper-level attachments contribute to the X midpoint below.
     const placedAttachments = link.attachments.filter((a) =>
-      layout.has(a.busId),
+      busLayout.has(a.busId),
     );
     if (placedAttachments.length < 2) return;
     const sorted = placedAttachments.slice().sort(
@@ -869,7 +839,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         (busLevel.get(a.busId) ?? 0) - (busLevel.get(b.busId) ?? 0),
     );
     const upperBusId = sorted[0].busId;
-    const upperPlace = layout.get(upperBusId)!;
+    const upperGeom = busLayout.get(upperBusId)!;
 
     const upperPin = sorted[0].pin;
     const lowerPin = sorted[sorted.length - 1].pin;
@@ -879,11 +849,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
 
     const rot: 0 | 180 = upperLocal.y <= lowerLocal.y ? 0 : 180;
 
-    // Y-junction support: a 3-bus linker has multiple attachments sharing
-    // the same upper pin (one chain to BI, another to BII). Compute the
-    // chain head X for each and place the linker at their midpoint so the
-    // body sits cleanly between the upper bars. Use the max chain extent
-    // so the linker pin clears the deepest chain end on either side.
     const upperLevel = busLevel.get(upperBusId) ?? 0;
     const upperSideAttachments = placedAttachments.filter(
       (a) => (busLevel.get(a.busId) ?? 0) === upperLevel,
@@ -896,8 +861,12 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       const headPlace = result.head ? layout.get(result.head) : undefined;
       if (headPlace) {
         upperHeadXs.push(headPlace.at[0]);
+      } else if (linkerSlotX.has(link.elementId)) {
+        // Direct-tap linker (no intermediate chain head): use the slot X
+        // allocated for it by the upper bus's tap distribution.
+        upperHeadXs.push(linkerSlotX.get(link.elementId)!);
       } else {
-        upperHeadXs.push(layout.get(att.busId)!.at[0]);
+        upperHeadXs.push(busLayout.get(att.busId)!.at[0]);
       }
     }
     let xCenter: number;
@@ -905,12 +874,11 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       xCenter =
         upperHeadXs.reduce((s, x) => s + x, 0) / upperHeadXs.length;
     } else if (linkerSlotX.has(link.elementId)) {
-      // Direct-tap linker fallback (slot allocated by tap distribution).
       xCenter = linkerSlotX.get(link.elementId)!;
     } else {
-      xCenter = upperPlace.at[0];
+      xCenter = upperGeom.at[0];
     }
-    const upperPinWorldY = upperPlace.at[1] + maxUpperExtent;
+    const upperPinWorldY = upperGeom.at[1] + maxUpperExtent;
 
     const at: [number, number] =
       rot === 0
@@ -918,13 +886,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         : [snap(xCenter + upperLocal.x), snap(upperPinWorldY + upperLocal.y)];
     layout.set(link.elementId, { at, rot, mirror: false });
 
-    // Y-junction chain alignment: for 3-bus linkers (multiple upper-side
-    // attachments), walk the chain from the linker's upper pin back toward
-    // the merge node, placing each chain element at the linker's X. Without
-    // this, those elements stay anchored to one upper bus's chain head
-    // (whichever is voted in stage 6), creating a kink between the chain
-    // and the linker. Stops at the first multi-pin (≥3) connection group,
-    // which is the merge node — auto-route handles the rake from there.
     if (upperSideAttachments.length > 1) {
       const linkerPlace = layout.get(link.elementId)!;
       const upperPinWorld = transformPoint(
@@ -944,26 +905,22 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     }
   };
 
-  // Walk a single-pin chain starting from `startRef` (an already-placed
-  // pin), heading in the world `startExit` direction. At each step, find
-  // the next element via a raw size-2 connection group and place it at
-  // `axisX` so the whole chain stays on a single column. Stops when:
-  //   - the next group has ≥3 members (a Y-junction merge node)
-  //   - the next neighbour is a bus, linker, or already-placed element
-  //   - no eligible neighbour remains
+  // Walk a single-pin chain starting from `startRef`, heading in the world
+  // `startExit` direction. Stops at a merge node (electrical node with 3+
+  // members), a bus, a linker, an already-placed element, or no neighbour.
   const walkChainAlongAxis = (
     startRef: TerminalRef,
     startWorld: [number, number],
     startExit: Orientation,
     axisX: number,
   ): void => {
-    const visited = new Set<TerminalRef>([startRef]);
-    let prevRef = startRef;
+    const visited = new Set<WireEnd>([startRef]);
+    let prevRef: WireEnd = startRef;
     let prevWorld = startWorld;
     let prevExit = startExit;
     while (true) {
       const groups = pinToGroups.get(prevRef) ?? [];
-      let nextRef: TerminalRef | undefined;
+      let nextRef: WireEnd | undefined;
       let blocked = false;
       for (const g of groups) {
         if (g.length >= 3) {
@@ -973,8 +930,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         }
         const other = g.find((r) => r !== prevRef);
         if (!other || visited.has(other)) continue;
-        if (isBusPin(other)) {
-          // Reached the bus directly (no intermediate element). Stop.
+        if (isBus(other)) {
           blocked = true;
           break;
         }
@@ -986,7 +942,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       if (dot < 0) break;
       const elId = nextRef.slice(0, dot);
       const pinName = nextRef.slice(dot + 1);
-      if (busIds.has(elId) || linkerIds.has(elId)) break;
+      if (isBus(elId) || linkerIds.has(elId)) break;
       if (layout.has(elId)) break;
       const lib = libOf(elId);
       if (!lib) break;
@@ -1005,8 +961,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         rot,
         mirror: false,
       });
-      // X anchored on axisX (so the body sits on the column). Y derived from
-      // chain progression. snap() keeps positions on the 10-px grid.
       const at: [number, number] = [
         snap(axisX - rotatedInPin[0]),
         snap(target[1] - rotatedInPin[1]),
@@ -1014,7 +968,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       layout.set(elId, { at, rot, mirror: false });
       visited.add(nextRef);
 
-      // Find the OTHER pin to continue the chain, if any.
       const outTerm = lib.terminals.find((t) => t.id !== pinName);
       if (!outTerm) break;
       const outRef = `${elId}.${outTerm.id}` as TerminalRef;
@@ -1026,18 +979,12 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     }
   };
 
-  // Horizontal linker placement: rotate the device 90°/270° so its pin span
-  // runs left-right between two same-level buses, and center it at the X
-  // midpoint of the two chain heads. The chain elements on each side
-  // (e.g., QS_BT_I, QS_BT_II disconnectors) stay placed as ordinary taps
-  // hanging below their respective buses; auto-route fills in the wire
-  // stubs from each chain head to the linker's pins.
   const placeHorizontalLinker = (link: LinkerInfo): void => {
     if (layout.has(link.elementId)) return;
     if (link.orientation !== 'horizontal') return;
     const linkerLib = libOf(link.elementId);
     if (!linkerLib) return;
-    const placed = link.attachments.filter((a) => layout.has(a.busId));
+    const placed = link.attachments.filter((a) => busLayout.has(a.busId));
     if (placed.length < 2) return;
 
     interface HeadInfo {
@@ -1050,7 +997,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       const headPlace = result.head ? layout.get(result.head) : undefined;
       const x = headPlace
         ? headPlace.at[0]
-        : layout.get(att.busId)!.at[0];
+        : busLayout.get(att.busId)!.at[0];
       return { att, x, extent: result.extent };
     });
     heads.sort((a, b) => a.x - b.x);
@@ -1060,14 +1007,10 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     const rightLocal = linkerLib.terminals.find((t) => t.id === right.att.pin);
     if (!leftLocal || !rightLocal) return;
 
-    // For breakers/disconnectors with vertical pin layout (t1.y < 0, t2.y > 0):
-    // rot=270 maps the smaller-Y pin to the world-LEFT, larger-Y to RIGHT.
-    // rot=90 is the mirror image. Pick whichever puts the left attachment's
-    // pin on the left.
     const rot: 90 | 270 = leftLocal.y <= rightLocal.y ? 270 : 90;
 
     const xCenter = (left.x + right.x) / 2;
-    const busY = layout.get(left.att.busId)!.at[1];
+    const busY = busLayout.get(left.att.busId)!.at[1];
     const linkerY = busY + Math.max(left.extent, right.extent);
 
     layout.set(link.elementId, {
@@ -1077,11 +1020,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     });
   };
 
-  // Sibling buses at the same level that are NOT linker-bridged get spread
-  // horizontally so they don't overlap when sharing a Y. (Linker-bridged
-  // siblings inherit their X from chain-head X of the parent linker, which
-  // is computed below — this only matters for level 0 with multiple roots
-  // or for orphan tiers added at the bottom.)
   const SIBLING_X_GAP = 100;
 
   let prevLevelY = BUS_Y0;
@@ -1102,29 +1040,20 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
           }
         }
       }
-      // No linker between prev level and this level (orphan tier) → use the
-      // global floor.
       if (maxGap === 0) maxGap = MIN_BUS_GAP_Y;
       levelY = prevLevelY + maxGap;
     }
     prevLevelY = levelY;
 
-    // Place each bus at this level. Linker-bridged children center on the
-    // parent linker's chain head; siblings without a linker spread out so
-    // they don't overlap.
     let nextSiblingX = BUS_X;
     for (const busId of busIdsAtLevel) {
-      if (layout.has(busId)) {
-        prevLevelY = Math.max(prevLevelY, layout.get(busId)!.at[1]);
+      if (busLayout.has(busId)) {
+        prevLevelY = Math.max(prevLevelY, busLayout.get(busId)!.at[1]);
         continue;
       }
       let busX: number | undefined;
       if (li > 0) {
         const prevBusIds = levelToBuses.get(sortedLevels[li - 1])!;
-        // Collect chain-head X from EVERY upper-level parent that links to
-        // this child (3-bus linker has two — one chain head per upper bus).
-        // The child centers on the midpoint, so it sits between its
-        // upstream parents instead of being yanked to one side.
         const headXs: number[] = [];
         for (const parent of prevBusIds) {
           const link = busLinks.get(parent)?.get(busId);
@@ -1139,7 +1068,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
           } else if (linkerSlotX.has(link.elementId)) {
             headXs.push(linkerSlotX.get(link.elementId)!);
           } else {
-            headXs.push(layout.get(parent)!.at[0]);
+            headXs.push(busLayout.get(parent)!.at[0]);
           }
         }
         if (headXs.length > 0) {
@@ -1151,23 +1080,19 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         busX = nextSiblingX + ownSpan / 2;
         nextSiblingX += ownSpan + SIBLING_X_GAP;
       }
-      layout.set(busId, {
+      const span = busSpan.get(busId) ?? DEFAULT_BUS_SPAN;
+      busLayout.set(busId, {
         at: [snap(busX), snap(levelY)],
         rot: 0,
-        mirror: false,
-        span: busSpan.get(busId) ?? DEFAULT_BUS_SPAN,
+        span,
+        axis: busAxisFromRot(0),
       });
     }
 
-    // Distribute taps for each bus at this level — needs to happen after the
-    // bus is placed so chain heads have known X for the next level.
     for (const busId of busIdsAtLevel) {
-      const bus = elementById.get(busId);
-      if (bus) distributeBusTaps(bus);
+      distributeBusTaps(busId);
     }
 
-    // Place every linker whose lower bus is at this level. Both endpoints
-    // are placed by now and chain heads on both sides have been distributed.
     if (li > 0) {
       for (const link of linkers) {
         if (layout.has(link.elementId)) continue;
@@ -1179,9 +1104,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       }
     }
 
-    // Place horizontal linkers between same-level buses (bus-tie chains).
-    // All endpoints are at this level, so this only fires once both
-    // siblings + their chain-head taps are placed.
     for (const link of linkers) {
       if (link.orientation !== 'horizontal') continue;
       if (layout.has(link.elementId)) continue;
@@ -1194,53 +1116,24 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
   }
 
   // ---- 6. Node-based parallel-branch placement --------------------------
-  // The earlier implementation walked raw connection groups and chained
-  // each downstream off whichever upstream was visited first. That blew up
-  // on multi-pin nodes — three earthing switches sharing `QF2.t2` were
-  // serialized via collision-nudge, and any sibling reached through the
-  // *wrong* pin (e.g. QE7 reached via QE1.t_top) was placed pointing back
-  // across the bus.
-  //
-  // Now we resolve electrical nodes via union-find and, for each node with
-  // unplaced members, pick the anchor pin by *voting* on raw connection
-  // co-membership. Unplaced elements that share an anchor pin are laid out
-  // as parallel branches along the perpendicular to the anchor's exit. We
-  // iterate to a fixpoint so newly-placed elements can anchor further
-  // chains. Bus-tap nodes use stage-5 placements; the synthetic `B*.tap`
-  // pin is excluded from anchor candidates.
-  // Reuse the early `pinToGroups` map (built before stage 3) and feed it
-  // into a pin-level union-find for electrical-node detection.
-  const uf = new UnionFind<TerminalRef>();
-  for (const group of rawGroups) {
-    for (let i = 1; i < group.length; i++) uf.union(group[0], group[i]);
-  }
-  for (const el of elements) {
-    if (el.kind === 'busbar') {
-      uf.add(`${el.id}.tap` as TerminalRef);
-      continue;
-    }
-    const lib = libOf(el.id);
-    if (!lib) continue;
-    for (const t of lib.terminals) uf.add(`${el.id}.${t.id}` as TerminalRef);
-  }
-
-  const isPinPlaced = (ref: TerminalRef): boolean => {
-    const dot = ref.indexOf('.');
+  // For each electrical node with placed and unplaced members, pick the
+  // anchor pin by voting on direct co-occurrence with the unplaced cluster,
+  // and lay out the remaining elements as parallel branches perpendicular
+  // to the anchor's exit. Iterate to a fixpoint so newly-placed elements
+  // can anchor further chains.
+  const isEndPlaced = (end: WireEnd): boolean => {
+    if (isBus(end)) return busLayout.has(end);
+    const dot = end.indexOf('.');
     if (dot < 0) return false;
-    const id = ref.slice(0, dot);
-    return layout.has(id);
+    return layout.has(end.slice(0, dot));
   };
 
-  // Iterate to fixpoint: each pass places one "layer" of parallel branches.
-  // Newly-placed elements expose their other terminals as anchors for the
-  // next pass, so chained downstream elements still get reached.
   let progressed = true;
   let safety = elements.length + 4;
   while (progressed && safety-- > 0) {
     progressed = false;
-    const nodeRoots = uf.groups();
 
-    for (const [, node] of nodeRoots) {
+    for (const node of nodeGroups) {
       if (node.length < 2) continue;
 
       interface UnplacedPinInfo {
@@ -1255,22 +1148,19 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         };
       }
       const placedPins: TerminalRef[] = [];
-      // De-dup unplaced by element id at collection time — we only need one
-      // pin per element (the one in this node) to position it.
       const unplacedByEl = new Map<ElementId, UnplacedPinInfo>();
 
-      for (const ref of node) {
-        const dot = ref.indexOf('.');
-        if (dot < 0) continue;
-        const id = ref.slice(0, dot);
-        const pinName = ref.slice(dot + 1);
-        if (busIds.has(id)) {
-          // Bus.tap is a virtual hub, not a real pin we can hang branches
-          // from. Stage 5 owns bus-side distribution.
+      for (const end of node) {
+        if (isBus(end)) {
+          // Bus is a hyperedge node, not an anchor candidate.
           continue;
         }
+        const dot = end.indexOf('.');
+        if (dot < 0) continue;
+        const id = end.slice(0, dot);
+        const pinName = end.slice(dot + 1);
         if (layout.has(id)) {
-          placedPins.push(ref);
+          placedPins.push(end as TerminalRef);
           continue;
         }
         if (linkerIds.has(id)) continue;
@@ -1279,23 +1169,28 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         if (!lib) continue;
         const localTerm = lib.terminals.find((t) => t.id === pinName);
         if (!localTerm) continue;
-        unplacedByEl.set(id, { ref, elId: id, lib, localTerm });
+        unplacedByEl.set(id, {
+          ref: end as TerminalRef,
+          elId: id,
+          lib,
+          localTerm,
+        });
       }
       if (unplacedByEl.size === 0 || placedPins.length === 0) continue;
       const unplacedUnique = [...unplacedByEl.values()];
 
-      // Vote on anchor: each unplaced pin contributes a vote to every placed
-      // pin it co-occurs with in a raw group. Strong winner = the placed pin
+      // Vote on anchor: each unplaced pin contributes a vote to every other
+      // placed non-bus pin in the same node. Strong winner = the placed pin
       // most directly connected to the unplaced cluster.
       const votes = new Map<TerminalRef, number>();
       for (const u of unplacedUnique) {
-        const groups = pinToGroups.get(u.ref);
-        if (!groups) continue;
-        for (const g of groups) {
+        for (const g of pinToGroups.get(u.ref) ?? []) {
           for (const p of g) {
             if (p === u.ref) continue;
-            if (!isPinPlaced(p) || isBusPin(p)) continue;
-            votes.set(p, (votes.get(p) ?? 0) + 1);
+            if (isBus(p)) continue;
+            if (!isEndPlaced(p)) continue;
+            const tref = p as TerminalRef;
+            votes.set(tref, (votes.get(tref) ?? 0) + 1);
           }
         }
       }
@@ -1311,7 +1206,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
         }
       }
       if (!anchor) {
-        // Fallback: any placed non-bus pin in the node.
         anchor = [...placedPins].sort()[0];
       }
       if (!anchor) continue;
@@ -1336,7 +1230,6 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
       const exit = orientationVec(anchorOrient);
       const perp: [number, number] = [-exit[1], exit[0]];
 
-      // Deterministic distribution order.
       unplacedUnique.sort((a, b) => a.elId.localeCompare(b.elId));
       const widths = unplacedUnique.map((u) =>
         Math.max(u.lib.width, MIN_TAP_SPACING),
@@ -1390,7 +1283,7 @@ export function autoLayout(input: AutoLayoutInput): Map<ElementId, ResolvedPlace
     placedCount++;
   }
 
-  return layout;
+  return { devices: layout, buses: busLayout };
 }
 
 function snap(v: number): number {

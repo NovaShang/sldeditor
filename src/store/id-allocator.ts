@@ -1,13 +1,12 @@
 /**
- * Mint a fresh `ElementId` based on the kind. Prefixes match the conventions
- * power engineers use on real schematics (QF for breakers, QS for
- * disconnectors, etc.); unknown kinds fall back to the kind string itself.
+ * ID minting for new elements / buses / annotations / wires. Element and bus
+ * prefixes follow real-schematic conventions; wires use a deterministic
+ * content hash so the same pair of endpoints always maps to the same id.
  */
 
-import type { DiagramFile, ElementId } from '../model';
+import type { DiagramFile, ElementId, WireEnd, WireId } from '../model';
 
 const PREFIX: Record<string, string> = {
-  busbar: 'B',
   earth: 'GND',
   breaker: 'QF',
   disconnector: 'QS',
@@ -39,12 +38,28 @@ const PREFIX: Record<string, string> = {
   'converter-bidir': 'PCS',
 };
 
+const BUS_PREFIX = 'B';
+
+function usedIds(diagram: DiagramFile): Set<string> {
+  return new Set([
+    ...diagram.elements.map((e) => e.id),
+    ...(diagram.buses ?? []).map((b) => b.id),
+  ]);
+}
+
 export function newElementId(diagram: DiagramFile, kind: string): ElementId {
   const prefix = PREFIX[kind] ?? kind;
-  const used = new Set(diagram.elements.map((e) => e.id));
+  const used = usedIds(diagram);
   let n = 1;
   while (used.has(`${prefix}${n}`)) n++;
   return `${prefix}${n}`;
+}
+
+export function newBusId(diagram: DiagramFile): ElementId {
+  const used = usedIds(diagram);
+  let n = 1;
+  while (used.has(`${BUS_PREFIX}${n}`)) n++;
+  return `${BUS_PREFIX}${n}`;
 }
 
 export function newAnnotationId(diagram: DiagramFile): string {
@@ -52,4 +67,20 @@ export function newAnnotationId(diagram: DiagramFile): string {
   let n = 1;
   while (used.has(`a${n}`)) n++;
   return `a${n}`;
+}
+
+/**
+ * Content-hashed wire id. Two wires with the same pair of endpoints collide
+ * intentionally — duplicate `addWire` is a no-op, and migration / save
+ * round-trips produce stable diffs.
+ */
+export function wireIdFromEnds(a: WireEnd, b: WireEnd): WireId {
+  const sorted = [a, b].sort();
+  const text = `${sorted[0]}|${sorted[1]}`;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return `w_${(h >>> 0).toString(36)}`;
 }

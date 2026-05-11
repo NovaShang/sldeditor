@@ -1,8 +1,7 @@
 /**
- * Renders a non-scaling stroke rect around every selected element using the
- * library's viewBox as the base bbox, then applying the same transform as
- * the element. CSS variable `--canvas-scale` keeps the visible stroke
- * width constant across zoom levels.
+ * Renders a non-scaling stroke rect around every selected element / bus
+ * using the library viewBox (devices) or BusGeometry (buses) as the base
+ * bbox, then applying the same transform.
  */
 
 import { useEditorStore } from '../store';
@@ -12,12 +11,33 @@ export function SelectionOverlay() {
   const selection = useEditorStore((s) => s.selection);
   const elements = useEditorStore((s) => s.internal.elements);
   const layout = useEditorStore((s) => s.internal.layout);
+  const buses = useEditorStore((s) => s.internal.buses);
 
   if (selection.length === 0) return null;
 
   return (
     <g className="ole-selection-overlay" pointerEvents="none">
       {selection.map((id) => {
+        const rb = buses.get(id);
+        if (rb) {
+          const { axis, at, span } = rb.geometry;
+          const half = span / 2;
+          const x = axis === 'x' ? at[0] - half : at[0] - 4;
+          const y = axis === 'x' ? at[1] - 4 : at[1] - half;
+          const w = axis === 'x' ? span : 8;
+          const h = axis === 'x' ? 8 : span;
+          return (
+            <rect
+              key={id}
+              x={x}
+              y={y}
+              width={w}
+              height={h}
+              fill="none"
+              className="ole-selection-rect"
+            />
+          );
+        }
         const re = elements.get(id);
         const place = layout.get(id);
         if (!re?.libraryDef || !place) return null;
@@ -32,7 +52,7 @@ export function SelectionOverlay() {
             height={bb.h}
             fill="none"
             className="ole-selection-rect"
-            transform={transformAttr(place, re.libraryDef)}
+            transform={transformAttr(place)}
           />
         );
       })}

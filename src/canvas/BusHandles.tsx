@@ -1,8 +1,7 @@
 /**
- * Stretch handles for selected stretchable elements (busbar). Two `<circle>`
- * grips at the symbol's two endpoint terminals. Dragging a grip updates the
- * element's `span`, and — for the trailing grip — shifts `at` so the
- * opposite end stays fixed visually.
+ * Stretch handles for the selected bus. Two `<circle>` grips at the bus's
+ * endpoints. Dragging a grip updates the bus's `span`, and — for the
+ * trailing grip — shifts `at` so the opposite end stays fixed visually.
  *
  * Handles capture pointer events themselves; SelectTool sees the drag start
  * on a non-element target and won't try to also move the bus body.
@@ -10,11 +9,9 @@
 
 import { useRef } from 'react';
 import { useEditorStore } from '../store';
-import { libraryById } from '../element-library';
-import type { ElementId } from '../model';
+import type { BusId } from '../model';
 import { getViewportApi } from './viewport-bus';
 import { isSnapEnabled, GRID_SIZE } from './grid';
-import { transformPoint } from '../compiler';
 
 const MIN_SPAN = 20;
 
@@ -24,35 +21,29 @@ export function BusHandles() {
 
   if (selection.length !== 1) return null;
   const id = selection[0];
-  const re = internal.elements.get(id);
-  if (!re?.libraryDef) return null;
-  const lib = libraryById[re.element.kind];
-  if (!lib?.stretchable) return null;
-  const place = internal.layout.get(id);
-  if (!place) return null;
+  const rb = internal.buses.get(id);
+  if (!rb) return null;
 
-  const axis = lib.stretchable.axis;
-  // Endpoints are derived from naturalSpan + span, independent of terminals.
-  const span = place.span ?? lib.stretchable.naturalSpan;
+  const { axis, at, span } = rb.geometry;
   const half = span / 2;
-  const startLocal: [number, number] = axis === 'x' ? [-half, 0] : [0, -half];
-  const endLocal: [number, number] = axis === 'x' ? [half, 0] : [0, half];
-  const startWorld = transformPoint(startLocal, place);
-  const endWorld = transformPoint(endLocal, place);
+  const startWorld: [number, number] =
+    axis === 'x' ? [at[0] - half, at[1]] : [at[0], at[1] - half];
+  const endWorld: [number, number] =
+    axis === 'x' ? [at[0] + half, at[1]] : [at[0], at[1] + half];
 
   return (
     <g className="ole-bus-handles" pointerEvents="auto">
       <Handle
         x={startWorld[0]}
         y={startWorld[1]}
-        elementId={id}
+        busId={id}
         side="start"
         axis={axis}
       />
       <Handle
         x={endWorld[0]}
         y={endWorld[1]}
-        elementId={id}
+        busId={id}
         side="end"
         axis={axis}
       />
@@ -63,13 +54,13 @@ export function BusHandles() {
 function Handle({
   x,
   y,
-  elementId,
+  busId,
   side,
   axis,
 }: {
   x: number;
   y: number;
-  elementId: ElementId;
+  busId: BusId;
   side: 'start' | 'end';
   axis: 'x' | 'y';
 }) {
@@ -86,12 +77,12 @@ function Handle({
     e.stopPropagation();
     e.preventDefault();
     if (!viewport) return;
-    const place = useEditorStore.getState().internal.layout.get(elementId);
-    if (!place) return;
+    const rb = useEditorStore.getState().internal.buses.get(busId);
+    if (!rb) return;
     dragRef.current = {
       pointerId: e.pointerId,
-      startSpan: place.span ?? 0,
-      startAt: [...place.at],
+      startSpan: rb.geometry.span,
+      startAt: [...rb.geometry.at],
       startSvg: viewport.screenToSvg(e.clientX, e.clientY),
     };
     (e.target as SVGCircleElement).setPointerCapture(e.pointerId);
@@ -104,9 +95,6 @@ function Handle({
     const dRaw = axis === 'x' ? cur[0] - drag.startSvg[0] : cur[1] - drag.startSvg[1];
     const d = isSnapEnabled() ? Math.round(dRaw / GRID_SIZE) * GRID_SIZE : dRaw;
 
-    // End-grip drag of +d: span grows by +d.   Start-grip: span shrinks by -d.
-    // For *either* grip, the bus center shifts +d/2 along the axis so that
-    // the opposite endpoint stays visually fixed.
     const span = drag.startSpan + (side === 'end' ? d : -d);
     if (span < MIN_SPAN) return;
     const at: [number, number] =
@@ -114,7 +102,7 @@ function Handle({
         ? [drag.startAt[0] + d / 2, drag.startAt[1]]
         : [drag.startAt[0], drag.startAt[1] + d / 2];
 
-    useEditorStore.getState().updatePlacement(elementId, { span, at });
+    useEditorStore.getState().updateBus(busId, { span, at });
   };
 
   const onPointerUp = (e: React.PointerEvent<SVGCircleElement>) => {

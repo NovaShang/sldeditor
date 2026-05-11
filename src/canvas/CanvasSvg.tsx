@@ -28,6 +28,7 @@ import { dropElement } from './drop-on-bus';
 import { AnnotationLayer } from './AnnotationLayer';
 import { FreeAnnotationLayer } from './FreeAnnotationLayer';
 import { BusHandles } from './BusHandles';
+import { BusLayer } from './BusLayer';
 import { BusbarPreview } from './BusbarPreview';
 import { ElementLayer } from './ElementLayer';
 import { MarqueeOverlay } from './MarqueeOverlay';
@@ -318,6 +319,7 @@ export function CanvasSvg() {
         </defs>
         <rect width="100%" height="100%" fill="url(#ole-grid-dots)" />
         <g ref={groupRef} className="ole-viewport">
+          <BusLayer />
           <WireLayer />
           <ElementLayer />
           <AnnotationLayer />
