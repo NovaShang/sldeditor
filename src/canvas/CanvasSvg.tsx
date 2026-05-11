@@ -209,57 +209,66 @@ export function CanvasSvg() {
   // matches PanTool's tap threshold so a slow pan can't accidentally hover
   // long enough to fire the menu mid-drag. A second touch (pinch) cancels
   // via the synthetic pointercancel from useViewport.
-  const LONG_PRESS_MS = 700;
-  const LONG_PRESS_MOVE_PX = 4;
-  const longPressTimer = useRef<number | undefined>(undefined);
-  const longPressData = useRef<{
-    pointerId: number;
-    x: number;
-    y: number;
-    target: EventTarget | null;
-  } | null>(null);
-
-  const cancelLongPress = useCallback(() => {
-    window.clearTimeout(longPressTimer.current);
-    longPressTimer.current = undefined;
-    longPressData.current = null;
-  }, []);
-
-  const onPointerDownTouch = (e: React.PointerEvent) => {
-    if (e.pointerType !== 'touch') return;
-    cancelLongPress();
-    longPressData.current = {
-      pointerId: e.pointerId,
-      x: e.clientX,
-      y: e.clientY,
-      target: e.target,
-    };
+  //
+  // Listeners are native (not React-synthetic) so they fire deterministically
+  // alongside the tool's native pointer handlers in `useTools`. React's
+  // synthetic dispatch was racing with selection re-renders triggered by
+  // PanTool's tap-to-select, occasionally dropping the pointerup that should
+  // have cancelled the timer.
+  useEffect(() => {
     const host = hostRef.current;
-    longPressTimer.current = window.setTimeout(() => {
-      const data = longPressData.current;
-      longPressData.current = null;
-      longPressTimer.current = undefined;
-      if (!data || !host) return;
-      // Cancel the active tool's in-progress gesture so the long-press
-      // doesn't double as a drag commit when the user releases.
-      dispatchSyntheticPointerCancel(host, data.pointerId);
-      openContextMenuAt(data.x, data.y, data.target);
-    }, LONG_PRESS_MS);
-  };
-
-  const onPointerMoveTouch = (e: React.PointerEvent) => {
-    const data = longPressData.current;
-    if (!data || e.pointerId !== data.pointerId) return;
-    const dx = e.clientX - data.x;
-    const dy = e.clientY - data.y;
-    if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_PX) cancelLongPress();
-  };
-
-  const onPointerEndTouch = (e: React.PointerEvent) => {
-    const data = longPressData.current;
-    if (!data || e.pointerId !== data.pointerId) return;
-    cancelLongPress();
-  };
+    if (!host) return;
+    const LONG_PRESS_MS = 700;
+    const LONG_PRESS_MOVE_PX = 4;
+    let timer: number | undefined;
+    let data: { pointerId: number; x: number; y: number; target: EventTarget | null } | null = null;
+    const cancel = () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      timer = undefined;
+      data = null;
+    };
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') return;
+      cancel();
+      data = {
+        pointerId: e.pointerId,
+        x: e.clientX,
+        y: e.clientY,
+        target: e.target,
+      };
+      timer = window.setTimeout(() => {
+        const d = data;
+        data = null;
+        timer = undefined;
+        if (!d) return;
+        // Cancel the active tool's in-progress gesture so the long-press
+        // doesn't double as a drag commit when the user releases.
+        dispatchSyntheticPointerCancel(host, d.pointerId);
+        openContextMenuAt(d.x, d.y, d.target);
+      }, LONG_PRESS_MS);
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!data || e.pointerId !== data.pointerId) return;
+      const dx = e.clientX - data.x;
+      const dy = e.clientY - data.y;
+      if (Math.hypot(dx, dy) > LONG_PRESS_MOVE_PX) cancel();
+    };
+    const onEnd = (e: PointerEvent) => {
+      if (!data || e.pointerId !== data.pointerId) return;
+      cancel();
+    };
+    host.addEventListener('pointerdown', onDown);
+    host.addEventListener('pointermove', onMove);
+    host.addEventListener('pointerup', onEnd);
+    host.addEventListener('pointercancel', onEnd);
+    return () => {
+      cancel();
+      host.removeEventListener('pointerdown', onDown);
+      host.removeEventListener('pointermove', onMove);
+      host.removeEventListener('pointerup', onEnd);
+      host.removeEventListener('pointercancel', onEnd);
+    };
+  }, [openContextMenuAt]);
 
   const onDragOver = (e: React.DragEvent) => {
     if (e.dataTransfer.types.includes('application/x-oneline-kind')) {
@@ -288,10 +297,6 @@ export function CanvasSvg() {
       onDragOver={onDragOver}
       onDrop={onDrop}
       onContextMenu={onContextMenu}
-      onPointerDown={onPointerDownTouch}
-      onPointerMove={onPointerMoveTouch}
-      onPointerUp={onPointerEndTouch}
-      onPointerCancel={onPointerEndTouch}
     >
       <svg
         className="ole-canvas-svg block h-full w-full"
