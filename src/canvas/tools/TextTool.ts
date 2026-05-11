@@ -10,6 +10,7 @@
 
 import { useEditorStore } from '../../store';
 import { hitAnnotation } from '../hit-test';
+import { exitToPanIfTouch } from '../touch';
 import type { Tool } from './types';
 
 export const TextTool: Tool = {
@@ -36,5 +37,6 @@ export const TextTool: Tool = {
     const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
     const id = store.addAnnotation([pt[0], pt[1]], '');
     store.setEditingAnnotation(id);
+    exitToPanIfTouch();
   },
 };

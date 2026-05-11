@@ -16,6 +16,7 @@
 import { useEditorStore } from '../../store';
 import { hitTerminal } from '../hit-test';
 import { resolveWireTarget } from '../resolve-wire-target';
+import { exitToPanIfTouch } from '../touch';
 import { publishWireTarget } from '../wire-target-bus';
 import type { Tool } from './types';
 
@@ -84,6 +85,7 @@ export const WireTool: Tool = {
     const ref = hitTerminal(e.target);
     if (!ref || ref === from) return;
     store.addWire(from, ref);
+    exitToPanIfTouch();
   },
 
   onPointerLeave() {

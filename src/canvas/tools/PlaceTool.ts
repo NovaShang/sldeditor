@@ -21,6 +21,7 @@
 import { useEditorStore } from '../../store';
 import { dropElement, dropElementFromTerminal } from '../drop-on-bus';
 import { hitTerminal } from '../hit-test';
+import { exitToPanIfTouch } from '../touch';
 import type { Tool } from './types';
 
 const GRID = 10;
@@ -65,6 +66,7 @@ export const PlaceTool: Tool = {
 
     const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
     dropElement(placeKind, pt);
+    exitToPanIfTouch();
   },
 
   onPointerMove(e, ctx) {
@@ -81,6 +83,7 @@ export const PlaceTool: Tool = {
     if (!placeKind) return;
     const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
     dropElementFromTerminal(placeKind, from, pt);
+    exitToPanIfTouch();
   },
 
   onPointerLeave() {

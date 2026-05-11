@@ -15,6 +15,7 @@
  */
 
 import { useEditorStore } from '../../store';
+import { exitToPanIfTouch } from '../touch';
 import type { Tool } from './types';
 
 const GRID = 10;
@@ -71,6 +72,7 @@ export const BusbarTool: Tool = {
 
     const store = useEditorStore.getState();
     store.addBus(at, span, rot);
+    exitToPanIfTouch();
   },
 
   onPointerLeave() {
