@@ -560,7 +560,15 @@ function anchorWorld(
 
 class DxfWriter {
   private out: string[] = [];
-  constructor(private readonly precision: number) {}
+  // Explicit field + assignment rather than a constructor parameter
+  // property — embedding consumers (load-survey) compile this file
+  // through their own tsconfig with `erasableSyntaxOnly: true`, which
+  // rejects non-erasable TS syntax like ``private readonly precision``.
+  private readonly precision: number;
+
+  constructor(precision: number) {
+    this.precision = precision;
+  }
 
   toString(): string {
     return this.out.join('');

@@ -17,7 +17,10 @@ import { describe, expect, it } from 'vitest';
 import { MANIFEST, buildElement } from '../../scripts/build-element-library.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
-const OUT_DIR = path.dirname(__filename);
+// JSON fixtures live in the project's src/element-library/ — the test
+// itself was moved out of src/ so embedding consumers (e.g. load-survey)
+// don't compile it as part of their own app build.
+const OUT_DIR = path.resolve(path.dirname(__filename), '../../src/element-library');
 
 interface ManifestEntry {
   id: string;
