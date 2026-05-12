@@ -31,24 +31,25 @@ export function PlaceGhost() {
   const lib = getLibraryEntry(placeKind);
   if (!lib) return null;
 
-  // Anchor: cursor carries the tap-side pin in free-place mode. In
-  // drag-from-terminal mode the ghost still follows the raw cursor — the
-  // wire preview shows the connection back to the source instead.
-  const cursorPin = !fromRef ? pickPlaceCursorTerminal(lib) : null;
-  const ghostX = cursor[0] - (cursorPin?.x ?? 0);
-  const ghostY = cursor[1] - (cursorPin?.y ?? 0);
-
+  // Anchor: cursor always carries one of the ghost's pins, so the visual
+  // pointer-to-pin alignment stays continuous across the press → drag →
+  // release sequence. Free-place uses the tap-side pin; drag-from-terminal
+  // uses the pin that will connect back to the source, which also keeps
+  // the dashed wire taut from source to cursor.
+  let cursorPin: { x: number; y: number } | null = null;
   let connect: { source: [number, number]; pin: [number, number] } | null = null;
   if (fromRef) {
     const source = resolvePlaceSource(fromRef, cursor);
     if (source) {
       const chosen = pickConnectTerminal(lib, source, cursor);
-      connect = {
-        source: source.world,
-        pin: [cursor[0] + chosen.x, cursor[1] + chosen.y],
-      };
+      cursorPin = chosen;
+      connect = { source: source.world, pin: cursor };
     }
+  } else {
+    cursorPin = pickPlaceCursorTerminal(lib);
   }
+  const ghostX = cursor[0] - (cursorPin?.x ?? 0);
+  const ghostY = cursor[1] - (cursorPin?.y ?? 0);
 
   return (
     <g className="ole-place-ghost-group" pointerEvents="none">

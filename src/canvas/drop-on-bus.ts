@@ -266,9 +266,15 @@ export function dropElementFromTerminal(
   const treatAsClick = dx * dx + dy * dy <= CLICK_SLOP_SQ;
   const cursorPlaceAt: [number, number] = [snap(cursorAt[0]), snap(cursorAt[1])];
   const chosen = pickConnectTerminal(lib, source, cursorPlaceAt);
-  const placedAt: [number, number] = treatAsClick
-    ? [snap(source.world[0] - chosen.x), snap(source.world[1] - chosen.y)]
-    : cursorPlaceAt;
+  // The chosen pin lands at the anchor — `source.world` for a tap (so the
+  // pin meets the source terminal) or the cursor for a drag (so the visible
+  // PlaceGhost, which already anchors the chosen pin to the cursor, matches
+  // where the element actually lands).
+  const anchor = treatAsClick ? source.world : cursorPlaceAt;
+  const placedAt: [number, number] = [
+    snap(anchor[0] - chosen.x),
+    snap(anchor[1] - chosen.y),
+  ];
   const newId = newElementId(diagram, kind);
 
   store.dispatch((d) => {
