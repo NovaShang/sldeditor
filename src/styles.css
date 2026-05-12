@@ -1,7 +1,14 @@
 @import 'tailwindcss';
 
 @layer base {
-  :root {
+  /*
+   * Design tokens live on `.ole-root` (not `:root`) so the editor can be
+   * embedded inside a host app without clobbering the host's design tokens
+   * for short names like `--background`, `--accent`, `--radius` etc. The
+   * standalone demo applies the class on <body> (see index.html); embedding
+   * hosts get the class via `<OneLineEditor>`'s outer wrapper.
+   */
+  .ole-root {
     /* Safe-area insets — populated from env() so iOS notch/home-indicator
        are respected. Floating chrome reads these via CSS calc() so the same
        layout still works on desktop where the values are 0. */
@@ -38,7 +45,8 @@
     --selection: #0891b2;
   }
 
-  .dark {
+  .dark .ole-root,
+  .ole-root.dark {
     --background: #1a1a1a;
     --foreground: #f0f0f0;
     --card: #2c2c2c;
@@ -94,9 +102,9 @@
 
 /* iOS: disable pull-to-refresh + over-scroll bounce so canvas pans don't
    flash the browser chrome. Also kill the iOS tap-highlight rectangle and
-   the system text-selection callout that fires on long-press. */
-html,
-body {
+   the system text-selection callout that fires on long-press. Scoped to the
+   editor root so embedding hosts keep their own scroll/tap behavior. */
+.ole-root {
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;

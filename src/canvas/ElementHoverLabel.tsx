@@ -107,7 +107,7 @@ export function ElementHoverLabel() {
     <div
       ref={labelRef}
       role="tooltip"
-      className="ole-glass pointer-events-none fixed z-[100] flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] leading-snug shadow-md"
+      className="ole-root ole-glass pointer-events-none fixed z-[100] flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] leading-snug shadow-md"
       style={{
         top: anchor?.top ?? -9999,
         left: anchor?.left ?? -9999,
