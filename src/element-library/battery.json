@@ -1,7 +1,7 @@
 {
   "id": "battery",
   "name": "电池储能",
-  "category": "source",
+  "category": "storage",
   "viewBox": "-12 -12 29 24",
   "width": 29,
   "height": 24,

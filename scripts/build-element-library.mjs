@@ -195,7 +195,7 @@ const MANIFEST = [
   {
     id: 'battery',
     name: '电池储能',
-    category: 'source',
+    category: 'storage',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_15/en_60617_06_15_01.elmt' },
     extraTerminals: [
       { id: 't_left', x: -10, y: 0, orientation: 'w' },
