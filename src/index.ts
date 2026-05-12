@@ -72,6 +72,13 @@ export {
 export { useLocale } from './i18n';
 export type { Locale } from './i18n';
 
+// Theme primitives — exposed so embedding apps can drive color mode (the
+// `theme` prop on `<OneLineEditor>` covers the common case; `applyTheme` is
+// here for hosts that need to flip the editor's theme outside the React tree,
+// e.g. before the editor mounts to avoid a flash of the wrong palette).
+export { applyTheme, getInitialTheme } from './hooks/use-theme';
+export type { Theme } from './hooks/use-theme';
+
 // Optional toolbar widgets — file ops + image export. For embedding apps that
 // want a "local file" mode without their own persistence layer.
 export { FileMenu } from './components/FileMenu';
