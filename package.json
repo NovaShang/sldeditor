@@ -1,9 +1,30 @@
 {
   "name": "sldeditor",
   "version": "0.0.1",
-  "description": "Lightweight in-browser editor for electrical single-line diagrams.",
+  "description": "Lightweight in-browser React editor for electrical single-line diagrams (SLD).",
   "type": "module",
   "license": "MIT",
+  "author": "NovaShang",
+  "homepage": "https://github.com/NovaShang/sldeditor#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NovaShang/sldeditor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NovaShang/sldeditor/issues"
+  },
+  "keywords": [
+    "react",
+    "electrical",
+    "single-line-diagram",
+    "sld",
+    "schematic",
+    "diagram",
+    "editor",
+    "electrical-engineering",
+    "one-line-diagram",
+    "power-system"
+  ],
   "main": "./dist/sldeditor.cjs",
   "module": "./dist/sldeditor.js",
   "types": "./dist/index.d.ts",
@@ -18,11 +39,19 @@
   "files": [
     "dist",
     "README.md",
+    "LICENSE",
     "THIRD_PARTY_NOTICES.md"
   ],
   "sideEffects": [
     "**/*.css"
   ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -32,7 +61,11 @@
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\"",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "npm run build:lib && changeset publish",
+    "prepublishOnly": "npm run build:lib"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.1",
@@ -47,6 +80,8 @@
     "react-dom": ">=18.0.0"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.7.0",
+    "@changesets/cli": "^2.31.0",
     "@eslint/js": "^9.17.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^22.10.5",
@@ -57,6 +92,8 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "postcss": "^8.5.14",
+    "postcss-prefix-selector": "^2.1.1",
     "prettier": "^3.4.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
