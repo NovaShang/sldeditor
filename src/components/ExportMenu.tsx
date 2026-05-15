@@ -39,7 +39,11 @@ export function ExportMenu() {
     const { internal, diagram, fileSession } = useEditorStore.getState();
     const baseName =
       fileSession?.name?.replace(/\.json$/i, '') ?? diagram.meta?.title ?? 'diagram';
-    const opts = { title: diagram.meta?.title };
+    const opts = {
+      title: diagram.meta?.title,
+      labelMode: diagram.meta?.labelMode,
+      annotations: diagram.annotations,
+    };
     if (kind === 'svg') downloadSvg(internal, `${baseName}.svg`, opts);
     else if (kind === 'png')
       downloadPng(internal, `${baseName}.png`, { ...opts, scale: 2 }).catch((err) => {
@@ -47,11 +51,7 @@ export function ExportMenu() {
         alert(t('topbar.export.pngFailed', { err: (err as Error).message }));
       });
     else
-      downloadDxf(internal, `${baseName}.dxf`, {
-        ...opts,
-        labelMode: diagram.meta?.labelMode,
-        annotations: diagram.annotations,
-      }).catch((err) => {
+      downloadDxf(internal, `${baseName}.dxf`, opts).catch((err) => {
         console.error(err);
         alert(t('topbar.export.dxfFailed', { err: (err as Error).message }));
       });

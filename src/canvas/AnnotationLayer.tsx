@@ -17,14 +17,13 @@
 
 import { useEffect, useRef } from 'react';
 import { useEditorStore } from '../store';
-import type {
-  LabelMode,
-  LibraryEntry,
-  LibraryLabelAnchor,
-} from '../model';
-import type { ResolvedElement, ResolvedPlacement } from '../compiler';
-
-const LINE_HEIGHT = 9;
+import type { LabelMode } from '../model';
+import {
+  LABEL_LINE_HEIGHT as LINE_HEIGHT,
+  anchorWorld,
+  fallbackAnchor,
+  labelLines,
+} from '../lib/element-labels';
 
 export function AnnotationLayer() {
   const elements = useEditorStore((s) => s.internal.elements);
@@ -40,7 +39,7 @@ export function AnnotationLayer() {
         const place = layout.get(re.element.id);
         if (!place || !re.libraryDef) return null;
         const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
-        const world = anchorWorld(anchor, place, re.libraryDef);
+        const world = anchorWorld(anchor, place);
         const textAnchor = anchor.anchor ?? 'start';
         if (editingElement === re.element.id) {
           return (
@@ -181,62 +180,3 @@ function NameEditor({
   );
 }
 
-function labelLines(re: ResolvedElement, mode: LabelMode): string[] {
-  const lines: string[] = [];
-  const head = re.element.name?.trim() || re.element.id;
-  if (head) lines.push(head);
-  if (mode !== 'all' || !re.libraryDef?.params) return lines;
-  const params = re.element.params ?? {};
-  for (const p of re.libraryDef.params) {
-    if (!p.showOnCanvas) continue;
-    const v = params[p.name];
-    if (v === undefined || v === null || v === '') continue;
-    lines.push(`${v}${p.unit ?? ''}`);
-  }
-  return lines;
-}
-
-function fallbackAnchor(lib: LibraryEntry): LibraryLabelAnchor {
-  const vb = parseViewBox(lib.viewBox);
-  if (!vb) return { x: 0, y: 0, anchor: 'start' };
-  return { x: vb.x + vb.w + 2, y: vb.y + 4, anchor: 'start' };
-}
-
-function parseViewBox(s: string): { x: number; y: number; w: number; h: number } | null {
-  const parts = s.trim().split(/\s+/).map(Number);
-  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return null;
-  return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
-}
-
-/**
- * Project an element-local point through the element's placement transform —
- * matches `transformAttr`'s composition (stretch → mirror → rotate → translate)
- * but yields a single world coordinate so the label can be rendered without
- * inheriting the element's rotation.
- */
-function anchorWorld(
-  anchor: LibraryLabelAnchor,
-  place: ResolvedPlacement,
-  _lib: LibraryEntry,
-): [number, number] {
-  let x = anchor.x;
-  let y = anchor.y;
-
-  // Mirror flips local x.
-  if (place.mirror) x = -x;
-  // Rotation (90° steps).
-  switch (place.rot) {
-    case 90:
-      [x, y] = [-y, x];
-      break;
-    case 180:
-      [x, y] = [-x, -y];
-      break;
-    case 270:
-      [x, y] = [y, -x];
-      break;
-    default:
-      break;
-  }
-  return [x + place.at[0], y + place.at[1]];
-}

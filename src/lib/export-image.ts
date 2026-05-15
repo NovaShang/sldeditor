@@ -7,9 +7,19 @@
 
 import { transformAttr } from '../canvas/transform-attr';
 import { transformPoint, type InternalModel } from '../compiler';
+import type { LabelMode, TextAnnotation } from '../model';
+import {
+  LABEL_FONT_SIZE,
+  LABEL_LINE_HEIGHT,
+  anchorWorld,
+  fallbackAnchor,
+  labelLines,
+} from './element-labels';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PADDING = 24;
+const ANNOTATION_FONT_SIZE = 8;
+const ANNOTATION_LINE_HEIGHT = 1.25;
 
 interface Bbox {
   minX: number;
@@ -23,13 +33,18 @@ export interface ExportOptions {
   title?: string;
   /** Background fill (`'transparent'` skips the rect). Default white. */
   background?: string;
+  /** Element label visibility. Mirrors `DiagramFile.meta.labelMode`. Default 'all'. */
+  labelMode?: LabelMode;
+  /** Free text annotations from `DiagramFile.annotations` — `InternalModel`
+   *  doesn't carry them, so the caller passes them through. */
+  annotations?: TextAnnotation[];
 }
 
 export function buildExportSvg(
   model: InternalModel,
   opts: ExportOptions = {},
 ): string {
-  const bbox = computeContentBbox(model);
+  const bbox = computeContentBbox(model, opts);
   const x = Math.floor(bbox.minX - PADDING);
   const y = Math.floor(bbox.minY - PADDING);
   const w = Math.ceil(bbox.maxX + PADDING) - x;
@@ -82,11 +97,61 @@ export function buildExportSvg(
     out.push('  </g>');
   }
 
+  // Element structural labels (ID + showOnCanvas params). Matches
+  // AnnotationLayer.tsx so the export reflects what users see on the canvas.
+  // The halo (paint-order: stroke against the background color) keeps labels
+  // readable when they cross wires or symbols.
+  const labelMode: LabelMode = opts.labelMode ?? 'all';
+  if (labelMode !== 'off') {
+    const halo = bg === 'transparent' ? '#FFFFFF' : bg;
+    out.push(
+      `  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${LABEL_FONT_SIZE}" paint-order="stroke" stroke="${halo}" stroke-width="2" stroke-linejoin="round">`,
+    );
+    for (const re of model.elements.values()) {
+      const place = model.layout.get(re.element.id);
+      if (!place || !re.libraryDef) continue;
+      const lines = labelLines(re, labelMode);
+      if (lines.length === 0) continue;
+      const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
+      const [ax, ay] = anchorWorld(anchor, place);
+      const textAnchor = anchor.anchor ?? 'start';
+      for (let i = 0; i < lines.length; i++) {
+        out.push(
+          `    <text x="${ax}" y="${ay + i * LABEL_LINE_HEIGHT}" text-anchor="${textAnchor}">${escapeXml(lines[i])}</text>`,
+        );
+      }
+    }
+    out.push('  </g>');
+  }
+
+  // Free text annotations — independent notes the user dropped via the text
+  // tool. Same positioning as FreeAnnotationLayer (baseline at at.y + fs*0.85,
+  // step fs*LINE_HEIGHT per line).
+  const anns = opts.annotations ?? [];
+  if (anns.length > 0) {
+    const halo = bg === 'transparent' ? '#FFFFFF' : bg;
+    out.push(
+      `  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" paint-order="stroke" stroke="${halo}" stroke-width="2" stroke-linejoin="round">`,
+    );
+    for (const ann of anns) {
+      if (!ann.text) continue;
+      const fs = ann.fontSize ?? ANNOTATION_FONT_SIZE;
+      const lines = ann.text.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const y = ann.at[1] + fs * 0.85 + i * fs * ANNOTATION_LINE_HEIGHT;
+        out.push(
+          `    <text x="${ann.at[0]}" y="${y}" font-size="${fs}">${escapeXml(lines[i])}</text>`,
+        );
+      }
+    }
+    out.push('  </g>');
+  }
+
   out.push('</svg>');
   return out.join('\n');
 }
 
-function computeContentBbox(model: InternalModel): Bbox {
+function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -133,6 +198,38 @@ function computeContentBbox(model: InternalModel): Bbox {
   for (const r of model.wireRenders.values()) {
     for (const [x, y] of r.path) update(x, y);
   }
+
+  // Element labels — labels can extend past the symbol's viewBox, especially
+  // multi-line ones with showOnCanvas params.
+  const labelMode = opts.labelMode ?? 'all';
+  if (labelMode !== 'off') {
+    for (const re of model.elements.values()) {
+      const place = model.layout.get(re.element.id);
+      if (!place || !re.libraryDef) continue;
+      const lines = labelLines(re, labelMode);
+      if (lines.length === 0) continue;
+      const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
+      const [ax, ay] = anchorWorld(anchor, place);
+      const w = textWidthGuess(lines, LABEL_FONT_SIZE);
+      const h = lines.length * LABEL_LINE_HEIGHT;
+      const align = anchor.anchor ?? 'start';
+      const x0 = align === 'middle' ? ax - w / 2 : align === 'end' ? ax - w : ax;
+      update(x0, ay - LABEL_FONT_SIZE);
+      update(x0 + w, ay + h);
+    }
+  }
+
+  // Free annotations — can sit anywhere on the canvas.
+  for (const ann of opts.annotations ?? []) {
+    if (!ann.text) continue;
+    const fs = ann.fontSize ?? ANNOTATION_FONT_SIZE;
+    const lines = ann.text.split('\n');
+    const w = textWidthGuess(lines, fs);
+    const h = lines.length * fs * ANNOTATION_LINE_HEIGHT;
+    update(ann.at[0], ann.at[1]);
+    update(ann.at[0] + w, ann.at[1] + h);
+  }
+
   if (minX === Infinity) {
     minX = 0;
     minY = 0;
@@ -140,6 +237,17 @@ function computeContentBbox(model: InternalModel): Bbox {
     maxY = 0;
   }
   return { minX, minY, maxX, maxY };
+}
+
+function textWidthGuess(lines: string[], fontSize: number): number {
+  // Match the heuristic in FreeAnnotationLayer (~0.55em per char) so the
+  // bbox tracks the on-screen selection halo.
+  let max = 0;
+  for (const l of lines) {
+    const w = l.length * fontSize * 0.55;
+    if (w > max) max = w;
+  }
+  return Math.max(20, max);
 }
 
 function parseViewBox(
