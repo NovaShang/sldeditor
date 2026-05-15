@@ -25,11 +25,42 @@ import { OneLineEditor } from 'sldeditor';
 import 'sldeditor/style.css';
 
 export default function App() {
-  return <OneLineEditor />;
+  return (
+    <div style={{ height: '100vh' }}>
+      <OneLineEditor />
+    </div>
+  );
 }
 ```
 
+Peer deps: `react >= 18`, `react-dom >= 18` (React 19 tested).
+
 `OneLineEditor` mounts a full editor (canvas + toolbars + panels). Pass `diagram` to seed an initial `DiagramFile`; otherwise it loads from `localStorage` or starts empty.
+
+### Style isolation
+
+Every selector in `sldeditor/style.css` is scoped under `.ole-root` — including all Tailwind utilities and CSS variables. The editor always renders that wrapper, so the stylesheet is safe to drop into a host app that has its own Tailwind, design system, or hand-written CSS without collisions.
+
+### Migrating from a git submodule
+
+If your repo currently pulls this project as a submodule:
+
+```bash
+git submodule deinit -- oneline-editor
+git rm oneline-editor
+rm -rf .git/modules/oneline-editor
+npm install sldeditor
+```
+
+Then rewrite imports:
+
+```diff
+- import { OneLineEditor } from '../oneline-editor/src';
++ import { OneLineEditor } from 'sldeditor';
++ import 'sldeditor/style.css';
+```
+
+The `style.css` import is **required** in npm mode (in the submodule layout your bundler probably picked up the source Tailwind file via content scan; in npm mode you get the prebuilt bundle).
 
 ## Public API
 
@@ -51,6 +82,15 @@ The editor reads/writes from a built-in zustand store. For embedding apps that w
 - Not a SCADA viewer — no real-time binding.
 - Not a secondary / control-loop diagram tool.
 
+## Docs
+
+- [Getting started](./docs/getting-started.md) — install, sizing, seeding, theme/locale, exports
+- [API reference](./docs/api.md) — every public export, grouped by purpose
+- [Data model](./docs/data-model.md) — `DiagramFile` schema
+- [Embedding + viewer API design](./docs/binding-and-viewer-api.md) — runtime data-binding plans
+- [Runtime PRD](./docs/runtime-prd.md) — read-only viewer roadmap
+- [Blog / changelog notes](./docs/blog/)
+
 ## Develop
 
 ```bash
@@ -61,6 +101,17 @@ npm run typecheck
 npm test
 ```
 
+### Releasing
+
+Versions ship via [Changesets](https://github.com/changesets/changesets). After making a publishable change:
+
+```bash
+npx changeset             # write a patch/minor/major note
+git commit -am "feat: ..."
+```
+
+When the PR lands on `master`, the **Release** GitHub Action opens a "Version Packages" PR; merging that PR publishes to npm and creates a GitHub release. Repo needs an `NPM_TOKEN` secret with automation-token scope.
+
 ## License
 
-MIT. Third-party attributions in `THIRD_PARTY_NOTICES.md`.
+MIT. Third-party attributions in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
