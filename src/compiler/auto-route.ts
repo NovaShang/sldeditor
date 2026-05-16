@@ -62,6 +62,40 @@ function endWorld(end: WireEnd, model: InternalModel): Pt | null {
   return term ? (term.world as Pt) : null;
 }
 
+/**
+ * Resolve the current world coordinate of a wire endpoint.
+ *
+ * For terminal ends this is just the terminal's world position. For bus
+ * ends it's the projection of `approach` onto the bus axis (clamped to
+ * the bus span) — `approach` is the nearby interior point that indicates
+ * where the user wants the wire to meet the bus. With no approach, the
+ * bus center is returned.
+ *
+ * Used by `compile.ts` to rebase the first/last point of a user-edited
+ * `Wire.path` whenever the connected element has moved.
+ */
+export function wireEndWorld(
+  end: WireEnd,
+  approach: Pt | null,
+  model: InternalModel,
+): Pt | null {
+  if (!end.includes('.')) {
+    const rb = model.buses.get(end);
+    if (!rb) return null;
+    const { axis, at, span } = rb.geometry;
+    if (!approach) return [at[0], at[1]] as Pt;
+    const half = span / 2;
+    if (axis === 'x') {
+      const x = clamp(approach[0], at[0] - half, at[0] + half);
+      return [x, at[1]];
+    }
+    const y = clamp(approach[1], at[1] - half, at[1] + half);
+    return [at[0], y];
+  }
+  const term = model.terminals.get(end as `${string}.${string}`);
+  return term ? ([term.world[0], term.world[1]] as Pt) : null;
+}
+
 function orthogonalPath(a: Pt, b: Pt): Pt[] {
   if (a[0] === b[0] || a[1] === b[1]) return [a, b];
   return [a, [a[0], b[1]], b];

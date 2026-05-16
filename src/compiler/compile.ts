@@ -24,8 +24,9 @@ import type {
   Wire,
   WireEnd,
 } from '../model';
+import { normalizePath } from '../model/wire-path';
 import { autoLayout } from './auto-layout';
-import { routeWire } from './auto-route';
+import { routeWire, wireEndWorld } from './auto-route';
 import { LIBRARY } from './library-index';
 import {
   emptyInternalModel,
@@ -269,8 +270,27 @@ export function compile(diagram: DiagramFile): InternalModel {
   // ---- 7. Per-wire rendering (Wire.path override; otherwise routeWire) ---
   for (const w of validWires) {
     if (w.path && w.path.length >= 2) {
-      m.wireRenders.set(w.id, { wireId: w.id, path: w.path, userEdited: true });
-      continue;
+      // Rebase endpoints to current terminal / bus positions so the wire
+      // tracks its connected elements when they move. Any diagonal that
+      // appears as a result is fixed by normalizePath (inserts L-corner).
+      const stored = w.path;
+      const approachA = stored.length >= 2 ? (stored[1] as [number, number]) : null;
+      const approachB = stored.length >= 2 ? (stored[stored.length - 2] as [number, number]) : null;
+      const endA = wireEndWorld(w.ends[0], approachA, m);
+      const endB = wireEndWorld(w.ends[1], approachB, m);
+      if (endA && endB) {
+        const rebased: [number, number][] = [
+          [endA[0], endA[1]],
+          ...stored.slice(1, -1).map((p) => [p[0], p[1]] as [number, number]),
+          [endB[0], endB[1]],
+        ];
+        const cleaned = normalizePath(rebased);
+        if (cleaned.length >= 2) {
+          m.wireRenders.set(w.id, { wireId: w.id, path: cleaned, userEdited: true });
+          continue;
+        }
+      }
+      // Endpoint resolution failed; fall back to auto-route below.
     }
     const r = routeWire(w, m);
     if (r) m.wireRenders.set(w.id, r);

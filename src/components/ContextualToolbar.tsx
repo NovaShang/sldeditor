@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { FlipHorizontal, RotateCw, Trash2 } from 'lucide-react';
+import { FlipHorizontal, RotateCw, Spline, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tooltip } from './ui/tooltip';
 import { useT } from '../i18n';
@@ -30,6 +30,10 @@ export function ContextualToolbar() {
   const del = useEditorStore((s) => s.deleteSelection);
   const delNode = useEditorStore((s) => s.deleteSelectedNode);
   const delWire = useEditorStore((s) => s.deleteSelectedWire);
+  const resetWirePath = useEditorStore((s) => s.resetWirePath);
+  const wireRenders = useEditorStore((s) => s.internal.wireRenders);
+  const wireIsManual =
+    selectedWire != null && wireRenders.get(selectedWire)?.userEdited === true;
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -121,6 +125,33 @@ export function ContextualToolbar() {
       }
       className="ole-glass pointer-events-auto fixed left-0 top-0 z-30 hidden items-center gap-0.5 rounded-2xl border border-border p-1 shadow-md"
     >
+      {isWireMode && wireIsManual && selectedWire && (
+        <>
+          <Tooltip
+            content={
+              <div className="space-y-0.5">
+                <div>
+                  <span className="font-medium">{t('ctx.resetWirePath')}</span>
+                </div>
+                <div className="text-muted-foreground">
+                  {t('ctx.resetWirePathHint')}
+                </div>
+              </div>
+            }
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={() => resetWirePath(selectedWire)}
+              aria-label={t('ctx.resetWirePath')}
+            >
+              <Spline />
+            </Button>
+          </Tooltip>
+          <div aria-hidden className="mx-0.5 h-4 w-px bg-border" />
+        </>
+      )}
       {!hideTransform && (
         <>
           <Tooltip

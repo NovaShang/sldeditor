@@ -144,6 +144,8 @@ export const messages = {
     'ctx.deleteHintNode': '断开此电气节点上的所有连接（保留元件）',
     'ctx.deleteHintWire': '移除这一根连线（其它同节点连线保留）',
     'ctx.deleteHintElement': '移除选中元件及其连接的连线',
+    'ctx.resetWirePath': '恢复自动走线',
+    'ctx.resetWirePathHint': '清除手动调整的拐点，让连线回到自动路由',
 
     'menu.undo': '撤销',
     'menu.redo': '重做',
@@ -330,6 +332,8 @@ export const messages = {
     'ctx.deleteHintNode': 'Disconnect every wire on this node (elements stay)',
     'ctx.deleteHintWire': 'Remove only this wire (siblings on the same node stay)',
     'ctx.deleteHintElement': 'Remove the selection and its wires',
+    'ctx.resetWirePath': 'Reset to auto-route',
+    'ctx.resetWirePathHint': 'Drop manual corners and let the router re-draw this wire',
 
     'menu.undo': 'Undo',
     'menu.redo': 'Redo',

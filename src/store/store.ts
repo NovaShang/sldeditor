@@ -44,6 +44,7 @@ import {
   newElementId,
   wireIdFromEnds,
 } from './id-allocator';
+import { normalizePath } from '../model/wire-path';
 
 const EMPTY_DIAGRAM: DiagramFile = { version: '1', elements: [] };
 const HISTORY_LIMIT = 100;
@@ -165,6 +166,10 @@ export interface EditorState {
   ) => BusId;
   /** Append a wire between two endpoints (idempotent — duplicate is a no-op). */
   addWire: (a: WireEnd, b: WireEnd) => void;
+  /** Replace a wire's manual route. `null` clears it → back to auto-route. */
+  updateWirePath: (id: WireId, path: [number, number][] | null) => void;
+  /** Clear a wire's manual route (alias for `updateWirePath(id, null)`). */
+  resetWirePath: (id: WireId) => void;
   updateElement: (id: ElementId, patch: Partial<Element>) => void;
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
   updateBus: (id: BusId, patch: Partial<BusLayout>) => void;
@@ -700,14 +705,41 @@ export const useEditorStore = create<EditorState>()(
   },
 
   deleteSelectedWire: () => {
-    const { selectedWire } = get();
+    const { selectedWire, internal } = get();
     if (!selectedWire) return;
+
+    // Collect non-bus elements touching this wire so we can freeze their
+    // current auto-layout positions into `diagram.layout`. Otherwise the
+    // next compile re-runs auto-layout without the wire's anchor and the
+    // element "flies" to a different spot.
+    const wireObj = (get().diagram.wires ?? []).find((w) => w.id === selectedWire);
+    const affectedElementIds = new Set<ElementId>();
+    if (wireObj) {
+      for (const end of wireObj.ends) {
+        const dot = end.indexOf('.');
+        if (dot > 0) affectedElementIds.add(end.slice(0, dot));
+      }
+    }
+
     get().dispatch((d) => {
       const wires = (d.wires ?? []).filter((w) => w.id !== selectedWire);
       if (wires.length === (d.wires ?? []).length) return d;
+
+      const layout = { ...(d.layout ?? {}) };
+      for (const id of affectedElementIds) {
+        if (layout[id]) continue;
+        const resolved = internal.layout.get(id);
+        if (!resolved) continue;
+        const placement: Placement = { at: resolved.at };
+        if (resolved.rot) placement.rot = resolved.rot;
+        if (resolved.mirror) placement.mirror = resolved.mirror;
+        layout[id] = placement;
+      }
+
       return {
         ...d,
         wires: wires.length ? wires : undefined,
+        layout: Object.keys(layout).length ? layout : undefined,
       };
     });
     set({ selectedWire: null });
@@ -840,6 +872,26 @@ export const useEditorStore = create<EditorState>()(
         wires: [...existing, { id, ends: [a, b] }],
       };
     });
+  },
+
+  updateWirePath: (id, path) => {
+    get().dispatch((d) => {
+      const wires = d.wires ?? [];
+      if (!wires.some((w) => w.id === id)) return d;
+      const cleaned = path && path.length >= 2 ? normalizePath(path) : null;
+      const valid = cleaned && cleaned.length >= 2 ? cleaned : null;
+      const nextWires = wires.map((w) => {
+        if (w.id !== id) return w;
+        if (valid) return { ...w, path: valid };
+        const { path: _drop, ...rest } = w;
+        return rest as Wire;
+      });
+      return { ...d, wires: nextWires };
+    });
+  },
+
+  resetWirePath: (id) => {
+    get().updateWirePath(id, null);
   },
 
   updateElement: (id, patch) => {

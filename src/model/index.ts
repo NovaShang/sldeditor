@@ -30,3 +30,5 @@ export type {
   LibrarySource,
   Orientation,
 } from './library';
+
+export { normalizePath } from './wire-path';

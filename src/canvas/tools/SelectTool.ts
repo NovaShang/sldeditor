@@ -64,13 +64,13 @@ export const SelectTool: Tool = {
   onPointerDown(e, ctx) {
     if (e.button !== 0) return; // ignore middle/right
 
-    // Bus stretch handles are *inside* the canvas host but their React
-    // handlers run after the host's native bubble phase (React 17+ root
-    // delegation). Ignoring handle hits here keeps SelectTool from
-    // clearing the very selection that owns those handles.
+    // Bus stretch + wire path handles are *inside* the canvas host but
+    // their React handlers run after the host's native bubble phase
+    // (React 17+ root delegation). Ignoring handle hits here keeps
+    // SelectTool from clearing the very selection that owns those handles.
     if (
       e.target instanceof Element &&
-      e.target.closest('.ole-bus-handle')
+      e.target.closest('.ole-bus-handle, .ole-wire-handle')
     ) {
       return;
     }

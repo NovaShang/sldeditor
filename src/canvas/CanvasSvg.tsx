@@ -28,6 +28,7 @@ import { dropElement } from './drop-on-bus';
 import { AnnotationLayer } from './AnnotationLayer';
 import { FreeAnnotationLayer } from './FreeAnnotationLayer';
 import { BusHandles } from './BusHandles';
+import { WireHandles } from './WireHandles';
 import { BusLayer } from './BusLayer';
 import { BusbarPreview } from './BusbarPreview';
 import { ElementLayer } from './ElementLayer';
@@ -326,6 +327,7 @@ export function CanvasSvg() {
           <FreeAnnotationLayer />
           <SelectionOverlay />
           <BusHandles />
+          <WireHandles />
           <TerminalLayer />
           <WirePreview />
           <BusbarPreview />

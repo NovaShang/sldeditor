@@ -370,6 +370,38 @@
   fill: var(--selection);
 }
 
+/* Wire path edit handles. Vertex = filled corner grip; midpoint = smaller
+   hollow grip that drags a segment perpendicular to its axis (inserts two
+   new corners). Cursor is set inline based on the locked axis. */
+.ole-wire-handle {
+  vector-effect: non-scaling-stroke;
+  pointer-events: auto;
+}
+.ole-wire-vertex {
+  fill: var(--canvas-bg);
+  stroke: var(--selection);
+  stroke-width: 1.5;
+}
+.ole-wire-vertex:hover {
+  fill: var(--selection);
+}
+.ole-wire-midpoint {
+  fill: var(--canvas-bg);
+  stroke: var(--selection);
+  stroke-width: 1;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.ole-wire-midpoint-group:hover .ole-wire-midpoint {
+  opacity: 1;
+  fill: var(--selection);
+}
+.ole-wire-midpoint-hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+}
+
 /* Marquee selection box — translucent fill + dashed selection-color stroke. */
 .ole-marquee {
   fill: color-mix(in oklch, var(--selection) 8%, transparent);
