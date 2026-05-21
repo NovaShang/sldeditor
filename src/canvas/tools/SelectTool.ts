@@ -12,7 +12,7 @@
 
 import { useEditorStore } from '../../store';
 import type { ResolvedPlacement } from '../../compiler';
-import type { AnnotationId, ElementId, WireEnd } from '../../model';
+import type { AnnotationId, BusId, ElementId, WireEnd } from '../../model';
 import { snap } from '../grid';
 import { hitAnnotation, hitElement, hitNode, hitTerminal, hitWire } from '../hit-test';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
@@ -28,6 +28,9 @@ interface DragState {
   startSvg: [number, number];
   /** Original placements of every dragged element. */
   originals: Map<ElementId, ResolvedPlacement>;
+  /** Original `at` of every dragged bus. Buses live outside `internal.layout`
+   *  so they need a separate map; preview translates the wrapper `<g>`. */
+  busOriginals: Map<BusId, [number, number]>;
   moved: boolean;
 }
 
@@ -129,7 +132,30 @@ export const SelectTool: Tool = {
       }
     }
 
-    const id = hitElement(e.target);
+    let id = hitElement(e.target);
+
+    // Wire hit polylines are ~12px wide for comfortable clicking and live
+    // above the bus layer in z-order. At a wire's endpoint they sit
+    // directly on the bus the wire connects to, so a raw `hitElement`
+    // returns null (the polyline has no `data-element-id`) and we'd fall
+    // through to "select the wire" — breaking bus drag wherever a wire
+    // attaches. Rewrite the hit to the bus when the wire under the
+    // cursor is endpoint-connected to a bus that's also in the click stack.
+    if (!id) {
+      const wireIdAtTarget = hitWire(e.target);
+      if (wireIdAtTarget && typeof document !== 'undefined') {
+        const stack = document.elementsFromPoint(e.clientX, e.clientY);
+        for (const el of stack) {
+          const bid = el.closest?.('[data-bus-id]')?.getAttribute('data-bus-id');
+          if (!bid) continue;
+          const wire = store.diagram.wires?.find((w) => w.id === wireIdAtTarget);
+          if (wire && (wire.ends[0] === bid || wire.ends[1] === bid)) {
+            id = bid;
+          }
+          break;
+        }
+      }
+    }
 
     if (!id) {
       // Click on a wire → select that single Wire. Alt-click selects the
@@ -180,16 +206,23 @@ export const SelectTool: Tool = {
 
     const internal = useEditorStore.getState().internal;
     const originals = new Map<ElementId, ResolvedPlacement>();
+    const busOriginals = new Map<BusId, [number, number]>();
     for (const tid of targets) {
+      const rb = internal.buses.get(tid);
+      if (rb) {
+        busOriginals.set(tid, [rb.geometry.at[0], rb.geometry.at[1]]);
+        continue;
+      }
       const p = internal.layout.get(tid);
       if (p) originals.set(tid, { ...p });
     }
-    if (originals.size === 0) return;
+    if (originals.size === 0 && busOriginals.size === 0) return;
 
     drag = {
       pointerId: e.pointerId,
       startSvg: ctx.viewport.screenToSvg(e.clientX, e.clientY),
       originals,
+      busOriginals,
       moved: false,
     };
     // Defer pointer capture until the user actually starts moving (in
@@ -258,6 +291,16 @@ export const SelectTool: Tool = {
         };
         node.setAttribute('transform', transformAttr(next));
       }
+      // Buses: wrapper g has no baseline transform (geometry is baked into
+      // child line/rect coords), so a translate on the wrapper previews the
+      // drop position without recomputing geometry.
+      for (const id of drag.busOriginals.keys()) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-element-id="${cssEscape(id)}"]`,
+        );
+        if (!node) continue;
+        node.setAttribute('transform', `translate(${dx} ${dy})`);
+      }
       return;
     }
 
@@ -314,7 +357,15 @@ export const SelectTool: Tool = {
         if (dx !== 0 || dy !== 0) {
           const deltas = new Map<ElementId, [number, number]>();
           for (const id of drag.originals.keys()) deltas.set(id, [dx, dy]);
+          for (const id of drag.busOriginals.keys()) deltas.set(id, [dx, dy]);
           useEditorStore.getState().moveElements(deltas);
+        }
+        // Clear bus preview transforms — the store update repaints at new at.
+        for (const id of drag.busOriginals.keys()) {
+          const node = ctx.hostEl.querySelector<SVGGElement>(
+            `[data-element-id="${cssEscape(id)}"]`,
+          );
+          if (node) node.removeAttribute('transform');
         }
       }
       drag = null;
@@ -374,6 +425,12 @@ export const SelectTool: Tool = {
         );
         if (!node) continue;
         node.setAttribute('transform', transformAttr(orig));
+      }
+      for (const id of drag.busOriginals.keys()) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-element-id="${cssEscape(id)}"]`,
+        );
+        if (node) node.removeAttribute('transform');
       }
       if (ctx.hostEl.hasPointerCapture?.(e.pointerId)) {
         try {

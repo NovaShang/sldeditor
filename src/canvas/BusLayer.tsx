@@ -76,7 +76,7 @@ export function BusLayer() {
               y1={y1}
               x2={x2}
               y2={y2}
-              stroke="black"
+              stroke="currentColor"
               strokeWidth={STROKE_WIDTH}
               strokeLinecap="round"
               fill="none"

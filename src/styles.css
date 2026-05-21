@@ -412,6 +412,11 @@
   pointer-events: none;
 }
 
+/* Buses inherit `currentColor` so they track light/dark theme like wires. */
+.ole-bus-layer {
+  color: var(--foreground);
+}
+
 /* Wires. `pointer-events: stroke` so they're hoverable but the body of the
    wire's bounding box doesn't swallow clicks meant for elements behind it. */
 .ole-wire-layer {

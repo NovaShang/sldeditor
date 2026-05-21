@@ -13,7 +13,7 @@
  */
 
 import type { ResolvedPlacement } from '../../compiler';
-import type { ElementId } from '../../model';
+import type { BusId, ElementId } from '../../model';
 import { useEditorStore } from '../../store';
 import { snap } from '../grid';
 import { hitAnnotation, hitElement, hitNode } from '../hit-test';
@@ -32,10 +32,12 @@ interface PanState {
   moved: boolean;
   /** If set, the gesture started on these selected elements — drag = move
    *  instead of pan. Stores each target's original placement so we can
-   *  preview via DOM transform and commit a delta on pointerup. */
+   *  preview via DOM transform and commit a delta on pointerup. Buses live
+   *  outside `internal.layout` so they're tracked separately by `at`. */
   elementDrag: {
     startSvg: [number, number];
     originals: Map<ElementId, ResolvedPlacement>;
+    busOriginals: Map<BusId, [number, number]>;
   } | null;
 }
 
@@ -64,14 +66,21 @@ export const PanTool: Tool = {
       const sel = useEditorStore.getState().selection;
       const internal = useEditorStore.getState().internal;
       const originals = new Map<ElementId, ResolvedPlacement>();
+      const busOriginals = new Map<BusId, [number, number]>();
       for (const id of sel) {
+        const rb = internal.buses.get(id);
+        if (rb) {
+          busOriginals.set(id, [rb.geometry.at[0], rb.geometry.at[1]]);
+          continue;
+        }
         const p = internal.layout.get(id);
         if (p) originals.set(id, { ...p });
       }
-      if (originals.size > 0) {
+      if (originals.size > 0 || busOriginals.size > 0) {
         elementDrag = {
           startSvg: ctx.viewport.screenToSvg(e.clientX, e.clientY),
           originals,
+          busOriginals,
         };
       }
     }
@@ -120,6 +129,13 @@ export const PanTool: Tool = {
         };
         node.setAttribute('transform', transformAttr(next));
       }
+      for (const id of pan.elementDrag.busOriginals.keys()) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-element-id="${cssEscape(id)}"]`,
+        );
+        if (!node) continue;
+        node.setAttribute('transform', `translate(${ddx} ${ddy})`);
+      }
       return;
     }
     ctx.viewport.setViewport({ tx: pan.startTx + dx, ty: pan.startTy + dy });
@@ -141,7 +157,17 @@ export const PanTool: Tool = {
         for (const id of pan.elementDrag.originals.keys()) {
           deltas.set(id, [ddx, ddy]);
         }
+        for (const id of pan.elementDrag.busOriginals.keys()) {
+          deltas.set(id, [ddx, ddy]);
+        }
         useEditorStore.getState().moveElements(deltas);
+      }
+      // Clear bus preview transforms — store update repaints at the new at.
+      for (const id of pan.elementDrag.busOriginals.keys()) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-element-id="${cssEscape(id)}"]`,
+        );
+        if (node) node.removeAttribute('transform');
       }
     } else if (!pan.moved) {
       handlePanTap(pan.startTarget);
@@ -157,6 +183,12 @@ export const PanTool: Tool = {
           `[data-element-id="${cssEscape(id)}"]`,
         );
         if (node) node.setAttribute('transform', transformAttr(orig));
+      }
+      for (const id of pan.elementDrag.busOriginals.keys()) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-element-id="${cssEscape(id)}"]`,
+        );
+        if (node) node.removeAttribute('transform');
       }
     }
     pan = null;
