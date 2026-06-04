@@ -1,0 +1,27 @@
+{
+  "id": "plc",
+  "name": "PLC / 控制器",
+  "category": "control",
+  "description": "可编程逻辑控制器 (PLC)。",
+  "viewBox": "-24 -42 48 84",
+  "width": 48,
+  "height": 84,
+  "svg": "<rect x=\"-22\" y=\"-22\" width=\"44\" height=\"44\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"0\" y=\"4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"11\" fill=\"#000000\">PLC</text><line x1=\"0\" y1=\"-40\" x2=\"0\" y2=\"-22\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"22\" x2=\"0\" y2=\"40\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t_bottom",
+      "x": 0,
+      "y": 40,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

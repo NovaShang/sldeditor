@@ -1,0 +1,29 @@
+{
+  "id": "dc-motor",
+  "name": "直流电机 (M)",
+  "category": "load",
+  "description": "直流电动机 (串励通用符号)。",
+  "viewBox": "-72 -82 89 84",
+  "width": 89,
+  "height": 84,
+  "svg": "<ellipse cx=\"-30\" cy=\"-30\" rx=\"30\" ry=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-34\" y=\"-24.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"14\" fill=\"#000000\">M</text><line x1=\"-40\" y1=\"-20\" x2=\"-20\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"-15\" x2=\"-32\" y2=\"-15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-29\" y1=\"-15\" x2=\"-20\" y2=\"-15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-70\" y1=\"-80\" x2=\"-70\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-70\" y1=\"-30\" x2=\"-60\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-30\" x2=\"10\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"10\" y1=\"-30\" x2=\"10\" y2=\"-50\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 10 -60 A 5 5 0 0 0 10 -50\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 10 -70 A 5 5 0 0 0 10 -60\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 10 -80 A 5 5 0 0 0 10 -70\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -70,
+      "y": -80,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 10,
+      "y": -80,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_05/en_60617_06_05_01.elmt",
+    "qetEnglishName": "Series motor, DC"
+  }
+}

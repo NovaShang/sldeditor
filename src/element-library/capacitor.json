@@ -1,0 +1,44 @@
+{
+  "id": "capacitor",
+  "name": "电容 (C)",
+  "category": "passive",
+  "description": "通用 / 滤波 / 直流母线电容。无功补偿请用并联电容器。",
+  "viewBox": "-7 -23 14 27",
+  "width": 14,
+  "height": 27,
+  "svg": "<line x1=\"-5\" y1=\"2\" x2=\"5\" y2=\"2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5\" y1=\"-2\" x2=\"5\" y2=\"-2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -21,
+      "orientation": "n"
+    },
+    {
+      "id": "t_bottom",
+      "x": 0,
+      "y": 2,
+      "orientation": "s"
+    }
+  ],
+  "params": [
+    {
+      "name": "C",
+      "label": "容值",
+      "type": "number",
+      "unit": "μF",
+      "showOnCanvas": true
+    },
+    {
+      "name": "Un",
+      "label": "额定电压",
+      "type": "number",
+      "unit": "V"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "11_singlepole/395_electronics_semiconductors/20_capacitors/capacite.elmt",
+    "qetEnglishName": "Capacitor"
+  }
+}

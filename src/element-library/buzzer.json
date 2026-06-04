@@ -1,0 +1,29 @@
+{
+  "id": "buzzer",
+  "name": "蜂鸣器 (HA)",
+  "category": "control",
+  "description": "信号蜂鸣器。",
+  "viewBox": "-32 -52 44 64",
+  "width": 44,
+  "height": 64,
+  "svg": "<line x1=\"-30\" y1=\"-30\" x2=\"10\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -30 -30 A 20 20 0 0 0 10 -30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-12\" x2=\"-20\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-12\" x2=\"0\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": 10,
+      "orientation": "s"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 10,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_08/en_60617_08_10/en_60617_08_10_10.elmt",
+    "qetEnglishName": "Buzzer"
+  }
+}

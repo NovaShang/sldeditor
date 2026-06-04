@@ -1,0 +1,37 @@
+{
+  "id": "voltage-regulator",
+  "name": "调压器 (T)",
+  "category": "transformer",
+  "description": "可调感应调压器 / 自耦调压器。",
+  "viewBox": "-17 -32 38 64",
+  "width": 38,
+  "height": 64,
+  "svg": "<line x1=\"-5\" y1=\"21\" x2=\"5\" y2=\"17\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5.05\" y1=\"-16.05\" x2=\"4.95\" y2=\"-20.05\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"-5\" rx=\"10\" ry=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"0\" rx=\"15\" ry=\"15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5.05\" y1=\"-20.05\" x2=\"4.95\" y2=\"-24.05\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5\" y1=\"23\" x2=\"5\" y2=\"19\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5.05\" y1=\"-18.05\" x2=\"4.95\" y2=\"-22.05\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"15\" x2=\"0\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5\" y1=\"25\" x2=\"5\" y2=\"21\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-15\" y1=\"15\" x2=\"15\" y2=\"-15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"13,-16 16,-13 19,-19\" fill=\"black\" stroke=\"black\" stroke-width=\"0.4\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 30,
+      "orientation": "s"
+    }
+  ],
+  "params": [
+    {
+      "name": "ratio",
+      "label": "调压范围",
+      "type": "string",
+      "showOnCanvas": true
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "11_singlepole/340_converters_inverters/10_converters/regulator_ind_3f_1.elmt",
+    "qetEnglishName": "Voltage regulator"
+  }
+}

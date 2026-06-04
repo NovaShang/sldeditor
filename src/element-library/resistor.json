@@ -1,0 +1,49 @@
+{
+  "id": "resistor",
+  "name": "电阻 (R)",
+  "category": "passive",
+  "description": "通用电阻 / 限流 / 制动电阻。",
+  "viewBox": "-6 -23 12 35",
+  "width": 12,
+  "height": 35,
+  "svg": "<line x1=\"0\" y1=\"-10\" x2=\"0\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"4\" y1=\"10\" x2=\"4\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-4\" y1=\"10\" x2=\"4\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"4\" y1=\"-10\" x2=\"-4\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-4\" y1=\"-10\" x2=\"-4\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -21,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 10,
+      "orientation": "s"
+    }
+  ],
+  "params": [
+    {
+      "name": "R",
+      "label": "阻值",
+      "type": "number",
+      "unit": "Ω",
+      "showOnCanvas": true
+    },
+    {
+      "name": "P",
+      "label": "额定功率",
+      "type": "number",
+      "unit": "W"
+    }
+  ],
+  "label": {
+    "x": 6,
+    "y": 0,
+    "anchor": "start"
+  },
+  "source": {
+    "kind": "elmt",
+    "path": "11_singlepole/395_electronics_semiconductors/10_resistors/resistance.elmt",
+    "qetEnglishName": "Resistor"
+  }
+}

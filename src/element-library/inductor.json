@@ -1,0 +1,49 @@
+{
+  "id": "inductor",
+  "name": "电感 (L)",
+  "category": "passive",
+  "description": "通用电感 / 线圈 / 扼流圈。",
+  "viewBox": "-17 -32 34 64",
+  "width": 34,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"15\" x2=\"0\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 15 A 15 15 0 1 0 -15 0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-15\" y1=\"0\" x2=\"0\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 30,
+      "orientation": "s"
+    }
+  ],
+  "params": [
+    {
+      "name": "L",
+      "label": "电感量",
+      "type": "number",
+      "unit": "mH",
+      "showOnCanvas": true
+    },
+    {
+      "name": "In",
+      "label": "额定电流",
+      "type": "number",
+      "unit": "A"
+    }
+  ],
+  "label": {
+    "x": 6,
+    "y": 0,
+    "anchor": "start"
+  },
+  "source": {
+    "kind": "elmt",
+    "path": "11_singlepole/395_electronics_semiconductors/30_inductors/inductance.elmt",
+    "qetEnglishName": "Inductor"
+  }
+}

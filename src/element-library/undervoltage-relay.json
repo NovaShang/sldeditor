@@ -1,0 +1,23 @@
+{
+  "id": "undervoltage-relay",
+  "name": "欠压继电器 (27)",
+  "category": "protection",
+  "description": "欠电压保护继电器 (ANSI 27)。",
+  "viewBox": "-62 -82 64 84",
+  "width": 64,
+  "height": 84,
+  "svg": "<rect x=\"-60\" y=\"-80\" width=\"60\" height=\"80\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-49\" y=\"-7.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">130 %</text><text x=\"-55\" y=\"-32.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">50...80 V</text><text x=\"-41\" y=\"-53.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">U &lt;</text>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": -30,
+      "y": -80,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_07.elmt",
+    "qetEnglishName": "Undervoltage relay"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "thyristor",
+  "name": "晶闸管 (V)",
+  "category": "passive",
+  "description": "反向阻断三极晶闸管 / SCR。t1=阳极(上), t2=阴极(下)。",
+  "viewBox": "-22 -42 34 44",
+  "width": 34,
+  "height": 44,
+  "svg": "<line x1=\"0\" y1=\"-40\" x2=\"0\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-10\" x2=\"10\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"-10,-30 10,-30 0,-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"10\" y1=\"-20\" x2=\"-10\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-20,0 -7,0 -4,-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 0,
+      "orientation": "s"
+    }
+  ],
+  "label": {
+    "x": 6,
+    "y": -20,
+    "anchor": "start"
+  },
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_05/en_60617_05_04/en_60617_05_04_06.elmt",
+    "qetEnglishName": "Reverse blocking triode thyristor, P-gate (cathode-side controlled)"
+  }
+}

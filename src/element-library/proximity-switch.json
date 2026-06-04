@@ -1,0 +1,29 @@
+{
+  "id": "proximity-switch",
+  "name": "接近开关 (SQ)",
+  "category": "control",
+  "description": "接近传感器 / 无触点接近开关。",
+  "viewBox": "-12 -32 24 64",
+  "width": 24,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"30\" x2=\"0\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"0,-10 -10,0 0,10 10,0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-4\" y1=\"-6\" x2=\"-4\" y2=\"6\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"4\" y1=\"-6\" x2=\"4\" y2=\"6\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 30,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_19/en_60617_07_19_01.elmt",
+    "qetEnglishName": "Proximity sensor"
+  }
+}

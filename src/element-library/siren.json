@@ -1,0 +1,29 @@
+{
+  "id": "siren",
+  "name": "警笛 (HA)",
+  "category": "control",
+  "description": "声响警笛 / 报警器。",
+  "viewBox": "-32 -42 44 54",
+  "width": 44,
+  "height": 54,
+  "svg": "<line x1=\"-20\" y1=\"-10\" x2=\"-20\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-10\" x2=\"0\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"10,-10 -30,-10 -10,-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": 10,
+      "orientation": "s"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 10,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_08/en_60617_08_10/en_60617_08_10_09.elmt",
+    "qetEnglishName": "Siren"
+  }
+}

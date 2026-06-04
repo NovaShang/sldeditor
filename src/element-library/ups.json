@@ -1,0 +1,35 @@
+{
+  "id": "ups",
+  "name": "不间断电源 (UPS)",
+  "category": "source",
+  "description": "在线 / 后备式不间断电源。",
+  "viewBox": "-26 -42 52 84",
+  "width": 52,
+  "height": 84,
+  "svg": "<rect x=\"-24\" y=\"-20\" width=\"48\" height=\"40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"0\" y=\"4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"11\" fill=\"#000000\">UPS</text><line x1=\"0\" y1=\"-40\" x2=\"0\" y2=\"-20\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/><line x1=\"0\" y1=\"20\" x2=\"0\" y2=\"40\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/>",
+  "terminals": [
+    {
+      "id": "t_in",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t_out",
+      "x": 0,
+      "y": 40,
+      "orientation": "s"
+    }
+  ],
+  "params": [
+    {
+      "name": "S",
+      "label": "容量",
+      "type": "number",
+      "unit": "kVA"
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

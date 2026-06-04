@@ -1,0 +1,23 @@
+{
+  "id": "power-factor-meter",
+  "name": "功率因数表 (cosφ)",
+  "category": "measurement",
+  "description": "功率因数表 (cosφ)。",
+  "viewBox": "-22 -42 44 44",
+  "width": 44,
+  "height": 44,
+  "svg": "<ellipse cx=\"0\" cy=\"-20\" rx=\"20\" ry=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-14\" y=\"-6.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">cos φ</text>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_08/en_60617_08_02/en_60617_08_02_05.elmt",
+    "qetEnglishName": "Power-factor meter"
+  }
+}

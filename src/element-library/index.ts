@@ -23,6 +23,7 @@ export const CATEGORY_ORDER: readonly string[] = [
   'switching',
   'protection',
   'motor-control',
+  'control',
   'transformer',
   'instrument-transformer',
   'measurement',
@@ -30,6 +31,7 @@ export const CATEGORY_ORDER: readonly string[] = [
   'load',
   'storage',
   'compensation',
+  'passive',
   'grounding',
   'renewable',
 ];
@@ -39,6 +41,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   switching: '开关',
   protection: '保护',
   'motor-control': '电机控制',
+  control: '控制 / 信号',
   transformer: '变压器',
   'instrument-transformer': '互感器',
   measurement: '测量仪表',
@@ -46,6 +49,7 @@ export const CATEGORY_LABELS: Record<string, string> = {
   load: '负荷',
   storage: '储能',
   compensation: '无功补偿',
+  passive: '无源元件',
   grounding: '中性点接地',
   renewable: '新能源 / 电力电子',
 };

@@ -1,0 +1,23 @@
+{
+  "id": "overcurrent-relay",
+  "name": "过流继电器 (50/51)",
+  "category": "protection",
+  "description": "过电流保护继电器 (ANSI 50/51)。",
+  "viewBox": "-62 -62 64 64",
+  "width": 64,
+  "height": 64,
+  "svg": "<rect x=\"-60\" y=\"-60\" width=\"60\" height=\"60\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-48\" y=\"-7.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">5...10A</text>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": -30,
+      "y": -60,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_05.elmt",
+    "qetEnglishName": "Overcurrent relay"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "buchholz-relay",
+  "name": "瓦斯继电器 (63)",
+  "category": "protection",
+  "description": "瓦斯 / 气体继电器 (Buchholz, ANSI 63)。",
+  "viewBox": "-22 -62 44 64",
+  "width": 44,
+  "height": 64,
+  "svg": "<rect x=\"-20\" y=\"-60\" width=\"40\" height=\"30\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-20\" y=\"-30\" width=\"40\" height=\"30\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-5\" y=\"-20\" width=\"10\" height=\"10\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"5\" y1=\"-20\" x2=\"10\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-55\" x2=\"0\" y2=\"-50\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 -50 A 10 5 0 0 0 0 -40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 -40 A 10 5 0 0 0 0 -50\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -60,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_18/en_60617_07_18_01.elmt",
+    "qetEnglishName": "Buchholz protective device; Gas relay"
+  }
+}

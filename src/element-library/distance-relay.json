@@ -1,0 +1,23 @@
+{
+  "id": "distance-relay",
+  "name": "距离继电器 (21)",
+  "category": "protection",
+  "description": "距离 / 低阻抗保护继电器 (ANSI 21)。",
+  "viewBox": "-62 -42 64 44",
+  "width": 64,
+  "height": 44,
+  "svg": "<rect x=\"-60\" y=\"-40\" width=\"60\" height=\"40\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-42\" y=\"-7.8\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">Z  &lt;</text>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": -30,
+      "y": -40,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_09.elmt",
+    "qetEnglishName": "Under-impedance relay"
+  }
+}

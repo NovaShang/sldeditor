@@ -1,0 +1,30 @@
+{
+  "id": "genset",
+  "name": "发电机组 (G)",
+  "category": "source",
+  "description": "柴油 / 燃气发电机组。",
+  "viewBox": "-28 -22 56 64",
+  "width": 56,
+  "height": 64,
+  "svg": "<rect x=\"-26\" y=\"-20\" width=\"52\" height=\"40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"0\" y=\"4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"11\" fill=\"#000000\">GEN</text><line x1=\"0\" y1=\"20\" x2=\"0\" y2=\"40\" stroke=\"black\" stroke-width=\"1\" fill=\"none\"/>",
+  "terminals": [
+    {
+      "id": "t_out",
+      "x": 0,
+      "y": 40,
+      "orientation": "s"
+    }
+  ],
+  "params": [
+    {
+      "name": "P",
+      "label": "功率",
+      "type": "number",
+      "unit": "kW",
+      "showOnCanvas": true
+    }
+  ],
+  "source": {
+    "kind": "inline"
+  }
+}

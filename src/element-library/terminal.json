@@ -1,0 +1,41 @@
+{
+  "id": "terminal",
+  "name": "接线端子 / 节点 (X)",
+  "category": "busbar",
+  "description": "接线端子 / 接线盒 / 汇接节点。",
+  "viewBox": "-5 -5 10 10",
+  "width": 10,
+  "height": 10,
+  "svg": "<ellipse cx=\"0\" cy=\"0\" rx=\"2.5\" ry=\"2.5\" fill=\"black\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -2.5,
+      "orientation": "n"
+    },
+    {
+      "id": "t_bottom",
+      "x": 0,
+      "y": 2.5,
+      "orientation": "s"
+    },
+    {
+      "id": "t_left",
+      "x": -2.5,
+      "y": 0,
+      "orientation": "w"
+    },
+    {
+      "id": "t_right",
+      "x": 2.5,
+      "y": 0,
+      "orientation": "e"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_03/en_60617_03_02/en_60617_03_02_02.elmt",
+    "qetEnglishName": "Terminal"
+  }
+}

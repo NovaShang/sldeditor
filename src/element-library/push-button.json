@@ -1,0 +1,29 @@
+{
+  "id": "push-button",
+  "name": "按钮 (SB)",
+  "category": "control",
+  "description": "手动按钮, 自动复位 (常开 make)。",
+  "viewBox": "-37 -42 39 64",
+  "width": 39,
+  "height": 64,
+  "svg": "<line x1=\"-35\" y1=\"-10\" x2=\"-4\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\" stroke-dasharray=\"4 2\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-35\" y1=\"-15\" x2=\"-35\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"-8\" y2=\"-23\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-35\" y1=\"-15\" x2=\"-30\" y2=\"-15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-5\" x2=\"-35\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_07/en_60617_07_07_02.elmt",
+    "qetEnglishName": "Switch, manually operated, push-button, automatic return"
+  }
+}

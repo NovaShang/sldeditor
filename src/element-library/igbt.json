@@ -1,0 +1,35 @@
+{
+  "id": "igbt",
+  "name": "绝缘栅双极晶体管 (IGBT)",
+  "category": "passive",
+  "description": "N 沟道增强型 IGBT。t1=集电极(上), t2=发射极(下), t_g=门极。",
+  "viewBox": "-32 -32 54 74",
+  "width": 54,
+  "height": 74,
+  "svg": "<line x1=\"0\" y1=\"25\" x2=\"0\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-30,20 -5,20 -5,-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-15\" x2=\"20\" y2=\"-30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"15\" x2=\"20\" y2=\"40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"15\" y2=\"15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-25\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-8\" x2=\"0\" y2=\"8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"10,-24 8,-21 12,-22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"10,25 11,29 8,27\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 20,
+      "y": -30,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 20,
+      "y": 40,
+      "orientation": "s"
+    },
+    {
+      "id": "t_g",
+      "x": -30,
+      "y": 20,
+      "orientation": "w"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_05/en_60617_05_05/en_60617_05_05_19.elmt",
+    "qetEnglishName": "Insulated-gate bipolar transistor (IGBT) enhancement type, N channel"
+  }
+}

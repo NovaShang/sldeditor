@@ -1,0 +1,29 @@
+{
+  "id": "bell",
+  "name": "电铃 (HA)",
+  "category": "control",
+  "description": "信号电铃 / 警铃。",
+  "viewBox": "-32 -32 44 44",
+  "width": 44,
+  "height": 44,
+  "svg": "<line x1=\"-30\" y1=\"-10\" x2=\"10\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 10 -10 A 20 20 0 0 0 -30 -10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-10\" x2=\"-20\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-10\" x2=\"0\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": 10,
+      "orientation": "s"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 10,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_08/en_60617_08_10/en_60617_08_10_06.elmt",
+    "qetEnglishName": "Bell"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "heater",
+  "name": "电加热器 (EH)",
+  "category": "load",
+  "description": "电阻加热元件 / 电热负荷。",
+  "viewBox": "-22 -7 54 14",
+  "width": 54,
+  "height": 14,
+  "svg": "<line x1=\"-20\" y1=\"0\" x2=\"-10\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-10\" y=\"-5\" width=\"30\" height=\"10\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"0\" x2=\"30\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5\" y1=\"-5\" x2=\"-5\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"5\" y1=\"-5\" x2=\"5\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"15\" y1=\"-5\" x2=\"15\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": 0,
+      "orientation": "w"
+    },
+    {
+      "id": "t2",
+      "x": 30,
+      "y": 0,
+      "orientation": "e"
+    }
+  ],
+  "params": [
+    {
+      "name": "P",
+      "label": "功率",
+      "type": "number",
+      "unit": "kW",
+      "showOnCanvas": true
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_04/en_60617_04_01/en_60617_04_01_12.elmt",
+    "qetEnglishName": "Heating element"
+  }
+}

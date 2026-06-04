@@ -1,0 +1,23 @@
+{
+  "id": "synchronoscope",
+  "name": "同步表",
+  "category": "measurement",
+  "description": "同步指示器 / 同步表。",
+  "viewBox": "-22 -42 44 44",
+  "width": 44,
+  "height": 44,
+  "svg": "<ellipse cx=\"0\" cy=\"-20\" rx=\"20\" ry=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-5\" x2=\"0\" y2=\"-35\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 12.374 -30.374 A 17.5 17.5 0 0 0 -12.374 -30.374\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"-13,-30 -11,-33 -10,-31\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"11,-33 13,-30 10,-31\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_08/en_60617_08_02/en_60617_08_02_08.elmt",
+    "qetEnglishName": "Synchronoscope"
+  }
+}

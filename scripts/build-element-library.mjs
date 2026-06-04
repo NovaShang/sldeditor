@@ -682,6 +682,477 @@ const MANIFEST = [
     },
     terminals: [{ id: 't_top', x: 0, y: -25, orientation: 'n' }],
   },
+
+  // ---- 无源元件 / 电力电子 ----
+  {
+    id: 'resistor',
+    name: '电阻 (R)',
+    category: 'passive',
+    description: '通用电阻 / 限流 / 制动电阻。',
+    source: { kind: 'elmt', path: '11_singlepole/395_electronics_semiconductors/10_resistors/resistance.elmt' },
+    extraTerminals: [{ id: 't2', x: 0, y: 10, orientation: 's' }],
+    params: [
+      { name: 'R', label: '阻值', type: 'number', unit: 'Ω', showOnCanvas: true },
+      { name: 'P', label: '额定功率', type: 'number', unit: 'W' },
+    ],
+    label: { x: 6, y: 0, anchor: 'start' },
+  },
+  {
+    id: 'capacitor',
+    name: '电容 (C)',
+    category: 'passive',
+    description: '通用 / 滤波 / 直流母线电容。无功补偿请用并联电容器。',
+    source: { kind: 'elmt', path: '11_singlepole/395_electronics_semiconductors/20_capacitors/capacite.elmt' },
+    extraTerminals: [{ id: 't_bottom', x: 0, y: 2, orientation: 's' }],
+    params: [
+      { name: 'C', label: '容值', type: 'number', unit: 'μF', showOnCanvas: true },
+      { name: 'Un', label: '额定电压', type: 'number', unit: 'V' },
+    ],
+  },
+  {
+    id: 'diode',
+    name: '二极管 (D)',
+    category: 'passive',
+    description: '整流 / 续流 / 保护二极管。t1=阳极(上), t2=阴极(下)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_05/en_60617_05_03/en_60617_05_03_01.elmt' },
+    // QET lists the cathode (bottom) terminal first; force t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n' },
+      { id: 't2', x: 0, y: 0, orientation: 's' },
+    ],
+    label: { x: 6, y: -20, anchor: 'start' },
+  },
+
+  // ---- 控制 / 信号 ----
+  {
+    id: 'indicator-light',
+    name: '指示灯 (HL)',
+    category: 'control',
+    description: '信号 / 状态指示灯。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_10/en_60617_08_10_01.elmt' },
+    // QET lamp ships no terminals; it's a circle (cx0, cy-10, r10) — wire top/bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -20, orientation: 'n' },
+      { id: 't2', x: 0, y: 0, orientation: 's' },
+    ],
+    params: [{ name: 'color', label: '颜色', type: 'string' }],
+  },
+  {
+    id: 'push-button',
+    name: '按钮 (SB)',
+    category: 'control',
+    description: '手动按钮, 自动复位 (常开 make)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_07/en_60617_07_07_02.elmt' },
+    // QET lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n' },
+      { id: 't2', x: 0, y: 20, orientation: 's' },
+    ],
+  },
+  {
+    id: 'relay-coil',
+    name: '继电器线圈 (KA)',
+    category: 'control',
+    description: '继电器 / 接触器操作线圈 (方框)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_15/en_60617_07_15_01.elmt' },
+    // QET lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -20, orientation: 'n' },
+      { id: 't2', x: 0, y: 20, orientation: 's' },
+    ],
+  },
+  {
+    id: 'make-contact',
+    name: '常开触点 (NO)',
+    category: 'control',
+    description: '常开辅助触点 (make contact)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_02/en_60617_07_02_01.elmt' },
+    state: [{ name: 'closed', type: 'boolean', default: false, label: '闭合' }],
+  },
+  {
+    id: 'break-contact',
+    name: '常闭触点 (NC)',
+    category: 'control',
+    description: '常闭辅助触点 (break contact)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_02/en_60617_07_02_03.elmt' },
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+  },
+  {
+    id: 'bell',
+    name: '电铃 (HA)',
+    category: 'control',
+    description: '信号电铃 / 警铃。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_10/en_60617_08_10_06.elmt' },
+  },
+
+  // ---- 接线 ----
+  {
+    id: 'terminal',
+    name: '接线端子 / 节点 (X)',
+    category: 'busbar',
+    description: '接线端子 / 接线盒 / 汇接节点。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_03/en_60617_03_02/en_60617_03_02_02.elmt' },
+    // QET terminal is a small filled dot (r2.5); expose 4 cardinal attach points.
+    terminals: [
+      { id: 't_top', x: 0, y: -2.5, orientation: 'n' },
+      { id: 't_bottom', x: 0, y: 2.5, orientation: 's' },
+      { id: 't_left', x: -2.5, y: 0, orientation: 'w' },
+      { id: 't_right', x: 2.5, y: 0, orientation: 'e' },
+    ],
+  },
+
+  // ---- 开关 (补充) ----
+  {
+    id: 'fuse-switch-disconnector',
+    name: '熔断器式隔离开关',
+    category: 'switching',
+    description: '负荷型熔断器隔离开关 (on-load fuse switch-disconnector)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_21/en_60617_07_21_09.elmt' },
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+  },
+
+  // ---- 负荷 (补充) ----
+  {
+    id: 'socket-outlet',
+    name: '插座 / 连接器',
+    category: 'load',
+    description: '电源插座 / 多极连接器。',
+    source: { kind: 'elmt', path: '11_singlepole/140_connectors_plugs/prise_multipolaire_2.elmt' },
+  },
+
+  // ======================================================================
+  // Tier A — 配电 SLD 常用
+  // ======================================================================
+  {
+    id: 'inductor',
+    name: '电感 (L)',
+    category: 'passive',
+    description: '通用电感 / 线圈 / 扼流圈。',
+    source: { kind: 'elmt', path: '11_singlepole/395_electronics_semiconductors/30_inductors/inductance.elmt' },
+    // QET lists top terminal first (t1=top n, t2=bottom s) — convention OK.
+    params: [
+      { name: 'L', label: '电感量', type: 'number', unit: 'mH', showOnCanvas: true },
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A' },
+    ],
+    label: { x: 6, y: 0, anchor: 'start' },
+  },
+  {
+    id: 'voltage-regulator',
+    name: '调压器 (T)',
+    category: 'transformer',
+    description: '可调感应调压器 / 自耦调压器。',
+    source: { kind: 'elmt', path: '11_singlepole/340_converters_inverters/10_converters/regulator_ind_3f_1.elmt' },
+    // QET lists top terminal first (t1=top n, t2=bottom s) — convention OK.
+    params: [
+      { name: 'ratio', label: '调压范围', type: 'string', showOnCanvas: true },
+    ],
+  },
+  {
+    id: 'dc-motor',
+    name: '直流电机 (M)',
+    category: 'load',
+    description: '直流电动机 (串励通用符号)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_05/en_60617_06_05_01.elmt' },
+    // QET draws both leads at the top of the machine circle.
+    textFontSize: 14,
+  },
+  {
+    id: 'heater',
+    name: '电加热器 (EH)',
+    category: 'load',
+    description: '电阻加热元件 / 电热负荷。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_04/en_60617_04_01/en_60617_04_01_12.elmt' },
+    // Horizontal element: t1=left (w), t2=right (e).
+    params: [
+      { name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true },
+    ],
+  },
+  {
+    id: 'selector-switch',
+    name: '选择开关 (SA)',
+    category: 'switching',
+    description: '转换 / 选择开关 (旋转操作, 保位)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_07/en_60617_07_07_04.elmt' },
+    // QET lists top terminal first (t1=top n, t2=bottom s) — convention OK.
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+  },
+
+  // ======================================================================
+  // Tier B — 工业控制 / 仪表
+  // ======================================================================
+  {
+    id: 'limit-switch',
+    name: '限位开关 (SQ)',
+    category: 'control',
+    description: '行程 / 位置开关 (常开, 机械操作)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_08/en_60617_07_08_01.elmt' },
+    // QET lists top terminal first (t1=top n, t2=bottom s) — convention OK.
+    state: [{ name: 'closed', type: 'boolean', default: false, label: '闭合' }],
+  },
+  {
+    id: 'proximity-switch',
+    name: '接近开关 (SQ)',
+    category: 'control',
+    description: '接近传感器 / 无触点接近开关。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_19/en_60617_07_19_01.elmt' },
+    // QET lists top terminal first (t1=top n, t2=bottom s) — convention OK.
+  },
+  {
+    id: 'time-relay',
+    name: '时间继电器 (KT)',
+    category: 'control',
+    description: '延时 (缓动) 继电器线圈。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_15/en_60617_07_15_08.elmt' },
+    // QET lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -20, orientation: 'n' },
+      { id: 't2', x: 0, y: 20, orientation: 's' },
+    ],
+  },
+  {
+    id: 'buzzer',
+    name: '蜂鸣器 (HA)',
+    category: 'control',
+    description: '信号蜂鸣器。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_10/en_60617_08_10_10.elmt' },
+  },
+  {
+    id: 'siren',
+    name: '警笛 (HA)',
+    category: 'control',
+    description: '声响警笛 / 报警器。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_10/en_60617_08_10_09.elmt' },
+  },
+  {
+    id: 'thermocouple',
+    name: '热电偶 (BT)',
+    category: 'measurement',
+    description: '热电偶温度传感器。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_06/en_60617_08_06_01.elmt' },
+    // QET draws both leads at the top; keep its natural two top terminals.
+  },
+
+  // ======================================================================
+  // Tier C — 电力电子器件
+  // ======================================================================
+  {
+    id: 'thyristor',
+    name: '晶闸管 (V)',
+    category: 'passive',
+    description: '反向阻断三极晶闸管 / SCR。t1=阳极(上), t2=阴极(下)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_05/en_60617_05_04/en_60617_05_04_06.elmt' },
+    // QET lists anode (top) first (t1=top n, t2=bottom s) — convention OK.
+    label: { x: 6, y: -20, anchor: 'start' },
+  },
+  {
+    id: 'triac',
+    name: '双向晶闸管 (V)',
+    category: 'passive',
+    description: '双向三极晶闸管 (TRIAC)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_05/en_60617_05_04/en_60617_05_04_11.elmt' },
+    // QET lists top terminal first (t1=top n, t2=bottom s) — convention OK.
+    label: { x: 6, y: -20, anchor: 'start' },
+  },
+  {
+    id: 'zener-diode',
+    name: '稳压二极管 (D)',
+    category: 'passive',
+    description: '齐纳 / 稳压二极管。t1=阳极(上), t2=阴极(下)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_05/en_60617_05_03/en_60617_05_03_06.elmt' },
+    // QET lists the cathode (bottom) terminal first; force t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n' },
+      { id: 't2', x: 0, y: 0, orientation: 's' },
+    ],
+    label: { x: 6, y: -20, anchor: 'start' },
+  },
+  {
+    id: 'igbt',
+    name: '绝缘栅双极晶体管 (IGBT)',
+    category: 'passive',
+    description: 'N 沟道增强型 IGBT。t1=集电极(上), t2=发射极(下), t_g=门极。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_05/en_60617_05_05/en_60617_05_05_19.elmt' },
+    // QET symbol has no terminals; add collector (top-right), emitter
+    // (bottom-right) and gate (left) at the symbol's lead endpoints.
+    extraTerminals: [
+      { id: 't1', x: 20, y: -30, orientation: 'n' },
+      { id: 't2', x: 20, y: 40, orientation: 's' },
+      { id: 't_g', x: -30, y: 20, orientation: 'w' },
+    ],
+  },
+
+  // ======================================================================
+  // Tier D — 无标准 IEC 符号 → 内联标注方框
+  // ======================================================================
+  {
+    id: 'plc',
+    name: 'PLC / 控制器',
+    category: 'control',
+    description: '可编程逻辑控制器 (PLC)。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<rect x="-22" y="-22" width="44" height="44" fill="none" stroke="black" stroke-width="1"/>',
+        '<text x="0" y="4" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" fill="#000000">PLC</text>',
+        '<line x1="0" y1="-40" x2="0" y2="-22" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="22" x2="0" y2="40" stroke="black" stroke-width="1" fill="none"/>',
+      ].join(''),
+      bbox: { x1: -22, y1: -40, x2: 22, y2: 40 },
+    },
+    terminals: [
+      { id: 't_top', x: 0, y: -40, orientation: 'n' },
+      { id: 't_bottom', x: 0, y: 40, orientation: 's' },
+    ],
+  },
+  {
+    id: 'ups',
+    name: '不间断电源 (UPS)',
+    category: 'source',
+    description: '在线 / 后备式不间断电源。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<rect x="-24" y="-20" width="48" height="40" fill="none" stroke="black" stroke-width="1"/>',
+        '<text x="0" y="4" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" fill="#000000">UPS</text>',
+        '<line x1="0" y1="-40" x2="0" y2="-20" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="20" x2="0" y2="40" stroke="black" stroke-width="1" fill="none"/>',
+      ].join(''),
+      bbox: { x1: -24, y1: -40, x2: 24, y2: 40 },
+    },
+    terminals: [
+      { id: 't_in', x: 0, y: -40, orientation: 'n' },
+      { id: 't_out', x: 0, y: 40, orientation: 's' },
+    ],
+    params: [{ name: 'S', label: '容量', type: 'number', unit: 'kVA' }],
+  },
+  {
+    id: 'power-supply',
+    name: '开关电源 (PS)',
+    category: 'source',
+    description: 'AC→DC 开关电源 / 直流电源模块。t_ac 上(~), t_dc 下(=)。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<rect x="-22" y="-20" width="44" height="40" fill="none" stroke="black" stroke-width="1"/>',
+        '<line x1="-22" y1="20" x2="22" y2="-20" stroke="black" stroke-width="1" fill="none"/>',
+        '<text x="-15" y="-5" font-family="Liberation Sans, Arial, sans-serif" font-size="9" fill="#000000">~</text>',
+        '<text x="8" y="15" font-family="Liberation Sans, Arial, sans-serif" font-size="9" fill="#000000">=</text>',
+        '<line x1="0" y1="-40" x2="0" y2="-20" stroke="black" stroke-width="1" fill="none"/>',
+        '<line x1="0" y1="20" x2="0" y2="40" stroke="black" stroke-width="1" fill="none"/>',
+      ].join(''),
+      bbox: { x1: -22, y1: -40, x2: 22, y2: 40 },
+    },
+    terminals: [
+      { id: 't_ac', x: 0, y: -40, orientation: 'n' },
+      { id: 't_dc', x: 0, y: 40, orientation: 's' },
+    ],
+    params: [{ name: 'Vdc', label: '输出电压', type: 'number', unit: 'V', showOnCanvas: true }],
+  },
+  {
+    id: 'genset',
+    name: '发电机组 (G)',
+    category: 'source',
+    description: '柴油 / 燃气发电机组。',
+    source: {
+      kind: 'inline',
+      svg: [
+        '<rect x="-26" y="-20" width="52" height="40" fill="none" stroke="black" stroke-width="1"/>',
+        '<text x="0" y="4" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="11" fill="#000000">GEN</text>',
+        '<line x1="0" y1="20" x2="0" y2="40" stroke="black" stroke-width="1" fill="none"/>',
+      ].join(''),
+      bbox: { x1: -26, y1: -20, x2: 26, y2: 40 },
+    },
+    terminals: [
+      { id: 't_out', x: 0, y: 40, orientation: 's' },
+    ],
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
+  },
+
+  // ---- 保护继电器 / 仪表 (补充) ----
+  // IEC "function box" symbols — glyph drawn inside, ship with 0 terminals.
+  // Each gets a single top-center input terminal `t_top` (orientation 'n'),
+  // matching voltmeter/ammeter. The `t_top` y/x are filled from the generated
+  // viewBox top-center after a first build.
+  {
+    id: 'protective-relay',
+    name: '保护继电器',
+    category: 'protection',
+    description: '测量继电器 / 保护继电器通用符号 (IEC 60617)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_16/en_60617_07_16_01.elmt' },
+    extraTerminals: [{ id: 't_top', x: 0, y: -40, orientation: 'n' }],
+  },
+  {
+    id: 'overcurrent-relay',
+    name: '过流继电器 (50/51)',
+    category: 'protection',
+    description: '过电流保护继电器 (ANSI 50/51)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_05.elmt' },
+    extraTerminals: [{ id: 't_top', x: -30, y: -60, orientation: 'n' }],
+  },
+  {
+    id: 'undervoltage-relay',
+    name: '欠压继电器 (27)',
+    category: 'protection',
+    description: '欠电压保护继电器 (ANSI 27)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_07.elmt' },
+    extraTerminals: [{ id: 't_top', x: -30, y: -80, orientation: 'n' }],
+  },
+  {
+    id: 'reverse-power-relay',
+    name: '逆功率继电器 (32)',
+    category: 'protection',
+    description: '逆功率 / 逆流保护继电器 (ANSI 32)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_02.elmt' },
+    extraTerminals: [{ id: 't_top', x: -30, y: -40, orientation: 'n' }],
+  },
+  {
+    id: 'distance-relay',
+    name: '距离继电器 (21)',
+    category: 'protection',
+    description: '距离 / 低阻抗保护继电器 (ANSI 21)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_09.elmt' },
+    extraTerminals: [{ id: 't_top', x: -30, y: -40, orientation: 'n' }],
+  },
+  {
+    id: 'phase-failure-relay',
+    name: '断相继电器',
+    category: 'protection',
+    description: '断相 / 缺相保护继电器。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_12.elmt' },
+    extraTerminals: [{ id: 't_top', x: -30, y: -40, orientation: 'n' }],
+  },
+  {
+    id: 'buchholz-relay',
+    name: '瓦斯继电器 (63)',
+    category: 'protection',
+    description: '瓦斯 / 气体继电器 (Buchholz, ANSI 63)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_18/en_60617_07_18_01.elmt' },
+    extraTerminals: [{ id: 't_top', x: 0, y: -60, orientation: 'n' }],
+  },
+  {
+    id: 'power-factor-meter',
+    name: '功率因数表 (cosφ)',
+    category: 'measurement',
+    description: '功率因数表 (cosφ)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_02/en_60617_08_02_05.elmt' },
+    extraTerminals: [{ id: 't_top', x: 0, y: -40, orientation: 'n' }],
+  },
+  {
+    id: 'synchronoscope',
+    name: '同步表',
+    category: 'measurement',
+    description: '同步指示器 / 同步表。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_02/en_60617_08_02_08.elmt' },
+    extraTerminals: [{ id: 't_top', x: 0, y: -40, orientation: 'n' }],
+  },
+  {
+    id: 'varmeter',
+    name: '无功功率表 (var)',
+    category: 'measurement',
+    description: '无功功率表 (var)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_02/en_60617_08_02_04.elmt' },
+    extraTerminals: [{ id: 't_top', x: 0, y: -40, orientation: 'n' }],
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -784,6 +1255,21 @@ function escapeXml(s) {
     .replace(/"/g, '&quot;');
 }
 
+// QET stores `.elmt` text already XML-escaped (e.g. `U &lt;` for "U <"); the
+// flat attribute parser reads it verbatim, so decode entities back to real
+// characters before escapeXml re-encodes them — otherwise `&lt;` would round
+// out as `&amp;lt;` and render as literal "&lt;" on the canvas (affects the
+// IEC relay function glyphs: U<, Z<, m<3, etc.).
+function decodeXmlEntities(s) {
+  return s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n))
+    .replace(/&amp;/g, '&');
+}
+
 // Convert a Qt-style elliptical arc (start/sweep angles in degrees, Qt
 // convention: 0° = +x axis, positive angle = counter-clockwise as the user
 // sees it on a y-down screen) to an SVG path.
@@ -856,7 +1342,7 @@ function primitiveToSvg(p) {
       const ySvg = +a.y + fontSize * 0.8;
       const rot = +(a.rotation || 0);
       const transform = rot ? ` transform="rotate(${rot} ${num(a.x)} ${num(ySvg)})"` : '';
-      return `<text x="${num(a.x)}" y="${num(ySvg)}" font-family="Liberation Sans, Arial, sans-serif" font-size="${fontSize}" fill="${color}"${transform}>${escapeXml(a.text || '')}</text>`;
+      return `<text x="${num(a.x)}" y="${num(ySvg)}" font-family="Liberation Sans, Arial, sans-serif" font-size="${fontSize}" fill="${color}"${transform}>${escapeXml(decodeXmlEntities(a.text || ''))}</text>`;
     }
     case 'terminal':
       return null; // handled outside the visual layer

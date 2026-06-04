@@ -1,0 +1,36 @@
+{
+  "id": "indicator-light",
+  "name": "指示灯 (HL)",
+  "category": "control",
+  "description": "信号 / 状态指示灯。",
+  "viewBox": "-12 -22 24 24",
+  "width": 24,
+  "height": 24,
+  "svg": "<ellipse cx=\"0\" cy=\"-10\" rx=\"10\" ry=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-7\" y1=\"-3\" x2=\"7\" y2=\"-17\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-7\" y1=\"-17\" x2=\"7\" y2=\"-3\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -20,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 0,
+      "orientation": "s"
+    }
+  ],
+  "params": [
+    {
+      "name": "color",
+      "label": "颜色",
+      "type": "string"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_08/en_60617_08_10/en_60617_08_10_01.elmt",
+    "qetEnglishName": "Lamp, general symbol"
+  }
+}
