@@ -34,8 +34,21 @@
  *      co-referenced) and lay out the remaining elements as parallel
  *      branches perpendicular to the anchor's exit. Iterate to a fixpoint
  *      so multi-step chains terminate on a real anchor instead of being
- *      routed back across a bus.
- *   6. Anything still unplaced falls back to a grid in the lower-right.
+ *      routed back across a bus. (5b) Bus-less diagrams are seeded with one
+ *      root per connected component first, so this pass can grow a vertical
+ *      chain instead of dumping everything into the fallback grid.
+ *   6. Post-placement cleanup: (6b) separate co-tier feeds into the same bus
+ *      that resolved to the same column by shifting the smaller colliding
+ *      sub-branch sideways; (6c) tight-repack same-tier buses using their
+ *      *actual* extents (the bottom-up span estimate over-allocates, so
+ *      independent bars otherwise sprawl) — guarded with a snapshot so it
+ *      rolls back if it introduces overlaps; (6d) a final global overlap
+ *      sweep; (7) anything still unplaced falls back to a grid lower-right.
+ *
+ * Bus-span reservation accounts for each tap's stage-6 subtree fan (so a CT
+ * feeding a load + an earthing-switch gets a wide enough slot that adjacent
+ * taps' children don't collide), bounded to a shallow depth so deep
+ * distribution chains don't blow the span up.
  *
  * All resolved positions are snapped to a 10px grid so subsequent user
  * drags don't introduce sub-grid jitter.
@@ -616,6 +629,74 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
     linkerUpperRep.set(repElId, { lowerBusId });
   }
 
+  // ---- Stage-6 subtree fan-width estimate -------------------------------
+  // Mirrors the parallel-branch placement in stage 6: starting from a bus
+  // tap, walk the device graph *away* from the bus and estimate the maximum
+  // lateral width the tap's subtree will occupy. A CT that fans out to a
+  // load + an earthing-switch needs a wider bus slot than its own symbol so
+  // adjacent taps' subtrees don't collide. Conservative (an upper bound on
+  // one level's fan); deeper nesting takes the max over levels.
+  const SUBTREE_GAP = 30;
+  const elementWidth = (elId: ElementId): number => {
+    const lib = libOf(elId);
+    return Math.max(lib?.width ?? MIN_TAP_SPACING, MIN_TAP_SPACING);
+  };
+  // Cap recursion depth so a deep distribution chain (e.g. a horizontal
+  // daisy-chain of MCBs each feeding an outlet) doesn't sum into an enormous
+  // bus-span reservation. Two levels is enough to size the common case — a
+  // CT fanning to a load + an earthing-switch — which is what scenario C
+  // needs; deeper structure is reconciled by the later collision / repack
+  // passes instead.
+  const BRANCH_MAX_DEPTH = 2;
+  const branchWidth = (
+    fromRef: WireEnd,
+    elId: ElementId,
+    guard: Set<ElementId>,
+    depth = 0,
+  ): number => {
+    const lib = libOf(elId);
+    let own = elementWidth(elId);
+    if (lib && !guard.has(elId) && depth < BRANCH_MAX_DEPTH) {
+      guard.add(elId);
+      // Collect the downstream node(s): for each terminal other than the one
+      // facing `fromRef`, find the electrical node and its unplaced device
+      // members (the would-be stage-6 siblings).
+      let widest = 0;
+      for (const term of lib.terminals) {
+        const ref = `${elId}.${term.id}` as TerminalRef;
+        if (ref === fromRef) continue;
+        for (const g of pinToGroups.get(ref) ?? []) {
+          const childEls = new Set<ElementId>();
+          let touchesBus = false;
+          for (const member of g) {
+            if (member === ref) continue;
+            if (isBus(member)) { touchesBus = true; continue; }
+            const d = member.indexOf('.');
+            if (d < 0) continue;
+            const cid = member.slice(0, d);
+            if (cid === elId || guard.has(cid) || linkerIds.has(cid)) continue;
+            childEls.add(cid);
+          }
+          if (touchesBus || childEls.size === 0) continue;
+          let sum = 0;
+          for (const cid of childEls) {
+            const childMemberRef = [...g].find(
+              (mm) => mm.indexOf('.') > 0 && mm.slice(0, mm.indexOf('.')) === cid,
+            ) as WireEnd | undefined;
+            sum +=
+              (childMemberRef
+                ? branchWidth(childMemberRef, cid, guard, depth + 1)
+                : elementWidth(cid)) + SUBTREE_GAP;
+          }
+          widest = Math.max(widest, sum - SUBTREE_GAP);
+        }
+      }
+      guard.delete(elId);
+      own = Math.max(own, widest);
+    }
+    return own;
+  };
+
   // ---- Bottom-up bus span computation -----------------------------------
   const BUS_MIN_SPAN = 320;
   const busSpan = new Map<BusId, number>();
@@ -634,6 +715,7 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
   const slotWidthFor = (
     elId: ElementId,
     libWidth: number,
+    busFacingRef?: WireEnd,
   ): number => {
     const rep = linkerUpperRep.get(elId);
     if (rep) {
@@ -642,7 +724,12 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
         return Math.max(libWidth, childSpan + MIN_TAP_SPACING);
       }
     }
-    return Math.max(libWidth, MIN_TAP_SPACING);
+    // Reserve room for the tap's stage-6 subtree fan-out, so a CT feeding a
+    // load + earthing-switch gets a wide enough slot that neighbouring taps'
+    // children don't collide.
+    let sub = 0;
+    if (busFacingRef) sub = branchWidth(busFacingRef, elId, new Set());
+    return Math.max(libWidth, MIN_TAP_SPACING, sub);
   };
   const computeSpan = (busId: BusId, visiting: Set<BusId>): number => {
     if (busSpan.has(busId)) return busSpan.get(busId)!;
@@ -666,7 +753,11 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
       if (rep) {
         computeSpan(rep.lowerBusId, visiting);
       }
-      const slotW = slotWidthFor(elId, lib.width);
+      const slotW = slotWidthFor(
+        elId,
+        lib.width,
+        `${elId}.${pin}` as TerminalRef,
+      );
       if (localTerm.y > 0) aboveW += slotW;
       else belowW += slotW;
     }
@@ -688,6 +779,7 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
     lib: LibraryEntry;
     localTerm: { id: string; x: number; y: number; orientation: Orientation };
     isLinker: boolean;
+    busFacingRef: TerminalRef;
   }
 
   // Find the X of the closest other-bus that this tap reaches via the
@@ -757,7 +849,13 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
       if (!lib) return [];
       const localTerm = lib.terminals.find((t) => t.id === pin);
       if (!localTerm) return [];
-      return [{ elId, lib, localTerm, isLinker: linkerIds.has(elId) }];
+      return [{
+        elId,
+        lib,
+        localTerm,
+        isLinker: linkerIds.has(elId),
+        busFacingRef: `${elId}.${pin}` as TerminalRef,
+      }];
     });
     if (remaining.length === 0) return;
 
@@ -769,7 +867,10 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
     }
 
     const sideTotalWidth = (group: TapEntry[]): number =>
-      group.reduce((s, r) => s + slotWidthFor(r.elId, r.lib.width), 0);
+      group.reduce(
+        (s, r) => s + slotWidthFor(r.elId, r.lib.width, r.busFacingRef),
+        0,
+      );
     const requiredSpan =
       Math.max(sideTotalWidth(aboveSide), sideTotalWidth(belowSide)) +
       MIN_TAP_SPACING;
@@ -794,11 +895,13 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
         // pushed to the extreme. Lets a small bus-tie disconnector land on
         // the actual edge even when a wide transformer-feeding slot wants
         // the same side.
-        const aw = slotWidthFor(a.elId, a.lib.width);
-        const bw = slotWidthFor(b.elId, b.lib.width);
+        const aw = slotWidthFor(a.elId, a.lib.width, a.busFacingRef);
+        const bw = slotWidthFor(b.elId, b.lib.width, b.busFacingRef);
         return bw - aw;
       });
-      const widths = group.map((r) => slotWidthFor(r.elId, r.lib.width));
+      const widths = group.map((r) =>
+        slotWidthFor(r.elId, r.lib.width, r.busFacingRef),
+      );
       const totalW = widths.reduce((s, w) => s + w, 0);
       const usableSpan = Math.max(span, totalW);
       const slotGap = (usableSpan - totalW) / (group.length + 1);
@@ -1115,6 +1218,95 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
     }
   }
 
+  // ---- 5b. No-bus seeding -----------------------------------------------
+  // Bus-less diagrams (a string inverter, a DC charger, a small genset feed)
+  // have no anchor, so without help every element falls into the lower-right
+  // fallback grid. Seed one root per connected device component so the
+  // parallel-branch pass below can grow a top-to-bottom chain from it. The
+  // root is a source-category element when present (laid out feeding
+  // downward), else the element whose connected pin exits downward / the
+  // first by id — picked deterministically.
+  if (busList.length === 0 && layout.size < elements.length) {
+    const deviceAdj = (elId: ElementId): Set<ElementId> => {
+      const out = new Set<ElementId>();
+      const lib = libOf(elId);
+      if (!lib) return out;
+      for (const t of lib.terminals) {
+        const ref = `${elId}.${t.id}` as TerminalRef;
+        for (const g of pinToGroups.get(ref) ?? []) {
+          for (const member of g) {
+            if (member === ref || isBus(member)) continue;
+            const d = member.indexOf('.');
+            if (d < 0) continue;
+            const other = member.slice(0, d);
+            if (other !== elId) out.add(other);
+          }
+        }
+      }
+      return out;
+    };
+    // Connected components over the device graph.
+    const seen = new Set<ElementId>();
+    const components: ElementId[][] = [];
+    for (const el of elements) {
+      if (seen.has(el.id) || !libOf(el.id)) continue;
+      // Only seed components with ≥2 connected devices; true orphans go to
+      // the fallback grid as before.
+      const comp: ElementId[] = [];
+      const stack = [el.id];
+      seen.add(el.id);
+      while (stack.length > 0) {
+        const cur = stack.pop()!;
+        comp.push(cur);
+        for (const nb of deviceAdj(cur)) {
+          if (seen.has(nb)) continue;
+          seen.add(nb);
+          stack.push(nb);
+        }
+      }
+      if (comp.length >= 2) components.push(comp);
+    }
+
+    let columnX = BUS_X;
+    for (const comp of components) {
+      if (comp.some((id) => layout.has(id))) continue;
+      // Root preference: a source, else the element with the fewest device
+      // neighbours (a chain end), tie-broken by id for determinism.
+      comp.sort((a, b) => {
+        const sa = isSourceKind(elementById.get(a)?.kind ?? '') ? 0 : 1;
+        const sb = isSourceKind(elementById.get(b)?.kind ?? '') ? 0 : 1;
+        if (sa !== sb) return sa - sb;
+        const da = deviceAdj(a).size;
+        const db = deviceAdj(b).size;
+        if (da !== db) return da - db;
+        return a.localeCompare(b);
+      });
+      const rootId = comp[0];
+      const rootLib = libOf(rootId);
+      if (!rootLib) continue;
+      // Place the root so its downward-exiting pin (or its lowest pin) sits at
+      // the column; stage 6 grows the rest below it.
+      const lowestTerm = rootLib.terminals
+        .slice()
+        .sort((a, b) => b.y - a.y)[0];
+      const px = lowestTerm
+        ? transformPoint([lowestTerm.x, lowestTerm.y], {
+            at: [0, 0],
+            rot: 0,
+            mirror: false,
+          })
+        : [0, 0];
+      layout.set(rootId, {
+        at: [snap(columnX - px[0]), snap(BUS_Y0 - px[1])],
+        rot: 0,
+        mirror: false,
+      });
+      // Advance the column for the next component, leaving room for its fan.
+      columnX += Math.max(DEFAULT_BUS_SPAN, comp.length * MIN_TAP_SPACING) +
+        SIBLING_X_GAP;
+    }
+  }
+
   // ---- 6. Node-based parallel-branch placement --------------------------
   // For each electrical node with placed and unplaced members, pick the
   // anchor pin by voting on direct co-occurrence with the unplaced cluster,
@@ -1264,6 +1456,439 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
         progressed = true;
       }
     }
+  }
+
+  // ---- 6b. Separate co-tier upper feeds into the same bus ---------------
+  // Two independent feeds (e.g. a utility transformer chain and a backup
+  // generator/source chain, or a source chain and a parent-bus transformer
+  // drop) can resolve to the same X-column and overlap completely. Group the
+  // placed devices that feed each bus *from above* into connected feed
+  // components, then push overlapping siblings apart laterally across the
+  // bus span. Only horizontal translation is applied, so vertical chain
+  // structure is preserved.
+  const worldXRange = (
+    elId: ElementId,
+  ): { min: number; max: number } | null => {
+    const place = layout.get(elId);
+    const lib = libOf(elId);
+    if (!place || !lib) return null;
+    const parts = lib.viewBox.split(/\s+/).map(Number);
+    if (parts.length < 4 || parts.some((n) => Number.isNaN(n))) {
+      // Fall back to width centred on origin.
+      const half = lib.width / 2;
+      return { min: place.at[0] - half, max: place.at[0] + half };
+    }
+    const [vx, vy, vw, vh] = parts;
+    const corners: [number, number][] = [
+      [vx, vy],
+      [vx + vw, vy],
+      [vx, vy + vh],
+      [vx + vw, vy + vh],
+    ];
+    let mn = Infinity;
+    let mx = -Infinity;
+    for (const c of corners) {
+      const w = transformPoint(c, place);
+      mn = Math.min(mn, w[0]);
+      mx = Math.max(mx, w[0]);
+    }
+    return { min: mn, max: mx };
+  };
+
+  // Device adjacency (no passthrough, no bus crossing) for feed grouping.
+  const deviceNeighbors = (elId: ElementId): Set<ElementId> => {
+    const out = new Set<ElementId>();
+    const lib = libOf(elId);
+    if (!lib) return out;
+    for (const t of lib.terminals) {
+      const ref = `${elId}.${t.id}` as TerminalRef;
+      for (const g of pinToGroups.get(ref) ?? []) {
+        for (const member of g) {
+          if (member === ref || isBus(member)) continue;
+          const d = member.indexOf('.');
+          if (d < 0) continue;
+          const other = member.slice(0, d);
+          if (other !== elId) out.add(other);
+        }
+      }
+    }
+    return out;
+  };
+
+  const FEED_GAP = 40;
+  const worldYRange = (
+    elId: ElementId,
+  ): { min: number; max: number } | null => {
+    const place = layout.get(elId);
+    const lib = libOf(elId);
+    if (!place || !lib) return null;
+    const parts = lib.viewBox.split(/\s+/).map(Number);
+    if (parts.length < 4 || parts.some((n) => Number.isNaN(n))) {
+      const half = lib.height / 2;
+      return { min: place.at[1] - half, max: place.at[1] + half };
+    }
+    const [vx, vy, vw, vh] = parts;
+    const corners: [number, number][] = [
+      [vx, vy],
+      [vx + vw, vy],
+      [vx, vy + vh],
+      [vx + vw, vy + vh],
+    ];
+    let mn = Infinity;
+    let mx = -Infinity;
+    for (const c of corners) {
+      const w = transformPoint(c, place);
+      mn = Math.min(mn, w[1]);
+      mx = Math.max(mx, w[1]);
+    }
+    return { min: mn, max: mx };
+  };
+
+  // For each bus, gather the devices feeding it from above (its connected
+  // upper region) and resolve any symbol overlaps by shifting the smaller of
+  // the two colliding sub-branches sideways. This catches both two
+  // independent feeds (utility transformer + backup generator) AND two chains
+  // splitting off a shared anchor (an ATS feeding two source chains). Only
+  // horizontal translation is applied; vertical chain structure is preserved.
+  const upperRegionOf = (busId: BusId, busY: number): Set<ElementId> => {
+    const region = new Set<ElementId>();
+    const stack: ElementId[] = [];
+    for (const ref of effectiveTaps.get(busId) ?? []) {
+      if (isBus(ref)) continue;
+      const d = ref.indexOf('.');
+      if (d < 0) continue;
+      const elId = ref.slice(0, d);
+      const place = layout.get(elId);
+      if (!place || place.at[1] >= busY - 1) continue;
+      if (!region.has(elId)) {
+        region.add(elId);
+        stack.push(elId);
+      }
+    }
+    while (stack.length > 0) {
+      const cur = stack.pop()!;
+      for (const nb of deviceNeighbors(cur)) {
+        if (region.has(nb)) continue;
+        const place = layout.get(nb);
+        if (!place || place.at[1] >= busY - 1) continue;
+        region.add(nb);
+        stack.push(nb);
+      }
+    }
+    return region;
+  };
+
+  // Devices on `a`'s side of the graph once `b` is removed (and that stay
+  // within `region`). Used to decide which sub-branch to shift.
+  const exclusiveSide = (
+    a: ElementId,
+    b: ElementId,
+    region: Set<ElementId>,
+  ): Set<ElementId> => {
+    const seen = new Set<ElementId>([a]);
+    const stack = [a];
+    while (stack.length > 0) {
+      const cur = stack.pop()!;
+      for (const nb of deviceNeighbors(cur)) {
+        if (nb === b || seen.has(nb) || !region.has(nb)) continue;
+        seen.add(nb);
+        stack.push(nb);
+      }
+    }
+    return seen;
+  };
+
+  // Resolve symbol overlaps within `members` by shifting the smaller
+  // exclusive sub-branch of each colliding pair sideways. `region` bounds the
+  // sub-branch search so shifts stay local. Returns whether anything moved.
+  const resolveOverlaps = (
+    members: ElementId[],
+    region: Set<ElementId>,
+  ): boolean => {
+    let iter = members.length * members.length + 8;
+    let anyShift = false;
+    let collided = true;
+    while (collided && iter-- > 0) {
+      collided = false;
+      for (let i = 0; i < members.length && !collided; i++) {
+        for (let j = i + 1; j < members.length; j++) {
+          const a = members[i];
+          const b = members[j];
+          const ax = worldXRange(a);
+          const bx = worldXRange(b);
+          const ay = worldYRange(a);
+          const by = worldYRange(b);
+          if (!ax || !bx || !ay || !by) continue;
+          const oxOverlap =
+            Math.min(ax.max, bx.max) - Math.max(ax.min, bx.min);
+          const oyOverlap =
+            Math.min(ay.max, by.max) - Math.max(ay.min, by.min);
+          if (oxOverlap <= 0 || oyOverlap <= 0) continue;
+
+          // Shift the smaller exclusive sub-branch sideways to clear.
+          const sideA = exclusiveSide(a, b, region);
+          const sideB = exclusiveSide(b, a, region);
+          // If removing the partner doesn't separate them, they're on a cycle
+          // / shared rake — skip (can't cleanly split).
+          if (sideA.has(b) || sideB.has(a)) continue;
+          const aCenter = (ax.min + ax.max) / 2;
+          const bCenter = (bx.min + bx.max) / 2;
+          // Move the smaller side; ties → move the right-hand one rightward.
+          let moveSet: Set<ElementId>;
+          let dir: 1 | -1;
+          if (sideA.size <= sideB.size) {
+            moveSet = sideA;
+            dir = aCenter <= bCenter ? -1 : 1;
+          } else {
+            moveSet = sideB;
+            dir = bCenter <= aCenter ? -1 : 1;
+          }
+          const clear =
+            Math.max(ax.max, bx.max) - Math.min(ax.min, bx.min);
+          const dx = snap(dir * (clear + FEED_GAP));
+          if (dx === 0) continue;
+          for (const elId of moveSet) {
+            const place = layout.get(elId);
+            if (!place) continue;
+            layout.set(elId, {
+              ...place,
+              at: [place.at[0] + dx, place.at[1]],
+            });
+          }
+          anyShift = true;
+          collided = true;
+          break;
+        }
+      }
+    }
+    return anyShift;
+  };
+
+  for (const bus of busList) {
+    const busGeom = busLayout.get(bus.id);
+    if (!busGeom) continue;
+    const region = upperRegionOf(bus.id, busGeom.at[1]);
+    if (region.size < 2) continue;
+    const members = [...region];
+    const anyShift = resolveOverlaps(members, region);
+
+    if (anyShift) {
+      // Re-centre the upper region over the bus and widen the bus to cover it.
+      let mn = Infinity;
+      let mx = -Infinity;
+      for (const elId of members) {
+        const r = worldXRange(elId);
+        if (!r) continue;
+        mn = Math.min(mn, r.min);
+        mx = Math.max(mx, r.max);
+      }
+      if (Number.isFinite(mn)) {
+        const recenter = snap(busGeom.at[0] - (mn + mx) / 2);
+        if (recenter !== 0) {
+          for (const elId of members) {
+            const place = layout.get(elId);
+            if (!place) continue;
+            layout.set(elId, {
+              ...place,
+              at: [place.at[0] + recenter, place.at[1]],
+            });
+          }
+        }
+        const spread = mx - mn + FEED_GAP;
+        if (spread > busGeom.span) {
+          const g = busLayout.get(bus.id)!;
+          busLayout.set(bus.id, { ...g, span: spread });
+        }
+      }
+    }
+  }
+
+  // Count symbol overlaps among placed devices — used to verify the repack
+  // below didn't make things worse (it can, on diagrams with long horizontal
+  // daisy-chains that don't fit the bus-tap model). Cheap O(n²) on the small
+  // diagrams auto-layout runs on.
+  const countOverlaps = (): number => {
+    const ids = elements.map((e) => e.id).filter((id) => layout.has(id));
+    const boxes = ids
+      .map((id) => ({ x: worldXRange(id), y: worldYRange(id) }))
+      .filter((b) => b.x && b.y) as {
+      x: { min: number; max: number };
+      y: { min: number; max: number };
+    }[];
+    let count = 0;
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const ox =
+          Math.min(boxes[i].x.max, boxes[j].x.max) -
+          Math.max(boxes[i].x.min, boxes[j].x.min);
+        const oy =
+          Math.min(boxes[i].y.max, boxes[j].y.max) -
+          Math.max(boxes[i].y.min, boxes[j].y.min);
+        if (ox > 1 && oy > 1) count++;
+      }
+    }
+    return count;
+  };
+
+  // ---- 6c. Tight horizontal repack of same-tier buses -------------------
+  // Buses sharing a tier (e.g. phase/neutral bars, AC/DC rails, ring
+  // segments — no source→transformer hierarchy between them) are positioned
+  // by a running sibling cursor that uses each bus's *estimated* span. That
+  // estimate over-allocates (the bottom-up span sums per-slot minimums and
+  // subtree reservations), so a handful of independent bars can sprawl to
+  // tens of thousands of px. After everything is placed we know the *actual*
+  // extent each bus occupies, so re-pack each over-wide tier tightly using
+  // real extents, translating each bus together with the devices it owns.
+  // Guarded: snapshot first, and roll back if the repack introduces overlaps.
+  const overlapsBeforeRepack = countOverlaps();
+  const layoutSnapshot = new Map<ElementId, ResolvedPlacement>();
+  for (const [id, p] of layout) layoutSnapshot.set(id, { ...p, at: [...p.at] });
+  const busSnapshot = new Map<BusId, BusGeometry>();
+  for (const [id, g] of busLayout)
+    busSnapshot.set(id, { ...g, at: [...g.at] });
+  const PACK_GAP = 120;
+  // Owning bus for a placed device: the nearest bus by device-graph BFS.
+  const ownerBus = new Map<ElementId, BusId>();
+  {
+    // Multi-source BFS from every bus simultaneously over the device graph
+    // (devices passthrough; buses are sinks). First bus to reach a device
+    // owns it; shared/equidistant devices stay unowned (left in place).
+    const dist = new Map<ElementId, number>();
+    const owner = new Map<ElementId, BusId | null>();
+    const queue: { el: ElementId; bus: BusId; d: number }[] = [];
+    for (const bus of busList) {
+      for (const ref of effectiveTaps.get(bus.id) ?? []) {
+        if (isBus(ref)) continue;
+        const dot = ref.indexOf('.');
+        if (dot < 0) continue;
+        const elId = ref.slice(0, dot);
+        if (!layout.has(elId)) continue;
+        queue.push({ el: elId, bus: bus.id, d: 1 });
+      }
+    }
+    queue.sort((a, b) => a.d - b.d);
+    let qi = 0;
+    while (qi < queue.length) {
+      const { el, bus, d } = queue[qi++];
+      const prev = dist.get(el);
+      if (prev === undefined) {
+        dist.set(el, d);
+        owner.set(el, bus);
+      } else if (d === prev && owner.get(el) !== bus) {
+        owner.set(el, null); // tie → shared, unowned
+        continue;
+      } else {
+        continue;
+      }
+      for (const nb of deviceNeighbors(el)) {
+        if (!layout.has(nb)) continue;
+        if (dist.has(nb)) continue;
+        queue.push({ el: nb, bus, d: d + 1 });
+      }
+    }
+    for (const [el, b] of owner) if (b) ownerBus.set(el, b);
+  }
+
+  for (const lvl of sortedLevels) {
+    const idsAtLevel = (levelToBuses.get(lvl) ?? []).filter((b) =>
+      busLayout.has(b),
+    );
+    if (idsAtLevel.length < 2) continue;
+
+    // Actual extent of each bus = bus line (capped to its taps) ∪ owned
+    // devices' x-ranges.
+    interface BusExtent {
+      busId: BusId;
+      min: number;
+      max: number;
+      members: ElementId[];
+    }
+    const extents: BusExtent[] = [];
+    let totalActual = 0;
+    for (const busId of idsAtLevel) {
+      const g = busLayout.get(busId)!;
+      const members: ElementId[] = [];
+      let mn = Infinity;
+      let mx = -Infinity;
+      for (const [el, b] of ownerBus) {
+        if (b !== busId) continue;
+        const r = worldXRange(el);
+        if (!r) continue;
+        members.push(el);
+        mn = Math.min(mn, r.min);
+        mx = Math.max(mx, r.max);
+      }
+      // Include the bus line span only as far as its owned devices need; if a
+      // bus has no owned devices, keep a minimal stub centred on its line.
+      if (!Number.isFinite(mn)) {
+        mn = g.at[0] - BUS_MIN_SPAN / 2;
+        mx = g.at[0] + BUS_MIN_SPAN / 2;
+      }
+      extents.push({ busId, min: mn, max: mx, members });
+      totalActual += mx - mn;
+    }
+    // Current spread of this tier.
+    let curMin = Infinity;
+    let curMax = -Infinity;
+    for (const e of extents) {
+      curMin = Math.min(curMin, e.min);
+      curMax = Math.max(curMax, e.max);
+    }
+    const curSpread = curMax - curMin;
+    const packedSpread =
+      totalActual + PACK_GAP * (extents.length - 1);
+    // Only repack when it meaningfully tightens the tier (avoid churning
+    // already-compact layouts).
+    if (!(curSpread > packedSpread + PACK_GAP)) continue;
+
+    extents.sort((a, b) => (a.min + a.max) / 2 - (b.min + b.max) / 2);
+    let cursor = curMin;
+    for (const e of extents) {
+      const dx = snap(cursor - e.min);
+      if (dx !== 0) {
+        const g = busLayout.get(e.busId)!;
+        busLayout.set(e.busId, { ...g, at: [g.at[0] + dx, g.at[1]] });
+        for (const el of e.members) {
+          const place = layout.get(el);
+          if (!place) continue;
+          layout.set(el, { ...place, at: [place.at[0] + dx, place.at[1]] });
+        }
+        e.min += dx;
+        e.max += dx;
+      }
+      cursor = e.max + PACK_GAP;
+    }
+    // Cap each bus's drawn span to its (now-final) owned extent so the bus
+    // line doesn't draw far past its taps.
+    for (const e of extents) {
+      const g = busLayout.get(e.busId)!;
+      const want = Math.max(BUS_MIN_SPAN, e.max - e.min);
+      if (want < g.span) {
+        busLayout.set(e.busId, { ...g, span: want });
+      }
+    }
+  }
+
+  // ---- 6d. Final global overlap sweep -----------------------------------
+  // The tight repack (6c) can abut device fans owned by adjacent buses; mop
+  // up any residual symbol overlaps with the same shift-the-smaller-branch
+  // resolver, this time over every placed device.
+  {
+    const allPlaced = elements
+      .map((e) => e.id)
+      .filter((id) => layout.has(id));
+    const region = new Set(allPlaced);
+    resolveOverlaps(allPlaced, region);
+  }
+
+  // Roll back the repack (6c) + its overlap mop-up (6d) if it left more
+  // overlaps than before. A slightly wider but overlap-free layout beats a
+  // tight one with stacked symbols.
+  if (countOverlaps() > overlapsBeforeRepack) {
+    layout.clear();
+    for (const [id, p] of layoutSnapshot) layout.set(id, p);
+    busLayout.clear();
+    for (const [id, g] of busSnapshot) busLayout.set(id, g);
   }
 
   // ---- 7. Fallback grid for orphans -------------------------------------
