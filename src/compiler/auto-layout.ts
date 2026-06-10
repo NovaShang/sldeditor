@@ -140,6 +140,14 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
   const layout = new Map<ElementId, ResolvedPlacement>(userLayout);
   const busLayout = new Map<BusId, BusGeometry>(userBusLayout);
 
+  // Explicit placements are authoritative. Auto-layout only fills gaps —
+  // the cleanup passes below (overlap shifts, repack, span widening) must
+  // never rewrite a user/AI-provided position, or callers that reason about
+  // the rendered result (e.g. an AI layout feedback loop) can no longer
+  // attribute what they see to what they did.
+  const userPlaced = new Set<ElementId>(userLayout.keys());
+  const userBusPlaced = new Set<BusId>(userBusLayout.keys());
+
   const elementById = new Map<ElementId, Element>();
   for (const el of elements) elementById.set(el.id, el);
   const busById = new Map<BusId, Bus>();
@@ -875,7 +883,9 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
       Math.max(sideTotalWidth(aboveSide), sideTotalWidth(belowSide)) +
       MIN_TAP_SPACING;
     const span = Math.max(geom.span, requiredSpan);
-    if (span !== geom.span) {
+    // Widen only auto-placed buses; an explicit bus keeps its drawn span
+    // (the tap distribution below still spreads over `usableSpan`).
+    if (span !== geom.span && !userBusPlaced.has(busId)) {
       busLayout.set(busId, { ...geom, span });
     }
     const finalGeom = busLayout.get(busId)!;
@@ -1631,21 +1641,27 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
           // If removing the partner doesn't separate them, they're on a cycle
           // / shared rake — skip (can't cleanly split).
           if (sideA.has(b) || sideB.has(a)) continue;
+          // Never move a sub-branch containing an explicitly-placed element.
+          const aMovable = ![...sideA].some((id) => userPlaced.has(id));
+          const bMovable = ![...sideB].some((id) => userPlaced.has(id));
+          if (!aMovable && !bMovable) continue;
           const aCenter = (ax.min + ax.max) / 2;
           const bCenter = (bx.min + bx.max) / 2;
-          // Move the smaller side; ties → move the right-hand one rightward.
+          // Move the smaller movable side; ties → move the right-hand one
+          // rightward.
           let moveSet: Set<ElementId>;
           let dir: 1 | -1;
-          if (sideA.size <= sideB.size) {
+          if (aMovable && (!bMovable || sideA.size <= sideB.size)) {
             moveSet = sideA;
             dir = aCenter <= bCenter ? -1 : 1;
           } else {
             moveSet = sideB;
             dir = bCenter <= aCenter ? -1 : 1;
           }
-          const clear =
-            Math.max(ax.max, bx.max) - Math.min(ax.min, bx.min);
-          const dx = snap(dir * (clear + FEED_GAP));
+          // Shift just far enough to clear the overlap, not by the whole
+          // union width — overshooting compounds across pairs and bulldozes
+          // dense layouts thousands of px sideways.
+          const dx = snap(dir * (oxOverlap + FEED_GAP));
           if (dx === 0) continue;
           for (const elId of moveSet) {
             const place = layout.get(elId);
@@ -1674,6 +1690,8 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
 
     if (anyShift) {
       // Re-centre the upper region over the bus and widen the bus to cover it.
+      // Skip the re-centre when the region contains explicitly-placed
+      // elements — translating them would rewrite authoritative positions.
       let mn = Infinity;
       let mx = -Infinity;
       for (const elId of members) {
@@ -1683,7 +1701,8 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
         mx = Math.max(mx, r.max);
       }
       if (Number.isFinite(mn)) {
-        const recenter = snap(busGeom.at[0] - (mn + mx) / 2);
+        const hasFrozen = members.some((elId) => userPlaced.has(elId));
+        const recenter = hasFrozen ? 0 : snap(busGeom.at[0] - (mn + mx) / 2);
         if (recenter !== 0) {
           for (const elId of members) {
             const place = layout.get(elId);
@@ -1695,7 +1714,7 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
           }
         }
         const spread = mx - mn + FEED_GAP;
-        if (spread > busGeom.span) {
+        if (spread > busGeom.span && !userBusPlaced.has(bus.id)) {
           const g = busLayout.get(bus.id)!;
           busLayout.set(bus.id, { ...g, span: spread });
         }
@@ -1794,6 +1813,10 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
       busLayout.has(b),
     );
     if (idsAtLevel.length < 2) continue;
+    // Repacking translates buses together with their owned devices. If any
+    // bus at this tier was explicitly placed, leave the whole tier alone —
+    // packing auto buses around a fixed one isn't worth the complexity.
+    if (idsAtLevel.some((b) => userBusPlaced.has(b))) continue;
 
     // Actual extent of each bus = bus line (capped to its taps) ∪ owned
     // devices' x-ranges.
@@ -1826,6 +1849,11 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
       }
       extents.push({ busId, min: mn, max: mx, members });
       totalActual += mx - mn;
+    }
+    // Owned devices translate together with their bus — bail if any of them
+    // were explicitly placed.
+    if (extents.some((e) => e.members.some((m) => userPlaced.has(m)))) {
+      continue;
     }
     // Current spread of this tier.
     let curMin = Infinity;
