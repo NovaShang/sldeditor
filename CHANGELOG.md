@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.5.0
+
+### Minor Changes
+
+- [`f3ccce3`](https://github.com/NovaShang/sldeditor/commit/f3ccce362a6e7fc76bdb56d14583c89de4041ed8) Thanks [@NovaShang](https://github.com/NovaShang)! - Auto-layout now treats explicit placements as authoritative: the overlap-resolution and repack passes (6b/6c/6d) never move user/AI-provided element positions or rewrite explicit bus geometry, and overlap shifts move by the actual overlap amount instead of the colliding pair's union width (which compounded into huge displacements on dense layouts).
+
 ## 0.4.0
 
 ### Minor Changes
