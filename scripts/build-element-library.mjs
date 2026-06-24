@@ -112,6 +112,11 @@ const MANIFEST = [
     name: '熔断器 (FU)',
     category: 'switching',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_21/en_60617_07_21_01.elmt' },
+    // QET source lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -30, orientation: 'n' },
+      { id: 't2', x: 0, y: 30, orientation: 's' },
+    ],
     state: [{ name: 'blown', type: 'boolean', default: false, label: '熔断' }],
     label: { x: 7, y: -2, anchor: 'start' },
   },
@@ -123,6 +128,11 @@ const MANIFEST = [
     category: 'transformer',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_01.elmt' },
     dropPrimitive: dropFormLabel,
+    // QET source lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: -30, y: -140, orientation: 'n' },
+      { id: 't2', x: -30, y: 0, orientation: 's' },
+    ],
     params: [
       { name: 'S', label: '容量', type: 'number', unit: 'MVA', showOnCanvas: true },
       { name: 'ratio', label: '变比', type: 'string', showOnCanvas: true },
@@ -158,6 +168,11 @@ const MANIFEST = [
     category: 'instrument-transformer',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_10.elmt' },
     dropPrimitive: dropFormLabel,
+    // QET source lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: -30, y: -60, orientation: 'n' },
+      { id: 't2', x: -30, y: 0, orientation: 's' },
+    ],
   },
   {
     id: 'pt',
@@ -165,6 +180,11 @@ const MANIFEST = [
     category: 'instrument-transformer',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_13/en_60617_06_13_01A.elmt' },
     dropPrimitive: dropFormLabel,
+    // QET source lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n' },
+      { id: 't2', x: 0, y: 71, orientation: 's' },
+    ],
   },
 
   // ---- 电源 ----
@@ -284,6 +304,11 @@ const MANIFEST = [
     description: '星-曲折接线变压器，中性点接地用',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_10/en_60617_06_10_15.elmt' },
     dropPrimitive: dropFormLabel,
+    // QET source lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: -30, y: -150, orientation: 'n' },
+      { id: 't2', x: -30, y: 10, orientation: 's' },
+    ],
   },
   {
     id: 'ngr',

@@ -10,14 +10,14 @@
     {
       "id": "t1",
       "x": -30,
-      "y": 0,
-      "orientation": "s"
+      "y": -140,
+      "orientation": "n"
     },
     {
       "id": "t2",
       "x": -30,
-      "y": -140,
-      "orientation": "n"
+      "y": 0,
+      "orientation": "s"
     }
   ],
   "params": [

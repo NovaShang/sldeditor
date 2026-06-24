@@ -11,14 +11,14 @@
     {
       "id": "t1",
       "x": -30,
-      "y": 10,
-      "orientation": "s"
+      "y": -150,
+      "orientation": "n"
     },
     {
       "id": "t2",
       "x": -30,
-      "y": -150,
-      "orientation": "n"
+      "y": 10,
+      "orientation": "s"
     }
   ],
   "source": {

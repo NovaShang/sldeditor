@@ -130,12 +130,12 @@
     { "id": "w_qf_t1_ct_t1",    "ends": ["QF_T1.t2", "CT_T1.t1"] },
     { "id": "w_ct_t1_t1",       "ends": ["CT_T1.t2", "T1.t1"] },
 
-    { "id": "w_gt_t1_ngr",      "ends": ["GT_T1.t1", "NGR_T1.t_top"] },
+    { "id": "w_gt_t1_ngr",      "ends": ["GT_T1.t2", "NGR_T1.t_top"] },
 
     { "id": "w_fbl_35_gnd",     "ends": ["FBL_35.t2", "GND_FBL_35.t1"] },
 
     { "id": "w_b35_t1",         "ends": ["B35", "T1.t2"] },
-    { "id": "w_b35_gt_t1",      "ends": ["B35", "GT_T1.t2"] },
+    { "id": "w_b35_gt_t1",      "ends": ["B35", "GT_T1.t1"] },
     { "id": "w_b35_pt_35",      "ends": ["B35", "PT_35.t1"] },
     { "id": "w_b35_fbl_35",     "ends": ["B35", "FBL_35.t1"] },
     { "id": "w_b35_qs_f1",      "ends": ["B35", "QS_F1.t1"] },
