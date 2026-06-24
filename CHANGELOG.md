@@ -1,5 +1,29 @@
 # sldeditor
 
+## 0.6.0
+
+### Minor Changes
+
+- [`169bdb3`](https://github.com/NovaShang/sldeditor/commit/169bdb32fadce9a4ee07f4ab99cdd948b4c9b903) Thanks [@NovaShang](https://github.com/NovaShang)! - Fix reversed terminal IDs on `transformer-2w`, `ct`, `pt`, `fuse`, and `grounding-transformer`
+
+  These five elements inherited their terminal order straight from the QElectroTech source, which lists the bottom terminal first — so `t1` ended up at the bottom and `t2` at the top, the opposite of the library-wide convention (`t1` = top/north, `t2` = bottom/south) that every other two-terminal element follows. Because auto-layout derives a symbol's rotation from the local Y of the pin wired to the upper bus, wiring an upper bus to `t1` made these symbols render rotated 180° with awkward wire routing.
+
+  Terminal geometry is unchanged; only the `t1`/`t2` assignment is swapped so it matches the convention. The `grounding-transformer` wiring in the `complex-substation` fixture was updated to keep pointing at the same physical terminals.
+
+  Note: any saved diagram that references `<id>.t1` / `<id>.t2` on these kinds will have those endpoints remapped to the opposite physical terminal. For diagrams that were authored assuming the standard `t1` = top convention (including AI-generated ones), this corrects the rendering.
+
+- [`235a171`](https://github.com/NovaShang/sldeditor/commit/235a171ca9a96d86c77bb90bc1a3966bfeef4795) Thanks [@NovaShang](https://github.com/NovaShang)! - Add free-standing **junctions** and free-drawn wires
+
+  Wires no longer need two pre-existing anchors. The wire tool now connects from any starting point — a device pin, a bus, a junction, or **empty space** — to any ending point. Releasing in empty space drops a **junction** (a first-class point connection node) and wires to it; releasing on an existing wire taps in a junction and splits that wire, all as a single undo step. This removes the old workaround where users (and the AI agent) fabricated thin buses to stand in for ordinary point-to-point wiring.
+
+  New model surface:
+  - `DiagramFile.junctions: Junction[]` — a junction is a peer to `Bus` with point geometry `{ at: [x, y] }` (no span). Ids share the element/bus namespace (prefix `J`).
+  - `WireEnd` widens to `TerminalRef | BusId | JunctionId`; a bare wire end now resolves to a bus **or** a junction.
+  - New exports: `Junction`, `JunctionId`, `JunctionLayout`, `ResolvedJunction`, `newJunctionId`, and `InternalModel.junctions`.
+  - New `JunctionTool` (toolbar + `J` hotkey) to place a junction deliberately.
+
+  Backward compatible: existing diagrams (no `junctions`) load and render unchanged; explicit placements are still frozen by auto-layout, and junctions are connectivity-transparent so device-to-device chains wired through a junction lay out as before.
+
 ## 0.5.0
 
 ### Minor Changes
