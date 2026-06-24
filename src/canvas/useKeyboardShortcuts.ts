@@ -40,7 +40,7 @@ export function exitDrawingState(): void {
     store.setEditingElement(null);
     return;
   }
-  if (tool === 'wire' || tool === 'busbar' || tool === 'text') {
+  if (tool === 'wire' || tool === 'busbar' || tool === 'junction' || tool === 'text') {
     store.setActiveTool('select');
     return;
   }
@@ -129,6 +129,10 @@ export function useKeyboardShortcuts(): void {
         case 'b':
         case 'B':
           store.setActiveTool('busbar');
+          return;
+        case 'j':
+        case 'J':
+          store.setActiveTool('junction');
           return;
         case 'p':
         case 'P':

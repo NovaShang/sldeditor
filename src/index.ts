@@ -13,6 +13,9 @@ export type {
   DiagramVersion,
   Element,
   ElementId,
+  Junction,
+  JunctionId,
+  JunctionLayout,
   LibraryEntry,
   LibraryLabelAnchor,
   LibraryParamField,
@@ -50,6 +53,7 @@ export type {
   InternalModel,
   ResolvedBus,
   ResolvedElement,
+  ResolvedJunction,
   ResolvedPlacement,
   TerminalGeometry,
   WireRender,
@@ -65,6 +69,7 @@ export type { EditorState } from './store';
 export {
   newBusId,
   newElementId,
+  newJunctionId,
   wireIdFromEnds,
 } from './store/id-allocator';
 

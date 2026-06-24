@@ -39,11 +39,13 @@ const PREFIX: Record<string, string> = {
 };
 
 const BUS_PREFIX = 'B';
+const JUNCTION_PREFIX = 'J';
 
 function usedIds(diagram: DiagramFile): Set<string> {
   return new Set([
     ...diagram.elements.map((e) => e.id),
     ...(diagram.buses ?? []).map((b) => b.id),
+    ...(diagram.junctions ?? []).map((j) => j.id),
   ]);
 }
 
@@ -60,6 +62,13 @@ export function newBusId(diagram: DiagramFile): ElementId {
   let n = 1;
   while (used.has(`${BUS_PREFIX}${n}`)) n++;
   return `${BUS_PREFIX}${n}`;
+}
+
+export function newJunctionId(diagram: DiagramFile): ElementId {
+  const used = usedIds(diagram);
+  let n = 1;
+  while (used.has(`${JUNCTION_PREFIX}${n}`)) n++;
+  return `${JUNCTION_PREFIX}${n}`;
 }
 
 export function newAnnotationId(diagram: DiagramFile): string {

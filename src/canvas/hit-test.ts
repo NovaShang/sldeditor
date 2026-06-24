@@ -9,6 +9,7 @@ import type {
   AnnotationId,
   BusId,
   ElementId,
+  JunctionId,
   NodeId,
   TerminalRef,
   WireEnd,
@@ -28,15 +29,21 @@ export function hitBus(target: EventTarget | null): BusId | null {
   return ancestor(target, 'data-bus-id')?.getAttribute('data-bus-id') ?? null;
 }
 
+export function hitJunction(target: EventTarget | null): JunctionId | null {
+  return ancestor(target, 'data-junction-id')?.getAttribute('data-junction-id') ?? null;
+}
+
 /**
- * Returns either a device terminal ref ("X.Y") or a bare bus id under the
- * cursor. Direct hit on a `data-terminal-id` node wins; otherwise if the
- * click landed on a bus body fall back to the bus id so the wire tool can
- * attach anywhere along the bus.
+ * Returns the connectable WireEnd under the cursor — a device terminal ref
+ * ("X.Y"), a bare bus id, or a bare junction id. Direct hit on a
+ * `data-terminal-id` node wins; otherwise fall back to a junction dot or a bus
+ * body so the wire tool can attach to any of them.
  */
 export function hitTerminal(target: EventTarget | null): WireEnd | null {
   const direct = ancestor(target, 'data-terminal-id')?.getAttribute('data-terminal-id');
   if (direct) return direct as TerminalRef;
+  const junctionId = hitJunction(target);
+  if (junctionId) return junctionId;
   const busId = hitBus(target);
   if (busId) return busId;
   return null;

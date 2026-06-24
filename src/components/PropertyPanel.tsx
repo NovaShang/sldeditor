@@ -15,6 +15,7 @@ import type {
   BusId,
   Element,
   ElementId,
+  Junction,
   LibraryParamField,
   LibraryStateField,
   ParamValue,
@@ -27,6 +28,7 @@ export function PropertyPanel() {
   const selection = useEditorStore((s) => s.selection);
   const elements = useEditorStore((s) => s.diagram.elements);
   const buses = useEditorStore((s) => s.diagram.buses);
+  const junctions = useEditorStore((s) => s.diagram.junctions);
   const selectedNode = useEditorStore((s) => s.selectedNode);
   const selectedWire = useEditorStore((s) => s.selectedWire);
 
@@ -52,6 +54,8 @@ export function PropertyPanel() {
   const id = selection[0];
   const bus = (buses ?? []).find((b) => b.id === id);
   if (bus) return <BusInspector bus={bus} />;
+  const junction = (junctions ?? []).find((j) => j.id === id);
+  if (junction) return <JunctionPanel junction={junction} />;
   const element = elements.find((e) => e.id === id);
   if (!element) return null;
   const lib = libraryById[element.kind];
@@ -303,6 +307,7 @@ function WirePanel({ wireId }: { wireId: WireId }) {
   const wires = useEditorStore((s) => s.diagram.wires);
   const elements = useEditorStore((s) => s.diagram.elements);
   const buses = useEditorStore((s) => s.diagram.buses);
+  const junctions = useEditorStore((s) => s.diagram.junctions);
   const terminalToNode = useEditorStore((s) => s.internal.terminalToNode);
   const setSelectedNode = useEditorStore((s) => s.setSelectedNode);
   const wire = (wires ?? []).find((w) => w.id === wireId);
@@ -316,10 +321,13 @@ function WirePanel({ wireId }: { wireId: WireId }) {
   const nodeId = terminalToNode.get(wire.ends[0]);
   const elemById = new Map(elements.map((e) => [e.id, e]));
   const busById = new Map((buses ?? []).map((b) => [b.id, b]));
+  const junctionById = new Map((junctions ?? []).map((j) => [j.id, j]));
   const describeEnd = (end: string): { id: string; label: string; pin?: string } => {
     if (!end.includes('.')) {
       const b = busById.get(end);
-      return { id: end, label: b?.name ?? end };
+      if (b) return { id: end, label: b.name ?? end };
+      const j = junctionById.get(end);
+      return { id: end, label: j?.name ?? end };
     }
     const dot = end.indexOf('.');
     const elId = end.slice(0, dot);
@@ -362,6 +370,53 @@ function WirePanel({ wireId }: { wireId: WireId }) {
         >
           {t('props.selectWholeNode')}
         </button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Junction panel — a free-standing point connection node.
+// ---------------------------------------------------------------------------
+
+function JunctionPanel({ junction }: { junction: Junction }) {
+  const t = useT();
+  const world = useEditorStore((s) => s.internal.junctions.get(junction.id)?.world);
+  const at = junction.layout?.at ?? world;
+  return (
+    <div className="flex flex-col gap-2.5 px-3 py-3 text-xs">
+      <div className="space-y-1">
+        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          {t('props.junction')}
+        </div>
+        <div className="font-mono text-[12px]">{junction.id}</div>
+      </div>
+      <TextRow
+        label={t('props.name')}
+        value={junction.name ?? ''}
+        placeholder={junction.id}
+        onCommit={(v) =>
+          useEditorStore
+            .getState()
+            .updateJunction(junction.id, { name: v.trim() === '' ? undefined : v.trim() })
+        }
+      />
+      <TextAreaRow
+        label={t('props.note')}
+        value={junction.note ?? ''}
+        onCommit={(v) =>
+          useEditorStore
+            .getState()
+            .updateJunction(junction.id, { note: v.trim() === '' ? undefined : v.trim() })
+        }
+      />
+      {at && (
+        <div className="flex items-center justify-between border-t border-border/40 pt-2">
+          <span className="text-muted-foreground">{t('props.junctionPos')}</span>
+          <span className="font-mono text-[11px]">
+            {Math.round(at[0])}, {Math.round(at[1])}
+          </span>
+        </div>
       )}
     </div>
   );

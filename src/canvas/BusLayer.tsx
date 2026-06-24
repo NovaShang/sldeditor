@@ -20,13 +20,15 @@ export function BusLayer() {
   const terminalToNode = useEditorStore((s) => s.internal.terminalToNode);
   const selSet = new Set(selection);
 
-  // Buses whose ConnectivityNode is selected get a halo.
+  // Buses whose ConnectivityNode is selected get a halo. A bare end may be a
+  // bus or a junction — only buses live in this layer, so guard with a bus
+  // lookup (`buses` is read at the top of the component).
   const nodeRelatedBuses = new Set<string>();
   if (selectedNode) {
     const node = nodes.get(selectedNode);
     if (node) {
       for (const end of node.terminals) {
-        if (!end.includes('.')) nodeRelatedBuses.add(end);
+        if (!end.includes('.') && buses.has(end)) nodeRelatedBuses.add(end);
       }
     }
   }

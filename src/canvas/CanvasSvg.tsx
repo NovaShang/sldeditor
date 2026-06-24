@@ -31,6 +31,7 @@ import { BusHandles } from './BusHandles';
 import { WireHandles } from './WireHandles';
 import { BusLayer } from './BusLayer';
 import { BusbarPreview } from './BusbarPreview';
+import { JunctionLayer } from './JunctionLayer';
 import { ElementLayer } from './ElementLayer';
 import { MarqueeOverlay } from './MarqueeOverlay';
 import { PlaceGhost } from './PlaceGhost';
@@ -103,7 +104,7 @@ export function CanvasSvg() {
     (clientX: number, clientY: number, target: EventTarget | null) => {
       const store = useEditorStore.getState();
       const tool = store.activeTool;
-      if (tool === 'wire' || tool === 'busbar' || tool === 'place') {
+      if (tool === 'wire' || tool === 'busbar' || tool === 'junction' || tool === 'place') {
         exitDrawingState();
         return;
       }
@@ -322,6 +323,7 @@ export function CanvasSvg() {
         <g ref={groupRef} className="ole-viewport">
           <BusLayer />
           <WireLayer />
+          <JunctionLayer />
           <ElementLayer />
           <AnnotationLayer />
           <FreeAnnotationLayer />

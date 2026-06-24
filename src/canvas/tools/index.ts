@@ -4,6 +4,7 @@ import { PanTool } from './PanTool';
 import { WireTool } from './WireTool';
 import { PlaceTool } from './PlaceTool';
 import { BusbarTool } from './BusbarTool';
+import { JunctionTool } from './JunctionTool';
 import { TextTool } from './TextTool';
 
 export const TOOLS: Record<ToolId, Tool> = {
@@ -12,6 +13,7 @@ export const TOOLS: Record<ToolId, Tool> = {
   wire: WireTool,
   place: PlaceTool,
   busbar: BusbarTool,
+  junction: JunctionTool,
   text: TextTool,
 };
 

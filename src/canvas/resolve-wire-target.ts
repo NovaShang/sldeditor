@@ -14,21 +14,25 @@ export function resolveWireTarget(
   cursorWorld: [number, number],
 ): WireTarget | null {
   const internal = useEditorStore.getState().internal;
-  // Bare bus id: project cursor onto bus axis.
+  // Bare id: a bus (project cursor onto its axis) or a junction (a point).
   if (!ref.includes('.')) {
     const rb = internal.buses.get(ref);
-    if (!rb) return null;
-    const { axis, at, span } = rb.geometry;
-    if (axis === 'x') {
-      const minX = at[0] - span / 2;
-      const maxX = at[0] + span / 2;
-      const x = Math.max(minX, Math.min(maxX, cursorWorld[0]));
-      return { ref, world: [x, at[1]], isBus: true };
+    if (rb) {
+      const { axis, at, span } = rb.geometry;
+      if (axis === 'x') {
+        const minX = at[0] - span / 2;
+        const maxX = at[0] + span / 2;
+        const x = Math.max(minX, Math.min(maxX, cursorWorld[0]));
+        return { ref, world: [x, at[1]], isBus: true };
+      }
+      const minY = at[1] - span / 2;
+      const maxY = at[1] + span / 2;
+      const y = Math.max(minY, Math.min(maxY, cursorWorld[1]));
+      return { ref, world: [at[0], y], isBus: true };
     }
-    const minY = at[1] - span / 2;
-    const maxY = at[1] + span / 2;
-    const y = Math.max(minY, Math.min(maxY, cursorWorld[1]));
-    return { ref, world: [at[0], y], isBus: true };
+    const rj = internal.junctions.get(ref);
+    if (rj) return { ref, world: [rj.world[0], rj.world[1]], isBus: false };
+    return null;
   }
   // Real device terminal.
   const term = internal.terminals.get(ref as `${string}.${string}`);

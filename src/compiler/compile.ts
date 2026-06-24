@@ -19,6 +19,8 @@ import type {
   DiagramFile,
   Element,
   ElementId,
+  Junction,
+  JunctionId,
   NodeId,
   TerminalRef,
   Wire,
@@ -113,10 +115,27 @@ export function compile(diagram: DiagramFile): InternalModel {
     }
   });
 
+  // ---- 2b. Resolve junctions (preliminary; world filled after layout) ----
+  const junctionById = new Map<JunctionId, Junction>();
+  (diagram.junctions ?? []).forEach((j, idx) => {
+    if (elementById.has(j.id) || busById.has(j.id) || junctionById.has(j.id)) {
+      m.diagnostics.push({
+        code: 'E001',
+        severity: 'error',
+        message: t('compile.duplicateId', { id: j.id }),
+        pointer: `/junctions/${idx}`,
+      });
+      return;
+    }
+    junctionById.set(j.id, j);
+  });
+
   // ---- 3. Validate wire endpoints ---------------------------------------
+  // A bare end is a node — bus or junction; a dotted end is a device pin.
   const isBus = (end: WireEnd): boolean => !end.includes('.') && busById.has(end);
+  const isJunction = (end: WireEnd): boolean => !end.includes('.') && junctionById.has(end);
   const validEnd = (end: WireEnd, pointer: string): boolean => {
-    if (isBus(end)) return true;
+    if (isBus(end) || isJunction(end)) return true;
     const dot = end.indexOf('.');
     if (dot <= 0) {
       m.diagnostics.push({
@@ -231,6 +250,42 @@ export function compile(diagram: DiagramFile): InternalModel {
     m.elementToTerminals.set(re.element.id, refs);
   }
 
+  // ---- 5b. Resolve junction world points ---------------------------------
+  // Explicit `layout.at` wins (verbatim, like bus/element placements). A
+  // junction without a position falls back to the average of its wire
+  // neighbours' world coords so hand-authored / AI-authored junctions that
+  // omit coordinates still render somewhere sensible.
+  const nonJunctionWorld = (end: WireEnd): [number, number] | null => {
+    if (!end.includes('.')) {
+      const rb = m.buses.get(end);
+      return rb ? (rb.geometry.at as [number, number]) : null;
+    }
+    const term = m.terminals.get(end as TerminalRef);
+    return term ? (term.world as [number, number]) : null;
+  };
+  for (const [jid, junction] of junctionById) {
+    let world: [number, number];
+    if (junction.layout?.at) {
+      world = [junction.layout.at[0], junction.layout.at[1]];
+    } else {
+      const pts: [number, number][] = [];
+      for (const w of validWires) {
+        const [a, b] = w.ends;
+        const other = a === jid ? b : b === jid ? a : null;
+        if (other === null) continue;
+        const p = nonJunctionWorld(other);
+        if (p) pts.push(p);
+      }
+      world = pts.length
+        ? [
+            pts.reduce((s, p) => s + p[0], 0) / pts.length,
+            pts.reduce((s, p) => s + p[1], 0) / pts.length,
+          ]
+        : [0, 0];
+    }
+    m.junctions.set(jid, { junction, world });
+  }
+
   // ---- 6. Union-find over wires -----------------------------------------
   const uf = new UnionFind<WireEnd>();
   for (const w of validWires) {
@@ -263,6 +318,15 @@ export function compile(diagram: DiagramFile): InternalModel {
         code: 'W001',
         severity: 'warning',
         message: t('compile.elementUnconnected', { id: busId }),
+      });
+    }
+  }
+  for (const jid of m.junctions.keys()) {
+    if (!m.terminalToNode.has(jid)) {
+      m.diagnostics.push({
+        code: 'W001',
+        severity: 'warning',
+        message: t('compile.elementUnconnected', { id: jid }),
       });
     }
   }

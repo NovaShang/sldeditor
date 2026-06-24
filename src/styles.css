@@ -331,6 +331,12 @@
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
 }
+/* Hollow dashed ring = releasing here mints a new junction (empty space or
+   a tap onto an existing wire). */
+.ole-wire-preview-target-ring[data-create='true'] {
+  fill: none;
+  stroke-dasharray: 3 2;
+}
 .ole-wire-preview-target-dot {
   fill: var(--selection);
   stroke: var(--canvas-bg);
@@ -415,6 +421,28 @@
 /* Buses inherit `currentColor` so they track light/dark theme like wires. */
 .ole-bus-layer {
   color: var(--foreground);
+}
+
+/* Junctions — free-standing point connection nodes. Always visible (model
+   objects, not transient pins); a wider transparent circle catches clicks. */
+.ole-junction-layer {
+  color: var(--foreground);
+}
+.ole-junction-dot {
+  fill: var(--foreground);
+  stroke: none;
+  pointer-events: none;
+}
+.ole-junction-hit {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.ole-junction[data-selected='true'] .ole-junction-dot,
+.ole-junction[data-node-related='true'] .ole-junction-dot {
+  fill: var(--selection);
+}
+.ole-canvas-root.tool-wire .ole-junction-hit {
+  cursor: crosshair;
 }
 
 /* Wires. `pointer-events: stroke` so they're hoverable but the body of the

@@ -8,6 +8,8 @@ import type {
   BusId,
   Element,
   ElementId,
+  Junction,
+  JunctionId,
   LibraryEntry,
   NodeId,
   Orientation,
@@ -41,6 +43,12 @@ export interface BusGeometry {
 export interface ResolvedBus {
   bus: Bus;
   geometry: BusGeometry;
+}
+
+export interface ResolvedJunction {
+  junction: Junction;
+  /** Canvas coordinate of the point node. */
+  world: [number, number];
 }
 
 export interface TerminalGeometry {
@@ -83,6 +91,7 @@ export interface WireRender {
 export interface InternalModel {
   elements: Map<ElementId, ResolvedElement>;
   buses: Map<BusId, ResolvedBus>;
+  junctions: Map<JunctionId, ResolvedJunction>;
   terminals: Map<TerminalRef, TerminalGeometry>;
   nodes: Map<NodeId, ConnectivityNode>;
   layout: Map<ElementId, ResolvedPlacement>;
@@ -97,6 +106,7 @@ export function emptyInternalModel(): InternalModel {
   return {
     elements: new Map(),
     buses: new Map(),
+    junctions: new Map(),
     terminals: new Map(),
     nodes: new Map(),
     layout: new Map(),

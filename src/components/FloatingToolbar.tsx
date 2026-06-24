@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import {
   Cable,
+  CircleDot,
   Clipboard,
   Copy,
   Hand,
@@ -72,6 +73,15 @@ const TOOLS: ToolDef[] = [
     switchTo: 'busbar',
   },
   {
+    id: 'junction',
+    labelKey: 'tool.junction',
+    hotkey: 'J',
+    descriptionKey: 'tool.junctionHint',
+    icon: CircleDot,
+    switchTo: 'junction',
+    iconOnly: true,
+  },
+  {
     id: 'place',
     labelKey: 'tool.place',
     hotkey: 'P',
@@ -108,7 +118,7 @@ function ToolHint() {
   const active = useEditorStore((s) => s.activeTool);
   const placeKind = useEditorStore((s) => s.placeKind);
   const placeFrom = useEditorStore((s) => s.placeFromTerminal);
-  const wireFrom = useEditorStore((s) => s.wireFromTerminal);
+  const wireFrom = useEditorStore((s) => s.wireDragFrom);
   const busbarStart = useEditorStore((s) => s.busbarDrawStart);
   const hasSelection = useEditorStore(
     (s) => s.selection.length > 0 || s.selectedNode != null,
@@ -132,6 +142,10 @@ function ToolHint() {
       break;
     case 'busbar':
       text = busbarStart ? t('mode.busDragging') : t('mode.busInit');
+      cancelHint = true;
+      break;
+    case 'junction':
+      text = t('mode.junction');
       cancelHint = true;
       break;
     case 'place':

@@ -5,14 +5,17 @@ export type ElementId = string;
 export type PinName = string;
 export type NodeId = string;
 export type BusId = ElementId;
+export type JunctionId = ElementId;
 export type WireId = string;
 /** "elementId.pinName" — dotted form for device pins. */
 export type TerminalRef = `${ElementId}.${PinName}`;
 /**
- * Either a device terminal ("X.Y") or a bare bus id ("X"). Disambiguated by
- * the presence of a `.` — bus ids are never dotted.
+ * A wire endpoint. Either a device terminal ("X.Y") or a bare **node** id —
+ * a bus id or a junction id. Disambiguated by the presence of a `.`: dotted is
+ * always a device pin, bare is a node resolved against `buses` then `junctions`
+ * (node ids share one namespace, so the two never collide).
  */
-export type WireEnd = TerminalRef | BusId;
+export type WireEnd = TerminalRef | BusId | JunctionId;
 export type ParamValue = number | string | boolean;
 export type LabelMode = 'off' | 'id' | 'all';
 
@@ -23,7 +26,14 @@ export interface DiagramFile {
   elements: Element[];
   /** Bus collection. Each bus is a hyperedge node, not an element. */
   buses?: Bus[];
-  /** Binary line segments between two endpoints (terminal pin or bare bus id). */
+  /**
+   * Junction collection. A junction is a free-standing point connection node —
+   * a first-class peer to `Bus` (it has geometry but no span). Wires meeting at
+   * a junction share one electrical node, so junctions back free point-to-point
+   * wiring without abusing buses.
+   */
+  junctions?: Junction[];
+  /** Binary line segments between two endpoints (terminal pin, bus, or junction). */
   wires?: Wire[];
   /** Device placements only. Bus geometry lives in `Bus.layout`. */
   layout?: Record<ElementId, Placement>;
@@ -62,6 +72,19 @@ export interface BusLayout {
   at: [number, number];
   span: number;
   rot?: 0 | 90 | 180 | 270;
+}
+
+export interface Junction {
+  id: JunctionId;
+  name?: string;
+  note?: string;
+  params?: Record<string, ParamValue>;
+  /** If absent, auto-layout computes the point (midpoint of wire neighbors). */
+  layout?: JunctionLayout;
+}
+
+export interface JunctionLayout {
+  at: [number, number];
 }
 
 export interface Wire {

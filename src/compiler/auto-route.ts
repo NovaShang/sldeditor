@@ -56,7 +56,9 @@ function isBus(end: WireEnd, model: InternalModel): boolean {
 function endWorld(end: WireEnd, model: InternalModel): Pt | null {
   if (!end.includes('.')) {
     const rb = model.buses.get(end);
-    return rb ? (rb.geometry.at as Pt) : null;
+    if (rb) return rb.geometry.at as Pt;
+    const rj = model.junctions.get(end);
+    return rj ? (rj.world as Pt) : null;
   }
   const term = model.terminals.get(end as `${string}.${string}`);
   return term ? (term.world as Pt) : null;
@@ -81,7 +83,10 @@ export function wireEndWorld(
 ): Pt | null {
   if (!end.includes('.')) {
     const rb = model.buses.get(end);
-    if (!rb) return null;
+    if (!rb) {
+      const rj = model.junctions.get(end);
+      return rj ? ([rj.world[0], rj.world[1]] as Pt) : null;
+    }
     const { axis, at, span } = rb.geometry;
     if (!approach) return [at[0], at[1]] as Pt;
     const half = span / 2;

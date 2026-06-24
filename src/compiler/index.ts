@@ -12,6 +12,7 @@ export type {
   InternalModel,
   ResolvedBus,
   ResolvedElement,
+  ResolvedJunction,
   ResolvedPlacement,
   TerminalGeometry,
   WireRender,

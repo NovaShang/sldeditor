@@ -31,6 +31,8 @@ import type {
   DiagramFile,
   Element,
   ElementId,
+  Junction,
+  JunctionId,
   NodeId,
   Placement,
   TextAnnotation,
@@ -42,6 +44,7 @@ import {
   newAnnotationId,
   newBusId,
   newElementId,
+  newJunctionId,
   wireIdFromEnds,
 } from './id-allocator';
 import { normalizePath } from '../model/wire-path';
@@ -68,12 +71,39 @@ function defaultTool(): ToolId {
 export interface ClipboardData {
   elements: Element[];
   buses: Bus[];
+  junctions: Junction[];
   placements: Record<ElementId, Placement>;
   busLayouts: Record<BusId, BusLayout>;
   wires: Wire[];
 }
 
-export type ToolId = 'select' | 'pan' | 'wire' | 'place' | 'busbar' | 'text';
+export type ToolId =
+  | 'select'
+  | 'pan'
+  | 'wire'
+  | 'place'
+  | 'busbar'
+  | 'junction'
+  | 'text';
+
+/**
+ * How one end of a freshly-drawn wire should resolve at commit time. The wire
+ * tool can land on an existing connectable, on empty space (→ mint a junction),
+ * or on an existing wire body (→ split it and mint a junction at the tap).
+ */
+export type WireEndSpec =
+  | { end: WireEnd }
+  | { junctionAt: [number, number] }
+  | { onWire: WireId; at: [number, number] };
+
+/** Live state of an in-progress wire drag (origin). */
+export interface WireDragFrom {
+  spec: WireEndSpec;
+  /** Anchor point for the preview line. */
+  world: [number, number];
+  /** Existing-end ref when the origin is a pin/bus/junction, else null. */
+  ref: WireEnd | null;
+}
 
 export interface EditorState {
   // ---- Document --------------------------------------------------------
@@ -86,6 +116,8 @@ export interface EditorState {
   placeKind: string | null;
   lastPlaceKind: string | null;
   wireFromTerminal: WireEnd | null;
+  /** Canonical in-progress wire-drag origin (supports free-space starts). */
+  wireDragFrom: WireDragFrom | null;
   placeFromTerminal: WireEnd | null;
   busbarDrawStart: [number, number] | null;
   cursorSvg: [number, number] | null;
@@ -121,6 +153,7 @@ export interface EditorState {
   setActiveTool: (tool: ToolId, opts?: { placeKind?: string | null }) => void;
   setPlaceKind: (kind: string | null) => void;
   setWireFromTerminal: (ref: WireEnd | null) => void;
+  setWireDragFrom: (from: WireDragFrom | null) => void;
   setPlaceFromTerminal: (ref: WireEnd | null) => void;
   setBusbarDrawStart: (pt: [number, number] | null) => void;
   setCursorSvg: (pt: [number, number] | null) => void;
@@ -164,8 +197,17 @@ export interface EditorState {
     span: number,
     rot?: 0 | 90 | 180 | 270,
   ) => BusId;
+  /** Drop a free-standing junction (point connection node) at `at`. */
+  addJunction: (at: [number, number]) => JunctionId;
+  updateJunction: (id: JunctionId, patch: Partial<Junction>) => void;
   /** Append a wire between two endpoints (idempotent — duplicate is a no-op). */
   addWire: (a: WireEnd, b: WireEnd) => void;
+  /**
+   * Commit a freshly-drawn wire. Each end may be an existing connectable, a
+   * new junction (free-space drop), or a tap that splits an existing wire —
+   * all minted/split in one dispatch so the gesture is a single undo step.
+   */
+  connectWire: (from: WireEndSpec, to: WireEndSpec) => void;
   /** Replace a wire's manual route. `null` clears it → back to auto-route. */
   updateWirePath: (id: WireId, path: [number, number][] | null) => void;
   /** Clear a wire's manual route (alias for `updateWirePath(id, null)`). */
@@ -189,6 +231,7 @@ export const useEditorStore = create<EditorState>()(
   placeKind: null,
   lastPlaceKind: null,
   wireFromTerminal: null,
+  wireDragFrom: null,
   placeFromTerminal: null,
   busbarDrawStart: null,
   cursorSvg: null,
@@ -218,6 +261,7 @@ export const useEditorStore = create<EditorState>()(
       editingAnnotation: null,
       editingElement: null,
       wireFromTerminal: null,
+      wireDragFrom: null,
       placeFromTerminal: null,
     }),
 
@@ -237,6 +281,7 @@ export const useEditorStore = create<EditorState>()(
       editingAnnotation: null,
       editingElement: null,
       wireFromTerminal: null,
+      wireDragFrom: null,
       placeFromTerminal: null,
     }),
 
@@ -263,6 +308,7 @@ export const useEditorStore = create<EditorState>()(
       past: past.slice(0, -1),
       future: [...future, diagram],
       wireFromTerminal: null,
+      wireDragFrom: null,
       placeFromTerminal: null,
     });
   },
@@ -277,6 +323,7 @@ export const useEditorStore = create<EditorState>()(
       past: [...past, diagram],
       future: future.slice(0, -1),
       wireFromTerminal: null,
+      wireDragFrom: null,
       placeFromTerminal: null,
     });
   },
@@ -292,6 +339,7 @@ export const useEditorStore = create<EditorState>()(
       placeKind,
       lastPlaceKind: placeKind ?? cur.lastPlaceKind,
       wireFromTerminal: tool === 'wire' ? cur.wireFromTerminal : null,
+      wireDragFrom: tool === 'wire' ? cur.wireDragFrom : null,
       placeFromTerminal: tool === 'place' ? cur.placeFromTerminal : null,
     });
   },
@@ -301,6 +349,7 @@ export const useEditorStore = create<EditorState>()(
       lastPlaceKind: kind ?? s.lastPlaceKind,
     })),
   setWireFromTerminal: (ref) => set({ wireFromTerminal: ref }),
+  setWireDragFrom: (from) => set({ wireDragFrom: from }),
   setPlaceFromTerminal: (ref) => set({ placeFromTerminal: ref }),
   setBusbarDrawStart: (pt) => set({ busbarDrawStart: pt }),
   setCursorSvg: (pt) => set({ cursorSvg: pt }),
@@ -381,6 +430,17 @@ export const useEditorStore = create<EditorState>()(
       .filter((b) => sel.has(b.id))
       .map((b) => structuredClone(b));
 
+    const junctions = (diagram.junctions ?? [])
+      .filter((j) => sel.has(j.id))
+      .map((j) => {
+        const cloned = structuredClone(j);
+        if (!cloned.layout) {
+          const world = internal.junctions.get(j.id)?.world;
+          if (world) cloned.layout = { at: [world[0], world[1]] };
+        }
+        return cloned;
+      });
+
     const placements: Record<ElementId, Placement> = {};
     for (const id of selection) {
       if (sel.has(id) && !internal.buses.has(id)) {
@@ -408,7 +468,7 @@ export const useEditorStore = create<EditorState>()(
       .map((w) => structuredClone(w));
 
     set({
-      clipboard: { elements, buses, placements, busLayouts, wires },
+      clipboard: { elements, buses, junctions, placements, busLayouts, wires },
       clipboardPasteIndex: 0,
     });
   },
@@ -423,7 +483,12 @@ export const useEditorStore = create<EditorState>()(
   pasteClipboard: () => {
     const { clipboard, clipboardPasteIndex, diagram } = get();
     if (!clipboard) return;
-    if (clipboard.elements.length === 0 && clipboard.buses.length === 0) return;
+    if (
+      clipboard.elements.length === 0 &&
+      clipboard.buses.length === 0 &&
+      clipboard.junctions.length === 0
+    )
+      return;
     const step = clipboardPasteIndex + 1;
     const dx = PASTE_OFFSET * step;
     const dy = PASTE_OFFSET * step;
@@ -444,6 +509,14 @@ export const useEditorStore = create<EditorState>()(
       working = {
         ...working,
         buses: [...(working.buses ?? []), { id: newId }],
+      };
+    }
+    for (const junction of clipboard.junctions) {
+      const newId = newJunctionId(working);
+      idMap.set(junction.id, newId);
+      working = {
+        ...working,
+        junctions: [...(working.junctions ?? []), { id: newId }],
       };
     }
 
@@ -475,6 +548,17 @@ export const useEditorStore = create<EditorState>()(
         return cloned;
       });
 
+      const newJunctions: Junction[] = clipboard.junctions.map((j) => {
+        const cloned = structuredClone(j);
+        cloned.id = idMap.get(j.id)!;
+        if (cloned.layout) {
+          cloned.layout = {
+            at: [cloned.layout.at[0] + dx, cloned.layout.at[1] + dy],
+          };
+        }
+        return cloned;
+      });
+
       const newLayout: Record<ElementId, Placement> = { ...(d.layout ?? {}) };
       for (const [oldId, newId] of idMap) {
         const p = clipboard.placements[oldId];
@@ -501,6 +585,9 @@ export const useEditorStore = create<EditorState>()(
         buses: newBuses.length
           ? [...(d.buses ?? []), ...newBuses]
           : d.buses,
+        junctions: newJunctions.length
+          ? [...(d.junctions ?? []), ...newJunctions]
+          : d.junctions,
         wires: wires.length ? wires : undefined,
         layout: Object.keys(newLayout).length ? newLayout : undefined,
       };
@@ -645,9 +732,14 @@ export const useEditorStore = create<EditorState>()(
     get().dispatch((d) => {
       const layout = { ...(d.layout ?? {}) };
       const busPatches = new Map<BusId, [number, number]>();
+      const junctionPatches = new Map<JunctionId, [number, number]>();
       for (const [id, delta] of deltas) {
         if (internal.buses.has(id)) {
           busPatches.set(id, delta);
+          continue;
+        }
+        if (internal.junctions.has(id)) {
+          junctionPatches.set(id, delta);
           continue;
         }
         const resolved = internal.layout.get(id);
@@ -674,7 +766,16 @@ export const useEditorStore = create<EditorState>()(
           };
         });
       }
-      return { ...d, layout, buses };
+      let junctions = d.junctions;
+      if (junctionPatches.size > 0) {
+        junctions = (d.junctions ?? []).map((j) => {
+          const delta = junctionPatches.get(j.id);
+          if (!delta) return j;
+          const at = j.layout?.at ?? internal.junctions.get(j.id)?.world ?? [0, 0];
+          return { ...j, layout: { at: [at[0] + delta[0], at[1] + delta[1]] } };
+        });
+      }
+      return { ...d, layout, buses, junctions };
     });
   },
 
@@ -685,6 +786,7 @@ export const useEditorStore = create<EditorState>()(
     get().dispatch((d) => {
       const elements = d.elements.filter((e) => !ids.has(e.id));
       const buses = (d.buses ?? []).filter((b) => !ids.has(b.id));
+      const junctions = (d.junctions ?? []).filter((j) => !ids.has(j.id));
       const wires = (d.wires ?? []).filter(
         (w) => !ids.has(endOwner(w.ends[0])) && !ids.has(endOwner(w.ends[1])),
       );
@@ -697,6 +799,7 @@ export const useEditorStore = create<EditorState>()(
         ...d,
         elements,
         buses: buses.length ? buses : undefined,
+        junctions: junctions.length ? junctions : undefined,
         wires: wires.length ? wires : undefined,
         layout: layout && Object.keys(layout).length ? layout : undefined,
       };
@@ -789,6 +892,7 @@ export const useEditorStore = create<EditorState>()(
       const layout = { ...(d.layout ?? {}) };
       const busPatches = new Map<BusId, 0 | 90 | 180 | 270>();
       for (const id of selection) {
+        if (internal.junctions.has(id)) continue; // points don't rotate
         if (internal.buses.has(id)) {
           const rb = internal.buses.get(id)!;
           const cur =
@@ -821,6 +925,7 @@ export const useEditorStore = create<EditorState>()(
       const layout = { ...(d.layout ?? {}) };
       for (const id of selection) {
         if (internal.buses.has(id)) continue; // buses don't mirror
+        if (internal.junctions.has(id)) continue; // points don't mirror
         const cur = layout[id] ?? { at: internal.layout.get(id)?.at ?? [0, 0] };
         layout[id] = { ...cur, mirror: !(cur.mirror ?? false) };
       }
@@ -861,6 +966,25 @@ export const useEditorStore = create<EditorState>()(
     return id;
   },
 
+  addJunction: (at) => {
+    const id = newJunctionId(get().diagram);
+    get().dispatch((d) => {
+      const junction: Junction = { id, layout: { at } };
+      return { ...d, junctions: [...(d.junctions ?? []), junction] };
+    });
+    set({ selection: [id] });
+    return id;
+  },
+
+  updateJunction: (id, patch) => {
+    get().dispatch((d) => ({
+      ...d,
+      junctions: (d.junctions ?? []).map((j) =>
+        j.id === id ? { ...j, ...patch } : j,
+      ),
+    }));
+  },
+
   addWire: (a, b) => {
     if (a === b) return;
     const id = wireIdFromEnds(a, b);
@@ -871,6 +995,62 @@ export const useEditorStore = create<EditorState>()(
         ...d,
         wires: [...existing, { id, ends: [a, b] }],
       };
+    });
+  },
+
+  connectWire: (from, to) => {
+    get().dispatch((d) => {
+      let working = d;
+      const usedIds = new Set<string>([
+        ...working.elements.map((e) => e.id),
+        ...(working.buses ?? []).map((b) => b.id),
+        ...(working.junctions ?? []).map((j) => j.id),
+      ]);
+      const mintJunctionId = (): JunctionId => {
+        let n = 1;
+        while (usedIds.has(`J${n}`)) n++;
+        const id = `J${n}`;
+        usedIds.add(id);
+        return id;
+      };
+      const addJunctionAt = (at: [number, number]): JunctionId => {
+        const id = mintJunctionId();
+        working = {
+          ...working,
+          junctions: [...(working.junctions ?? []), { id, layout: { at } }],
+        };
+        return id;
+      };
+      // Resolve a spec to a concrete WireEnd, performing any junction mint /
+      // wire split as a side effect on `working`.
+      const resolve = (spec: WireEndSpec): WireEnd | null => {
+        if ('end' in spec) return spec.end;
+        if ('junctionAt' in spec) return addJunctionAt(spec.junctionAt);
+        // onWire: split the host wire at the tap point.
+        const host = (working.wires ?? []).find((w) => w.id === spec.onWire);
+        const jid = addJunctionAt(spec.at);
+        if (!host) return jid;
+        const rest = (working.wires ?? []).filter((w) => w.id !== spec.onWire);
+        const half = (a: WireEnd, b: WireEnd): Wire => ({
+          id: wireIdFromEnds(a, b),
+          ends: [a, b],
+        });
+        working = {
+          ...working,
+          wires: mergeWires(rest, [
+            half(host.ends[0], jid),
+            half(jid, host.ends[1]),
+          ]),
+        };
+        return jid;
+      };
+      const a = resolve(from);
+      const b = resolve(to);
+      if (a === null || b === null || a === b) return working;
+      const id = wireIdFromEnds(a, b);
+      const existing = working.wires ?? [];
+      if (existing.some((w) => w.id === id)) return working;
+      return { ...working, wires: [...existing, { id, ends: [a, b] }] };
     });
   },
 

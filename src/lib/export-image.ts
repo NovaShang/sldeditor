@@ -85,6 +85,14 @@ export function buildExportSvg(
     );
   }
 
+  // Junctions — a filled dot per point node (matches the on-canvas marker;
+  // the solder dot also disambiguates a connection from a wire crossover).
+  for (const { junction, world } of model.junctions.values()) {
+    out.push(
+      `  <circle id="${escapeXml(junction.id)}" cx="${world[0]}" cy="${world[1]}" r="3.5" fill="black"/>`,
+    );
+  }
+
   // Devices.
   for (const re of model.elements.values()) {
     if (!re.libraryDef) continue;
@@ -164,6 +172,7 @@ function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
   };
 
   for (const t of model.terminals.values()) update(t.world[0], t.world[1]);
+  for (const rj of model.junctions.values()) update(rj.world[0], rj.world[1]);
   for (const re of model.elements.values()) {
     const place = model.layout.get(re.element.id);
     const lib = re.libraryDef;

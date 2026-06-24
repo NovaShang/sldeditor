@@ -8,11 +8,14 @@
 import type { WireEnd } from '../model';
 
 export interface WireTarget {
-  ref: WireEnd;
+  /** Existing connectable ref, or null when this target will mint a junction. */
+  ref: WireEnd | null;
   /** World-frame coords of where the connection will physically attach. */
   world: [number, number];
   /** True when the target is a bare bus id. */
   isBus: boolean;
+  /** Set when releasing here mints a junction (empty space, or a wire tap). */
+  create?: 'junction';
 }
 
 type Listener = (target: WireTarget | null) => void;
