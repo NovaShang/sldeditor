@@ -12,7 +12,7 @@
 
 import { useEditorStore } from '../../store';
 import type { ResolvedPlacement } from '../../compiler';
-import type { AnnotationId, BusId, ElementId, WireEnd } from '../../model';
+import type { AnnotationId, BusId, ElementId, JunctionId, WireEnd } from '../../model';
 import { snap } from '../grid';
 import { hitAnnotation, hitElement, hitNode, hitTerminal, hitWire } from '../hit-test';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
@@ -31,6 +31,9 @@ interface DragState {
   /** Original `at` of every dragged bus. Buses live outside `internal.layout`
    *  so they need a separate map; preview translates the wrapper `<g>`. */
   busOriginals: Map<BusId, [number, number]>;
+  /** Original world point of every dragged junction. Like buses, junctions
+   *  live outside `internal.layout`; preview translates the wrapper `<g>`. */
+  junctionOriginals: Map<JunctionId, [number, number]>;
   moved: boolean;
 }
 
@@ -207,22 +210,30 @@ export const SelectTool: Tool = {
     const internal = useEditorStore.getState().internal;
     const originals = new Map<ElementId, ResolvedPlacement>();
     const busOriginals = new Map<BusId, [number, number]>();
+    const junctionOriginals = new Map<JunctionId, [number, number]>();
     for (const tid of targets) {
       const rb = internal.buses.get(tid);
       if (rb) {
         busOriginals.set(tid, [rb.geometry.at[0], rb.geometry.at[1]]);
         continue;
       }
+      const rj = internal.junctions.get(tid);
+      if (rj) {
+        junctionOriginals.set(tid, [rj.world[0], rj.world[1]]);
+        continue;
+      }
       const p = internal.layout.get(tid);
       if (p) originals.set(tid, { ...p });
     }
-    if (originals.size === 0 && busOriginals.size === 0) return;
+    if (originals.size === 0 && busOriginals.size === 0 && junctionOriginals.size === 0)
+      return;
 
     drag = {
       pointerId: e.pointerId,
       startSvg: ctx.viewport.screenToSvg(e.clientX, e.clientY),
       originals,
       busOriginals,
+      junctionOriginals,
       moved: false,
     };
     // Defer pointer capture until the user actually starts moving (in
@@ -301,6 +312,14 @@ export const SelectTool: Tool = {
         if (!node) continue;
         node.setAttribute('transform', `translate(${dx} ${dy})`);
       }
+      // Junctions: same wrapper-translate preview as buses.
+      for (const id of drag.junctionOriginals.keys()) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-element-id="${cssEscape(id)}"]`,
+        );
+        if (!node) continue;
+        node.setAttribute('transform', `translate(${dx} ${dy})`);
+      }
       return;
     }
 
@@ -358,10 +377,17 @@ export const SelectTool: Tool = {
           const deltas = new Map<ElementId, [number, number]>();
           for (const id of drag.originals.keys()) deltas.set(id, [dx, dy]);
           for (const id of drag.busOriginals.keys()) deltas.set(id, [dx, dy]);
+          for (const id of drag.junctionOriginals.keys()) deltas.set(id, [dx, dy]);
           useEditorStore.getState().moveElements(deltas);
         }
-        // Clear bus preview transforms — the store update repaints at new at.
+        // Clear bus / junction preview transforms — the store update repaints.
         for (const id of drag.busOriginals.keys()) {
+          const node = ctx.hostEl.querySelector<SVGGElement>(
+            `[data-element-id="${cssEscape(id)}"]`,
+          );
+          if (node) node.removeAttribute('transform');
+        }
+        for (const id of drag.junctionOriginals.keys()) {
           const node = ctx.hostEl.querySelector<SVGGElement>(
             `[data-element-id="${cssEscape(id)}"]`,
           );
@@ -427,6 +453,12 @@ export const SelectTool: Tool = {
         node.setAttribute('transform', transformAttr(orig));
       }
       for (const id of drag.busOriginals.keys()) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-element-id="${cssEscape(id)}"]`,
+        );
+        if (node) node.removeAttribute('transform');
+      }
+      for (const id of drag.junctionOriginals.keys()) {
         const node = ctx.hostEl.querySelector<SVGGElement>(
           `[data-element-id="${cssEscape(id)}"]`,
         );
@@ -555,6 +587,17 @@ function elementsInRect(rect: MarqueeRect): ElementId[] {
       minY <= rect.y + rect.h
     ) {
       hits.push(bus.id);
+    }
+  }
+  // Junctions: a point inside the rect.
+  for (const { junction, world } of internal.junctions.values()) {
+    if (
+      world[0] >= rect.x &&
+      world[0] <= rect.x + rect.w &&
+      world[1] >= rect.y &&
+      world[1] <= rect.y + rect.h
+    ) {
+      hits.push(junction.id);
     }
   }
   return hits;
