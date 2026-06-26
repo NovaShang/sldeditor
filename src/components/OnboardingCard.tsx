@@ -1,6 +1,7 @@
 /**
  * First-visit onboarding card. Surfaces the canonical drawing flow:
- * busbar first → drag elements off the bus → chain from terminals.
+ * place a component → wire pins together (drag to empty space = junction) →
+ * reach for a busbar only when several circuits share one rail.
  *
  * Visibility: shown until the user dismisses it (persisted to localStorage),
  * regardless of whether the canvas is empty — the card and the sample
@@ -40,19 +41,19 @@ export function OnboardingCard() {
       <ol className="mt-3 space-y-2.5">
         <Step
           n={1}
-          icon={<Minus />}
+          icon={<Shapes />}
           title={t('onboard.step1.title')}
           body={t('onboard.step1.body')}
         />
         <Step
           n={2}
-          icon={<Shapes />}
+          icon={<Cable />}
           title={t('onboard.step2.title')}
           body={t('onboard.step2.body')}
         />
         <Step
           n={3}
-          icon={<Cable />}
+          icon={<Minus />}
           title={t('onboard.step3.title')}
           body={t('onboard.step3.body')}
         />
