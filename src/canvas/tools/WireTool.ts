@@ -25,6 +25,9 @@ import type { Tool } from './types';
 
 const GRID = 10;
 const snap = (v: number): number => Math.round(v / GRID) * GRID;
+/** Screen-px radius within which a release snaps onto an existing wire (taps a
+ *  junction). Wider than the wire's own hit region so near-misses still land. */
+const SCREEN_TAP_TOL = 16;
 
 /** Where a press/release at `cursor` would land, for both preview and commit. */
 interface DragTarget {
@@ -63,22 +66,70 @@ function elementUnder(clientX: number, clientY: number): Element | null {
     : null;
 }
 
-/** Resolve the landing under the cursor into a spec + preview info. */
-function resolveDragTarget(under: Element | null, cursor: [number, number]): DragTarget {
+/** Nearest existing wire whose rendered path passes within `worldTol` of the
+ *  cursor, with the snap point on it. Lets a tap land without pixel-precision. */
+function nearestWireWithin(
+  cursor: [number, number],
+  worldTol: number,
+): { wireId: string; at: [number, number] } | null {
+  const renders = useEditorStore.getState().internal.wireRenders;
+  let best: { wireId: string; at: [number, number] } | null = null;
+  let bestD = worldTol;
+  for (const r of renders.values()) {
+    if (r.path.length < 2) continue;
+    const p = nearestOnPath(r.path, cursor);
+    const d = Math.hypot(p[0] - cursor[0], p[1] - cursor[1]);
+    if (d <= bestD) {
+      bestD = d;
+      best = { wireId: r.wireId, at: p };
+    }
+  }
+  return best;
+}
+
+/** Resolve the landing under the cursor into a spec + preview info. A release
+ *  on/near an existing wire taps a junction into it; empty space drops one. */
+function resolveDragTarget(
+  under: Element | null,
+  cursor: [number, number],
+  worldTol: number,
+): DragTarget {
   const ref = under ? hitTerminal(under) : null;
   if (ref) {
     const t = resolveWireTarget(ref, cursor);
     if (t) return { spec: { end: ref }, world: t.world, ref, isBus: t.isBus, create: false };
   }
-  const wireId = under ? hitWire(under) : null;
+  // Tap an existing wire: prefer the exact DOM hit, else snap to the nearest
+  // wire within tolerance (forgiving "drop on the line" gesture).
+  let wireId = under ? hitWire(under) : null;
+  let tapRaw: [number, number] | null = null;
   if (wireId) {
     const render = useEditorStore.getState().internal.wireRenders.get(wireId);
-    const raw = render ? nearestOnPath(render.path, cursor) : cursor;
-    const at: [number, number] = [snap(raw[0]), snap(raw[1])];
+    tapRaw = render ? nearestOnPath(render.path, cursor) : cursor;
+  } else {
+    const near = nearestWireWithin(cursor, worldTol);
+    if (near) {
+      wireId = near.wireId;
+      tapRaw = near.at;
+    }
+  }
+  if (wireId && tapRaw) {
+    const at: [number, number] = [snap(tapRaw[0]), snap(tapRaw[1])];
     return { spec: { onWire: wireId, at }, world: at, ref: null, isBus: false, create: true };
   }
   const at: [number, number] = [snap(cursor[0]), snap(cursor[1])];
   return { spec: { junctionAt: at }, world: at, ref: null, isBus: false, create: true };
+}
+
+/** Convert the screen-px tap tolerance to world units at the current zoom. */
+function worldTolAt(
+  ctx: { viewport: { screenToSvg: (x: number, y: number) => [number, number] } },
+  clientX: number,
+  clientY: number,
+): number {
+  const a = ctx.viewport.screenToSvg(clientX, clientY);
+  const b = ctx.viewport.screenToSvg(clientX + SCREEN_TAP_TOL, clientY);
+  return Math.hypot(b[0] - a[0], b[1] - a[1]);
 }
 
 function toWireTarget(t: DragTarget): WireTarget {
@@ -125,7 +176,8 @@ export const WireTool: Tool = {
     }
 
     const cursor = ctx.viewport.screenToSvg(e.clientX, e.clientY);
-    const from = resolveDragTarget(e.target instanceof Element ? e.target : null, cursor);
+    const tol = worldTolAt(ctx, e.clientX, e.clientY);
+    const from = resolveDragTarget(e.target instanceof Element ? e.target : null, cursor, tol);
     const store = useEditorStore.getState();
     store.setWireDragFrom({ spec: from.spec, world: from.world, ref: from.ref });
     store.setWireFromTerminal(from.ref);
@@ -142,7 +194,7 @@ export const WireTool: Tool = {
     // Pointer capture pins `e.target` to the origin — sample what's actually
     // under the cursor instead.
     const under = elementUnder(e.clientX, e.clientY);
-    const to = resolveDragTarget(under, cursor);
+    const to = resolveDragTarget(under, cursor, worldTolAt(ctx, e.clientX, e.clientY));
     const fromTarget: DragTarget = {
       spec: from.spec,
       world: from.world,
@@ -164,7 +216,7 @@ export const WireTool: Tool = {
 
     const cursor = ctx.viewport.screenToSvg(e.clientX, e.clientY);
     const under = elementUnder(e.clientX, e.clientY) ?? (e.target instanceof Element ? e.target : null);
-    const to = resolveDragTarget(under, cursor);
+    const to = resolveDragTarget(under, cursor, worldTolAt(ctx, e.clientX, e.clientY));
     const fromTarget: DragTarget = {
       spec: from.spec,
       world: from.world,

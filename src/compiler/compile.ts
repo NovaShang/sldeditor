@@ -202,6 +202,7 @@ export function compile(diagram: DiagramFile): InternalModel {
   const layoutResult = autoLayout({
     elements: diagram.elements,
     buses: diagram.buses ?? [],
+    junctions: diagram.junctions ?? [],
     wires: validWires,
     library: LIBRARY,
     userLayout,
@@ -267,6 +268,9 @@ export function compile(diagram: DiagramFile): InternalModel {
     let world: [number, number];
     if (junction.layout?.at) {
       world = [junction.layout.at[0], junction.layout.at[1]];
+    } else if (layoutResult.junctions.has(jid)) {
+      // Auto-positioned by the bus-less tree layout.
+      world = layoutResult.junctions.get(jid)!;
     } else {
       const pts: [number, number][] = [];
       for (const w of validWires) {

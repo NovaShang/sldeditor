@@ -59,6 +59,8 @@ import type {
   BusId,
   Element,
   ElementId,
+  Junction,
+  JunctionId,
   LibraryEntry,
   Orientation,
   TerminalRef,
@@ -95,6 +97,7 @@ interface AutoLayoutInput {
   /** Devices only. Buses are in `buses`. */
   elements: Element[];
   buses: Bus[];
+  junctions: Junction[];
   wires: Wire[];
   library: ReadonlyMap<string, LibraryEntry>;
   userLayout: ReadonlyMap<ElementId, ResolvedPlacement>;
@@ -104,6 +107,9 @@ interface AutoLayoutInput {
 export interface AutoLayoutOutput {
   devices: Map<ElementId, ResolvedPlacement>;
   buses: Map<BusId, BusGeometry>;
+  /** Auto-positioned junction points (bus-less tree layout). Explicit
+   *  `Junction.layout.at` still wins downstream. */
+  junctions: Map<JunctionId, [number, number]>;
 }
 
 const BUS_X = 320;
@@ -135,10 +141,11 @@ interface LinkerInfo {
 }
 
 export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
-  const { elements, buses: busList, wires, library, userLayout, userBusLayout } = input;
+  const { elements, buses: busList, junctions: junctionList, wires, library, userLayout, userBusLayout } = input;
 
   const layout = new Map<ElementId, ResolvedPlacement>(userLayout);
   const busLayout = new Map<BusId, BusGeometry>(userBusLayout);
+  const junctionOut = new Map<JunctionId, [number, number]>();
 
   // Explicit placements are authoritative. Auto-layout only fills gaps —
   // the cleanup passes below (overlap shifts, repack, span widening) must
@@ -161,6 +168,10 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
 
   const busIds = new Set<BusId>(busList.map((b) => b.id));
   const isBus = (end: WireEnd): boolean => busIds.has(end);
+  const junctionIds = new Set<JunctionId>(junctionList.map((j) => j.id));
+  const userJunctionPlaced = new Set<JunctionId>(
+    junctionList.filter((j) => j.layout?.at).map((j) => j.id),
+  );
 
   // ---- 0. Union-find on wires → electrical nodes ------------------------
   // Members of a node are a mix of `TerminalRef` ("X.Y", device pins) and
@@ -203,6 +214,171 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
       const arr = effectiveTaps.get(busMember) ?? [];
       arr.push(...others);
       effectiveTaps.set(busMember, arr);
+    }
+  }
+
+  // ---- 0b. Top-down tree layout for bus-less connected components --------
+  // The bus pipeline below organises everything around busbars. A radial /
+  // tree circuit (source → chain → branches at junctions, no busbar) has no
+  // bus to hang on and otherwise falls into the weak seed-and-grid fallback.
+  // Lay such components out as a tidy top-down tree *here*, before the bus
+  // pipeline, and record the placements so the later passes treat them as
+  // already-placed and leave them alone.
+  {
+    const VGAP = 140;
+    const HGAP = 160;
+    const isDevice = (id: string): boolean => elementById.has(id) && !!libOf(id);
+    // A wire end → its graph node: a junction id, a device id, or null for a
+    // bus (buses don't take part in tree components).
+    const nodeOf = (end: WireEnd): string | null => {
+      if (isBus(end)) return null;
+      if (junctionIds.has(end)) return end;
+      const dot = end.indexOf('.');
+      return dot > 0 ? end.slice(0, dot) : null;
+    };
+
+    // Adjacency over device + junction nodes via shared electrical nodes.
+    const adj = new Map<string, Set<string>>();
+    const touchesBus = new Set<string>();
+    const link = (a: string, b: string) => {
+      if (!adj.has(a)) adj.set(a, new Set());
+      if (!adj.has(b)) adj.set(b, new Set());
+      if (a !== b) { adj.get(a)!.add(b); adj.get(b)!.add(a); }
+    };
+    for (const group of nodeGroups) {
+      const ents: string[] = [];
+      let hasBus = false;
+      for (const m of group) {
+        if (isBus(m)) { hasBus = true; continue; }
+        const n = nodeOf(m);
+        if (n) ents.push(n);
+      }
+      const uniq = [...new Set(ents)];
+      for (const e of uniq) {
+        if (!adj.has(e)) adj.set(e, new Set());
+        if (hasBus) touchesBus.add(e);
+      }
+      // A junction is the hub of its electrical node: link each device through
+      // the junction (star), not device-to-device, so the tree branches *at*
+      // the junction instead of collapsing the whole net to one tier. A net
+      // with no junction is a direct connection — link its devices pairwise.
+      const juncs = uniq.filter((e) => junctionIds.has(e));
+      const devs = uniq.filter((e) => !junctionIds.has(e));
+      if (juncs.length > 0) {
+        for (const j of juncs) for (const d of devs) link(j, d);
+        for (let i = 0; i < juncs.length; i++)
+          for (let j = i + 1; j < juncs.length; j++) link(juncs[i], juncs[j]);
+      } else {
+        for (let i = 0; i < devs.length; i++)
+          for (let j = i + 1; j < devs.length; j++) link(devs[i], devs[j]);
+      }
+    }
+
+    // Which local terminal of `elId` faces neighbour node `nbr`.
+    const facingTerm = (elId: string, nbr: string) => {
+      const lib = libOf(elId);
+      if (!lib) return null;
+      for (const t of lib.terminals) {
+        const ref = `${elId}.${t.id}` as TerminalRef;
+        for (const g of pinToGroups.get(ref) ?? []) {
+          for (const m of g) if (nodeOf(m) === nbr) return t;
+        }
+      }
+      return null;
+    };
+
+    const treeLayoutComponent = (comp: string[]) => {
+      const deg = (id: string) => adj.get(id)?.size ?? 0;
+      const cat = (id: string) => libOf(id)?.category ?? '';
+      // Root preference: a true source (grid/generator) over a renewable
+      // (which feeds *up* into the tree), then a leaf, then by id.
+      const score = (id: string): number => {
+        const c = cat(id);
+        if (c === 'source') return 0;
+        if (c === 'renewable') return 1;
+        return 2 + Math.min(deg(id), 9) / 10;
+      };
+      const root = comp
+        .filter(isDevice)
+        .sort((a, b) => score(a) - score(b) || a.localeCompare(b))[0];
+      if (!root) return;
+
+      // BFS spanning tree (deterministic child order).
+      const parent = new Map<string, string | null>([[root, null]]);
+      const depth = new Map<string, number>([[root, 0]]);
+      const children = new Map<string, string[]>();
+      const order: string[] = [];
+      const queue = [root];
+      const visited = new Set<string>([root]);
+      while (queue.length) {
+        const cur = queue.shift()!;
+        order.push(cur);
+        for (const nb of [...(adj.get(cur) ?? [])].sort((a, b) => a.localeCompare(b))) {
+          if (visited.has(nb)) continue;
+          visited.add(nb);
+          parent.set(nb, cur);
+          depth.set(nb, (depth.get(cur) ?? 0) + 1);
+          if (!children.has(cur)) children.set(cur, []);
+          children.get(cur)!.push(nb);
+          queue.push(nb);
+        }
+      }
+
+      // Tidy x: leaves get sequential slots; parents centre over children.
+      let nextLeaf = 0;
+      const xslot = new Map<string, number>();
+      const assignX = (id: string) => {
+        const kids = children.get(id) ?? [];
+        if (kids.length === 0) { xslot.set(id, nextLeaf++); return; }
+        for (const k of kids) assignX(k);
+        const xs = kids.map((k) => xslot.get(k)!);
+        xslot.set(id, xs.reduce((s, v) => s + v, 0) / xs.length);
+      };
+      assignX(root);
+
+      for (const id of order) {
+        const x = snap(BUS_X + (xslot.get(id) ?? 0) * HGAP);
+        const y = snap(BUS_Y0 + (depth.get(id) ?? 0) * VGAP);
+        if (junctionIds.has(id)) {
+          junctionOut.set(id, [x, y]);
+          continue;
+        }
+        // Rotate so the parent-facing terminal points up (root: first-child-
+        // facing terminal points down), giving a clean top-to-bottom flow.
+        let rot: 0 | 90 | 180 | 270 = 0;
+        const p = parent.get(id) ?? null;
+        if (p) {
+          const t = facingTerm(id, p);
+          if (t) rot = rotationToAlignOrient(t.orientation, 'n');
+        } else {
+          const firstChild = (children.get(id) ?? [])[0];
+          const t = firstChild ? facingTerm(id, firstChild) : null;
+          if (t) rot = rotationToAlignOrient(t.orientation, 's');
+        }
+        layout.set(id, { at: [x, y], rot, mirror: false });
+        // The tree layout is authoritative for this component — freeze it so
+        // the bus-oriented cleanup/overlap sweeps don't nudge the clean tree.
+        userPlaced.add(id);
+      }
+    };
+
+    // Connected components over adj; tree-lay-out the bus-less, un-placed ones.
+    const seen = new Set<string>();
+    for (const start of adj.keys()) {
+      if (seen.has(start)) continue;
+      const comp: string[] = [];
+      const stack = [start];
+      seen.add(start);
+      while (stack.length) {
+        const cur = stack.pop()!;
+        comp.push(cur);
+        for (const nb of adj.get(cur) ?? []) if (!seen.has(nb)) { seen.add(nb); stack.push(nb); }
+      }
+      if (comp.length < 2) continue;
+      if (comp.some((id) => touchesBus.has(id))) continue; // bus pipeline owns it
+      if (comp.some((id) => layout.has(id) || userJunctionPlaced.has(id))) continue; // user-placed
+      if (!comp.some(isDevice)) continue;
+      treeLayoutComponent(comp);
     }
   }
 
@@ -1936,7 +2112,7 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
     placedCount++;
   }
 
-  return { devices: layout, buses: busLayout };
+  return { devices: layout, buses: busLayout, junctions: junctionOut };
 }
 
 function snap(v: number): number {
