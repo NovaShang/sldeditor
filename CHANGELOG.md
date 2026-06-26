@@ -1,5 +1,15 @@
 # sldeditor
 
+## 0.8.0
+
+### Minor Changes
+
+- [`6bbff6d`](https://github.com/NovaShang/sldeditor/commit/6bbff6d5d4e27fbad81282174a7f87ad15a21371) Thanks [@NovaShang](https://github.com/NovaShang)! - Non-bus-first onboarding + crossing-vs-connecting wire gaps
+
+  **Onboarding.** The first-run card no longer teaches "draw a busbar first". It now leads with the general flow — place a component → wire pins together (drag into empty space to drop a junction) → reach for a busbar only when several circuits share one rail — matching the free-wire / junction model.
+
+  **Crossing ≠ connecting.** Where two wires of different electrical nodes cross with no junction, the under-wire is now drawn with a small gap at the crossing, so a crossover reads unambiguously as _not connected_. A junction dot remains the only "connected" signal. Hit-testing/selection still spans the whole wire (the gap is visual only).
+
 ## 0.7.0
 
 ### Minor Changes
