@@ -48,6 +48,7 @@ import {
   wireIdFromEnds,
 } from './id-allocator';
 import { normalizePath } from '../model/wire-path';
+import { pruneOrphanedJunctions } from './prune-junctions';
 
 const EMPTY_DIAGRAM: DiagramFile = { version: '1', elements: [] };
 const HISTORY_LIMIT = 100;
@@ -790,6 +791,8 @@ export const useEditorStore = create<EditorState>()(
       const wires = (d.wires ?? []).filter(
         (w) => !ids.has(endOwner(w.ends[0])) && !ids.has(endOwner(w.ends[1])),
       );
+      // Also drop junctions left orphaned by the wires we just removed.
+      const prunedJunctions = pruneOrphanedJunctions(d.wires ?? [], wires, junctions);
       const layout = d.layout
         ? Object.fromEntries(
             Object.entries(d.layout).filter(([k]) => !ids.has(k)),
@@ -799,7 +802,7 @@ export const useEditorStore = create<EditorState>()(
         ...d,
         elements,
         buses: buses.length ? buses : undefined,
-        junctions: junctions.length ? junctions : undefined,
+        junctions: prunedJunctions.length ? prunedJunctions : undefined,
         wires: wires.length ? wires : undefined,
         layout: layout && Object.keys(layout).length ? layout : undefined,
       };
@@ -825,8 +828,9 @@ export const useEditorStore = create<EditorState>()(
     }
 
     get().dispatch((d) => {
-      const wires = (d.wires ?? []).filter((w) => w.id !== selectedWire);
-      if (wires.length === (d.wires ?? []).length) return d;
+      const oldWires = d.wires ?? [];
+      const wires = oldWires.filter((w) => w.id !== selectedWire);
+      if (wires.length === oldWires.length) return d;
 
       const layout = { ...(d.layout ?? {}) };
       for (const id of affectedElementIds) {
@@ -839,9 +843,12 @@ export const useEditorStore = create<EditorState>()(
         layout[id] = placement;
       }
 
+      const junctions = pruneOrphanedJunctions(oldWires, wires, d.junctions ?? []);
+
       return {
         ...d,
         wires: wires.length ? wires : undefined,
+        junctions: junctions.length ? junctions : undefined,
         layout: Object.keys(layout).length ? layout : undefined,
       };
     });
@@ -873,12 +880,15 @@ export const useEditorStore = create<EditorState>()(
         layout[id] = placement;
       }
 
-      const wires = (d.wires ?? []).filter(
+      const oldWires = d.wires ?? [];
+      const wires = oldWires.filter(
         (w) => !memberSet.has(w.ends[0]) && !memberSet.has(w.ends[1]),
       );
+      const junctions = pruneOrphanedJunctions(oldWires, wires, d.junctions ?? []);
       return {
         ...d,
         wires: wires.length ? wires : undefined,
+        junctions: junctions.length ? junctions : undefined,
         layout: Object.keys(layout).length ? layout : undefined,
       };
     });
