@@ -136,6 +136,15 @@ export const SelectTool: Tool = {
         }
         ctx.hostEl.classList.add('tool-wire');
         store.setWireFromTerminal(termRef);
+        // Feed the same drag-origin the WireTool uses so WirePreview draws the
+        // dashed rubber-band line from the terminal to the cursor. Without it
+        // the user gets no hint that a wire is being created.
+        const fromWorld = store.internal.terminals.get(
+          termRef as `${string}.${string}`,
+        )?.world;
+        if (fromWorld) {
+          store.setWireDragFrom({ spec: { end: termRef }, world: fromWorld, ref: termRef });
+        }
         store.setCursorSvg(ctx.viewport.screenToSvg(e.clientX, e.clientY));
         wireDrag = { pointerId: e.pointerId, fromRef: termRef };
         return;
@@ -366,6 +375,7 @@ export const SelectTool: Tool = {
       wireDrag = null;
       ctx.hostEl.classList.remove('tool-wire');
       store.setWireFromTerminal(null);
+      store.setWireDragFrom(null);
       store.setCursorSvg(null);
       publishWireTarget(null);
       // Same engine as the WireTool: the release resolves to a connectable, a
@@ -499,6 +509,7 @@ export const SelectTool: Tool = {
       ctx.hostEl.classList.remove('tool-wire');
       const store = useEditorStore.getState();
       store.setWireFromTerminal(null);
+      store.setWireDragFrom(null);
       store.setCursorSvg(null);
       publishWireTarget(null);
       wireDrag = null;
@@ -541,6 +552,7 @@ export const SelectTool: Tool = {
       ctx.hostEl.classList.remove('tool-wire');
       const store = useEditorStore.getState();
       store.setWireFromTerminal(null);
+      store.setWireDragFrom(null);
       store.setCursorSvg(null);
       publishWireTarget(null);
       wireDrag = null;
