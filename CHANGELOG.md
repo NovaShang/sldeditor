@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.9.1
+
+### Patch Changes
+
+- [`115e5be`](https://github.com/NovaShang/sldeditor/commit/115e5be4c002db1d8f9bba0db44f9b20294f498e) Thanks [@NovaShang](https://github.com/NovaShang)! - Show the dashed wire preview while dragging a wire out of a selected element's terminal in the select tool. The gesture already created the wire on release, but `WirePreview` only renders when `wireDragFrom` is set and the select-tool path never set it — so there was no rubber-band line and users couldn't tell a wire was being created. The select-tool drag now feeds the same drag-origin the wire tool uses (and clears it on end), so the preview line + landing marker show throughout the drag.
+
 ## 0.9.0
 
 ### Minor Changes
