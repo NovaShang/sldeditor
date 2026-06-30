@@ -32,7 +32,14 @@ export function labelLines(re: ResolvedElement, mode: LabelMode): string[] {
 export function fallbackAnchor(lib: LibraryEntry): LibraryLabelAnchor {
   const vb = parseViewBox(lib.viewBox);
   if (!vb) return { x: 0, y: 0, anchor: 'start' };
-  return { x: vb.x + vb.w + 2, y: vb.y + 4, anchor: 'start' };
+  // Anchor at the symbol's right edge, vertically centered. The small
+  // +FONT_SIZE/3 nudges the text baseline so a single line sits visually
+  // centered on the symbol's mid-height rather than hanging below it.
+  return {
+    x: vb.x + vb.w + 2,
+    y: vb.y + vb.h / 2 + LABEL_FONT_SIZE / 3,
+    anchor: 'start',
+  };
 }
 
 /**
