@@ -1,5 +1,13 @@
 # sldeditor
 
+## 0.10.2
+
+### Patch Changes
+
+- [`f94e909`](https://github.com/NovaShang/sldeditor/commit/f94e909c0646f6ced92d1b1e6ccae32b86054448) Thanks [@NovaShang](https://github.com/NovaShang)! - Default element label position moved from the symbol's top-right to its right edge, vertically centered. Labels without an explicit per-symbol anchor (currently all of them) now sit beside the middle of the symbol, which reads better for typical one-line names. Shared with the SVG/DXF exporters, so exported labels move too.
+
+- [`245f531`](https://github.com/NovaShang/sldeditor/commit/245f531f4ad9b31e0e73628c0a52bba5db698d90) Thanks [@NovaShang](https://github.com/NovaShang)! - Render junctions as a smaller, less prominent dot (visible radius 4 → 2.5). The click/drag target is unchanged, so junctions are still easy to grab; they just read as a discreet connection point rather than a heavy blob.
+
 ## 0.10.1
 
 ### Patch Changes
