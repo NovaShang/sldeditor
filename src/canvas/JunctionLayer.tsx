@@ -11,7 +11,7 @@
 
 import { useEditorStore } from '../store';
 
-const DOT_R = 4;
+const DOT_R = 2.5;
 /** Wider invisible target for comfortable clicking, mirroring the bus hit-rect. */
 const HIT_R = 9;
 /** Wire-pull handle, shown on a solo-selected junction: drag it to start a wire
