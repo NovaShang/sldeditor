@@ -16,7 +16,14 @@ import type { AnnotationId, BusId, ElementId, JunctionId, WireEnd } from '../../
 import { snap } from '../grid';
 import { hitAnnotation, hitElement, hitNode, hitTerminal, hitWire } from '../hit-test';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
-import { resolveWireTarget } from '../resolve-wire-target';
+import {
+  resolveDragTarget,
+  toWireTarget,
+  sameLanding,
+  worldTolAt,
+  elementUnder,
+  type DragTarget,
+} from '../wire-drag';
 import { transformAttr } from '../transform-attr';
 import { publishWireTarget } from '../wire-target-bus';
 import type { Tool } from './types';
@@ -263,20 +270,21 @@ export const SelectTool: Tool = {
     }
 
     if (wireDrag && e.pointerId === wireDrag.pointerId) {
-      const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
-      useEditorStore.getState().setCursorSvg(pt);
+      const cursor = ctx.viewport.screenToSvg(e.clientX, e.clientY);
+      useEditorStore.getState().setCursorSvg(cursor);
       // Pointer capture would pin `e.target` to the origin terminal — sample
-      // what's actually under the cursor for the live drop-target marker.
-      const under =
-        typeof document !== 'undefined'
-          ? document.elementFromPoint(e.clientX, e.clientY)
-          : null;
-      const ref = under ? hitTerminal(under) : null;
-      if (!ref || ref === wireDrag.fromRef) {
-        publishWireTarget(null);
-        return;
-      }
-      publishWireTarget(resolveWireTarget(ref, pt));
+      // what's actually under the cursor. Same resolution as the WireTool, so a
+      // drop on empty space previews a junction and a wire previews a tap.
+      const under = elementUnder(e.clientX, e.clientY);
+      const to = resolveDragTarget(under, cursor, worldTolAt(ctx, e.clientX, e.clientY));
+      const fromTarget: DragTarget = {
+        spec: { end: wireDrag.fromRef },
+        world: [0, 0],
+        ref: wireDrag.fromRef,
+        isBus: false,
+        create: false,
+      };
+      publishWireTarget(sameLanding(fromTarget, to) ? null : toWireTarget(to));
       return;
     }
 
@@ -360,8 +368,22 @@ export const SelectTool: Tool = {
       store.setWireFromTerminal(null);
       store.setCursorSvg(null);
       publishWireTarget(null);
-      const ref = hitTerminal(e.target);
-      if (ref && ref !== from) store.addWire(from, ref);
+      // Same engine as the WireTool: the release resolves to a connectable, a
+      // tap on an existing wire, or empty space (which mints a junction = a
+      // free end). One `connectWire` dispatch = one undo entry.
+      const cursor = ctx.viewport.screenToSvg(e.clientX, e.clientY);
+      const under =
+        elementUnder(e.clientX, e.clientY) ?? (e.target instanceof Element ? e.target : null);
+      const to = resolveDragTarget(under, cursor, worldTolAt(ctx, e.clientX, e.clientY));
+      const fromTarget: DragTarget = {
+        spec: { end: from },
+        world: [0, 0],
+        ref: from,
+        isBus: false,
+        create: false,
+      };
+      if (sameLanding(fromTarget, to)) return;
+      store.connectWire({ end: from }, to.spec);
       return;
     }
 

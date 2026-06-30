@@ -185,6 +185,18 @@ export function resolvePlaceSource(
     const orientation: Orientation = cursorWorld[0] >= x ? 'e' : 'w';
     return { ref, world: [x, y], orientation, isBus: true, busId: ref };
   }
+  if (!ref.includes('.') && internal.junctions.has(ref)) {
+    // A junction is a bare point (no axis). Orient from the junction toward the
+    // cursor so the new element's body extends away from it — mirroring the bus
+    // case, which lets you drag a connected element out of a junction.
+    const rj = internal.junctions.get(ref)!;
+    const [jx, jy] = rj.world;
+    const dx = cursorWorld[0] - jx;
+    const dy = cursorWorld[1] - jy;
+    const orientation: Orientation =
+      Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? 'e' : 'w') : (dy >= 0 ? 's' : 'n');
+    return { ref, world: [jx, jy], orientation, isBus: false };
+  }
   const term = internal.terminals.get(ref as `${string}.${string}`);
   if (term) {
     return {
