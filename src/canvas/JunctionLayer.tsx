@@ -14,6 +14,13 @@ import { useEditorStore } from '../store';
 const DOT_R = 4;
 /** Wider invisible target for comfortable clicking, mirroring the bus hit-rect. */
 const HIT_R = 9;
+/** Wire-pull handle, shown on a solo-selected junction: drag it to start a wire
+ *  from the junction (dragging the dot itself still moves the junction). Offset
+ *  up-and-right of the dot so it never overlaps the move target. */
+const WIRE_HANDLE_DX = 13;
+const WIRE_HANDLE_DY = -13;
+const WIRE_HANDLE_R = 4.5;
+const WIRE_HANDLE_HIT_R = 8;
 
 export function JunctionLayer() {
   const junctions = useEditorStore((s) => s.internal.junctions);
@@ -33,6 +40,9 @@ export function JunctionLayer() {
     <g className="ole-junction-layer">
       {Array.from(junctions.values()).map(({ junction, world }) => {
         const nodeId = terminalToNode.get(junction.id) ?? undefined;
+        const soloSelected = selection.length === 1 && selection[0] === junction.id;
+        const hx = world[0] + WIRE_HANDLE_DX;
+        const hy = world[1] + WIRE_HANDLE_DY;
         return (
           <g
             key={junction.id}
@@ -45,6 +55,13 @@ export function JunctionLayer() {
           >
             <circle cx={world[0]} cy={world[1]} r={HIT_R} fill="transparent" className="ole-junction-hit" />
             <circle cx={world[0]} cy={world[1]} r={DOT_R} className="ole-junction-dot" />
+            {soloSelected && (
+              <g className="ole-junction-wire-handle-group">
+                <line x1={world[0]} y1={world[1]} x2={hx} y2={hy} className="ole-junction-wire-handle-stem" />
+                <circle cx={hx} cy={hy} r={WIRE_HANDLE_HIT_R} fill="transparent" className="ole-junction-wire-handle" />
+                <circle cx={hx} cy={hy} r={WIRE_HANDLE_R} className="ole-junction-wire-handle-dot" />
+              </g>
+            )}
           </g>
         );
       })}

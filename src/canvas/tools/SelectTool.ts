@@ -111,6 +111,33 @@ export const SelectTool: Tool = {
       return;
     }
 
+    // Wire-pull handle of a solo-selected junction: drag it to start a wire
+    // from the junction (the handle only renders for a solo-selected junction,
+    // so its presence is the gate). Dragging the junction dot still moves it.
+    const jHandle =
+      e.target instanceof Element ? e.target.closest('.ole-junction-wire-handle') : null;
+    if (jHandle) {
+      const jid = jHandle
+        .closest('[data-junction-id]')
+        ?.getAttribute('data-junction-id');
+      if (jid) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.target instanceof Element && e.target.hasPointerCapture?.(e.pointerId)) {
+          e.target.releasePointerCapture(e.pointerId);
+        }
+        ctx.hostEl.classList.add('tool-wire');
+        store.setWireFromTerminal(jid);
+        const jworld = store.internal.junctions.get(jid)?.world;
+        if (jworld) {
+          store.setWireDragFrom({ spec: { end: jid }, world: jworld, ref: jid });
+        }
+        store.setCursorSvg(ctx.viewport.screenToSvg(e.clientX, e.clientY));
+        wireDrag = { pointerId: e.pointerId, fromRef: jid };
+        return;
+      }
+    }
+
     // If the user clicked a terminal on a currently-selected element, start a
     // wire drag — same gesture as the wire tool, but available without
     // switching modes. The selection set is the gating affordance. We only

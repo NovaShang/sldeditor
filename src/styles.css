@@ -444,6 +444,29 @@
 .ole-canvas-root.tool-wire .ole-junction-hit {
   cursor: crosshair;
 }
+/* Wire-pull handle on a solo-selected junction: drag the ring to start a wire
+   from the junction; dragging the dot itself still moves it. */
+.ole-junction-wire-handle {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+.ole-junction-wire-handle-dot {
+  fill: var(--canvas-bg);
+  stroke: var(--selection);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.ole-junction-wire-handle-group:hover .ole-junction-wire-handle-dot {
+  fill: var(--selection);
+}
+.ole-junction-wire-handle-stem {
+  stroke: var(--selection);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
 
 /* Wires. `pointer-events: stroke` so they're hoverable but the body of the
    wire's bounding box doesn't swallow clicks meant for elements behind it. */
