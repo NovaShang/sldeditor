@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.10.5
+
+### Patch Changes
+
+- [`fba4981`](https://github.com/NovaShang/sldeditor/commit/fba4981fa2411012c2df943e8e6ff856514ffc72) Thanks [@NovaShang](https://github.com/NovaShang)! - Onboarding step 3 now makes clear a busbar is a shared rail, not a connecting wire — countering the common misuse of drawing a bus to join two devices. Title changed to "A busbar is a shared rail, not a wire" and the body steers point-to-point connections to the wire tool.
+
 ## 0.10.4
 
 ### Patch Changes
