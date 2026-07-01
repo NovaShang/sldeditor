@@ -399,6 +399,11 @@ const MANIFEST = [
     name: '逆变器 (DC→AC)',
     category: 'renewable',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_05.elmt' },
+    // QET draws this inverter DC-top / AC-bottom — opposite to the AC-top /
+    // DC-bottom convention every other converter follows (rectifier,
+    // converter-bidir, power-supply). Flip it vertically so it matches.
+    // extraTerminals are in the un-flipped source frame; the flip moves them.
+    transform: { flipV: true },
     extraTerminals: [
       { id: 't_dc', x: -20, y: -40, orientation: 'n' },
       { id: 't_ac', x: -20, y: 0, orientation: 's' },
@@ -1501,6 +1506,13 @@ function finalize(entry, { svgBody, bbox, terminals, sourceMeta }) {
     h: Math.ceil(bbox.y2 + pad) - Math.floor(bbox.y1 - pad),
   };
 
+  // Declarative import transform: some QET sources are drawn flipped/rotated
+  // relative to this library's convention. `entry.transform` re-orients the
+  // graphic AND terminals together about the viewBox centre (which preserves
+  // the viewBox), so a one-line `transform: { flipV: true }` fixes a symbol at
+  // build time instead of hand-editing coordinates. See `applyTransform`.
+  ({ svgBody, terminals } = applyTransform(entry.transform, svgBody, terminals, vb));
+
   // Drop optional fields when absent so JSON keys stay stable across builds.
   const out = {
     id: entry.id,
@@ -1519,6 +1531,49 @@ function finalize(entry, { svgBody, bbox, terminals, sourceMeta }) {
   if (entry.label) out.label = entry.label;
   out.source = sourceMeta;
   return out;
+}
+
+/**
+ * Apply a declarative import transform to a symbol's graphic + terminals about
+ * its viewBox centre. Centre-symmetric ops (flipV / flipH / rotate180) map the
+ * viewBox onto itself, so the viewBox is unchanged. The graphic is flipped via
+ * a wrapping group matrix (no per-coordinate rewrite); terminals are remapped
+ * with matching orientation swaps. Note: a flip mirrors any `<text>` inside the
+ * graphic — fine for the current symbols (which have none under a transform).
+ */
+function applyTransform(tf, svgBody, terminals, vb) {
+  if (!tf) return { svgBody, terminals };
+  const cx = vb.x + vb.w / 2;
+  const cy = vb.y + vb.h / 2;
+  const swapNS = (o) => (o === 'n' ? 's' : o === 's' ? 'n' : o);
+  const swapEW = (o) => (o === 'e' ? 'w' : o === 'w' ? 'e' : o);
+
+  let matrix, mapXY, mapOrient;
+  if (tf.flipV) {
+    matrix = `matrix(1 0 0 -1 0 ${2 * cy})`;
+    mapXY = (x, y) => [x, 2 * cy - y];
+    mapOrient = swapNS;
+  } else if (tf.flipH) {
+    matrix = `matrix(-1 0 0 1 ${2 * cx} 0)`;
+    mapXY = (x, y) => [2 * cx - x, y];
+    mapOrient = swapEW;
+  } else if (tf.rotate180) {
+    matrix = `matrix(-1 0 0 -1 ${2 * cx} ${2 * cy})`;
+    mapXY = (x, y) => [2 * cx - x, 2 * cy - y];
+    mapOrient = (o) => swapNS(swapEW(o));
+  } else {
+    throw new Error(
+      `Unsupported transform ${JSON.stringify(tf)} (supported: flipV, flipH, rotate180)`,
+    );
+  }
+
+  return {
+    svgBody: `<g transform="${matrix}">${svgBody}</g>`,
+    terminals: terminals.map((t) => {
+      const [x, y] = mapXY(t.x, t.y);
+      return { ...t, x, y, orientation: mapOrient(t.orientation) };
+    }),
+  };
 }
 
 // ---------------------------------------------------------------------------
