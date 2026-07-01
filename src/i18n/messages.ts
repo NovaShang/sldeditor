@@ -196,8 +196,8 @@ export const messages = {
     'onboard.step1.body': '切到 元件 工具（P），从左侧元件库选一种拖到画布',
     'onboard.step2.title': '拉线连接',
     'onboard.step2.body': '用 连线 工具（W）从一个引脚拖到另一个引脚；拖到空白处会自动新建接线柱',
-    'onboard.step3.title': '需要共用排时才用母线',
-    'onboard.step3.body': '多条回路共用一条母排时，用 母线 工具（B）画一段；普通点对点连线不需要母线',
+    'onboard.step3.title': '母线是共用排，不是连线',
+    'onboard.step3.body': '几条回路共用一排时才用 母线 工具（B）。别拿母线连两个器件——点对点直接拉线（W）就行。',
     'onboard.dismiss': '知道了',
   },
   en: {
@@ -389,8 +389,8 @@ export const messages = {
     'onboard.step1.body': 'Pick the Place tool (P) and drag a kind from the library onto the canvas',
     'onboard.step2.title': 'Wire it up',
     'onboard.step2.body': 'Use the Wire tool (W): drag from one pin to another — drag into empty space to drop a junction',
-    'onboard.step3.title': 'Busbars are for shared rails',
-    'onboard.step3.body': 'When several circuits share one rail, draw a busbar (B); plain point-to-point wiring needs no bus',
+    'onboard.step3.title': 'A busbar is a shared rail, not a wire',
+    'onboard.step3.body': 'Use the Busbar tool (B) only when several circuits share one rail. Don\'t use a bus to join two devices — just wire the pins (W).',
     'onboard.dismiss': 'Got it',
   },
 } as const;
