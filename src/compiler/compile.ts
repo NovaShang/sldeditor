@@ -256,38 +256,75 @@ export function compile(diagram: DiagramFile): InternalModel {
   // junction without a position falls back to the average of its wire
   // neighbours' world coords so hand-authored / AI-authored junctions that
   // omit coordinates still render somewhere sensible.
-  const nonJunctionWorld = (end: WireEnd): [number, number] | null => {
+  // Fixed anchors: junctions with an explicit `at` or a tree-layout position.
+  const jWorld = new Map<string, [number, number]>();
+  const jFixed = new Set<string>();
+  for (const [jid, junction] of junctionById) {
+    if (junction.layout?.at) {
+      jWorld.set(jid, [junction.layout.at[0], junction.layout.at[1]]);
+      jFixed.add(jid);
+    } else if (layoutResult.junctions.has(jid)) {
+      // Auto-positioned by the bus-less tree layout.
+      jWorld.set(jid, layoutResult.junctions.get(jid)!);
+      jFixed.add(jid);
+    }
+  }
+
+  // World point of a wire end for junction fallback: a device terminal, a bus,
+  // or an already-resolved junction. Crucially, junction→junction wires DO
+  // contribute here — otherwise a chain of coordinate-less junctions collapses
+  // onto its single device neighbour (or to the origin when it has none).
+  const endWorld = (end: WireEnd): [number, number] | null => {
     if (!end.includes('.')) {
       const rb = m.buses.get(end);
-      return rb ? (rb.geometry.at as [number, number]) : null;
+      if (rb) return rb.geometry.at as [number, number];
+      return jWorld.get(end) ?? null;
     }
     const term = m.terminals.get(end as TerminalRef);
     return term ? (term.world as [number, number]) : null;
   };
-  for (const [jid, junction] of junctionById) {
-    let world: [number, number];
-    if (junction.layout?.at) {
-      world = [junction.layout.at[0], junction.layout.at[1]];
-    } else if (layoutResult.junctions.has(jid)) {
-      // Auto-positioned by the bus-less tree layout.
-      world = layoutResult.junctions.get(jid)!;
-    } else {
-      const pts: [number, number][] = [];
-      for (const w of validWires) {
-        const [a, b] = w.ends;
-        const other = a === jid ? b : b === jid ? a : null;
-        if (other === null) continue;
-        const p = nonJunctionWorld(other);
-        if (p) pts.push(p);
+
+  // Wire neighbours of each coordinate-less junction.
+  const jNeighbours = new Map<string, WireEnd[]>();
+  for (const [jid] of junctionById) if (!jFixed.has(jid)) jNeighbours.set(jid, []);
+  for (const w of validWires) {
+    const [a, b] = w.ends;
+    if (jNeighbours.has(a)) jNeighbours.get(a)!.push(b);
+    if (jNeighbours.has(b)) jNeighbours.get(b)!.push(a);
+  }
+
+  // Relax iteratively (Gauss-Seidel): each pass re-averages every unfixed
+  // junction over whatever neighbours now have a position, so device/bus
+  // anchors propagate outward along junction chains. Converges to a sensible
+  // spread (no collapse); breaks early once stable.
+  for (let pass = 0; pass < 12; pass++) {
+    let changed = false;
+    for (const [jid, ends] of jNeighbours) {
+      let sx = 0;
+      let sy = 0;
+      let n = 0;
+      for (const e of ends) {
+        const p = endWorld(e);
+        if (p) {
+          sx += p[0];
+          sy += p[1];
+          n++;
+        }
       }
-      world = pts.length
-        ? [
-            pts.reduce((s, p) => s + p[0], 0) / pts.length,
-            pts.reduce((s, p) => s + p[1], 0) / pts.length,
-          ]
-        : [0, 0];
+      if (!n) continue;
+      const nx = sx / n;
+      const ny = sy / n;
+      const prev = jWorld.get(jid);
+      if (!prev || Math.abs(prev[0] - nx) > 0.01 || Math.abs(prev[1] - ny) > 0.01) {
+        jWorld.set(jid, [nx, ny]);
+        changed = true;
+      }
     }
-    m.junctions.set(jid, { junction, world });
+    if (!changed) break;
+  }
+
+  for (const [jid, junction] of junctionById) {
+    m.junctions.set(jid, { junction, world: jWorld.get(jid) ?? [0, 0] });
   }
 
   // ---- 6. Union-find over wires -----------------------------------------
