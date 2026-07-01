@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.10.4
+
+### Patch Changes
+
+- [`1925613`](https://github.com/NovaShang/sldeditor/commit/1925613e1bcb1d89cb7b963f25f79f408aa5d877) Thanks [@NovaShang](https://github.com/NovaShang)! - Fix positionless junctions collapsing when wired to other junctions. The fallback that positions a junction without explicit coordinates only counted device/bus neighbours, so a chain of coordinate-less junctions (e.g. collection-junction → main-junction) landed on top of each other or at the origin. Junction→junction wires now contribute, and the fallback is solved iteratively so device/bus anchors propagate along the chain — junctions spread to sensible positions instead of collapsing.
+
 ## 0.10.3
 
 ### Patch Changes
