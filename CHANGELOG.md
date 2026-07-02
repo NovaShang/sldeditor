@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.12.0
+
+### Minor Changes
+
+- [`c6b2ad2`](https://github.com/NovaShang/sldeditor/commit/c6b2ad2b4f51efaa127a04882aa5b326e9349751) Thanks [@NovaShang](https://github.com/NovaShang)! - Add `panelboard` element (IEC 60617 "distribution centre" — a load-center / distribution-board symbol with its incoming terminal at the bottom), and export `TextAnnotation`, `AnnotationId`, and `newAnnotationId` so embedding apps can create free-text annotations programmatically.
+
 ## 0.11.0
 
 ### Minor Changes
