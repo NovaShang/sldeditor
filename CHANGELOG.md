@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.11.0
+
+### Minor Changes
+
+- [`94ca999`](https://github.com/NovaShang/sldeditor/commit/94ca9993630ee49e76ccef5b4c4101d352297ae5) Thanks [@NovaShang](https://github.com/NovaShang)! - Add a `readOnly` prop to `<OneLineEditor>` for a view-only share/viewer mode. All pan/zoom/touch gestures (wheel, trackpad, pinch, multi-touch, space+drag) and fit-to-content on load are preserved, while every editing interaction and all editing chrome (tool/property panels, contextual + library popovers, onboarding, right-click / long-press menu, keyboard shortcuts) are disabled. The passed `diagram` always wins over any persisted document in this mode, and a read-only instance never writes to storage — so mounting a viewer can't clobber the editor's autosaved work.
+
 ## 0.10.5
 
 ### Patch Changes
