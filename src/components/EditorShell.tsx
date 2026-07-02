@@ -3,6 +3,7 @@ import { CanvasSvg } from '../canvas';
 import { ElementHoverLabel } from '../canvas/ElementHoverLabel';
 import { useObservedWidth } from '../hooks/editor-tier';
 import { EditorTierProvider } from '../hooks/use-editor-tier';
+import { useEditorStore } from '../store';
 import { ContextMenuHost } from './ContextMenu';
 import { ContextualToolbar } from './ContextualToolbar';
 import { FloatingToolbar } from './FloatingToolbar';
@@ -70,6 +71,7 @@ function useFocusGuards() {
 
 export function EditorShell() {
   useFocusGuards();
+  const readOnly = useEditorStore((s) => s.readOnly);
   const rootRef = useRef<HTMLDivElement>(null);
   // Measured here (where the ref lives) so the layout effect runs *after*
   // this component's own ref attaches. A child component's layout effect
@@ -83,14 +85,25 @@ export function EditorShell() {
       >
         <EditorTierProvider width={width}>
           <CanvasSvg />
-          <LeftPanel />
-          <RightPanel />
-          <FloatingToolbar />
-          <ViewToolbar />
-          <ContextualToolbar />
-          <LibraryPopover />
-          <OnboardingCard />
-          <ElementHoverLabel />
+          {readOnly ? (
+            // View-only: canvas + zoom/fit controls + hover labels, no editing
+            // chrome (panels, tools, contextual/library popovers, onboarding).
+            <>
+              <ViewToolbar />
+              <ElementHoverLabel />
+            </>
+          ) : (
+            <>
+              <LeftPanel />
+              <RightPanel />
+              <FloatingToolbar />
+              <ViewToolbar />
+              <ContextualToolbar />
+              <LibraryPopover />
+              <OnboardingCard />
+              <ElementHoverLabel />
+            </>
+          )}
         </EditorTierProvider>
       </div>
     </ContextMenuHost>

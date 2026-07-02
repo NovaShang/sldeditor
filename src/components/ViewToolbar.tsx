@@ -396,7 +396,11 @@ export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
  */
 export function ViewToolbar() {
   const tier = useEditorTier();
-  if (atLeast(tier, 'dense')) return null;
+  const readOnly = useEditorStore((s) => s.readOnly);
+  // Normally the dense+ FloatingToolbar hosts the zoom controls, so this bar
+  // hides there. In read-only mode the FloatingToolbar isn't rendered, so keep
+  // this bar visible at every tier to preserve on-screen zoom/fit buttons.
+  if (!readOnly && atLeast(tier, 'dense')) return null;
   return <ViewToolbarExpanded tier={tier} />;
 }
 
@@ -404,6 +408,7 @@ function ViewToolbarExpanded({ tier }: { tier: Tier }) {
   // Hide the zoom-% pill from `tight` (≥720 < 900) onward — that's where the
   // centered FloatingToolbar starts colliding with this right-anchored bar.
   const hidePercentPill = atLeast(tier, 'tight');
+  const readOnly = useEditorStore((s) => s.readOnly);
   const [grid, setGrid] = useGridState();
 
   return (
@@ -421,7 +426,8 @@ function ViewToolbarExpanded({ tier }: { tier: Tier }) {
         <div aria-hidden className="mx-1 h-4 w-px bg-border" />
         <FitBtn />
         <GridBtn grid={grid} setGrid={setGrid} />
-        <LabelBtn />
+        {/* Label-mode toggle mutates the document — omit it in view-only mode. */}
+        {!readOnly && <LabelBtn />}
       </div>
     </div>
   );

@@ -53,7 +53,8 @@ export const PanTool: Tool = {
 
     // If the gesture starts on a currently-selected element, set up an
     // element drag so the same finger can move it instead of panning.
-    const startId = hitElement(e.target);
+    // In read-only mode never arm the drag — every gesture just pans.
+    const startId = useEditorStore.getState().readOnly ? null : hitElement(e.target);
     let elementDrag: PanState['elementDrag'] = null;
     if (startId) {
       const store = useEditorStore.getState();
@@ -169,7 +170,7 @@ export const PanTool: Tool = {
         );
         if (node) node.removeAttribute('transform');
       }
-    } else if (!pan.moved) {
+    } else if (!pan.moved && !useEditorStore.getState().readOnly) {
       handlePanTap(pan.startTarget);
     }
     pan = null;

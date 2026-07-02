@@ -65,6 +65,9 @@ export function useKeyboardShortcuts(): void {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (isEditing(e.target)) return;
+      // View-only: no editing shortcuts (delete/undo/redo/copy/paste/tools/
+      // rotate/mirror). Space-to-pan lives in useViewport and is unaffected.
+      if (useEditorStore.getState().readOnly) return;
 
       const mod = e.metaKey || e.ctrlKey;
       const store = useEditorStore.getState();

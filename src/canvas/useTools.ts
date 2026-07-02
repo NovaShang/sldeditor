@@ -16,11 +16,15 @@ export function useTools(
   viewport: ViewportApi,
 ): void {
   const activeTool = useEditorStore((s) => s.activeTool);
+  const readOnly = useEditorStore((s) => s.readOnly);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    const tool = TOOLS[activeTool];
+    // In read-only mode only the pan tool is ever attached, regardless of the
+    // (possibly persisted) activeTool — this is the single choke point that
+    // keeps Select/Wire/Place/Bus/Junction/Text off the canvas.
+    const tool = readOnly ? TOOLS.pan : TOOLS[activeTool];
     const ctx: ToolContext = { viewport, hostEl: host };
 
     tool.onActivate?.(ctx);
@@ -54,5 +58,5 @@ export function useTools(
       tool.onDeactivate?.(ctx);
       host.style.cursor = '';
     };
-  }, [activeTool, hostRef, viewport]);
+  }, [activeTool, readOnly, hostRef, viewport]);
 }

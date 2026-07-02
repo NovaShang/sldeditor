@@ -132,6 +132,10 @@ export interface EditorState {
   selectedAnnotation: AnnotationId | null;
   editingAnnotation: AnnotationId | null;
   editingElement: ElementId | null;
+  /** View-only mode: disables every editing interaction and hides the editing
+   *  chrome while keeping pan/zoom. Set via the OneLineEditor `readOnly` prop.
+   *  Ephemeral — never persisted (see the storage wrapper below). */
+  readOnly: boolean;
 
   // ---- History ---------------------------------------------------------
   past: DiagramFile[];
@@ -167,6 +171,7 @@ export interface EditorState {
   setSelectedAnnotation: (id: AnnotationId | null) => void;
   setEditingAnnotation: (id: AnnotationId | null) => void;
   setEditingElement: (id: ElementId | null) => void;
+  setReadOnly: (readOnly: boolean) => void;
 
   // ---- Clipboard actions ----------------------------------------------
   copySelection: () => void;
@@ -242,6 +247,7 @@ export const useEditorStore = create<EditorState>()(
   selectedAnnotation: null,
   editingAnnotation: null,
   editingElement: null,
+  readOnly: false,
 
   past: [],
   future: [],
@@ -267,6 +273,8 @@ export const useEditorStore = create<EditorState>()(
     }),
 
   setFileSession: (fileSession) => set({ fileSession }),
+
+  setReadOnly: (readOnly) => set({ readOnly }),
 
   loadDiagramFromFile: (diagram, fileSession) =>
     set({
@@ -1169,7 +1177,17 @@ export const useEditorStore = create<EditorState>()(
     {
       name: 'ole-editor',
       version: 2,
-      storage: createJSONStorage(() => localStorage),
+      // A read-only viewer instance shares this storage key with the editor.
+      // Suppress all writes while read-only so force-seeding a shared diagram
+      // never overwrites the user's autosaved document.
+      storage: createJSONStorage(() => ({
+        getItem: (name) => localStorage.getItem(name),
+        setItem: (name, value) => {
+          if (useEditorStore.getState().readOnly) return;
+          localStorage.setItem(name, value);
+        },
+        removeItem: (name) => localStorage.removeItem(name),
+      })),
       partialize: (s) => ({
         diagram: s.diagram,
         activeTool: s.activeTool,

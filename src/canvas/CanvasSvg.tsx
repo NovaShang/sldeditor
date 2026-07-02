@@ -103,6 +103,7 @@ export function CanvasSvg() {
   const openContextMenuAt = useCallback(
     (clientX: number, clientY: number, target: EventTarget | null) => {
       const store = useEditorStore.getState();
+      if (store.readOnly) return; // view-only: no right-click / long-press menu
       const tool = store.activeTool;
       if (tool === 'wire' || tool === 'busbar' || tool === 'junction' || tool === 'place') {
         exitDrawingState();
@@ -281,6 +282,7 @@ export function CanvasSvg() {
   };
 
   const onDrop = (e: React.DragEvent) => {
+    if (useEditorStore.getState().readOnly) return;
     const kind = e.dataTransfer.getData('application/x-oneline-kind');
     if (!kind) return;
     e.preventDefault();
