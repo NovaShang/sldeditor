@@ -5,6 +5,7 @@ export type { OneLineEditorProps } from './OneLineEditor';
 export type { OneLineEditorProps as SldEditorProps } from './OneLineEditor';
 
 export type {
+  AnnotationId,
   Bus,
   BusId,
   BusLayout,
@@ -28,6 +29,7 @@ export type {
   ParamValue,
   PinName,
   Placement,
+  TextAnnotation,
   TerminalRef,
   Wire,
   WireEnd,
@@ -67,6 +69,7 @@ export type { EditorState } from './store';
 // existing diagram. `wireIdFromEnds` produces deterministic content-hash
 // WireIds so the same endpoint pair always maps to the same id.
 export {
+  newAnnotationId,
   newBusId,
   newElementId,
   newJunctionId,

@@ -353,6 +353,17 @@ const MANIFEST = [
     terminals: [{ id: 't_top', x: 0, y: -30, orientation: 'n' }],
   },
 
+  {
+    id: 'panelboard',
+    name: '配电箱',
+    category: 'load',
+    description: '配电箱 / 负荷中心（IEC 60617 分配中心符号）：底部进线，箱顶分路示意',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_11/en_60617_11_12/en_60617_11_12_07.elmt' },
+    // QET symbol ships no terminals; expose the incoming feeder stub at the
+    // bottom. The four outgoing stubs on top stay decorative — at QET's
+    // 10-unit pitch they're too tight to wire downstream symbols into.
+    extraTerminals: [{ id: 't_in', x: -25, y: 0, orientation: 's' }],
+  },
   // ---- 新能源 / 电力电子 ----
   {
     id: 'pv',

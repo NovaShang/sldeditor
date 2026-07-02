@@ -1,0 +1,23 @@
+{
+  "id": "panelboard",
+  "name": "配电箱",
+  "category": "load",
+  "description": "配电箱 / 负荷中心（IEC 60617 分配中心符号）：底部进线，箱顶分路示意",
+  "viewBox": "-52 -62 54 64",
+  "width": 54,
+  "height": 64,
+  "svg": "<rect x=\"-50\" y=\"-40\" width=\"50\" height=\"20\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"-60\" x2=\"-40\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-30\" y1=\"-60\" x2=\"-30\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-60\" x2=\"-20\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-60\" x2=\"-10\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-25\" y1=\"-20\" x2=\"-25\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_in",
+      "x": -25,
+      "y": 0,
+      "orientation": "s"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_11/en_60617_11_12/en_60617_11_12_07.elmt",
+    "qetEnglishName": "Distribution centre"
+  }
+}
