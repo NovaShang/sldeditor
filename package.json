@@ -1,6 +1,6 @@
 {
   "name": "sldeditor",
-  "version": "0.10.5",
+  "version": "0.11.0",
   "description": "Lightweight in-browser React editor for electrical single-line diagrams (SLD).",
   "type": "module",
   "license": "MIT",
