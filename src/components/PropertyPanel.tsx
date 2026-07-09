@@ -73,6 +73,7 @@ export function PropertyPanel() {
         }
       />
       <TextAreaRow
+        key={id}
         label={t('props.note')}
         value={element.note ?? ''}
         onCommit={(v) =>
@@ -258,6 +259,7 @@ function BusInspector({ bus }: { bus: Bus }) {
         onCommit={onName}
       />
       <TextAreaRow
+        key={id}
         label={t('props.note')}
         value={bus.note ?? ''}
         onCommit={(v) =>
@@ -402,6 +404,7 @@ function JunctionPanel({ junction }: { junction: Junction }) {
         }
       />
       <TextAreaRow
+        key={junction.id}
         label={t('props.note')}
         value={junction.note ?? ''}
         onCommit={(v) =>
@@ -568,6 +571,20 @@ function TextRow({
   );
 }
 
+/** How long after the last keystroke a note auto-saves. */
+const NOTE_AUTOSAVE_MS = 350;
+
+/**
+ * Multi-line text row that **auto-saves while typing** (debounced) and
+ * flushes on blur/unmount. Notes used to persist on blur only, which read
+ * as data loss: type a note, press Enter (newline — documented behavior),
+ * see no confirmation, click elsewhere → "my note disappeared". Auto-saving
+ * also covers the panel unmounting while occluded, where blur never fires.
+ *
+ * Call sites must pass a `key` tied to the edited entity so a pending
+ * debounce can never flush into a different element after a selection
+ * change (the remount's unmount-flush commits against the old closure).
+ */
 function TextAreaRow({
   label,
   value,
@@ -578,15 +595,60 @@ function TextAreaRow({
   onCommit: (v: string) => void;
 }) {
   const [local, setLocal] = useState(value);
-  useEffect(() => setLocal(value), [value]);
+  const focused = useRef(false);
+  const timer = useRef<number | null>(null);
+  // Live refs so the debounce/unmount flush always sees the latest text and
+  // never re-commits what it already sent (commits trim, so the store value
+  // can legitimately differ from `local` while typing trailing whitespace).
+  const latest = useRef({ local, value, onCommit });
+  latest.current = { local, value, onCommit };
+  const lastSent = useRef<string | null>(null);
+
+  // External change (undo/redo, AI edit): adopt it unless the user is
+  // actively typing here — resetting mid-edit would clobber keystrokes.
+  useEffect(() => {
+    if (!focused.current) {
+      setLocal(value);
+      lastSent.current = null;
+    }
+  }, [value]);
+
+  const flush = () => {
+    if (timer.current !== null) {
+      window.clearTimeout(timer.current);
+      timer.current = null;
+    }
+    const cur = latest.current;
+    if (cur.local === cur.value || cur.local === lastSent.current) return;
+    lastSent.current = cur.local;
+    cur.onCommit(cur.local);
+  };
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+
+  // Flush on unmount so nothing is lost when the panel closes while the
+  // textarea still holds uncommitted text.
+  useEffect(() => () => flushRef.current(), []);
+
   return (
     <Field label={label}>
       <textarea
         rows={2}
         value={local}
-        onChange={(e) => setLocal(e.target.value)}
+        onFocus={() => {
+          focused.current = true;
+        }}
+        onChange={(e) => {
+          setLocal(e.target.value);
+          if (timer.current !== null) window.clearTimeout(timer.current);
+          timer.current = window.setTimeout(() => {
+            timer.current = null;
+            flushRef.current();
+          }, NOTE_AUTOSAVE_MS);
+        }}
         onBlur={() => {
-          if (local !== value) onCommit(local);
+          focused.current = false;
+          flush();
         }}
         className="w-full resize-none rounded-md border border-border/60 bg-background/50 px-2 py-1 text-[11px] focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
       />
