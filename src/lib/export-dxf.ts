@@ -29,9 +29,9 @@ import type { LabelMode, TextAnnotation } from '../model';
 import {
   LABEL_FONT_SIZE,
   LABEL_LINE_HEIGHT,
-  anchorWorld,
   fallbackAnchor,
   labelLines,
+  placeLabel,
 } from './element-labels';
 
 export interface DxfExportOptions {
@@ -104,12 +104,16 @@ export function buildExportDxf(
       const lines = labelLines(re, mode);
       if (lines.length === 0) continue;
       const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
-      const [ax, ay] = anchorWorld(anchor, place);
+      const {
+        world: [ax, ay],
+        textAnchor,
+        dy,
+      } = placeLabel(anchor, re.libraryDef, place, lines.length);
       // Lines stack downward in screen-space → upward separation in DXF Y-up
       // becomes negative spacing on the screen-Y, i.e. positive when flipped.
       for (let i = 0; i < lines.length; i++) {
-        const [x, y] = worldToDxf([ax, ay + i * LABEL_LINE_HEIGHT]);
-        w.text(LAYER_LABELS, [x, y], lines[i], LABEL_FONT_SIZE, 0, false);
+        const [x, y] = worldToDxf([ax, ay + dy + i * LABEL_LINE_HEIGHT]);
+        w.text(LAYER_LABELS, [x, y], lines[i], LABEL_FONT_SIZE, 0, false, textAnchor);
       }
     }
   }
@@ -611,6 +615,7 @@ class DxfWriter {
     height: number,
     rotationDeg: number,
     mirrorX: boolean,
+    halign: 'start' | 'middle' | 'end' = 'start',
   ): void {
     this.g(0, 'TEXT');
     this.g(8, layer);
@@ -621,6 +626,14 @@ class DxfWriter {
     this.g(1, sanitizeText(text));
     if (rotationDeg !== 0) this.g(50, rotationDeg);
     if (mirrorX) this.g(71, 2);
+    if (halign !== 'start') {
+      // Horizontal justification (group 72: 1 = center, 2 = right); the
+      // anchor for justified text is the second alignment point (11/21).
+      this.g(72, halign === 'middle' ? 1 : 2);
+      this.g(11, p[0]);
+      this.g(21, p[1]);
+      this.g(31, 0);
+    }
   }
 }
 

@@ -20,9 +20,9 @@ import { useEditorStore } from '../store';
 import type { LabelMode } from '../model';
 import {
   LABEL_LINE_HEIGHT as LINE_HEIGHT,
-  anchorWorld,
   fallbackAnchor,
   labelLines,
+  placeLabel,
 } from '../lib/element-labels';
 
 export function AnnotationLayer() {
@@ -39,8 +39,13 @@ export function AnnotationLayer() {
         const place = layout.get(re.element.id);
         if (!place || !re.libraryDef) return null;
         const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
-        const world = anchorWorld(anchor, place);
-        const textAnchor = anchor.anchor ?? 'start';
+        const lines = labelLines(re, mode);
+        const { world, textAnchor, dy } = placeLabel(
+          anchor,
+          re.libraryDef,
+          place,
+          Math.max(1, lines.length),
+        );
         if (editingElement === re.element.id) {
           return (
             <NameEditor
@@ -53,7 +58,6 @@ export function AnnotationLayer() {
           );
         }
         if (mode === 'off') return null;
-        const lines = labelLines(re, mode);
         if (lines.length === 0) return null;
         return (
           <g
@@ -65,7 +69,7 @@ export function AnnotationLayer() {
               <text
                 key={i}
                 x={0}
-                y={i * LINE_HEIGHT}
+                y={dy + i * LINE_HEIGHT}
                 textAnchor={textAnchor}
                 className="ole-annotation-text"
               >

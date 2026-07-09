@@ -11,9 +11,9 @@ import type { LabelMode, TextAnnotation } from '../model';
 import {
   LABEL_FONT_SIZE,
   LABEL_LINE_HEIGHT,
-  anchorWorld,
   fallbackAnchor,
   labelLines,
+  placeLabel,
 } from './element-labels';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -121,11 +121,14 @@ export function buildExportSvg(
       const lines = labelLines(re, labelMode);
       if (lines.length === 0) continue;
       const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
-      const [ax, ay] = anchorWorld(anchor, place);
-      const textAnchor = anchor.anchor ?? 'start';
+      const {
+        world: [ax, ay],
+        textAnchor,
+        dy,
+      } = placeLabel(anchor, re.libraryDef, place, lines.length);
       for (let i = 0; i < lines.length; i++) {
         out.push(
-          `    <text x="${ax}" y="${ay + i * LABEL_LINE_HEIGHT}" text-anchor="${textAnchor}">${escapeXml(lines[i])}</text>`,
+          `    <text x="${ax}" y="${ay + dy + i * LABEL_LINE_HEIGHT}" text-anchor="${textAnchor}">${escapeXml(lines[i])}</text>`,
         );
       }
     }
@@ -218,13 +221,16 @@ function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
       const lines = labelLines(re, labelMode);
       if (lines.length === 0) continue;
       const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
-      const [ax, ay] = anchorWorld(anchor, place);
+      const {
+        world: [ax, ay],
+        textAnchor: align,
+        dy,
+      } = placeLabel(anchor, re.libraryDef, place, lines.length);
       const w = textWidthGuess(lines, LABEL_FONT_SIZE);
       const h = lines.length * LABEL_LINE_HEIGHT;
-      const align = anchor.anchor ?? 'start';
       const x0 = align === 'middle' ? ax - w / 2 : align === 'end' ? ax - w : ax;
-      update(x0, ay - LABEL_FONT_SIZE);
-      update(x0 + w, ay + h);
+      update(x0, ay + dy - LABEL_FONT_SIZE);
+      update(x0 + w, ay + dy + h);
     }
   }
 
