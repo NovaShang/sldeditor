@@ -30,6 +30,15 @@ const OUT_DIR = path.join(ROOT, 'src', 'element-library');
 const dropFormLabel = (p) =>
   p.tag === 'text' && /^Form\s*\d+/i.test(p.attrs.text || '');
 
+/**
+ * A pure-digit <text> primitive within this distance of a terminal is treated
+ * as a QET pin-number glyph and split into `terminalLabelsSvg` (see
+ * `buildElement`). 20 units cleanly separates the breaker's pin digits
+ * (≤ 9 units from their pins) from machine glyphs like the motors' "3"/"1"
+ * (≥ 70 units from any terminal).
+ */
+const TERMINAL_LABEL_RADIUS = 20;
+
 const MANIFEST = [
   // ---- 母线 / 接线 ----
   {
@@ -1471,18 +1480,6 @@ function buildElement(entry) {
   for (const p of visualPrims) bbox = unionBBox(bbox, primitiveBBox(p));
   if (!bbox) bbox = { x1: -10, y1: -10, x2: 10, y2: 10 };
 
-  let svgBody = visualPrims.map(primitiveToSvg).filter(Boolean).join('');
-  // Post-process: rewrite all <text font-size="..."> in the output. Used for
-  // visibility tweaks where we want bigger glyphs without recomputing the
-  // QET-derived y baseline (the text label still lives at QET's intended
-  // position; only the rendered glyph height grows).
-  if (entry.textFontSize !== undefined) {
-    svgBody = svgBody.replace(
-      /font-size="\d+(?:\.\d+)?"/g,
-      `font-size="${entry.textFontSize}"`,
-    );
-  }
-
   const terminalsFromElmt = terminalPrims.map((p, i) => ({
     id: `t${i + 1}`,
     ...extractTerminal(p),
@@ -1491,8 +1488,39 @@ function buildElement(entry) {
     ? entry.terminals
     : [...terminalsFromElmt, ...(entry.extraTerminals || [])];
 
+  // Split QET pin-number glyphs (pure-digit <text> sitting on a terminal,
+  // e.g. the breaker's "1"/"2") out of the main artwork into
+  // `terminalLabelsSvg`: the canvas reveals them only while wiring or when
+  // the element is selected, and exports omit them entirely. Machine glyphs
+  // like the motor's "M 3~" digits are far from any terminal and stay put.
+  // Note: they still count toward the bbox above so the viewBox (and thus
+  // hit rect / anchors) is independent of this split.
+  const isTerminalNumber = (p) =>
+    p.tag === 'text' &&
+    /^\d+$/.test((p.attrs.text || '').trim()) &&
+    terminals.some(
+      (t) => Math.hypot(+p.attrs.x - t.x, +p.attrs.y - t.y) <= TERMINAL_LABEL_RADIUS,
+    );
+  const toSvg = (prims) => {
+    let body = prims.map(primitiveToSvg).filter(Boolean).join('');
+    // Post-process: rewrite all <text font-size="..."> in the output. Used for
+    // visibility tweaks where we want bigger glyphs without recomputing the
+    // QET-derived y baseline (the text label still lives at QET's intended
+    // position; only the rendered glyph height grows).
+    if (entry.textFontSize !== undefined) {
+      body = body.replace(
+        /font-size="\d+(?:\.\d+)?"/g,
+        `font-size="${entry.textFontSize}"`,
+      );
+    }
+    return body;
+  };
+  const svgBody = toSvg(visualPrims.filter((p) => !isTerminalNumber(p)));
+  const terminalLabelsSvg = toSvg(visualPrims.filter(isTerminalNumber));
+
   return finalize(entry, {
     svgBody,
+    terminalLabelsSvg,
     bbox,
     terminals,
     sourceMeta: {
@@ -1503,7 +1531,7 @@ function buildElement(entry) {
   });
 }
 
-function finalize(entry, { svgBody, bbox, terminals, sourceMeta }) {
+function finalize(entry, { svgBody, terminalLabelsSvg, bbox, terminals, sourceMeta }) {
   // Pad the bbox so strokes don't get clipped, and so the viewBox includes
   // every terminal point (which sits exactly on the boundary).
   for (const t of terminals) {
@@ -1522,7 +1550,13 @@ function finalize(entry, { svgBody, bbox, terminals, sourceMeta }) {
   // graphic AND terminals together about the viewBox centre (which preserves
   // the viewBox), so a one-line `transform: { flipV: true }` fixes a symbol at
   // build time instead of hand-editing coordinates. See `applyTransform`.
-  ({ svgBody, terminals } = applyTransform(entry.transform, svgBody, terminals, vb));
+  ({ svgBody, terminalLabelsSvg, terminals } = applyTransform(
+    entry.transform,
+    svgBody,
+    terminalLabelsSvg,
+    terminals,
+    vb,
+  ));
 
   // Drop optional fields when absent so JSON keys stay stable across builds.
   const out = {
@@ -1535,6 +1569,7 @@ function finalize(entry, { svgBody, bbox, terminals, sourceMeta }) {
   out.width = vb.w;
   out.height = vb.h;
   out.svg = svgBody;
+  if (terminalLabelsSvg) out.terminalLabelsSvg = terminalLabelsSvg;
   out.terminals = terminals;
   if (entry.stretchable) out.stretchable = entry.stretchable;
   if (entry.state) out.state = entry.state;
@@ -1552,8 +1587,8 @@ function finalize(entry, { svgBody, bbox, terminals, sourceMeta }) {
  * with matching orientation swaps. Note: a flip mirrors any `<text>` inside the
  * graphic — fine for the current symbols (which have none under a transform).
  */
-function applyTransform(tf, svgBody, terminals, vb) {
-  if (!tf) return { svgBody, terminals };
+function applyTransform(tf, svgBody, terminalLabelsSvg, terminals, vb) {
+  if (!tf) return { svgBody, terminalLabelsSvg, terminals };
   const cx = vb.x + vb.w / 2;
   const cy = vb.y + vb.h / 2;
   const swapNS = (o) => (o === 'n' ? 's' : o === 's' ? 'n' : o);
@@ -1580,6 +1615,9 @@ function applyTransform(tf, svgBody, terminals, vb) {
 
   return {
     svgBody: `<g transform="${matrix}">${svgBody}</g>`,
+    terminalLabelsSvg: terminalLabelsSvg
+      ? `<g transform="${matrix}">${terminalLabelsSvg}</g>`
+      : terminalLabelsSvg,
     terminals: terminals.map((t) => {
       const [x, y] = mapXY(t.x, t.y);
       return { ...t, x, y, orientation: mapOrient(t.orientation) };

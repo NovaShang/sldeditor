@@ -228,6 +228,21 @@
   cursor: crosshair;
 }
 
+/* Terminal-number glyphs (pin digits, e.g. the breaker's "1"/"2") — split
+   from the symbol artwork at library build time. Hidden in normal viewing
+   (they read as noise at diagram zoom, and rotate with the symbol); revealed
+   together with the terminal dots while wiring / placing / selected. Exports
+   never include them (buildExportSvg / DXF only emit `LibraryEntry.svg`). */
+.ole-terminal-labels {
+  display: none;
+  pointer-events: none;
+}
+.ole-canvas-root.tool-wire .ole-terminal-labels,
+.ole-canvas-root.tool-place .ole-terminal-labels,
+.ole-element[data-selected='true'] .ole-terminal-labels {
+  display: inline;
+}
+
 /* Structural annotations — element ID + showOnCanvas params painted next
    to each symbol by AnnotationLayer. White halo (paint-order: stroke) keeps
    the text readable when it crosses wires or symbols. */

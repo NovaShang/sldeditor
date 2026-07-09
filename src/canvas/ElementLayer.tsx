@@ -120,6 +120,15 @@ export function ElementLayer() {
           >
             <HitRect lib={re.libraryDef} />
             <g dangerouslySetInnerHTML={{ __html: re.libraryDef.svg }} />
+            {re.libraryDef.terminalLabelsSvg && (
+              /* Pin digits — hidden unless wiring/selected (see styles.css). */
+              <g
+                className="ole-terminal-labels"
+                dangerouslySetInnerHTML={{
+                  __html: re.libraryDef.terminalLabelsSvg,
+                }}
+              />
+            )}
           </g>
         );
       })}

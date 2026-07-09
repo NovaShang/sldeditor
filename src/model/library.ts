@@ -97,6 +97,14 @@ export interface LibraryEntry {
   height: number;
   /** Inner SVG fragment, no `<svg>` wrapper. */
   svg: string;
+  /**
+   * Terminal-number glyphs (pin digits, e.g. the breaker's "1"/"2") split out
+   * of `svg` at build time. Canvas-only wiring affordance: `ElementLayer`
+   * renders them in a `.ole-terminal-labels` group that CSS reveals only
+   * while the wire/place tool is active or the element is selected. Exports
+   * (SVG / PNG / DXF) never include them.
+   */
+  terminalLabelsSvg?: string;
   terminals: LibraryTerminal[];
   stretchable?: LibraryStretchable;
   /**
