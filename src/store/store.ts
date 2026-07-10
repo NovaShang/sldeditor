@@ -218,6 +218,11 @@ export interface EditorState {
   updateWirePath: (id: WireId, path: [number, number][] | null) => void;
   /** Clear a wire's manual route (alias for `updateWirePath(id, null)`). */
   resetWirePath: (id: WireId) => void;
+  /**
+   * Patch a wire's decoration fields (label). Route edits go through
+   * `updateWirePath`; endpoints are immutable (delete + redraw instead).
+   */
+  updateWire: (id: WireId, patch: Partial<Pick<Wire, 'label'>>) => void;
   updateElement: (id: ElementId, patch: Partial<Element>) => void;
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
   updateBus: (id: BusId, patch: Partial<BusLayout>) => void;
@@ -583,7 +588,11 @@ export const useEditorStore = create<EditorState>()(
           remapEnd(w.ends[0]),
           remapEnd(w.ends[1]),
         ];
-        return { id: wireIdFromEnds(ends[0], ends[1]), ends };
+        return {
+          id: wireIdFromEnds(ends[0], ends[1]),
+          ends,
+          ...(w.label ? { label: w.label } : {}),
+        };
       });
 
       const wires = mergeWires(d.wires ?? [], newWires);
@@ -1049,9 +1058,11 @@ export const useEditorStore = create<EditorState>()(
         const jid = addJunctionAt(spec.at);
         if (!host) return jid;
         const rest = (working.wires ?? []).filter((w) => w.id !== spec.onWire);
+        // Both halves stay the same conductor, so each keeps the host's label.
         const half = (a: WireEnd, b: WireEnd): Wire => ({
           id: wireIdFromEnds(a, b),
           ends: [a, b],
+          ...(host.label ? { label: host.label } : {}),
         });
         working = {
           ...working,
@@ -1090,6 +1101,17 @@ export const useEditorStore = create<EditorState>()(
 
   resetWirePath: (id) => {
     get().updateWirePath(id, null);
+  },
+
+  updateWire: (id, patch) => {
+    get().dispatch((d) => {
+      const wires = d.wires ?? [];
+      if (!wires.some((w) => w.id === id)) return d;
+      return {
+        ...d,
+        wires: wires.map((w) => (w.id === id ? { ...w, ...patch } : w)),
+      };
+    });
   },
 
   updateElement: (id, patch) => {

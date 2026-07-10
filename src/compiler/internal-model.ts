@@ -86,6 +86,8 @@ export interface WireRender {
   path: [number, number][];
   /** True if this came from `Wire.path` (user-edited); false = auto-routed. */
   userEdited?: boolean;
+  /** Display label carried over from `Wire.label` (phase designation etc.). */
+  label?: string;
 }
 
 export interface InternalModel {

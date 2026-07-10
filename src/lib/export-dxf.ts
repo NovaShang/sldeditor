@@ -15,6 +15,7 @@
  *   wire route      → LWPOLYLINE (open)
  *   free annotation → TEXT (one per line)
  *   element label   → TEXT (one per line, ID + showOnCanvas params)
+ *   wire label      → TEXT (mid-wire, phase designation etc.)
  *
  * Y is flipped to CAD convention (Y up). 4 layers: WIRES, ELEMENTS, LABELS,
  * ANNOTATIONS.
@@ -33,6 +34,7 @@ import {
   labelLines,
   placeLabel,
 } from './element-labels';
+import { placeWireLabel } from './wire-labels';
 
 export interface DxfExportOptions {
   /** Used as the $PROJECTNAME header value when present. */
@@ -115,6 +117,16 @@ export function buildExportDxf(
         const [x, y] = worldToDxf([ax, ay + dy + i * LABEL_LINE_HEIGHT]);
         w.text(LAYER_LABELS, [x, y], lines[i], LABEL_FONT_SIZE, 0, false, textAnchor);
       }
+    }
+    // Wire labels (phase designations etc.) — anchored mid-wire, matching
+    // the canvas / SVG-export placement.
+    for (const r of model.wireRenders.values()) {
+      const label = r.label?.trim();
+      if (!label) continue;
+      const placed = placeWireLabel(r.path);
+      if (!placed) continue;
+      const p = worldToDxf(placed.world);
+      w.text(LAYER_LABELS, p, label, LABEL_FONT_SIZE, 0, false, placed.textAnchor);
     }
   }
 

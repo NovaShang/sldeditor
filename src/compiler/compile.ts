@@ -391,14 +391,19 @@ export function compile(diagram: DiagramFile): InternalModel {
         ];
         const cleaned = normalizePath(rebased);
         if (cleaned.length >= 2) {
-          m.wireRenders.set(w.id, { wireId: w.id, path: cleaned, userEdited: true });
+          m.wireRenders.set(w.id, {
+            wireId: w.id,
+            path: cleaned,
+            userEdited: true,
+            ...(w.label ? { label: w.label } : {}),
+          });
           continue;
         }
       }
       // Endpoint resolution failed; fall back to auto-route below.
     }
     const r = routeWire(w, m);
-    if (r) m.wireRenders.set(w.id, r);
+    if (r) m.wireRenders.set(w.id, w.label ? { ...r, label: w.label } : r);
   }
 
   return m;

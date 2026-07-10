@@ -92,6 +92,12 @@ export interface Wire {
   ends: [WireEnd, WireEnd];
   /** Optional manual route path. Absent → auto-route. */
   path?: [number, number][];
+  /**
+   * Optional display label rendered at the wire's midpoint (e.g. phase
+   * designations "L1" / "L2" / "L3" / "N" / "PE"). Pure decoration — has no
+   * effect on routing or connectivity.
+   */
+  label?: string;
 }
 
 export interface Placement {

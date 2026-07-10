@@ -13,6 +13,9 @@
  *   - 'id'  → element name/ID only.
  *   - 'all' → ID plus each library param marked `showOnCanvas: true`.
  * Default when unset: 'all'.
+ *
+ * Wire labels (`Wire.label`, e.g. phase designations L1/L2/L3/N/PE) render
+ * here too — anchored mid-wire via `placeWireLabel`, hidden at 'off'.
  */
 
 import { useEffect, useRef } from 'react';
@@ -24,10 +27,12 @@ import {
   labelLines,
   placeLabel,
 } from '../lib/element-labels';
+import { placeWireLabel } from '../lib/wire-labels';
 
 export function AnnotationLayer() {
   const elements = useEditorStore((s) => s.internal.elements);
   const layout = useEditorStore((s) => s.internal.layout);
+  const wireRenders = useEditorStore((s) => s.internal.wireRenders);
   const mode: LabelMode = useEditorStore(
     (s) => s.diagram.meta?.labelMode ?? 'all',
   );
@@ -79,6 +84,24 @@ export function AnnotationLayer() {
           </g>
         );
       })}
+      {mode !== 'off' &&
+        Array.from(wireRenders.values()).map((r) => {
+          const label = r.label?.trim();
+          if (!label) return null;
+          const placed = placeWireLabel(r.path);
+          if (!placed) return null;
+          return (
+            <text
+              key={`wire-${r.wireId}`}
+              x={placed.world[0]}
+              y={placed.world[1]}
+              textAnchor={placed.textAnchor}
+              className="ole-annotation-text"
+            >
+              {label}
+            </text>
+          );
+        })}
     </g>
   );
 }

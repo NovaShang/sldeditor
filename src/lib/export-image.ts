@@ -15,6 +15,7 @@ import {
   labelLines,
   placeLabel,
 } from './element-labels';
+import { placeWireLabel } from './wire-labels';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PADDING = 24;
@@ -132,6 +133,17 @@ export function buildExportSvg(
         );
       }
     }
+    // Wire labels (phase designations etc.) — anchored mid-wire, same
+    // font/halo treatment as element labels.
+    for (const r of model.wireRenders.values()) {
+      const label = r.label?.trim();
+      if (!label) continue;
+      const placed = placeWireLabel(r.path);
+      if (!placed) continue;
+      out.push(
+        `    <text x="${placed.world[0]}" y="${placed.world[1]}" text-anchor="${placed.textAnchor}">${escapeXml(label)}</text>`,
+      );
+    }
     out.push('  </g>');
   }
 
@@ -231,6 +243,19 @@ function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
       const x0 = align === 'middle' ? ax - w / 2 : align === 'end' ? ax - w : ax;
       update(x0, ay + dy - LABEL_FONT_SIZE);
       update(x0 + w, ay + dy + h);
+    }
+    // Wire labels — offset perpendicular from the wire, so they can extend
+    // past the polyline's own bbox.
+    for (const r of model.wireRenders.values()) {
+      const label = r.label?.trim();
+      if (!label) continue;
+      const placed = placeWireLabel(r.path);
+      if (!placed) continue;
+      const [lx, ly] = placed.world;
+      const w = textWidthGuess([label], LABEL_FONT_SIZE);
+      const x0 = placed.textAnchor === 'middle' ? lx - w / 2 : lx;
+      update(x0, ly - LABEL_FONT_SIZE);
+      update(x0 + w, ly);
     }
   }
 

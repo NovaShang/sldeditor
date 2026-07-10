@@ -347,6 +347,16 @@ function WirePanel({ wireId }: { wireId: WireId }) {
         </div>
         <div className="font-mono text-[12px]">{wire.id}</div>
       </div>
+      <TextRow
+        label={t('props.label')}
+        value={wire.label ?? ''}
+        placeholder={t('props.labelPlaceholder')}
+        onCommit={(v) =>
+          useEditorStore
+            .getState()
+            .updateWire(wireId, { label: v.trim() === '' ? undefined : v.trim() })
+        }
+      />
       <ul className="space-y-0.5 border-t border-border/40 pt-2">
         {[a, b].map((e, i) => (
           <li
