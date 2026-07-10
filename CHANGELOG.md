@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.13.0
+
+### Minor Changes
+
+- [`afdeeaf`](https://github.com/NovaShang/sldeditor/commit/afdeeaf46950675c3f4c5c835607aed4b750d41f) Thanks [@NovaShang](https://github.com/NovaShang)! - New `label` field on wires (`Wire.label?: string`) — a short text rendered mid-wire, intended for phase designations (L1 / L2 / L3 / N / PE). The label anchors at the midpoint of the wire's longest rendered segment, offset clear of the line, and always stays upright: centered above horizontal runs, flowing right of vertical ones. Editable via a new Label input in the properties panel when a wire is selected, included in SVG/PNG and DXF exports, and carried through to `WireRender.label` for embedding apps. Labels survive copy/paste and wire splits, and round-trip untouched through save/load.
+
 ## 0.12.1
 
 ### Patch Changes
