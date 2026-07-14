@@ -415,7 +415,7 @@ function ViewToolbarExpanded({ tier }: { tier: Tier }) {
     <div
       className="absolute z-20"
       style={{
-        bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px))',
+        bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))',
         right: 'calc(0.75rem + env(safe-area-inset-right, 0px))',
       }}
     >

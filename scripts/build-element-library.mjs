@@ -366,11 +366,16 @@ const MANIFEST = [
     id: 'panelboard',
     name: '配电箱',
     category: 'load',
-    description: '配电箱 / 负荷中心（IEC 60617 分配中心符号）：底部进线，箱顶分路示意',
+    description: '配电箱 / 负荷中心（IEC 60617 分配中心符号）：顶部进线，底部分路示意',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_11/en_60617_11_12/en_60617_11_12_07.elmt' },
-    // QET symbol ships no terminals; expose the incoming feeder stub at the
-    // bottom. The four outgoing stubs on top stay decorative — at QET's
-    // 10-unit pitch they're too tight to wire downstream symbols into.
+    // QET draws this distribution centre incoming-at-bottom / ways-on-top —
+    // upside down for a load, which takes its feeder from above (the load
+    // convention is a TOP terminal, orientation 'n'; cf. `load`, `ev-charger`).
+    // Flip it vertically so the incoming feeder is at the top and the (still
+    // decorative — too tight to wire at QET's 10-unit pitch) way-stubs sit at
+    // the bottom. extraTerminals are in the un-flipped source frame; the flip
+    // moves t_in to the top and its orientation s→n (see `applyTransform`).
+    transform: { flipV: true },
     extraTerminals: [{ id: 't_in', x: -25, y: 0, orientation: 's' }],
   },
   // ---- 新能源 / 电力电子 ----
@@ -379,8 +384,13 @@ const MANIFEST = [
     name: '光伏组件',
     category: 'renewable',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_18/en_60617_06_18_06.elmt' },
-    // QET symbol has no terminals; PV exits through DC bus on the right edge.
-    extraTerminals: [{ id: 't_dc', x: 50, y: 10, orientation: 'e' }],
+    // QET symbol has no terminals. PV is a source: feed its DC out the BOTTOM
+    // (orientation 's') like every other generator (grid-source, generator,
+    // wind-turbine) so it wires straight down into a combiner/inverter below.
+    // The old right-edge pin (x:50, 'e') was off-axis and horizontal, forcing
+    // layouts to shift downstream symbols +50x to avoid a jog. x:0 sits on the
+    // panel box's bottom edge (box spans x:-10..50) and on the symbol axis.
+    extraTerminals: [{ id: 't_dc', x: 0, y: 40, orientation: 's' }],
     textFontSize: 14,
   },
   {

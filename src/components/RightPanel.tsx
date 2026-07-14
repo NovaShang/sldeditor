@@ -48,9 +48,9 @@ export function RightPanel() {
         compactWidth ? 'w-48' : 'w-56',
       )}
       style={{
-        top: `calc(${compactWidth ? '4.5rem' : '0.75rem'} + var(--ole-top-inset, 0px))`,
-        right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
-        maxHeight: `calc(100% - ${compactWidth ? '5.25rem' : '1.5rem'} - var(--ole-top-inset, 0px) - var(--ole-bottom-inset, 0px) - 4.5rem)`,
+        top: `calc(${compactWidth ? '4.5rem' : '0.75rem'} + var(--ole-top-inset, 0px) + var(--ole-safe-top, 0px))`,
+        right: 'calc(0.75rem + var(--ole-right-inset, 0px) + var(--ole-safe-right, 0px))',
+        maxHeight: `calc(100% - ${compactWidth ? '5.25rem' : '1.5rem'} - var(--ole-top-inset, 0px) - var(--ole-safe-top, 0px) - var(--ole-bottom-inset, 0px) - var(--ole-safe-bottom, 0px) - 4.5rem)`,
       }}
     >
       <div className="flex items-center gap-1.5 border-b border-border/40 px-3 py-2">

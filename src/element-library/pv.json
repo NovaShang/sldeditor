@@ -9,9 +9,9 @@
   "terminals": [
     {
       "id": "t_dc",
-      "x": 50,
-      "y": 10,
-      "orientation": "e"
+      "x": 0,
+      "y": 40,
+      "orientation": "s"
     }
   ],
   "source": {

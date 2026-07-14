@@ -23,9 +23,9 @@ export function LeftPanel() {
       <div
         className="absolute z-10"
         style={{
-          left: 'calc(0.75rem + var(--ole-left-inset, 0px))',
-          right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
-          bottom: 'calc(4rem + var(--ole-bottom-inset, 0px) + 0.75rem)',
+          left: 'calc(0.75rem + var(--ole-left-inset, 0px) + var(--ole-safe-left, 0px))',
+          right: 'calc(0.75rem + var(--ole-right-inset, 0px) + var(--ole-safe-right, 0px))',
+          bottom: 'calc(4rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px) + 0.75rem)',
         }}
       >
         <OutlinePanel onClose={() => setOpen(false)} sheet />
@@ -37,8 +37,8 @@ export function LeftPanel() {
     <div
       className="absolute z-10 flex flex-col items-start"
       style={{
-        bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px))',
-        left: 'calc(0.75rem + var(--ole-left-inset, 0px))',
+        bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))',
+        left: 'calc(0.75rem + var(--ole-left-inset, 0px) + var(--ole-safe-left, 0px))',
         maxHeight: 'calc(100% - 1.5rem)',
       }}
     >

@@ -102,10 +102,10 @@ export function LibraryPopover() {
   // dock.
   const wrapperStyle: React.CSSProperties = sheet
     ? {
-        top: `calc(${TOP_INSET}px + var(--ole-top-inset, 0px))`,
-        left: 'calc(0.75rem + var(--ole-left-inset, 0px))',
-        right: 'calc(0.75rem + var(--ole-right-inset, 0px))',
-        bottom: 'calc(4rem + var(--ole-bottom-inset, 0px) + 0.75rem)',
+        top: `calc(${TOP_INSET}px + var(--ole-top-inset, 0px) + var(--ole-safe-top, 0px))`,
+        left: 'calc(0.75rem + var(--ole-left-inset, 0px) + var(--ole-safe-left, 0px))',
+        right: 'calc(0.75rem + var(--ole-right-inset, 0px) + var(--ole-safe-right, 0px))',
+        bottom: 'calc(4rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px) + 0.75rem)',
       }
     : { top: TOP_INSET };
   return (

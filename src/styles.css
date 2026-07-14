@@ -10,12 +10,17 @@
    */
   .ole-root {
     /* Safe-area insets — populated from env() so iOS notch/home-indicator
-       are respected. Floating chrome reads these via CSS calc() so the same
-       layout still works on desktop where the values are 0. */
-    --ole-top-inset: env(safe-area-inset-top, 0px);
-    --ole-right-inset: env(safe-area-inset-right, 0px);
-    --ole-bottom-inset: env(safe-area-inset-bottom, 0px);
-    --ole-left-inset: env(safe-area-inset-left, 0px);
+       are respected. These are the EDITOR's own concern and live on
+       `.ole-root`. They are deliberately SEPARATE from `--ole-*-inset`, which
+       is the embedder contract: an embedding host sets `--ole-*-inset` on its
+       wrapper to reserve space for its own chrome (e.g. a side panel), and the
+       editor must not clobber it — so we must NOT redeclare `--ole-*-inset`
+       here (that shadows the host's value for everything inside `.ole-root`).
+       Floating chrome sums the two: `var(--ole-X-inset) + var(--ole-safe-X)`. */
+    --ole-safe-top: env(safe-area-inset-top, 0px);
+    --ole-safe-right: env(safe-area-inset-right, 0px);
+    --ole-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --ole-safe-left: env(safe-area-inset-left, 0px);
 
     --background: #f5f5f5;
     --foreground: #171717;

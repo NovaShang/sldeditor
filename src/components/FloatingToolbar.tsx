@@ -203,7 +203,7 @@ export function FloatingToolbar() {
   return (
     <div
       className="absolute left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5"
-      style={{ bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px))' }}
+      style={{ bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))' }}
     >
       {showHint && <ToolHint />}
       <div
