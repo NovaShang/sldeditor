@@ -1,0 +1,37 @@
+{
+  "id": "mppt",
+  "name": "MPPT 控制器",
+  "category": "renewable",
+  "description": "MPPT 太阳能充电控制器（DC/DC，最大功率点跟踪）",
+  "viewBox": "-42 -42 44 44",
+  "width": 44,
+  "height": 44,
+  "svg": "<line x1=\"-40\" y1=\"0\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-40\" y=\"-40\" width=\"40\" height=\"40\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-36\" y1=\"-36\" x2=\"-20\" y2=\"-36\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-8\" x2=\"-4\" y2=\"-8\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-4\" x2=\"-14\" y2=\"-4\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-4\" x2=\"-4\" y2=\"-4\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-36\" y1=\"-32\" x2=\"-30\" y2=\"-32\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-26\" y1=\"-32\" x2=\"-20\" y2=\"-32\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_pv",
+      "x": -20,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t_bat",
+      "x": -20,
+      "y": 0,
+      "orientation": "s"
+    }
+  ],
+  "params": [
+    {
+      "name": "I",
+      "label": "额定电流",
+      "type": "number",
+      "unit": "A"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_02.elmt",
+    "qetEnglishName": "DC/DC converter"
+  }
+}

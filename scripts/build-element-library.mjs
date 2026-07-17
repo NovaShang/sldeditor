@@ -451,6 +451,34 @@ const MANIFEST = [
     ],
     params: [{ name: 'S', label: '容量', type: 'number', unit: 'MVA' }],
   },
+  {
+    id: 'dc-dc-converter',
+    name: 'DC/DC 变换器',
+    category: 'renewable',
+    description: 'DC/DC 变换器 / 直流充电器（IEC 60617）',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_02.elmt' },
+    // QET symbol has no terminals; DC in on top, DC out on bottom (top→bottom flow).
+    extraTerminals: [
+      { id: 't_in', x: -20, y: -40, orientation: 'n' },
+      { id: 't_out', x: -20, y: 0, orientation: 's' },
+    ],
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW' }],
+  },
+  {
+    id: 'mppt',
+    name: 'MPPT 控制器',
+    category: 'renewable',
+    // No dedicated IEC/QET symbol for an MPPT charge controller — the accepted
+    // SLD convention is the DC/DC-converter block (same source as dc-dc-converter),
+    // distinguished by name/label. PV in on top, battery/DC-bus out on bottom.
+    description: 'MPPT 太阳能充电控制器（DC/DC，最大功率点跟踪）',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_02.elmt' },
+    extraTerminals: [
+      { id: 't_pv', x: -20, y: -40, orientation: 'n' },
+      { id: 't_bat', x: -20, y: 0, orientation: 's' },
+    ],
+    params: [{ name: 'I', label: '额定电流', type: 'number', unit: 'A' }],
+  },
 
   // ---- 保护 / 剩余电流 ----
   {
