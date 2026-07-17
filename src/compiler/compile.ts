@@ -323,8 +323,23 @@ export function compile(diagram: DiagramFile): InternalModel {
     if (!changed) break;
   }
 
+  // Junction degree: how many wire ends physically terminate at each junction.
+  // The solder-dot convention only draws a dot where 3+ conductors meet.
+  const jDegree = new Map<string, number>();
+  for (const [jid] of junctionById) jDegree.set(jid, 0);
+  for (const w of validWires) {
+    for (const end of w.ends) {
+      const cur = jDegree.get(end);
+      if (cur !== undefined) jDegree.set(end, cur + 1);
+    }
+  }
+
   for (const [jid, junction] of junctionById) {
-    m.junctions.set(jid, { junction, world: jWorld.get(jid) ?? [0, 0] });
+    m.junctions.set(jid, {
+      junction,
+      world: jWorld.get(jid) ?? [0, 0],
+      degree: jDegree.get(jid) ?? 0,
+    });
   }
 
   // ---- 6. Union-find over wires -----------------------------------------

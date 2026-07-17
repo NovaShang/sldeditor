@@ -49,6 +49,14 @@ export interface ResolvedJunction {
   junction: Junction;
   /** Canvas coordinate of the point node. */
   world: [number, number];
+  /**
+   * How many wire ends terminate at this junction. Drives the solder-dot
+   * convention: a visible dot is only *required* where 3+ conductors meet
+   * (T / cross). Degree ≤ 2 is a corner or pass-through — no dot needed, and
+   * a dot there would falsely read as a tap. The renderer hides low-degree
+   * dots until the user interacts; export omits them entirely.
+   */
+  degree: number;
 }
 
 export interface TerminalGeometry {

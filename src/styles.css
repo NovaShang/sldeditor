@@ -443,8 +443,11 @@
   color: var(--foreground);
 }
 
-/* Junctions — free-standing point connection nodes. Always visible (model
-   objects, not transient pins); a wider transparent circle catches clicks. */
+/* Junctions — free-standing point connection nodes. A wider transparent circle
+   always catches clicks, but the visible dot follows the schematic solder-dot
+   convention: shown at rest only where 3+ conductors meet (`data-solder`).
+   Corners / pass-throughs stay hidden until the user needs them (see reveal
+   rules below), so the canvas isn't peppered with unnecessary dots. */
 .ole-junction-layer {
   color: var(--foreground);
 }
@@ -452,14 +455,43 @@
   fill: var(--foreground);
   stroke: none;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s ease;
 }
-.ole-junction-hit {
-  pointer-events: auto;
-  cursor: pointer;
+/* Electrically-required solder dot (3+ conductors) — always visible; it carries
+   the "these wires are joined" meaning that disambiguates a tap from a crossover. */
+.ole-junction[data-solder='true'] .ole-junction-dot {
+  opacity: 1;
+}
+/* Reveal a hidden junction when the user might act on it: pointer over the
+   junction, over a connected wire (same node → .ole-hover-node-on), or when
+   it's selected / part of the selected node. */
+.ole-junction:hover .ole-junction-dot,
+.ole-junction.ole-hover-node-on .ole-junction-dot,
+.ole-junction[data-selected='true'] .ole-junction-dot,
+.ole-junction[data-node-related='true'] .ole-junction-dot {
+  opacity: 1;
 }
 .ole-junction[data-selected='true'] .ole-junction-dot,
 .ole-junction[data-node-related='true'] .ole-junction-dot {
   fill: var(--selection);
+}
+/* Node hover tints the dot selection-blue to match the highlighted wire. */
+.ole-junction.ole-hover-node-on .ole-junction-dot {
+  fill: var(--selection);
+}
+/* While a drawing / placing tool is active, reveal every junction so users
+   can see (and snap to) all the attach points. Keyed off the `data-tool`
+   attribute set by useTools. */
+.ole-canvas-root[data-tool='wire'] .ole-junction-dot,
+.ole-canvas-root[data-tool='place'] .ole-junction-dot,
+.ole-canvas-root[data-tool='junction'] .ole-junction-dot,
+.ole-canvas-root[data-tool='busbar'] .ole-junction-dot {
+  opacity: 1;
+}
+.ole-junction-hit {
+  pointer-events: auto;
+  cursor: pointer;
 }
 .ole-canvas-root.tool-wire .ole-junction-hit {
   cursor: crosshair;

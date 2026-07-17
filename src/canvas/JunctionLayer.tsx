@@ -4,9 +4,12 @@
  * the wire tool can attach to it, and `data-node-id` so a click resolves to
  * the junction's electrical node, mirroring the bus/wire tagging convention.
  *
- * Junctions are always visible (unlike device terminals, which the wire tool
- * reveals on demand) because they are model objects the user placed, not
- * transient pins.
+ * Following the schematic solder-dot convention, only *electrical* junctions —
+ * where 3+ conductors meet (`degree >= 3`, tagged `data-solder`) — show a dot
+ * at rest. Low-degree junctions (a corner or pass-through) stay hidden until
+ * the user needs them: CSS reveals the dot on hover of the junction or a
+ * connected wire, while a drawing/placing tool is active, or on selection.
+ * The wider transparent hit circle keeps every junction clickable regardless.
  */
 
 import { useEditorStore } from '../store';
@@ -38,7 +41,7 @@ export function JunctionLayer() {
 
   return (
     <g className="ole-junction-layer">
-      {Array.from(junctions.values()).map(({ junction, world }) => {
+      {Array.from(junctions.values()).map(({ junction, world, degree }) => {
         const nodeId = terminalToNode.get(junction.id) ?? undefined;
         const soloSelected = selection.length === 1 && selection[0] === junction.id;
         const hx = world[0] + WIRE_HANDLE_DX;
@@ -49,6 +52,7 @@ export function JunctionLayer() {
             data-junction-id={junction.id}
             data-element-id={junction.id}
             data-node-id={nodeId}
+            data-solder={degree >= 3 ? 'true' : undefined}
             data-selected={selSet.has(junction.id) ? 'true' : undefined}
             data-node-related={nodeRelated.has(junction.id) ? 'true' : undefined}
             className="ole-junction"

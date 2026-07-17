@@ -24,8 +24,13 @@ export function useTools(
     // In read-only mode only the pan tool is ever attached, regardless of the
     // (possibly persisted) activeTool — this is the single choke point that
     // keeps Select/Wire/Place/Bus/Junction/Text off the canvas.
+    const toolId = readOnly ? 'pan' : activeTool;
     const tool = readOnly ? TOOLS.pan : TOOLS[activeTool];
     const ctx: ToolContext = { viewport, hostEl: host };
+
+    // Reflect the active tool as a data attribute so CSS can style by mode
+    // (e.g. reveal every junction dot while a drawing/placing tool is active).
+    host.dataset.tool = toolId;
 
     tool.onActivate?.(ctx);
     if (tool.cursor) host.style.cursor = tool.cursor;
@@ -57,6 +62,7 @@ export function useTools(
       host.removeEventListener('dblclick', onDbl);
       tool.onDeactivate?.(ctx);
       host.style.cursor = '';
+      delete host.dataset.tool;
     };
   }, [activeTool, readOnly, hostRef, viewport]);
 }

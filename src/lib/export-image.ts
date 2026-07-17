@@ -86,9 +86,13 @@ export function buildExportSvg(
     );
   }
 
-  // Junctions — a filled dot per point node (matches the on-canvas marker;
-  // the solder dot also disambiguates a connection from a wire crossover).
-  for (const { junction, world } of model.junctions.values()) {
+  // Junctions — a filled solder dot per point node, but only where 3+
+  // conductors meet (`degree >= 3`). Per the schematic convention a corner or
+  // pass-through (degree ≤ 2) gets no dot — one there would falsely imply a
+  // tap. Where a real tee/cross exists the dot disambiguates a connection from
+  // a crossover. Mirrors the on-canvas rule (JunctionLayer `data-solder`).
+  for (const { junction, world, degree } of model.junctions.values()) {
+    if (degree < 3) continue;
     out.push(
       `  <circle id="${escapeXml(junction.id)}" cx="${world[0]}" cy="${world[1]}" r="3.5" fill="black"/>`,
     );

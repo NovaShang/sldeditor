@@ -108,6 +108,37 @@ describe('junction endpoints', () => {
     expect(j3[0]).toBeLessThan(j2[0]); // J3 sits between its two junction neighbours
   });
 
+  it('reports each junction degree (wire ends terminating on it)', () => {
+    const d: DiagramFile = {
+      version: '1',
+      elements: [
+        { id: 'QF1', kind: 'breaker' },
+        { id: 'QF2', kind: 'breaker' },
+        { id: 'QF3', kind: 'breaker' },
+      ],
+      // Jtee: 3 wires meet (degree 3). Jend: single dangling wire (degree 1).
+      junctions: [
+        { id: 'Jtee', layout: { at: [100, 100] } },
+        { id: 'Jend', layout: { at: [300, 100] } },
+      ],
+      layout: {
+        QF1: { at: [0, 0] },
+        QF2: { at: [200, 0] },
+        QF3: { at: [100, 200] },
+      },
+      wires: [
+        { id: 'w1', ends: [`QF1.${pin(1)}`, 'Jtee'] },
+        { id: 'w2', ends: ['Jtee', `QF2.${pin(0)}`] },
+        { id: 'w3', ends: ['Jtee', `QF3.${pin(0)}`] },
+        { id: 'w4', ends: ['Jtee', 'Jend'] },
+      ],
+    };
+    const m = compile(d);
+    // Jtee is referenced by w1, w2, w3, w4 → degree 4; Jend only by w4 → 1.
+    expect(m.junctions.get('Jtee')?.degree).toBe(4);
+    expect(m.junctions.get('Jend')?.degree).toBe(1);
+  });
+
   it('errors on a wire to an id that is neither bus nor junction', () => {
     const d: DiagramFile = {
       version: '1',
