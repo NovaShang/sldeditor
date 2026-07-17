@@ -10,17 +10,28 @@ import { libraryById } from '../element-library';
 import { useT } from '../i18n';
 import { useLibT } from '../i18n/library';
 import { useEditorStore } from '../store';
-import type {
-  Bus,
-  BusId,
-  Element,
-  ElementId,
-  Junction,
-  LibraryParamField,
-  LibraryStateField,
-  ParamValue,
-  WireId,
+import {
+  annotationKind,
+  type AnnotationId,
+  type Bus,
+  type BusId,
+  type Element,
+  type ElementId,
+  type Junction,
+  type LibraryParamField,
+  type LibraryStateField,
+  type LineAnnotation,
+  type ParamValue,
+  type RectAnnotation,
+  type TableAnnotation,
+  type TextAnnotation,
+  type WireId,
 } from '../model';
+import {
+  makeTableBody,
+  TABLE_DEFAULT_CELL_H,
+  TABLE_DEFAULT_CELL_W,
+} from '../lib/annotation-geom';
 import { cn } from '../lib/utils';
 
 export function PropertyPanel() {
@@ -31,9 +42,11 @@ export function PropertyPanel() {
   const junctions = useEditorStore((s) => s.diagram.junctions);
   const selectedNode = useEditorStore((s) => s.selectedNode);
   const selectedWire = useEditorStore((s) => s.selectedWire);
+  const selectedAnnotation = useEditorStore((s) => s.selectedAnnotation);
 
   if (selectedWire) return <WirePanel wireId={selectedWire} />;
   if (selectedNode) return <NodePanel nodeId={selectedNode} />;
+  if (selectedAnnotation) return <AnnotationPanel annId={selectedAnnotation} />;
 
   if (selection.length === 0) {
     return (
@@ -298,6 +311,264 @@ function updateBusEntry(id: BusId, patch: Partial<Bus>) {
     const buses = (d.buses ?? []).map((b) => (b.id === id ? { ...b, ...patch } : b));
     return { ...d, buses };
   });
+}
+
+// ---------------------------------------------------------------------------
+// Annotation inspector — per-type controls for text / rect / line / table.
+// ---------------------------------------------------------------------------
+
+function AnnotationPanel({ annId }: { annId: AnnotationId }) {
+  const t = useT();
+  const ann = useEditorStore((s) =>
+    (s.diagram.annotations ?? []).find((a) => a.id === annId),
+  );
+  if (!ann) {
+    return (
+      <div className="px-4 py-5 text-center text-xs text-muted-foreground">
+        {t('props.annNotFound', { id: annId })}
+      </div>
+    );
+  }
+  const patch = (p: Record<string, unknown>) =>
+    useEditorStore.getState().updateAnnotation(annId, p);
+
+  switch (annotationKind(ann)) {
+    case 'rect': {
+      const r = ann as RectAnnotation;
+      return (
+        <div className="flex flex-col gap-2.5 px-3 py-3 text-xs">
+          <TextRow
+            label={t('props.annLabel')}
+            value={r.label ?? ''}
+            placeholder={t('props.annLabelPlaceholder')}
+            onCommit={(v) =>
+              patch({ label: v.trim() === '' ? undefined : v.trim() })
+            }
+          />
+          <SegRow
+            label={t('props.annStroke')}
+            value={r.stroke ?? 'dashed'}
+            options={[
+              { value: 'solid', label: t('props.annStrokeSolid') },
+              { value: 'dashed', label: t('props.annStrokeDashed') },
+            ]}
+            onChange={(v) => patch({ stroke: v })}
+          />
+          <SegRow
+            label={t('props.annFill')}
+            value={r.fill ?? 'none'}
+            options={[
+              { value: 'none', label: t('props.annFillNone') },
+              { value: 'tint', label: t('props.annFillTint') },
+            ]}
+            onChange={(v) => patch({ fill: v === 'none' ? undefined : v })}
+          />
+        </div>
+      );
+    }
+    case 'line': {
+      const l = ann as LineAnnotation;
+      return (
+        <div className="flex flex-col gap-2.5 px-3 py-3 text-xs">
+          <SegRow
+            label={t('props.annStroke')}
+            value={l.stroke ?? 'solid'}
+            options={[
+              { value: 'solid', label: t('props.annStrokeSolid') },
+              { value: 'dashed', label: t('props.annStrokeDashed') },
+            ]}
+            onChange={(v) => patch({ stroke: v })}
+          />
+          <SegRow
+            label={t('props.annArrow')}
+            value={l.arrow ?? 'none'}
+            options={[
+              { value: 'none', label: t('props.annArrowNone') },
+              { value: 'end', label: t('props.annArrowEnd') },
+              { value: 'both', label: t('props.annArrowBoth') },
+            ]}
+            onChange={(v) => patch({ arrow: v === 'none' ? undefined : v })}
+          />
+        </div>
+      );
+    }
+    case 'table': {
+      const tb = ann as TableAnnotation;
+      return (
+        <div className="flex flex-col gap-2.5 px-3 py-3 text-xs">
+          <StepperRow
+            label={t('props.annRows')}
+            value={tb.rowHeights.length}
+            min={1}
+            onChange={(n) => patch(resizeTableRows(tb, n))}
+          />
+          <StepperRow
+            label={t('props.annCols')}
+            value={tb.colWidths.length}
+            min={1}
+            onChange={(n) => patch(resizeTableCols(tb, n))}
+          />
+          <FontSizeRow
+            label={t('props.annFontSize')}
+            value={tb.fontSize}
+            onCommit={(fs) => patch({ fontSize: fs })}
+          />
+        </div>
+      );
+    }
+    default: {
+      const tx = ann as TextAnnotation;
+      return (
+        <div className="flex flex-col gap-2.5 px-3 py-3 text-xs">
+          <FontSizeRow
+            label={t('props.annFontSize')}
+            value={tx.fontSize}
+            onCommit={(fs) => patch({ fontSize: fs })}
+          />
+        </div>
+      );
+    }
+  }
+}
+
+/** Grow/shrink table rows from the end, preserving existing cell content. */
+function resizeTableRows(
+  tb: TableAnnotation,
+  n: number,
+): Pick<TableAnnotation, 'rowHeights' | 'cells'> {
+  const cols = tb.colWidths.length;
+  const lastH = tb.rowHeights[tb.rowHeights.length - 1] ?? TABLE_DEFAULT_CELL_H;
+  const rowHeights = tb.rowHeights.slice(0, n);
+  while (rowHeights.length < n) rowHeights.push(lastH);
+  const cells = tb.cells.slice(0, n).map((r) => [...r]);
+  while (cells.length < n) cells.push(makeTableBody(cols, 1).cells[0]);
+  return { rowHeights, cells };
+}
+
+/** Grow/shrink table columns from the end, preserving existing content. */
+function resizeTableCols(
+  tb: TableAnnotation,
+  n: number,
+): Pick<TableAnnotation, 'colWidths' | 'cells'> {
+  const lastW = tb.colWidths[tb.colWidths.length - 1] ?? TABLE_DEFAULT_CELL_W;
+  const colWidths = tb.colWidths.slice(0, n);
+  while (colWidths.length < n) colWidths.push(lastW);
+  const cells = tb.cells.map((row) => {
+    const next = row.slice(0, n);
+    while (next.length < n) next.push('');
+    return next;
+  });
+  return { colWidths, cells };
+}
+
+/** Segmented single-choice control (2–3 options). */
+function SegRow<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <Field label={label}>
+      <div className="flex overflow-hidden rounded-md border border-border/60">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={value === o.value}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              'h-7 flex-1 truncate px-1.5 text-[11px] transition-colors',
+              value === o.value
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </Field>
+  );
+}
+
+/** Integer stepper with − / + buttons (rows/cols count). */
+function StepperRow({
+  label,
+  value,
+  min,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-label={`${label} −`}
+          disabled={value <= min}
+          onClick={() => onChange(value - 1)}
+          className="h-7 w-7 rounded-md border border-border/60 text-[13px] leading-none text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+        >
+          −
+        </button>
+        <span className="w-8 text-center font-mono text-[11px] tabular-nums">
+          {value}
+        </span>
+        <button
+          type="button"
+          aria-label={`${label} +`}
+          onClick={() => onChange(value + 1)}
+          className="h-7 w-7 rounded-md border border-border/60 text-[13px] leading-none text-muted-foreground hover:bg-accent"
+        >
+          +
+        </button>
+      </div>
+    </Field>
+  );
+}
+
+const FONT_SIZE_MIN = 5;
+const FONT_SIZE_MAX = 32;
+const FONT_SIZE_DEFAULT = 8;
+
+/** Numeric font-size input; empty commits back to the default. */
+function FontSizeRow({
+  label,
+  value,
+  onCommit,
+}: {
+  label: string;
+  value: number | undefined;
+  onCommit: (v: number | undefined) => void;
+}) {
+  return (
+    <TextRow
+      label={label}
+      value={value != null ? String(value) : ''}
+      placeholder={String(FONT_SIZE_DEFAULT)}
+      unit="px"
+      onCommit={(v) => {
+        const trimmed = v.trim();
+        if (trimmed === '') {
+          onCommit(undefined);
+          return;
+        }
+        const n = Number(trimmed);
+        if (!Number.isFinite(n)) return;
+        onCommit(Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, Math.round(n))));
+      }}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------

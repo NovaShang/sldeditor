@@ -5,7 +5,12 @@ export type { OneLineEditorProps } from './OneLineEditor';
 export type { OneLineEditorProps as SldEditorProps } from './OneLineEditor';
 
 export type {
+  Annotation,
+  AnnotationFill,
   AnnotationId,
+  AnnotationKind,
+  AnnotationPatch,
+  AnnotationStroke,
   Bus,
   BusId,
   BusLayout,
@@ -24,17 +29,23 @@ export type {
   LibraryStateField,
   LibraryStretchable,
   LibraryTerminal,
+  LineAnnotation,
+  LineArrow,
   NodeId,
   Orientation,
   ParamValue,
   PinName,
   Placement,
+  RectAnnotation,
+  TableAnnotation,
   TextAnnotation,
   TerminalRef,
   Wire,
   WireEnd,
   WireId,
 } from './model';
+
+export { annotationKind, isTextAnnotation } from './model';
 
 // Compiler / runtime model — exported so library consumers can build their
 // own renderers or analysis tools on top of the same DiagramFile pipeline.

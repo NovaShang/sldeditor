@@ -1,5 +1,10 @@
 export type {
+  Annotation,
+  AnnotationFill,
   AnnotationId,
+  AnnotationKind,
+  AnnotationPatch,
+  AnnotationStroke,
   Bus,
   BusId,
   BusLayout,
@@ -12,16 +17,22 @@ export type {
   JunctionId,
   JunctionLayout,
   LabelMode,
+  LineAnnotation,
+  LineArrow,
   NodeId,
   ParamValue,
   PinName,
   Placement,
+  RectAnnotation,
+  TableAnnotation,
   TerminalRef,
   TextAnnotation,
   Wire,
   WireEnd,
   WireId,
 } from './types';
+
+export { annotationKind, isTextAnnotation } from './types';
 
 export type {
   LibraryEntry,

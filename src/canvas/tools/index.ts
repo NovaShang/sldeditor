@@ -6,6 +6,9 @@ import { PlaceTool } from './PlaceTool';
 import { BusbarTool } from './BusbarTool';
 import { JunctionTool } from './JunctionTool';
 import { TextTool } from './TextTool';
+import { RectTool } from './RectTool';
+import { LineTool } from './LineTool';
+import { TableTool } from './TableTool';
 
 export const TOOLS: Record<ToolId, Tool> = {
   select: SelectTool,
@@ -15,6 +18,9 @@ export const TOOLS: Record<ToolId, Tool> = {
   busbar: BusbarTool,
   junction: JunctionTool,
   text: TextTool,
+  rect: RectTool,
+  line: LineTool,
+  table: TableTool,
 };
 
 export type { Tool, ToolContext, ToolId } from './types';

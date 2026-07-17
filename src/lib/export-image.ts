@@ -7,7 +7,28 @@
 
 import { transformAttr } from '../canvas/transform-attr';
 import { transformPoint, type InternalModel } from '../compiler';
-import type { LabelMode, TextAnnotation } from '../model';
+import {
+  annotationKind,
+  type Annotation,
+  type LabelMode,
+  type LineAnnotation,
+  type RectAnnotation,
+  type TableAnnotation,
+  type TextAnnotation,
+} from '../model';
+import {
+  ANNOTATION_DASH,
+  ANNOTATION_FONT_SIZE as ANN_FONT_SIZE,
+  annotationBBox,
+  lineAbsPoints,
+  lineArrowHeads,
+  RECT_LABEL_PAD,
+  TABLE_CELL_PAD_X,
+  tableColEdges,
+  tableRowEdges,
+  tableSize,
+  TINT_OPACITY,
+} from './annotation-geom';
 import {
   LABEL_FONT_SIZE,
   LABEL_LINE_HEIGHT,
@@ -19,7 +40,6 @@ import { placeWireLabel } from './wire-labels';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PADDING = 24;
-const ANNOTATION_FONT_SIZE = 8;
 const ANNOTATION_LINE_HEIGHT = 1.25;
 
 interface Bbox {
@@ -36,9 +56,9 @@ export interface ExportOptions {
   background?: string;
   /** Element label visibility. Mirrors `DiagramFile.meta.labelMode`. Default 'all'. */
   labelMode?: LabelMode;
-  /** Free text annotations from `DiagramFile.annotations` — `InternalModel`
+  /** Free annotations from `DiagramFile.annotations` — `InternalModel`
    *  doesn't carry them, so the caller passes them through. */
-  annotations?: TextAnnotation[];
+  annotations?: Annotation[];
 }
 
 export function buildExportSvg(
@@ -151,31 +171,137 @@ export function buildExportSvg(
     out.push('  </g>');
   }
 
-  // Free text annotations — independent notes the user dropped via the text
-  // tool. Same positioning as FreeAnnotationLayer (baseline at at.y + fs*0.85,
-  // step fs*LINE_HEIGHT per line).
+  // Free annotations — decoration the user drew over the diagram. Rendering
+  // mirrors FreeAnnotationLayer per type; geometry comes from the shared
+  // annotation-geom helpers so canvas and export can't drift apart.
   const anns = opts.annotations ?? [];
   if (anns.length > 0) {
     const halo = bg === 'transparent' ? '#FFFFFF' : bg;
-    out.push(
-      `  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" paint-order="stroke" stroke="${halo}" stroke-width="2" stroke-linejoin="round">`,
-    );
+    const cellBg = bg === 'transparent' ? 'none' : bg;
+    const fontAttrs = `font-family="ui-sans-serif, system-ui, sans-serif" paint-order="stroke" stroke="${halo}" stroke-width="2" stroke-linejoin="round"`;
     for (const ann of anns) {
-      if (!ann.text) continue;
-      const fs = ann.fontSize ?? ANNOTATION_FONT_SIZE;
-      const lines = ann.text.split('\n');
-      for (let i = 0; i < lines.length; i++) {
-        const y = ann.at[1] + fs * 0.85 + i * fs * ANNOTATION_LINE_HEIGHT;
-        out.push(
-          `    <text x="${ann.at[0]}" y="${y}" font-size="${fs}">${escapeXml(lines[i])}</text>`,
-        );
+      switch (annotationKind(ann)) {
+        case 'rect':
+          exportRect(out, ann as RectAnnotation, fontAttrs);
+          break;
+        case 'line':
+          exportLine(out, ann as LineAnnotation);
+          break;
+        case 'table':
+          exportTable(out, ann as TableAnnotation, cellBg);
+          break;
+        default:
+          exportText(out, ann as TextAnnotation, fontAttrs);
+          break;
       }
     }
-    out.push('  </g>');
   }
 
   out.push('</svg>');
   return out.join('\n');
+}
+
+// ---- Annotation emitters (mirror FreeAnnotationLayer) ---------------------
+
+function exportText(out: string[], ann: TextAnnotation, fontAttrs: string): void {
+  if (!ann.text) return;
+  const fs = ann.fontSize ?? ANN_FONT_SIZE;
+  const lines = ann.text.split('\n');
+  out.push(`  <g fill="black" ${fontAttrs}>`);
+  for (let i = 0; i < lines.length; i++) {
+    const y = ann.at[1] + fs * 0.85 + i * fs * ANNOTATION_LINE_HEIGHT;
+    out.push(
+      `    <text x="${ann.at[0]}" y="${y}" font-size="${fs}">${escapeXml(lines[i])}</text>`,
+    );
+  }
+  out.push('  </g>');
+}
+
+function exportRect(out: string[], ann: RectAnnotation, fontAttrs: string): void {
+  const [x, y] = ann.at;
+  const [w, h] = ann.size;
+  const dash =
+    (ann.stroke ?? 'dashed') === 'dashed'
+      ? ` stroke-dasharray="${ANNOTATION_DASH}"`
+      : '';
+  if (ann.fill === 'tint') {
+    out.push(
+      `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="black" fill-opacity="${TINT_OPACITY}"/>`,
+    );
+  }
+  out.push(
+    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="black" stroke-width="1"${dash}/>`,
+  );
+  if (ann.label) {
+    out.push(`  <g fill="black" ${fontAttrs}>`);
+    out.push(
+      `    <text x="${x + RECT_LABEL_PAD}" y="${y + RECT_LABEL_PAD + ANN_FONT_SIZE * 0.85}" font-size="${ANN_FONT_SIZE}">${escapeXml(ann.label)}</text>`,
+    );
+    out.push('  </g>');
+  }
+}
+
+function exportLine(out: string[], ann: LineAnnotation): void {
+  const pts = lineAbsPoints(ann);
+  if (pts.length < 2) return;
+  const dash =
+    (ann.stroke ?? 'solid') === 'dashed'
+      ? ` stroke-dasharray="${ANNOTATION_DASH}"`
+      : '';
+  const ptsAttr = pts.map(([px, py]) => `${px},${py}`).join(' ');
+  out.push(
+    `  <polyline points="${ptsAttr}" fill="none" stroke="black" stroke-width="1"${dash}/>`,
+  );
+  for (const tri of lineArrowHeads(pts, ann.arrow)) {
+    out.push(
+      `  <polygon points="${tri.map(([px, py]) => `${px},${py}`).join(' ')}" fill="black"/>`,
+    );
+  }
+}
+
+function exportTable(out: string[], ann: TableAnnotation, cellBg: string): void {
+  const [x, y] = ann.at;
+  const [w, h] = tableSize(ann);
+  const colE = tableColEdges(ann);
+  const rowE = tableRowEdges(ann);
+  const fs = ann.fontSize ?? ANN_FONT_SIZE;
+  if (cellBg !== 'none') {
+    out.push(
+      `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${cellBg}"/>`,
+    );
+  }
+  let grid = '';
+  for (let c = 1; c < ann.colWidths.length; c++) {
+    grid += `M${x + colE[c]} ${y}V${y + h}`;
+  }
+  for (let r = 1; r < ann.rowHeights.length; r++) {
+    grid += `M${x} ${y + rowE[r]}H${x + w}`;
+  }
+  if (grid) {
+    out.push(`  <path d="${grid}" fill="none" stroke="black" stroke-width="0.5"/>`);
+  }
+  out.push(
+    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="black" stroke-width="1"/>`,
+  );
+  const texts: string[] = [];
+  for (let r = 0; r < ann.rowHeights.length; r++) {
+    for (let c = 0; c < ann.colWidths.length; c++) {
+      const value = ann.cells[r]?.[c] ?? '';
+      if (value === '') continue;
+      const tx = x + colE[c] + TABLE_CELL_PAD_X;
+      const ty = y + rowE[r] + ann.rowHeights[r] / 2 + fs * 0.35;
+      texts.push(
+        `    <text x="${tx}" y="${ty}" font-size="${fs}">${escapeXml(value)}</text>`,
+      );
+    }
+  }
+  if (texts.length > 0) {
+    out.push(
+      '  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif">',
+    );
+    out.push(...texts);
+    out.push('  </g>');
+  }
 }
 
 function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
@@ -263,15 +389,15 @@ function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
     }
   }
 
-  // Free annotations — can sit anywhere on the canvas.
+  // Free annotations — can sit anywhere on the canvas. Bounds come from the
+  // shared per-type bbox helper (text uses the same width heuristic as the
+  // canvas halo).
   for (const ann of opts.annotations ?? []) {
-    if (!ann.text) continue;
-    const fs = ann.fontSize ?? ANNOTATION_FONT_SIZE;
-    const lines = ann.text.split('\n');
-    const w = textWidthGuess(lines, fs);
-    const h = lines.length * fs * ANNOTATION_LINE_HEIGHT;
-    update(ann.at[0], ann.at[1]);
-    update(ann.at[0] + w, ann.at[1] + h);
+    if (annotationKind(ann) === 'text' && !(ann as TextAnnotation).text)
+      continue;
+    const b = annotationBBox(ann);
+    update(b.minX, b.minY);
+    update(b.maxX, b.maxY);
   }
 
   if (minX === Infinity) {

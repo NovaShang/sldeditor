@@ -13,6 +13,9 @@ import {
   Redo2,
   Scissors,
   Shapes,
+  Slash,
+  Square,
+  Table,
   Type,
   Undo2,
   Wand2,
@@ -23,6 +26,7 @@ import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { usePanels } from '../hooks/use-panels';
 import { useT, type LocaleKey } from '../i18n';
 import { cn } from '../lib/utils';
+import { annotationKind } from '../model';
 import { useEditorStore, type ToolId } from '../store';
 import { ViewMenuButton } from './ViewToolbar';
 
@@ -96,7 +100,9 @@ const TOOLS: ToolDef[] = [
     descriptionKey: 'tool.wireHint',
     icon: Cable,
     switchTo: 'wire',
+    groupBreakAfter: true,
   },
+  // Annotation cluster — decoration over the electrical model.
   {
     id: 'text',
     labelKey: 'tool.text',
@@ -104,6 +110,33 @@ const TOOLS: ToolDef[] = [
     descriptionKey: 'tool.textHint',
     icon: Type,
     switchTo: 'text',
+    iconOnly: true,
+  },
+  {
+    id: 'rect',
+    labelKey: 'tool.rect',
+    hotkey: 'F',
+    descriptionKey: 'tool.rectHint',
+    icon: Square,
+    switchTo: 'rect',
+    iconOnly: true,
+  },
+  {
+    id: 'line',
+    labelKey: 'tool.line',
+    hotkey: 'L',
+    descriptionKey: 'tool.lineHint',
+    icon: Slash,
+    switchTo: 'line',
+    iconOnly: true,
+  },
+  {
+    id: 'table',
+    labelKey: 'tool.table',
+    hotkey: 'D',
+    descriptionKey: 'tool.tableHint',
+    icon: Table,
+    switchTo: 'table',
     iconOnly: true,
   },
 ];
@@ -123,11 +156,39 @@ function ToolHint() {
   const hasSelection = useEditorStore(
     (s) => s.selection.length > 0 || s.selectedNode != null,
   );
+  const editingAnnotation = useEditorStore((s) => s.editingAnnotation);
+  const annSelKind = useEditorStore((s) => {
+    const id = s.selectedAnnotation;
+    if (!id) return null;
+    const a = s.diagram.annotations?.find((x) => x.id === id);
+    return a ? annotationKind(a) : null;
+  });
+
+  // Editing an annotation overrides the tool hint — point at the confirm /
+  // cancel affordances (keys + the floating ✓ / ✕ buttons).
+  if (editingAnnotation) {
+    return (
+      <div className="ole-glass pointer-events-none flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground shadow-sm">
+        <span>{t('mode.annEditing')}</span>
+      </div>
+    );
+  }
 
   let text: string | null = null;
   let cancelHint = false;
   switch (active) {
     case 'select':
+      if (annSelKind) {
+        // A free annotation is selected — tell the user it's editable.
+        text =
+          annSelKind === 'table'
+            ? t('mode.annTableSel')
+            : annSelKind === 'text'
+              ? t('mode.annTextSel')
+              : t('mode.annShapeSel');
+        cancelHint = true;
+        break;
+      }
       text = hasSelection
         ? t('mode.selectWithSel')
         : t('mode.selectEmpty');
@@ -156,6 +217,18 @@ function ToolHint() {
       break;
     case 'text':
       text = t('mode.text');
+      cancelHint = true;
+      break;
+    case 'rect':
+      text = t('mode.rect');
+      cancelHint = true;
+      break;
+    case 'line':
+      text = t('mode.line');
+      cancelHint = true;
+      break;
+    case 'table':
+      text = t('mode.table');
       cancelHint = true;
       break;
   }
@@ -190,12 +263,14 @@ export function FloatingToolbar() {
   // toolbar disappear and their entry points are embedded directly into this
   // pill as a tab-bar-style row, so the whole bottom chrome stays on a single
   // visual row. The [Undo/Redo/Layout] group also collapses into one overflow
-  // button to keep the bar narrow. Select and text are dropped from the main
-  // bar — Pan is the default on touch and absorbs single-tap selection (see
-  // PanTool), and text annotation is rare enough on a phone to hide.
+  // button to keep the bar narrow. Select and the annotation cluster are
+  // dropped from the main bar — Pan is the default on touch and absorbs
+  // single-tap selection (see PanTool), and annotation drawing is rare
+  // enough on a phone to hide.
   const unifiedBar = atLeast(tier, 'dense');
+  const PHONE_HIDDEN = new Set(['select', 'text', 'rect', 'line', 'table']);
   const visibleTools = unifiedBar
-    ? TOOLS.filter((def) => def.id !== 'select' && def.id !== 'text')
+    ? TOOLS.filter((def) => !PHONE_HIDDEN.has(def.id))
     : TOOLS;
 
   const isToolActive = (def: ToolDef): boolean => active === def.switchTo;

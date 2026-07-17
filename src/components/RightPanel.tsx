@@ -3,6 +3,7 @@ import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { useT } from '../i18n';
 import { useLibT } from '../i18n/library';
 import { cn } from '../lib/utils';
+import { annotationKind } from '../model';
 import { useEditorStore } from '../store';
 import { PropertyPanel } from './PropertyPanel';
 
@@ -12,12 +13,20 @@ export function RightPanel() {
   const selection = useEditorStore((s) => s.selection);
   const selectedNode = useEditorStore((s) => s.selectedNode);
   const selectedWire = useEditorStore((s) => s.selectedWire);
+  const selectedAnnotation = useEditorStore((s) => s.selectedAnnotation);
+  const annotations = useEditorStore((s) => s.diagram.annotations);
   const elements = useEditorStore((s) => s.diagram.elements);
   const buses = useEditorStore((s) => s.diagram.buses);
   const tier = useEditorTier();
   const compactWidth = atLeast(tier, 'dense');
 
-  if (selection.length === 0 && !selectedNode && !selectedWire) return null;
+  if (
+    selection.length === 0 &&
+    !selectedNode &&
+    !selectedWire &&
+    !selectedAnnotation
+  )
+    return null;
 
   let title = t('props.title');
   let count: number | null = null;
@@ -25,6 +34,17 @@ export function RightPanel() {
     title = t('props.wire');
   } else if (selectedNode) {
     title = t('props.node');
+  } else if (selectedAnnotation) {
+    const ann = (annotations ?? []).find((a) => a.id === selectedAnnotation);
+    const kind = ann ? annotationKind(ann) : 'text';
+    title =
+      kind === 'rect'
+        ? t('props.annRect')
+        : kind === 'line'
+          ? t('props.annLine')
+          : kind === 'table'
+            ? t('props.annTable')
+            : t('props.annText');
   } else if (selection.length === 1) {
     const id = selection[0];
     const bus = (buses ?? []).find((b) => b.id === id);

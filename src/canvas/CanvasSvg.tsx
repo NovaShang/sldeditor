@@ -27,6 +27,8 @@ import { setViewportApi } from './viewport-bus';
 import { dropElement } from './drop-on-bus';
 import { AnnotationLayer } from './AnnotationLayer';
 import { FreeAnnotationLayer } from './FreeAnnotationLayer';
+import { AnnotationDraftPreview } from './AnnotationDraftPreview';
+import { AnnotationHandles } from './AnnotationHandles';
 import { BusHandles } from './BusHandles';
 import { WireHandles } from './WireHandles';
 import { BusLayer } from './BusLayer';
@@ -39,7 +41,7 @@ import { SelectionOverlay } from './SelectionOverlay';
 import { TerminalLayer } from './TerminalLayer';
 import { WireLayer } from './WireLayer';
 import { WirePreview } from './WirePreview';
-import { hitElement, hitNode } from './hit-test';
+import { hitAnnotation, hitElement, hitNode } from './hit-test';
 import { dispatchSyntheticPointerCancel } from './synthetic-pointer-cancel';
 import { exitDrawingState } from './useKeyboardShortcuts';
 import { useHoverHighlight } from './useHoverHighlight';
@@ -109,8 +111,13 @@ export function CanvasSvg() {
         exitDrawingState();
         return;
       }
-      const elementId = hitElement(target);
-      if (elementId) {
+      const annotationId = hitAnnotation(target);
+      const elementId = annotationId ? null : hitElement(target);
+      if (annotationId) {
+        if (store.selectedAnnotation !== annotationId) {
+          store.setSelectedAnnotation(annotationId);
+        }
+      } else if (elementId) {
         if (!store.selection.includes(elementId)) {
           store.setSelection([elementId]);
         }
@@ -122,7 +129,10 @@ export function CanvasSvg() {
       }
 
       const s = useEditorStore.getState();
-      const hasSelection = s.selection.length > 0;
+      const hasElementSelection = s.selection.length > 0;
+      const hasAnnotationSelection = s.selectedAnnotation != null;
+      // Cut/copy/delete cover both channels; rotate/mirror are element-only.
+      const hasSelection = hasElementSelection || hasAnnotationSelection;
       const hasNodeSelection = s.selectedNode != null;
       const hasClipboard = !!s.clipboard;
       const hasAnyElement = s.diagram.elements.length > 0;
@@ -169,14 +179,14 @@ export function CanvasSvg() {
           shortcut: 'R',
           icon: RotateCw,
           onSelect: () => useEditorStore.getState().rotateSelection(90),
-          disabled: !hasSelection,
+          disabled: !hasElementSelection,
         },
         {
           label: t('menu.mirror'),
           shortcut: 'M',
           icon: FlipHorizontal,
           onSelect: () => useEditorStore.getState().mirrorSelection(),
-          disabled: !hasSelection,
+          disabled: !hasElementSelection,
         },
         { type: 'separator' },
         {
@@ -195,10 +205,13 @@ export function CanvasSvg() {
           shortcut: 'Del',
           icon: Trash2,
           destructive: true,
-          onSelect: () =>
-            hasNodeSelection && !hasSelection
-              ? useEditorStore.getState().deleteSelectedNode()
-              : useEditorStore.getState().deleteSelection(),
+          onSelect: () => {
+            const st = useEditorStore.getState();
+            if (hasNodeSelection && !hasSelection) st.deleteSelectedNode();
+            else if (hasAnnotationSelection && st.selectedAnnotation) {
+              st.deleteAnnotation(st.selectedAnnotation);
+            } else st.deleteSelection();
+          },
           disabled: !hasSelection && !hasNodeSelection,
         },
       ];
@@ -332,9 +345,11 @@ export function CanvasSvg() {
           <SelectionOverlay />
           <BusHandles />
           <WireHandles />
+          <AnnotationHandles />
           <TerminalLayer />
           <WirePreview />
           <BusbarPreview />
+          <AnnotationDraftPreview />
           <PlaceGhost />
           <MarqueeOverlay />
         </g>

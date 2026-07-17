@@ -23,8 +23,11 @@ import {
   type BusGeometry,
 } from '../compiler';
 import type { FileSession } from '../lib/file-io';
+import type { AnnotationDraft } from '../lib/annotation-geom';
 import type {
+  Annotation,
   AnnotationId,
+  AnnotationPatch,
   Bus,
   BusId,
   BusLayout,
@@ -33,8 +36,11 @@ import type {
   ElementId,
   Junction,
   JunctionId,
+  LineAnnotation,
   NodeId,
   Placement,
+  RectAnnotation,
+  TableAnnotation,
   TextAnnotation,
   Wire,
   WireEnd,
@@ -76,6 +82,8 @@ export interface ClipboardData {
   placements: Record<ElementId, Placement>;
   busLayouts: Record<BusId, BusLayout>;
   wires: Wire[];
+  /** Copied free annotations (from the single-annotation selection channel). */
+  annotations: Annotation[];
 }
 
 export type ToolId =
@@ -85,7 +93,17 @@ export type ToolId =
   | 'place'
   | 'busbar'
   | 'junction'
-  | 'text';
+  | 'text'
+  | 'rect'
+  | 'line'
+  | 'table';
+
+/** Annotation body accepted by `insertAnnotation` (id minted by the store). */
+export type NewAnnotation =
+  | Omit<TextAnnotation, 'id'>
+  | Omit<RectAnnotation, 'id'>
+  | Omit<LineAnnotation, 'id'>
+  | Omit<TableAnnotation, 'id'>;
 
 /**
  * How one end of a freshly-drawn wire should resolve at commit time. The wire
@@ -131,6 +149,17 @@ export interface EditorState {
   selectedNode: NodeId | null;
   selectedAnnotation: AnnotationId | null;
   editingAnnotation: AnnotationId | null;
+  /** Table cell being edited (`[row, col]`), only with `editingAnnotation`. */
+  editingCell: [number, number] | null;
+  /** In-progress rect/line/table drag published by the drawing tools. */
+  annotationDraft: AnnotationDraft | null;
+  /**
+   * Ephemeral geometry override rendered *instead of* the model annotation
+   * with the same id — resize/vertex handles publish live previews here and
+   * commit a single `updateAnnotation` on release, so a whole handle drag is
+   * one undo entry (dispatching per pointermove would flood history).
+   */
+  annotationPreview: Annotation | null;
   editingElement: ElementId | null;
   /** View-only mode: disables every editing interaction and hides the editing
    *  chrome while keeping pan/zoom. Set via the OneLineEditor `readOnly` prop.
@@ -170,6 +199,9 @@ export interface EditorState {
   setSelectedNode: (nodeId: NodeId | null) => void;
   setSelectedAnnotation: (id: AnnotationId | null) => void;
   setEditingAnnotation: (id: AnnotationId | null) => void;
+  setEditingCell: (cell: [number, number] | null) => void;
+  setAnnotationDraft: (draft: AnnotationDraft | null) => void;
+  setAnnotationPreview: (preview: Annotation | null) => void;
   setEditingElement: (id: ElementId | null) => void;
   setReadOnly: (readOnly: boolean) => void;
 
@@ -227,7 +259,9 @@ export interface EditorState {
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
   updateBus: (id: BusId, patch: Partial<BusLayout>) => void;
   addAnnotation: (at: [number, number], text?: string) => AnnotationId;
-  updateAnnotation: (id: AnnotationId, patch: Partial<TextAnnotation>) => void;
+  /** Append a fully-specified annotation (rect / line / table / text). */
+  insertAnnotation: (ann: NewAnnotation) => AnnotationId;
+  updateAnnotation: (id: AnnotationId, patch: AnnotationPatch) => void;
   deleteAnnotation: (id: AnnotationId) => void;
 }
 
@@ -251,6 +285,9 @@ export const useEditorStore = create<EditorState>()(
   selectedNode: null,
   selectedAnnotation: null,
   editingAnnotation: null,
+  editingCell: null,
+  annotationDraft: null,
+  annotationPreview: null,
   editingElement: null,
   readOnly: false,
 
@@ -271,6 +308,9 @@ export const useEditorStore = create<EditorState>()(
       selectedNode: null,
       selectedAnnotation: null,
       editingAnnotation: null,
+      editingCell: null,
+      annotationDraft: null,
+      annotationPreview: null,
       editingElement: null,
       wireFromTerminal: null,
       wireDragFrom: null,
@@ -293,6 +333,9 @@ export const useEditorStore = create<EditorState>()(
       selectedNode: null,
       selectedAnnotation: null,
       editingAnnotation: null,
+      editingCell: null,
+      annotationDraft: null,
+      annotationPreview: null,
       editingElement: null,
       wireFromTerminal: null,
       wireDragFrom: null,
@@ -309,6 +352,13 @@ export const useEditorStore = create<EditorState>()(
       internal: compile(next),
       past: [...trimmed, diagram],
       future: [],
+      // A committed document change invalidates any in-flight geometry
+      // preview: the ephemeral `annotationPreview` shadows the model
+      // annotation of the same id in the renderer, so leaving a stale one set
+      // would hide this very change until the next preview rebuild (e.g. a
+      // resize). Clearing here keeps the canvas honest after every edit —
+      // including property-panel edits like table row/column count.
+      annotationPreview: null,
     });
   },
 
@@ -324,6 +374,7 @@ export const useEditorStore = create<EditorState>()(
       wireFromTerminal: null,
       wireDragFrom: null,
       placeFromTerminal: null,
+      annotationPreview: null,
     });
   },
 
@@ -339,6 +390,7 @@ export const useEditorStore = create<EditorState>()(
       wireFromTerminal: null,
       wireDragFrom: null,
       placeFromTerminal: null,
+      annotationPreview: null,
     });
   },
 
@@ -355,6 +407,7 @@ export const useEditorStore = create<EditorState>()(
       wireFromTerminal: tool === 'wire' ? cur.wireFromTerminal : null,
       wireDragFrom: tool === 'wire' ? cur.wireDragFrom : null,
       placeFromTerminal: tool === 'place' ? cur.placeFromTerminal : null,
+      annotationDraft: null,
     });
   },
   setPlaceKind: (kind) =>
@@ -391,6 +444,7 @@ export const useEditorStore = create<EditorState>()(
       selectedNode: null,
       selectedAnnotation: null,
       editingAnnotation: null,
+      editingCell: null,
       editingElement: null,
     }),
   setSelectedWire: (id) =>
@@ -414,13 +468,20 @@ export const useEditorStore = create<EditorState>()(
       selectedWire: id ? null : get().selectedWire,
       selectedNode: id ? null : get().selectedNode,
       editingAnnotation: id ? get().editingAnnotation : null,
+      editingCell: id ? get().editingCell : null,
     }),
   setEditingAnnotation: (id) =>
     set({
       editingAnnotation: id,
       selectedAnnotation: id ?? get().selectedAnnotation,
       editingElement: id ? null : get().editingElement,
+      // Cell targeting is per-edit-session; the caller re-sets it when
+      // entering a table cell right after this.
+      editingCell: null,
     }),
+  setEditingCell: (editingCell) => set({ editingCell }),
+  setAnnotationDraft: (annotationDraft) => set({ annotationDraft }),
+  setAnnotationPreview: (annotationPreview) => set({ annotationPreview }),
   setEditingElement: (id) =>
     set({
       editingElement: id,
@@ -432,8 +493,29 @@ export const useEditorStore = create<EditorState>()(
     }),
 
   copySelection: () => {
-    const { selection, diagram, internal } = get();
-    if (selection.length === 0) return;
+    const { selection, selectedAnnotation, diagram, internal } = get();
+    // Annotation channel: single-annotation selection is separate from the
+    // element selection, so copy it as an annotations-only clipboard.
+    if (selection.length === 0) {
+      if (!selectedAnnotation) return;
+      const ann = (diagram.annotations ?? []).find(
+        (a) => a.id === selectedAnnotation,
+      );
+      if (!ann) return;
+      set({
+        clipboard: {
+          elements: [],
+          buses: [],
+          junctions: [],
+          placements: {},
+          busLayouts: {},
+          wires: [],
+          annotations: [structuredClone(ann)],
+        },
+        clipboardPasteIndex: 0,
+      });
+      return;
+    }
     const sel = new Set(selection);
 
     const elements = diagram.elements
@@ -482,27 +564,73 @@ export const useEditorStore = create<EditorState>()(
       .map((w) => structuredClone(w));
 
     set({
-      clipboard: { elements, buses, junctions, placements, busLayouts, wires },
+      clipboard: {
+        elements,
+        buses,
+        junctions,
+        placements,
+        busLayouts,
+        wires,
+        annotations: [],
+      },
       clipboardPasteIndex: 0,
     });
   },
 
   cutSelection: () => {
-    const { selection } = get();
-    if (selection.length === 0) return;
+    const { selection, selectedAnnotation } = get();
+    if (selection.length === 0 && !selectedAnnotation) return;
     get().copySelection();
-    get().deleteSelection();
+    if (selection.length === 0 && selectedAnnotation) {
+      get().deleteAnnotation(selectedAnnotation);
+    } else {
+      get().deleteSelection();
+    }
   },
 
   pasteClipboard: () => {
     const { clipboard, clipboardPasteIndex, diagram } = get();
     if (!clipboard) return;
+    // Annotations-only clipboard: paste with the same cascade offset and
+    // select the pasted copy (mirrors the element flow below).
     if (
       clipboard.elements.length === 0 &&
       clipboard.buses.length === 0 &&
       clipboard.junctions.length === 0
-    )
+    ) {
+      const anns = clipboard.annotations ?? [];
+      if (anns.length === 0) return;
+      const step = clipboardPasteIndex + 1;
+      const off = PASTE_OFFSET * step;
+      let lastId: AnnotationId | null = null;
+      get().dispatch((d) => {
+        let working = d;
+        for (const ann of anns) {
+          const id = newAnnotationId(working);
+          lastId = id;
+          const moved = {
+            ...structuredClone(ann),
+            id,
+            at: [ann.at[0] + off, ann.at[1] + off] as [number, number],
+          };
+          working = {
+            ...working,
+            annotations: [...(working.annotations ?? []), moved],
+          };
+        }
+        return working;
+      });
+      if (lastId) {
+        set({
+          selectedAnnotation: lastId,
+          selection: [],
+          selectedWire: null,
+          selectedNode: null,
+          clipboardPasteIndex: step,
+        });
+      }
       return;
+    }
     const step = clipboardPasteIndex + 1;
     const dx = PASTE_OFFSET * step;
     const dy = PASTE_OFFSET * step;
@@ -1168,6 +1296,14 @@ export const useEditorStore = create<EditorState>()(
     });
     return id;
   },
+  insertAnnotation: (ann) => {
+    const id = newAnnotationId(get().diagram);
+    get().dispatch((d) => ({
+      ...d,
+      annotations: [...(d.annotations ?? []), { ...ann, id } as Annotation],
+    }));
+    return id;
+  },
   updateAnnotation: (id, patch) => {
     get().dispatch((d) => {
       const list = d.annotations ?? [];
@@ -1192,7 +1328,10 @@ export const useEditorStore = create<EditorState>()(
       };
     });
     if (get().selectedAnnotation === id) {
-      set({ selectedAnnotation: null, editingAnnotation: null });
+      set({ selectedAnnotation: null, editingAnnotation: null, editingCell: null });
+    }
+    if (get().annotationPreview?.id === id) {
+      set({ annotationPreview: null });
     }
   },
     }),

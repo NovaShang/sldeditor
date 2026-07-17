@@ -29,10 +29,10 @@ export function exitDrawingState(): void {
   const store = useEditorStore.getState();
   const tool = store.activeTool;
   if (store.editingAnnotation || store.editingElement) {
-    // Inline edit in progress: blur the contentEditable so its onBlur commits.
+    // Inline edit in progress: blur the editable so its onBlur commits.
     if (typeof document !== 'undefined') {
       const ed = document.querySelector(
-        '.ole-free-annotation-edit-fo div[contenteditable], .ole-element-name-editor div[contenteditable]',
+        '.ole-free-annotation-edit-fo div[contenteditable], .ole-element-name-editor div[contenteditable], .ole-ann-cell-edit-fo input',
       ) as HTMLElement | null;
       ed?.blur();
     }
@@ -40,7 +40,15 @@ export function exitDrawingState(): void {
     store.setEditingElement(null);
     return;
   }
-  if (tool === 'wire' || tool === 'busbar' || tool === 'junction' || tool === 'text') {
+  if (
+    tool === 'wire' ||
+    tool === 'busbar' ||
+    tool === 'junction' ||
+    tool === 'text' ||
+    tool === 'rect' ||
+    tool === 'line' ||
+    tool === 'table'
+  ) {
     store.setActiveTool('select');
     return;
   }
@@ -92,17 +100,20 @@ export function useKeyboardShortcuts(): void {
         store.setSelection(ids);
         return;
       }
-      // Cmd+C / Cmd+X / Cmd+V — copy / cut / paste
+      // Cmd+C / Cmd+X / Cmd+V — copy / cut / paste. Covers both selection
+      // channels: elements/buses/junctions and the single annotation.
       if (mod && !e.shiftKey && !e.altKey) {
         const k = e.key.toLowerCase();
+        const hasCopyable =
+          store.selection.length > 0 || store.selectedAnnotation != null;
         if (k === 'c') {
-          if (store.selection.length === 0) return;
+          if (!hasCopyable) return;
           e.preventDefault();
           store.copySelection();
           return;
         }
         if (k === 'x') {
-          if (store.selection.length === 0) return;
+          if (!hasCopyable) return;
           e.preventDefault();
           store.cutSelection();
           return;
@@ -144,6 +155,20 @@ export function useKeyboardShortcuts(): void {
         case 't':
         case 'T':
           store.setActiveTool('text');
+          return;
+        // Annotation drawing tools. F (frame) — R is taken by rotate,
+        // G by the grid toggle.
+        case 'f':
+        case 'F':
+          store.setActiveTool('rect');
+          return;
+        case 'l':
+        case 'L':
+          store.setActiveTool('line');
+          return;
+        case 'd':
+        case 'D':
+          store.setActiveTool('table');
           return;
         case 'r':
         case 'R':

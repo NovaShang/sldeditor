@@ -289,6 +289,119 @@
   pointer-events: none;
 }
 
+/* Shape annotations (rect / line / table). Monochrome like wires; selection
+   recolors strokes to the selection color via [data-selected]. */
+.ole-ann-fill {
+  fill: var(--foreground);
+  opacity: 0.05;
+  pointer-events: none;
+}
+.ole-ann-rect-border {
+  fill: none;
+  stroke: var(--foreground);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.ole-ann-line {
+  fill: none;
+  stroke: var(--foreground);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.ole-ann-arrow {
+  fill: var(--foreground);
+  stroke: none;
+  pointer-events: none;
+}
+/* Fat invisible outline band = the grab/select target for rects and lines.
+   `pointer-events: stroke` keeps a rect's interior click-transparent so a
+   group frame never blocks selecting the elements inside it. */
+.ole-ann-shape-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 12;
+  pointer-events: stroke;
+  cursor: move;
+}
+.ole-ann-label {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  fill: var(--foreground);
+  paint-order: stroke;
+  stroke: var(--canvas-bg);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  user-select: none;
+  pointer-events: auto;
+  cursor: move;
+}
+.ole-ann-table-bg {
+  fill: var(--canvas-bg);
+  pointer-events: auto;
+  cursor: move;
+}
+.ole-ann-table-grid {
+  fill: none;
+  stroke: var(--foreground);
+  stroke-width: 0.5;
+  pointer-events: none;
+}
+.ole-ann-table-border {
+  fill: none;
+  stroke: var(--foreground);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.ole-ann-table-text {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  fill: var(--foreground);
+  user-select: none;
+  pointer-events: none;
+}
+.ole-ann[data-selected='true'] .ole-ann-rect-border,
+.ole-ann[data-selected='true'] .ole-ann-line,
+.ole-ann[data-selected='true'] .ole-ann-table-border {
+  stroke: var(--selection);
+}
+.ole-ann[data-selected='true'] .ole-ann-arrow {
+  fill: var(--selection);
+}
+
+/* Resize / vertex grips for the selected annotation. Strips (table column /
+   row borders) are invisible but grab the cursor. */
+.ole-annotation-handle {
+  fill: var(--canvas-bg);
+  stroke: var(--selection);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  pointer-events: auto;
+}
+.ole-annotation-handle:hover {
+  fill: var(--selection);
+}
+.ole-annotation-handle-strip {
+  fill: transparent;
+  stroke: none;
+}
+.ole-annotation-handle-strip:hover {
+  fill: var(--selection);
+  opacity: 0.25;
+}
+
+/* Drag-to-draw ghost published by the rect / line / table tools. */
+.ole-ann-draft rect,
+.ole-ann-draft line {
+  fill: none;
+  stroke: var(--selection);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.ole-ann-draft-badge {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+  fill: var(--selection);
+  stroke: none;
+}
+
 /* Hover an element → reveal its terminals (others stay hidden). The
    useHoverHighlight hook tags the cursor's element with .ole-hover-element-host
    and its terminals with .ole-hover-terminal-on; CSS finishes the look. */

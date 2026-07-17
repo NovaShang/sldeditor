@@ -26,7 +26,25 @@ import {
   type InternalModel,
   type ResolvedPlacement,
 } from '../compiler';
-import type { LabelMode, TextAnnotation } from '../model';
+import {
+  annotationKind,
+  type Annotation,
+  type LabelMode,
+  type LineAnnotation,
+  type RectAnnotation,
+  type TableAnnotation,
+  type TextAnnotation,
+} from '../model';
+import {
+  ANNOTATION_FONT_SIZE as ANN_FONT_SIZE,
+  lineAbsPoints,
+  lineArrowHeads,
+  RECT_LABEL_PAD,
+  TABLE_CELL_PAD_X,
+  tableColEdges,
+  tableRowEdges,
+  tableSize,
+} from './annotation-geom';
 import {
   LABEL_FONT_SIZE,
   LABEL_LINE_HEIGHT,
@@ -43,9 +61,9 @@ export interface DxfExportOptions {
   precision?: number;
   /** Element label visibility. Mirrors `DiagramFile.meta.labelMode`. Default 'all'. */
   labelMode?: LabelMode;
-  /** Free text annotations from `DiagramFile.annotations` — `InternalModel`
+  /** Free annotations from `DiagramFile.annotations` — `InternalModel`
    *  doesn't carry them, so the caller passes them through. */
-  annotations?: TextAnnotation[];
+  annotations?: Annotation[];
 }
 
 const LAYER_WIRES = 'WIRES';
@@ -130,20 +148,109 @@ export function buildExportDxf(
     }
   }
 
-  // Free text annotations.
+  // Free annotations (text / rect / line / table). Dashed strokes flatten to
+  // continuous lines — R12 linetype tables aren't worth the compatibility
+  // risk, and the geometry carries the meaning in CAD.
   for (const ann of opts.annotations ?? []) {
-    if (!ann.text) continue;
-    const fs = ann.fontSize ?? ANNOTATION_FONT_SIZE;
-    const lines = ann.text.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-      const [x, y] = worldToDxf([
-        ann.at[0],
-        ann.at[1] + (i + 1) * fs * ANNOTATION_LINE_HEIGHT,
-      ]);
-      // SVG `<text y>` is the baseline; the canvas annotation layer paints
-      // the first line at `at.y + fs` and steps by fs*1.25. We mimic that so
-      // DXF placement matches what users see on the canvas.
-      w.text(LAYER_ANNOTATIONS, [x, y], lines[i], fs, 0, false);
+    switch (annotationKind(ann)) {
+      case 'rect': {
+        const r = ann as RectAnnotation;
+        const [x, y] = r.at;
+        const [rw, rh] = r.size;
+        w.lwpolyline(
+          LAYER_ANNOTATIONS,
+          (
+            [
+              [x, y],
+              [x + rw, y],
+              [x + rw, y + rh],
+              [x, y + rh],
+            ] as [number, number][]
+          ).map(worldToDxf),
+          true,
+        );
+        if (r.label) {
+          const p = worldToDxf([
+            x + RECT_LABEL_PAD,
+            y + RECT_LABEL_PAD + ANN_FONT_SIZE,
+          ]);
+          w.text(LAYER_ANNOTATIONS, p, r.label, ANN_FONT_SIZE, 0, false);
+        }
+        break;
+      }
+      case 'line': {
+        const l = ann as LineAnnotation;
+        const pts = lineAbsPoints(l);
+        if (pts.length < 2) break;
+        w.lwpolyline(LAYER_ANNOTATIONS, pts.map(worldToDxf), false);
+        for (const tri of lineArrowHeads(pts, l.arrow)) {
+          w.lwpolyline(LAYER_ANNOTATIONS, tri.map(worldToDxf), true);
+        }
+        break;
+      }
+      case 'table': {
+        const tb = ann as TableAnnotation;
+        const [x, y] = tb.at;
+        const [tw, th] = tableSize(tb);
+        const colE = tableColEdges(tb);
+        const rowE = tableRowEdges(tb);
+        const fs = tb.fontSize ?? ANN_FONT_SIZE;
+        w.lwpolyline(
+          LAYER_ANNOTATIONS,
+          (
+            [
+              [x, y],
+              [x + tw, y],
+              [x + tw, y + th],
+              [x, y + th],
+            ] as [number, number][]
+          ).map(worldToDxf),
+          true,
+        );
+        for (let c = 1; c < tb.colWidths.length; c++) {
+          w.line(
+            LAYER_ANNOTATIONS,
+            worldToDxf([x + colE[c], y]),
+            worldToDxf([x + colE[c], y + th]),
+          );
+        }
+        for (let r = 1; r < tb.rowHeights.length; r++) {
+          w.line(
+            LAYER_ANNOTATIONS,
+            worldToDxf([x, y + rowE[r]]),
+            worldToDxf([x + tw, y + rowE[r]]),
+          );
+        }
+        for (let r = 0; r < tb.rowHeights.length; r++) {
+          for (let c = 0; c < tb.colWidths.length; c++) {
+            const value = tb.cells[r]?.[c] ?? '';
+            if (value === '') continue;
+            const p = worldToDxf([
+              x + colE[c] + TABLE_CELL_PAD_X,
+              y + rowE[r] + tb.rowHeights[r] / 2 + fs * 0.35,
+            ]);
+            w.text(LAYER_ANNOTATIONS, p, value, fs, 0, false);
+          }
+        }
+        break;
+      }
+      default: {
+        const tx = ann as TextAnnotation;
+        if (!tx.text) break;
+        const fs = tx.fontSize ?? ANNOTATION_FONT_SIZE;
+        const lines = tx.text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const [x, y] = worldToDxf([
+            tx.at[0],
+            tx.at[1] + (i + 1) * fs * ANNOTATION_LINE_HEIGHT,
+          ]);
+          // SVG `<text y>` is the baseline; the canvas annotation layer
+          // paints the first line at `at.y + fs` and steps by fs*1.25. We
+          // mimic that so DXF placement matches what users see on canvas.
+          w.text(LAYER_ANNOTATIONS, [x, y], lines[i], fs, 0, false);
+        }
+        break;
+      }
     }
   }
 

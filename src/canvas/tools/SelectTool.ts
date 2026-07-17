@@ -12,7 +12,17 @@
 
 import { useEditorStore } from '../../store';
 import type { ResolvedPlacement } from '../../compiler';
-import type { AnnotationId, BusId, ElementId, JunctionId, WireEnd } from '../../model';
+import {
+  annotationKind,
+  type Annotation,
+  type AnnotationId,
+  type BusId,
+  type ElementId,
+  type JunctionId,
+  type TableAnnotation,
+  type WireEnd,
+} from '../../model';
+import { tableCellAt } from '../../lib/annotation-geom';
 import { snap } from '../grid';
 import { hitAnnotation, hitElement, hitNode, hitTerminal, hitWire } from '../hit-test';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
@@ -63,6 +73,10 @@ interface AnnotationDragState {
   startSvg: [number, number];
   origin: [number, number];
   moved: boolean;
+  /** True if the annotation was already selected at press time. A clean
+   *  (no-move) click on an already-selected annotation enters edit mode —
+   *  the Keynote/PowerPoint "click to select, click again to edit" flow. */
+  wasSelected: boolean;
 }
 
 let drag: DragState | null = null;
@@ -77,28 +91,30 @@ export const SelectTool: Tool = {
   onPointerDown(e, ctx) {
     if (e.button !== 0) return; // ignore middle/right
 
-    // Bus stretch + wire path handles are *inside* the canvas host but
-    // their React handlers run after the host's native bubble phase
+    // Bus stretch + wire path + annotation handles are *inside* the canvas
+    // host but their React handlers run after the host's native bubble phase
     // (React 17+ root delegation). Ignoring handle hits here keeps
     // SelectTool from clearing the very selection that owns those handles.
     if (
       e.target instanceof Element &&
-      e.target.closest('.ole-bus-handle, .ole-wire-handle')
+      e.target.closest('.ole-bus-handle, .ole-wire-handle, .ole-annotation-handle')
     ) {
       return;
     }
 
     const store = useEditorStore.getState();
 
-    // Free text annotation: takes priority over element / terminal because
-    // the annotation rect can overlap them visually. Click selects + arms
-    // a drag; double-click (separate handler) enters edit mode.
+    // Free annotation: takes priority over element / terminal because the
+    // annotation can overlap them visually. Click selects + arms a drag; a
+    // clean click on an *already-selected* annotation enters edit mode
+    // (handled on pointer-up so a drag still moves instead of editing).
     const annId = hitAnnotation(e.target);
     if (annId) {
       e.preventDefault();
       e.stopPropagation();
       const ann = store.diagram.annotations?.find((a) => a.id === annId);
       if (!ann) return;
+      const wasSelected = store.selectedAnnotation === annId;
       store.setSelectedAnnotation(annId);
       annDrag = {
         pointerId: e.pointerId,
@@ -106,6 +122,7 @@ export const SelectTool: Tool = {
         startSvg: ctx.viewport.screenToSvg(e.clientX, e.clientY),
         origin: [ann.at[0], ann.at[1]],
         moved: false,
+        wasSelected,
       };
       // Capture deferred to first real movement (see element-drag note).
       return;
@@ -391,6 +408,11 @@ export const SelectTool: Tool = {
         useEditorStore.getState().updateAnnotation(annDrag.id, {
           at: [annDrag.origin[0] + dx, annDrag.origin[1] + dy],
         });
+      } else if (!annDrag.moved && annDrag.wasSelected) {
+        // Click again on an already-selected annotation → edit in place.
+        const store = useEditorStore.getState();
+        const ann = store.diagram.annotations?.find((a) => a.id === annDrag!.id);
+        if (ann) enterAnnotationEdit(store, ann, cur);
       }
       annDrag = null;
       return;
@@ -554,13 +576,20 @@ export const SelectTool: Tool = {
     }
   },
 
-  onDoubleClick(e) {
+  onDoubleClick(e, ctx) {
     const store = useEditorStore.getState();
+    // Annotations use click-again-to-edit (see onPointerUp); a fast
+    // double-click still lands there via its second press. We only handle the
+    // cursor-precise table case here so a double-click opens the exact cell
+    // under the pointer even before the annotation was selected.
     const annId = hitAnnotation(e.target);
     if (annId) {
       e.preventDefault();
       e.stopPropagation();
-      store.setEditingAnnotation(annId);
+      const ann = store.diagram.annotations?.find((a) => a.id === annId);
+      if (!ann) return;
+      store.setSelectedAnnotation(annId);
+      enterAnnotationEdit(store, ann, ctx.viewport.screenToSvg(e.clientX, e.clientY));
       return;
     }
     const id = hitElement(e.target);
@@ -587,6 +616,29 @@ export const SelectTool: Tool = {
     publishMarquee(null);
   },
 };
+
+/**
+ * Enter inline editing for an annotation the user activated (click-again or
+ * double-click). Text opens its editor; a table opens the cell under `point`.
+ * Rect / line carry no inline text body — their label/style live in the
+ * property panel — so they stay selected without an editor.
+ */
+function enterAnnotationEdit(
+  store: ReturnType<typeof useEditorStore.getState>,
+  ann: Annotation,
+  point: [number, number],
+): void {
+  const kind = annotationKind(ann);
+  if (kind === 'table') {
+    const cell = tableCellAt(ann as TableAnnotation, point);
+    if (cell) {
+      store.setEditingAnnotation(ann.id);
+      store.setEditingCell(cell);
+    }
+  } else if (kind === 'text') {
+    store.setEditingAnnotation(ann.id);
+  }
+}
 
 function rectFromPoints(a: [number, number], b: [number, number]): MarqueeRect {
   const x = Math.min(a[0], b[0]);

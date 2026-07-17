@@ -6,6 +6,7 @@ import { EditorTierProvider } from '../hooks/use-editor-tier';
 import { useEditorStore } from '../store';
 import { ContextMenuHost } from './ContextMenu';
 import { ContextualToolbar } from './ContextualToolbar';
+import { AnnotationEditToolbar } from './AnnotationEditToolbar';
 import { FloatingToolbar } from './FloatingToolbar';
 import { LeftPanel } from './LeftPanel';
 import { LibraryPopover } from './LibraryPopover';
@@ -99,6 +100,7 @@ export function EditorShell() {
               <FloatingToolbar />
               <ViewToolbar />
               <ContextualToolbar />
+              <AnnotationEditToolbar />
               <LibraryPopover />
               <OnboardingCard />
               <ElementHoverLabel />
