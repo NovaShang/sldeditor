@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.15.1
+
+### Patch Changes
+
+- [`587839f`](https://github.com/NovaShang/sldeditor/commit/587839f17646ed4738f7825cadb7775ed5702b00) Thanks [@NovaShang](https://github.com/NovaShang)! - Fix the tool tooltip colliding with the mode-hint bar. Hovering a tool showed its tooltip in the same band as the persistent hint bar above the toolbar, so the two translucent panels overlapped and the tooltip looked covered. The hint now fades out while the pointer is over the toolbar (its layout space is preserved so the bar doesn't jump) — you see the hint at rest and the tooltip on hover.
+
 ## 0.15.0
 
 ### Minor Changes
