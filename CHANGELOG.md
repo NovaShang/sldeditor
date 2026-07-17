@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.17.0
+
+### Minor Changes
+
+- [`14ed296`](https://github.com/NovaShang/sldeditor/commit/14ed296f88a681dbf5eac75a4057771615d436ff) Thanks [@NovaShang](https://github.com/NovaShang)! - Expand localization from 2 to 11 languages. Adds Spanish, French, German, Portuguese, Japanese, Russian, Persian (Farsi), Arabic, and Hebrew alongside the existing English and Chinese, covering both the UI strings and the electrical component library. Non-canonical locales are partial and fall back to **English** (previously the fallback was Chinese). The active locale is still driven by the host via the `locale` prop / `useLocale`; `navigator.language` auto-detection now maps to any supported locale. RTL languages (fa/ar/he) render translated text in the existing LTR layout.
+
 ## 0.16.0
 
 ### Minor Changes
