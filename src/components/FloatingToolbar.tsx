@@ -275,13 +275,30 @@ export function FloatingToolbar() {
 
   const isToolActive = (def: ToolDef): boolean => active === def.switchTo;
 
+  // While the pointer is over the toolbar, per-button tooltips appear in the
+  // same band as the hint bar and the two translucent panels collide. Fade
+  // the hint out on hover (its layout space is preserved via opacity so the
+  // bar doesn't jump) — you see the hint at rest, the tooltip on hover.
+  const [barHover, setBarHover] = useState(false);
+
   return (
     <div
       className="absolute left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5"
       style={{ bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))' }}
     >
-      {showHint && <ToolHint />}
+      {showHint && (
+        <div
+          className={cn(
+            'transition-opacity duration-150',
+            barHover && 'pointer-events-none opacity-0',
+          )}
+        >
+          <ToolHint />
+        </div>
+      )}
       <div
+        onPointerEnter={() => setBarHover(true)}
+        onPointerLeave={() => setBarHover(false)}
         className={cn(
           'ole-glass flex flex-row items-center rounded-2xl border border-border shadow-sm',
           unifiedBar ? 'gap-0.5 p-1' : 'gap-0.5 p-1.5',
