@@ -1,12 +1,16 @@
 /**
  * Flat translation table keyed by dot-namespaced ids.
  *
- * Both locales must define the same key set — TypeScript enforces this via
- * the `LocaleKey` type derived from `messages.zh`. Placeholder syntax is
- * `{name}` and is substituted by the `t()` helper.
+ * `zh` and `en` are the canonical tables (`base`) and MUST define the same key
+ * set — TypeScript enforces this via the `LocaleKey` type derived from
+ * `base.zh`. Additional locales (see `./locales`) are PARTIAL: any missing key
+ * falls back to `en` at lookup time. Placeholder syntax is `{name}` and is
+ * substituted by the `t()` helper.
  */
 
-export const messages = {
+import { EXTRA_LOCALES } from './locales';
+
+const base = {
   zh: {
     'common.unnamed': '未命名',
     'common.close': '关闭',
@@ -473,5 +477,28 @@ export const messages = {
   },
 } as const;
 
+/** Key set is defined by the canonical Chinese table. */
+export type LocaleKey = keyof typeof base['zh'];
+/** A non-canonical locale table may translate any subset of keys. */
+export type UiTable = Partial<Record<LocaleKey, string>>;
+
+/**
+ * All UI locale tables. `zh`/`en` are complete; the rest are partial and fall
+ * back to `en`. Enumerated explicitly (not spread) so `Locale` stays a literal
+ * union of the supported codes.
+ */
+export const messages = {
+  zh: base.zh,
+  en: base.en,
+  es: EXTRA_LOCALES.es.ui,
+  fr: EXTRA_LOCALES.fr.ui,
+  de: EXTRA_LOCALES.de.ui,
+  pt: EXTRA_LOCALES.pt.ui,
+  ja: EXTRA_LOCALES.ja.ui,
+  ru: EXTRA_LOCALES.ru.ui,
+  fa: EXTRA_LOCALES.fa.ui,
+  ar: EXTRA_LOCALES.ar.ui,
+  he: EXTRA_LOCALES.he.ui,
+} satisfies Record<string, UiTable>;
+
 export type Locale = keyof typeof messages;
-export type LocaleKey = keyof (typeof messages)['zh'];

@@ -11,6 +11,7 @@
  */
 
 import { useLocale, type Locale } from './index';
+import { EXTRA_LOCALES } from './locales';
 
 type Table = Record<string, string>;
 
@@ -343,10 +344,22 @@ const en: Table = {
   'genset.param.P': 'Power',
 };
 
-const tables: Record<Locale, Table> = { zh, en };
+const tables: Record<Locale, Table> = {
+  zh,
+  en,
+  es: EXTRA_LOCALES.es.library,
+  fr: EXTRA_LOCALES.fr.library,
+  de: EXTRA_LOCALES.de.library,
+  pt: EXTRA_LOCALES.pt.library,
+  ja: EXTRA_LOCALES.ja.library,
+  ru: EXTRA_LOCALES.ru.library,
+  fa: EXTRA_LOCALES.fa.library,
+  ar: EXTRA_LOCALES.ar.library,
+  he: EXTRA_LOCALES.he.library,
+};
 
 function lookup(locale: Locale, key: string): string | undefined {
-  return tables[locale][key] ?? tables.zh[key];
+  return tables[locale][key] ?? tables.en[key];
 }
 
 /** Returns a translator that re-renders on locale change. */

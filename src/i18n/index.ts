@@ -15,18 +15,26 @@ export type { Locale, LocaleKey };
 
 const STORAGE_KEY = 'ole-locale';
 
+const SUPPORTED = Object.keys(messages) as Locale[];
+function isLocale(v: string): v is Locale {
+  return (SUPPORTED as string[]).includes(v);
+}
+
 function readInitial(): Locale {
-  if (typeof window === 'undefined') return 'zh';
+  if (typeof window === 'undefined') return 'en';
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw === 'zh' || raw === 'en') return raw;
+    if (raw && isLocale(raw)) return raw;
   } catch {
     // ignore
   }
   if (typeof navigator !== 'undefined' && typeof navigator.language === 'string') {
-    return navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+    const lang = navigator.language.toLowerCase();
+    if (lang.startsWith('zh')) return 'zh';
+    const two = lang.slice(0, 2);
+    if (isLocale(two)) return two;
   }
-  return 'zh';
+  return 'en';
 }
 
 function persist(loc: Locale): void {
@@ -66,7 +74,7 @@ function format(tmpl: string, params?: Params): string {
 }
 
 function lookup(locale: Locale, key: LocaleKey): string {
-  return messages[locale][key] ?? messages.zh[key] ?? key;
+  return messages[locale][key] ?? messages.en[key] ?? key;
 }
 
 /** Translate from a non-React context. Reads the current locale from the store. */
