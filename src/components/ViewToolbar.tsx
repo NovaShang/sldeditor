@@ -562,8 +562,16 @@ function ViewToolbarExpanded({ tier }: { tier: Tier }) {
   const [grid, setGrid] = useGridState();
 
   return (
+    // z-50, not z-20: this container is its own stacking context, so the
+    // Labels popover can never escape it however high the popover's own
+    // z-index is. An embedding app that parks floating chrome over the
+    // bottom-right corner — SmartSLD's help/feedback pills are `fixed z-40` —
+    // would otherwise cover that popover and make its controls unclickable.
+    // A toolbar's transient menu has to win over ambient host decoration.
+    // Safe against host side panels: those are expected to move this toolbar
+    // aside via `--ole-right-inset`, not to paint over it.
     <div
-      className="absolute z-20"
+      className="absolute z-50"
       style={{
         bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))',
         right: 'calc(0.75rem + env(safe-area-inset-right, 0px))',
