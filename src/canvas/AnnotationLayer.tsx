@@ -14,6 +14,14 @@
  *   - 'all' → ID plus each library param marked `showOnCanvas: true`.
  * Default when unset: 'all'.
  *
+ * Type size comes from `DiagramFile.meta.labelFontSize`. The glyph size itself
+ * is a stylesheet concern (`.ole-annotation-text`), so the document value is
+ * published as the `--ole-label-font-size` custom property on this layer's
+ * group and the stylesheet reads it — leaving the class free to be restyled by
+ * a host and defaulting to 7px when the field is absent. The *geometry*
+ * (baseline nudge, line stacking, wire-label offset) takes the same size as an
+ * argument so the canvas can't drift from the SVG / DXF exporters.
+ *
  * Wire labels (`Wire.label`, e.g. phase designations L1/L2/L3/N/PE) render
  * here too — anchored mid-wire via `placeWireLabel`, hidden at 'off'.
  */
@@ -22,10 +30,11 @@ import { useEffect, useRef } from 'react';
 import { useEditorStore } from '../store';
 import type { LabelMode } from '../model';
 import {
-  LABEL_LINE_HEIGHT as LINE_HEIGHT,
   fallbackAnchor,
+  labelLineHeight,
   labelLines,
   placeLabel,
+  resolveLabelFontSize,
 } from '../lib/element-labels';
 import { placeWireLabel } from '../lib/wire-labels';
 
@@ -36,20 +45,29 @@ export function AnnotationLayer() {
   const mode: LabelMode = useEditorStore(
     (s) => s.diagram.meta?.labelMode ?? 'all',
   );
+  const fontSize = useEditorStore((s) =>
+    resolveLabelFontSize(s.diagram.meta?.labelFontSize),
+  );
   const editingElement = useEditorStore((s) => s.editingElement);
+  const lineHeight = labelLineHeight(fontSize);
 
   return (
-    <g className="ole-annotation-layer" pointerEvents="none">
+    <g
+      className="ole-annotation-layer"
+      pointerEvents="none"
+      style={{ '--ole-label-font-size': `${fontSize}px` } as React.CSSProperties}
+    >
       {Array.from(elements.values()).map((re) => {
         const place = layout.get(re.element.id);
         if (!place || !re.libraryDef) return null;
-        const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
+        const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef, fontSize);
         const lines = labelLines(re, mode);
         const { world, textAnchor, dy } = placeLabel(
           anchor,
           re.libraryDef,
           place,
           Math.max(1, lines.length),
+          fontSize,
         );
         if (editingElement === re.element.id) {
           return (
@@ -59,6 +77,7 @@ export function AnnotationLayer() {
               currentName={re.element.name?.trim() || re.element.id}
               world={world}
               anchor={textAnchor}
+              fontSize={fontSize}
             />
           );
         }
@@ -74,7 +93,7 @@ export function AnnotationLayer() {
               <text
                 key={i}
                 x={0}
-                y={dy + i * LINE_HEIGHT}
+                y={dy + i * lineHeight}
                 textAnchor={textAnchor}
                 className="ole-annotation-text"
               >
@@ -88,7 +107,7 @@ export function AnnotationLayer() {
         Array.from(wireRenders.values()).map((r) => {
           const label = r.label?.trim();
           if (!label) return null;
-          const placed = placeWireLabel(r.path);
+          const placed = placeWireLabel(r.path, fontSize);
           if (!placed) return null;
           return (
             <text
@@ -114,18 +133,25 @@ const EDITOR_FS = 9;
  * the structural label so the inline edit happens where the user expects
  * to see the name. Empty content clears the override (label falls back to
  * the element's ID); non-empty content sets `Element.name`.
+ *
+ * The editor is a touch larger than the label it stands in for (easier to hit
+ * and read while typing) but never smaller — so a document with enlarged
+ * labels edits at the size it renders at.
  */
 function NameEditor({
   elementId,
   currentName,
   world,
   anchor,
+  fontSize,
 }: {
   elementId: string;
   currentName: string;
   world: [number, number];
   anchor: 'start' | 'middle' | 'end';
+  fontSize: number;
 }) {
+  const fs = Math.max(EDITOR_FS, fontSize);
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -172,9 +198,9 @@ function NameEditor({
   return (
     <foreignObject
       x={x}
-      y={world[1] - EDITOR_FS}
+      y={world[1] - fs}
       width={EDITOR_W}
-      height={EDITOR_FS * 2.2}
+      height={fs * 2.2}
       className="ole-element-name-editor"
     >
       <div
@@ -186,7 +212,7 @@ function NameEditor({
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         style={{
-          fontSize: `${EDITOR_FS}px`,
+          fontSize: `${fs}px`,
           fontFamily: 'ui-sans-serif, system-ui, sans-serif',
           color: 'var(--foreground)',
           background: 'var(--canvas-bg)',

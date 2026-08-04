@@ -46,11 +46,11 @@ import {
   tableSize,
 } from './annotation-geom';
 import {
-  LABEL_FONT_SIZE,
-  LABEL_LINE_HEIGHT,
   fallbackAnchor,
+  labelLineHeight,
   labelLines,
   placeLabel,
+  resolveLabelFontSize,
 } from './element-labels';
 import { placeWireLabel } from './wire-labels';
 
@@ -61,6 +61,12 @@ export interface DxfExportOptions {
   precision?: number;
   /** Element label visibility. Mirrors `DiagramFile.meta.labelMode`. Default 'all'. */
   labelMode?: LabelMode;
+  /**
+   * Element + wire label text height. Mirrors `DiagramFile.meta.labelFontSize`.
+   * Default 7 (`LABEL_FONT_SIZE`); clamped to 5…32. Pass the document's value
+   * or the CAD file silently disagrees with the canvas.
+   */
+  labelFontSize?: number;
   /** Free annotations from `DiagramFile.annotations` — `InternalModel`
    *  doesn't carry them, so the caller passes them through. */
   annotations?: Annotation[];
@@ -117,23 +123,25 @@ export function buildExportDxf(
 
   // Element structural labels (ID + showOnCanvas params).
   const mode: LabelMode = opts.labelMode ?? 'all';
+  const labelFs = resolveLabelFontSize(opts.labelFontSize);
+  const lineHeight = labelLineHeight(labelFs);
   if (mode !== 'off') {
     for (const re of model.elements.values()) {
       const place = model.layout.get(re.element.id);
       if (!place || !re.libraryDef) continue;
       const lines = labelLines(re, mode);
       if (lines.length === 0) continue;
-      const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
+      const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef, labelFs);
       const {
         world: [ax, ay],
         textAnchor,
         dy,
-      } = placeLabel(anchor, re.libraryDef, place, lines.length);
+      } = placeLabel(anchor, re.libraryDef, place, lines.length, labelFs);
       // Lines stack downward in screen-space → upward separation in DXF Y-up
       // becomes negative spacing on the screen-Y, i.e. positive when flipped.
       for (let i = 0; i < lines.length; i++) {
-        const [x, y] = worldToDxf([ax, ay + dy + i * LABEL_LINE_HEIGHT]);
-        w.text(LAYER_LABELS, [x, y], lines[i], LABEL_FONT_SIZE, 0, false, textAnchor);
+        const [x, y] = worldToDxf([ax, ay + dy + i * lineHeight]);
+        w.text(LAYER_LABELS, [x, y], lines[i], labelFs, 0, false, textAnchor);
       }
     }
     // Wire labels (phase designations etc.) — anchored mid-wire, matching
@@ -141,10 +149,10 @@ export function buildExportDxf(
     for (const r of model.wireRenders.values()) {
       const label = r.label?.trim();
       if (!label) continue;
-      const placed = placeWireLabel(r.path);
+      const placed = placeWireLabel(r.path, labelFs);
       if (!placed) continue;
       const p = worldToDxf(placed.world);
-      w.text(LAYER_LABELS, p, label, LABEL_FONT_SIZE, 0, false, placed.textAnchor);
+      w.text(LAYER_LABELS, p, label, labelFs, 0, false, placed.textAnchor);
     }
   }
 

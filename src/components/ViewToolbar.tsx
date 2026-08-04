@@ -18,6 +18,12 @@ import {
 } from '../canvas';
 import { atLeast, useEditorTier, type Tier } from '../hooks/editor-tier';
 import { useT } from '../i18n';
+import {
+  LABEL_FONT_SIZE,
+  LABEL_FONT_SIZE_MAX,
+  LABEL_FONT_SIZE_MIN,
+  resolveLabelFontSize,
+} from '../lib/element-labels';
 import { cn } from '../lib/utils';
 import { useEditorStore } from '../store';
 import type { LabelMode } from '../model';
@@ -92,20 +98,68 @@ function zoomOut(): void {
   zoomTo(next);
 }
 
-const LABEL_CYCLE: Record<LabelMode, LabelMode> = {
-  off: 'id',
-  id: 'all',
-  all: 'off',
-};
+/**
+ * Label type sizes offered by the size stepper, in canvas units. A ladder
+ * rather than ±1 so a couple of clicks gets from the 7px default to something
+ * readable on an A4 print (the reason this control exists); bounded by
+ * LABEL_FONT_SIZE_MIN/MAX, the same range the free-text annotation picker has
+ * always offered.
+ */
+const LABEL_SIZE_STEPS = [
+  LABEL_FONT_SIZE_MIN,
+  6,
+  LABEL_FONT_SIZE,
+  8,
+  9,
+  10,
+  12,
+  14,
+  16,
+  20,
+  24,
+  28,
+  LABEL_FONT_SIZE_MAX,
+] as const;
 
-function cycleLabelMode(): void {
-  const store = useEditorStore.getState();
-  const cur = store.diagram.meta?.labelMode ?? 'all';
-  const next = LABEL_CYCLE[cur];
-  store.dispatch((d) => {
+function setLabelMode(next: LabelMode): void {
+  useEditorStore.getState().dispatch((d) => {
     const meta = { ...(d.meta ?? {}), labelMode: next };
     return { ...d, meta };
   });
+}
+
+/**
+ * Write the document's label size. The default drops the field entirely rather
+ * than storing a 7 — diagrams that never touched the setting keep serializing
+ * exactly as they did before it existed.
+ */
+function setLabelFontSize(next: number): void {
+  useEditorStore.getState().dispatch((d) => {
+    const meta = { ...(d.meta ?? {}) };
+    if (next === LABEL_FONT_SIZE) delete meta.labelFontSize;
+    else meta.labelFontSize = next;
+    return { ...d, meta };
+  });
+}
+
+function stepLabelFontSize(dir: 1 | -1): void {
+  const cur = resolveLabelFontSize(
+    useEditorStore.getState().diagram.meta?.labelFontSize,
+  );
+  if (dir > 0) {
+    setLabelFontSize(
+      LABEL_SIZE_STEPS.find((s) => s > cur) ?? LABEL_FONT_SIZE_MAX,
+    );
+    return;
+  }
+  let next = LABEL_FONT_SIZE_MIN;
+  for (let i = LABEL_SIZE_STEPS.length - 1; i >= 0; i--) {
+    if (LABEL_SIZE_STEPS[i] < cur) {
+      next = LABEL_SIZE_STEPS[i];
+      break;
+    }
+  }
+  setLabelFontSize(next);
 }
 
 /**
@@ -282,37 +336,129 @@ function GridBtn({
   );
 }
 
-function LabelBtn() {
+/**
+ * Label settings panel — visibility mode + type size for the whole document.
+ *
+ * Both live together because they answer the same question ("what do the
+ * labels look like on this drawing"), and because the mode used to be a bare
+ * cycling icon whose current state was only visible in a tooltip. Spelling the
+ * three modes out as a segmented control makes the state legible and leaves an
+ * obvious home for the size stepper users were previously faking with floating
+ * text annotations.
+ *
+ * Rendered inline in the dense view menu and inside `LabelMenuBtn`'s popover
+ * on the wide toolbar — never nested inside another popover.
+ */
+function LabelControls() {
   const t = useT();
   const labelMode: LabelMode = useEditorStore(
     (s) => s.diagram.meta?.labelMode ?? 'all',
   );
+  const size = useEditorStore((s) =>
+    resolveLabelFontSize(s.diagram.meta?.labelFontSize),
+  );
+  const options: { value: LabelMode; label: string }[] = [
+    { value: 'off', label: t('view.labelOff') },
+    { value: 'id', label: t('view.labelId') },
+    { value: 'all', label: t('view.labelAll') },
+  ];
   return (
-    <Tooltip
-      content={
-        <div className="space-y-0.5">
-          <div className="font-medium">
-            {labelMode === 'off'
-              ? t('view.labelOff')
-              : labelMode === 'id'
-                ? t('view.labelId')
-                : t('view.labelAll')}
-          </div>
-          <div className="text-muted-foreground">{t('view.labelHint')}</div>
+    <div className="flex flex-col gap-1.5 px-1.5 py-1">
+      <div className="text-[11px] font-medium text-muted-foreground">
+        {t('view.label')}
+      </div>
+      <div className="flex overflow-hidden rounded-md border border-border/60">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={labelMode === o.value}
+            onClick={() => setLabelMode(o.value)}
+            className={cn(
+              // No truncation: the popover is shrink-to-fit, so a long
+              // translation widens the menu instead of ellipsing "ID + params".
+              'h-7 flex-1 whitespace-nowrap px-1.5 text-[11px] transition-colors',
+              labelMode === o.value
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] text-muted-foreground">
+          {t('view.labelSize')}
+        </span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label={t('view.labelSizeSmaller')}
+            disabled={size <= LABEL_FONT_SIZE_MIN}
+            onClick={() => stepLabelFontSize(-1)}
+            className="h-7 w-7 rounded-md border border-border/60 text-[13px] leading-none text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label={t('view.labelSizeReset')}
+            onClick={() => setLabelFontSize(LABEL_FONT_SIZE)}
+            className="w-9 rounded-md py-1 text-center font-mono text-[11px] tabular-nums hover:bg-accent hover:text-accent-foreground"
+          >
+            {size}
+          </button>
+          <button
+            type="button"
+            aria-label={t('view.labelSizeLarger')}
+            disabled={size >= LABEL_FONT_SIZE_MAX}
+            onClick={() => stepLabelFontSize(1)}
+            className="h-7 w-7 rounded-md border border-border/60 text-[13px] leading-none text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+          >
+            +
+          </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Popover trigger wrapping `LabelControls` for the wide (icon-row) toolbar. */
+function LabelMenuBtn() {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const labelMode: LabelMode = useEditorStore(
+    (s) => s.diagram.meta?.labelMode ?? 'all',
+  );
+  return (
+    <UpwardPopover
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <Tooltip
+          content={
+            <div className="space-y-0.5">
+              <div className="font-medium">{t('view.label')}</div>
+              <div className="text-muted-foreground">{t('view.labelHint')}</div>
+            </div>
+          }
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={t('view.label')}
+            aria-expanded={open}
+            className={cn(labelMode === 'off' && 'text-muted-foreground/60')}
+          >
+            <Type />
+          </Button>
+        </Tooltip>
       }
     >
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={cycleLabelMode}
-        aria-label={t('view.label')}
-        aria-pressed={labelMode !== 'off'}
-        className={cn(labelMode === 'off' && 'text-muted-foreground/60')}
-      >
-        <Type />
-      </Button>
-    </Tooltip>
+      <LabelControls />
+    </UpwardPopover>
   );
 }
 
@@ -381,8 +527,12 @@ export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
         <div className="flex items-center gap-0.5">
           <FitBtn />
           <GridBtn grid={grid} setGrid={setGrid} />
-          <LabelBtn />
         </div>
+        {/* Inline rather than a nested popover — this menu already opens
+            upward, and a second layer on top of it would cover its own
+            trigger row. */}
+        <div aria-hidden className="my-1 h-px bg-border" />
+        <LabelControls />
       </div>
     </UpwardPopover>
   );
@@ -426,8 +576,8 @@ function ViewToolbarExpanded({ tier }: { tier: Tier }) {
         <div aria-hidden className="mx-1 h-4 w-px bg-border" />
         <FitBtn />
         <GridBtn grid={grid} setGrid={setGrid} />
-        {/* Label-mode toggle mutates the document — omit it in view-only mode. */}
-        {!readOnly && <LabelBtn />}
+        {/* Label settings mutate the document — omit them in view-only mode. */}
+        {!readOnly && <LabelMenuBtn />}
       </div>
     </div>
   );

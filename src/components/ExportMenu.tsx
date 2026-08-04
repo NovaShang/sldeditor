@@ -42,6 +42,7 @@ export function ExportMenu() {
     const opts = {
       title: diagram.meta?.title,
       labelMode: diagram.meta?.labelMode,
+      labelFontSize: diagram.meta?.labelFontSize,
       annotations: diagram.annotations,
     };
     if (kind === 'svg') downloadSvg(internal, `${baseName}.svg`, opts);

@@ -8,11 +8,42 @@
 import type { ResolvedElement, ResolvedPlacement } from '../compiler';
 import type { LabelMode, LibraryEntry, LibraryLabelAnchor } from '../model';
 
-/** Vertical step between stacked label lines, in canvas units. */
+/** Vertical step between stacked label lines at `LABEL_FONT_SIZE`, in canvas units. */
 export const LABEL_LINE_HEIGHT = 9;
 
-/** Font size used for element structural labels, in canvas units. */
+/** Default font size for element structural labels, in canvas units. */
 export const LABEL_FONT_SIZE = 7;
+
+/**
+ * Bounds for `DiagramMeta.labelFontSize`. Same range the free-text annotation
+ * picker offers (`FontSizeRow` in PropertyPanel) — users were reaching for
+ * floating text purely to get type big enough to read on an A4 print, so the
+ * two knobs should span the same sizes.
+ */
+export const LABEL_FONT_SIZE_MIN = 5;
+export const LABEL_FONT_SIZE_MAX = 32;
+
+/**
+ * Resolve `DiagramMeta.labelFontSize` into a usable size. Absent (or garbage)
+ * falls back to `LABEL_FONT_SIZE`, so a diagram written before the setting
+ * existed renders byte-identically. Out-of-range values — only reachable by
+ * hand-editing the JSON, the UI clamps already — are clamped rather than
+ * trusted, in every renderer.
+ */
+export function resolveLabelFontSize(size?: number): number {
+  if (typeof size !== 'number' || !Number.isFinite(size)) return LABEL_FONT_SIZE;
+  return Math.min(LABEL_FONT_SIZE_MAX, Math.max(LABEL_FONT_SIZE_MIN, size));
+}
+
+/**
+ * Vertical step between stacked label lines at a given font size. Scales with
+ * the type (a fixed step would let multi-line labels collide as soon as the
+ * font grows past it) and reproduces `LABEL_LINE_HEIGHT` exactly at the
+ * default size.
+ */
+export function labelLineHeight(fontSize: number = LABEL_FONT_SIZE): number {
+  return (fontSize * LABEL_LINE_HEIGHT) / LABEL_FONT_SIZE;
+}
 
 export function labelLines(re: ResolvedElement, mode: LabelMode): string[] {
   const lines: string[] = [];
@@ -29,15 +60,19 @@ export function labelLines(re: ResolvedElement, mode: LabelMode): string[] {
   return lines;
 }
 
-export function fallbackAnchor(lib: LibraryEntry): LibraryLabelAnchor {
+export function fallbackAnchor(
+  lib: LibraryEntry,
+  fontSize: number = LABEL_FONT_SIZE,
+): LibraryLabelAnchor {
   const vb = parseViewBox(lib.viewBox);
   if (!vb) return { x: 0, y: 0, anchor: 'start' };
   // Anchor at the symbol's right edge, vertically centered. The small
-  // +FONT_SIZE/3 nudges the text baseline so a single line sits visually
-  // centered on the symbol's mid-height rather than hanging below it.
+  // +fontSize/3 nudges the text baseline so a single line sits visually
+  // centered on the symbol's mid-height rather than hanging below it — it
+  // tracks the type size, so the centering survives a larger label font.
   return {
     x: vb.x + vb.w + 2,
-    y: vb.y + vb.h / 2 + LABEL_FONT_SIZE / 3,
+    y: vb.y + vb.h / 2 + fontSize / 3,
     anchor: 'start',
   };
 }
@@ -78,7 +113,7 @@ export interface PlacedLabel {
   textAnchor: 'start' | 'middle' | 'end';
   /**
    * Baseline offset of the *first* line relative to `world[1]`. Line `i`
-   * renders at `world[1] + dy + i * LABEL_LINE_HEIGHT`.
+   * renders at `world[1] + dy + i * labelLineHeight(fontSize)`.
    */
   dy: number;
 }
@@ -103,6 +138,7 @@ export function placeLabel(
   lib: LibraryEntry,
   place: ResolvedPlacement,
   lineCount: number,
+  fontSize: number = LABEL_FONT_SIZE,
 ): PlacedLabel {
   const world = anchorWorld(anchor, place);
   const declared = anchor.anchor ?? 'start';
@@ -140,14 +176,14 @@ export function placeLabel(
   if (oy > 0) {
     // Below the symbol: centre the block and drop the first baseline clear
     // of the anchor point (which sits on the symbol's outer edge).
-    return { world, textAnchor: 'middle', dy: LABEL_FONT_SIZE };
+    return { world, textAnchor: 'middle', dy: fontSize };
   }
   // Above the symbol: centre the block and stack extra lines upward so the
   // whole block stays clear of the symbol.
   return {
     world,
     textAnchor: 'middle',
-    dy: -(lineCount - 1) * LABEL_LINE_HEIGHT,
+    dy: -(lineCount - 1) * labelLineHeight(fontSize),
   };
 }
 

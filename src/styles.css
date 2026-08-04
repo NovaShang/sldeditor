@@ -116,9 +116,13 @@
 }
 
 /* Editor-specific exposes the live canvas scale to children for stroke-width
-   compensation. Also disables text selection on the diagram surface. */
+   compensation. Also disables text selection on the diagram surface.
+   `--ole-label-font-size` is the document's structural-label type size
+   (`DiagramMeta.labelFontSize`); AnnotationLayer overrides it on the label
+   group, this declaration is the 7px default for everything else. */
 .ole-canvas-root {
   --canvas-scale: 1;
+  --ole-label-font-size: 7px;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -253,7 +257,7 @@
    the text readable when it crosses wires or symbols. */
 .ole-annotation-text {
   font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 7px;
+  font-size: var(--ole-label-font-size, 7px);
   fill: var(--foreground);
   paint-order: stroke;
   stroke: var(--canvas-bg);

@@ -48,6 +48,17 @@ export interface DiagramMeta {
   createdAt?: string;
   updatedAt?: string;
   labelMode?: LabelMode;
+  /**
+   * Type size for element + wire labels, in canvas units. Document-level:
+   * "make the labels readable on an A4 print" is a per-drawing decision, so
+   * there is deliberately no per-element override.
+   *
+   * Absent → 7 (`LABEL_FONT_SIZE`), which is what every diagram written before
+   * this field existed renders at. Values are clamped to
+   * `LABEL_FONT_SIZE_MIN…MAX` (5–32, the same range the free-text annotation
+   * picker offers) by every renderer.
+   */
+  labelFontSize?: number;
 }
 
 export interface Element {

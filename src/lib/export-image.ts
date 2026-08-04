@@ -30,11 +30,11 @@ import {
   TINT_OPACITY,
 } from './annotation-geom';
 import {
-  LABEL_FONT_SIZE,
-  LABEL_LINE_HEIGHT,
   fallbackAnchor,
+  labelLineHeight,
   labelLines,
   placeLabel,
+  resolveLabelFontSize,
 } from './element-labels';
 import { placeWireLabel } from './wire-labels';
 
@@ -56,6 +56,12 @@ export interface ExportOptions {
   background?: string;
   /** Element label visibility. Mirrors `DiagramFile.meta.labelMode`. Default 'all'. */
   labelMode?: LabelMode;
+  /**
+   * Element + wire label type size. Mirrors `DiagramFile.meta.labelFontSize`.
+   * Default 7 (`LABEL_FONT_SIZE`); clamped to 5…32. Pass the document's value
+   * or the export silently disagrees with the canvas.
+   */
+  labelFontSize?: number;
   /** Free annotations from `DiagramFile.annotations` — `InternalModel`
    *  doesn't carry them, so the caller passes them through. */
   annotations?: Annotation[];
@@ -135,25 +141,27 @@ export function buildExportSvg(
   // The halo (paint-order: stroke against the background color) keeps labels
   // readable when they cross wires or symbols.
   const labelMode: LabelMode = opts.labelMode ?? 'all';
+  const labelFs = resolveLabelFontSize(opts.labelFontSize);
+  const lineHeight = labelLineHeight(labelFs);
   if (labelMode !== 'off') {
     const halo = bg === 'transparent' ? '#FFFFFF' : bg;
     out.push(
-      `  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${LABEL_FONT_SIZE}" paint-order="stroke" stroke="${halo}" stroke-width="2" stroke-linejoin="round">`,
+      `  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${labelFs}" paint-order="stroke" stroke="${halo}" stroke-width="2" stroke-linejoin="round">`,
     );
     for (const re of model.elements.values()) {
       const place = model.layout.get(re.element.id);
       if (!place || !re.libraryDef) continue;
       const lines = labelLines(re, labelMode);
       if (lines.length === 0) continue;
-      const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
+      const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef, labelFs);
       const {
         world: [ax, ay],
         textAnchor,
         dy,
-      } = placeLabel(anchor, re.libraryDef, place, lines.length);
+      } = placeLabel(anchor, re.libraryDef, place, lines.length, labelFs);
       for (let i = 0; i < lines.length; i++) {
         out.push(
-          `    <text x="${ax}" y="${ay + dy + i * LABEL_LINE_HEIGHT}" text-anchor="${textAnchor}">${escapeXml(lines[i])}</text>`,
+          `    <text x="${ax}" y="${ay + dy + i * lineHeight}" text-anchor="${textAnchor}">${escapeXml(lines[i])}</text>`,
         );
       }
     }
@@ -162,7 +170,7 @@ export function buildExportSvg(
     for (const r of model.wireRenders.values()) {
       const label = r.label?.trim();
       if (!label) continue;
-      const placed = placeWireLabel(r.path);
+      const placed = placeWireLabel(r.path, labelFs);
       if (!placed) continue;
       out.push(
         `    <text x="${placed.world[0]}" y="${placed.world[1]}" text-anchor="${placed.textAnchor}">${escapeXml(label)}</text>`,
@@ -356,22 +364,24 @@ function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
   // Element labels — labels can extend past the symbol's viewBox, especially
   // multi-line ones with showOnCanvas params.
   const labelMode = opts.labelMode ?? 'all';
+  const labelFs = resolveLabelFontSize(opts.labelFontSize);
+  const lineHeight = labelLineHeight(labelFs);
   if (labelMode !== 'off') {
     for (const re of model.elements.values()) {
       const place = model.layout.get(re.element.id);
       if (!place || !re.libraryDef) continue;
       const lines = labelLines(re, labelMode);
       if (lines.length === 0) continue;
-      const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef);
+      const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef, labelFs);
       const {
         world: [ax, ay],
         textAnchor: align,
         dy,
-      } = placeLabel(anchor, re.libraryDef, place, lines.length);
-      const w = textWidthGuess(lines, LABEL_FONT_SIZE);
-      const h = lines.length * LABEL_LINE_HEIGHT;
+      } = placeLabel(anchor, re.libraryDef, place, lines.length, labelFs);
+      const w = textWidthGuess(lines, labelFs);
+      const h = lines.length * lineHeight;
       const x0 = align === 'middle' ? ax - w / 2 : align === 'end' ? ax - w : ax;
-      update(x0, ay + dy - LABEL_FONT_SIZE);
+      update(x0, ay + dy - labelFs);
       update(x0 + w, ay + dy + h);
     }
     // Wire labels — offset perpendicular from the wire, so they can extend
@@ -379,12 +389,12 @@ function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
     for (const r of model.wireRenders.values()) {
       const label = r.label?.trim();
       if (!label) continue;
-      const placed = placeWireLabel(r.path);
+      const placed = placeWireLabel(r.path, labelFs);
       if (!placed) continue;
       const [lx, ly] = placed.world;
-      const w = textWidthGuess([label], LABEL_FONT_SIZE);
+      const w = textWidthGuess([label], labelFs);
       const x0 = placed.textAnchor === 'middle' ? lx - w / 2 : lx;
-      update(x0, ly - LABEL_FONT_SIZE);
+      update(x0, ly - labelFs);
       update(x0 + w, ly);
     }
   }

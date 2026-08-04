@@ -11,8 +11,13 @@ import { LIBRARY, compile } from '../../src/compiler';
 import type { ResolvedPlacement } from '../../src/compiler';
 import {
   LABEL_FONT_SIZE,
+  LABEL_FONT_SIZE_MAX,
+  LABEL_FONT_SIZE_MIN,
   LABEL_LINE_HEIGHT,
+  fallbackAnchor,
+  labelLineHeight,
   placeLabel,
+  resolveLabelFontSize,
 } from '../../src/lib/element-labels';
 import { buildExportSvg } from '../../src/lib/export-image';
 import type { DiagramFile } from '../../src/model';
@@ -91,6 +96,121 @@ describe('export SVG label alignment', () => {
     // Below the placement row (y > 520), horizontally near the symbol centre.
     expect(Number(m![2])).toBeGreaterThan(520);
   });
+});
+
+/**
+ * `DiagramMeta.labelFontSize` exists because the only sizing knob the product
+ * shipped was the free-text annotation picker — users were dropping floating
+ * text over their diagram just to get type readable on an A4 print. It is
+ * document-level, defaults to the historical 7, and MUST reach the canvas and
+ * both exporters identically (an export path that silently disagrees with the
+ * canvas is exactly the bug class this module was created to prevent).
+ */
+describe('label font size resolution', () => {
+  it('falls back to the historical default when unset', () => {
+    expect(resolveLabelFontSize(undefined)).toBe(LABEL_FONT_SIZE);
+    expect(LABEL_FONT_SIZE).toBe(7);
+  });
+
+  it('clamps hand-edited JSON instead of trusting it', () => {
+    expect(resolveLabelFontSize(0)).toBe(LABEL_FONT_SIZE_MIN);
+    expect(resolveLabelFontSize(-40)).toBe(LABEL_FONT_SIZE_MIN);
+    expect(resolveLabelFontSize(9999)).toBe(LABEL_FONT_SIZE_MAX);
+    expect(resolveLabelFontSize(Number.NaN)).toBe(LABEL_FONT_SIZE);
+    // A string smuggled in through untyped JSON.
+    expect(resolveLabelFontSize('12' as unknown as number)).toBe(LABEL_FONT_SIZE);
+  });
+
+  it('scales the line step with the font, exact at the default', () => {
+    expect(labelLineHeight()).toBe(LABEL_LINE_HEIGHT);
+    expect(labelLineHeight(LABEL_FONT_SIZE)).toBe(LABEL_LINE_HEIGHT);
+    // 9/7 preserved: doubling the font doubles the step.
+    expect(labelLineHeight(14)).toBe(18);
+    // Every supported size keeps the step clear of the glyph height, so
+    // stacked lines can never collide.
+    for (let fs = LABEL_FONT_SIZE_MIN; fs <= LABEL_FONT_SIZE_MAX; fs++) {
+      expect(labelLineHeight(fs)).toBeGreaterThan(fs);
+    }
+  });
+
+  it('scales the baseline nudge and the upward stack', () => {
+    expect(fallbackAnchor(breaker, 21).y - fallbackAnchor(breaker, 0).y).toBe(7);
+    // rot 270 stacks the block upward by whole line heights.
+    expect(placeLabel(anchor, breaker, place(270), 2, 14).dy).toBe(-18);
+    expect(placeLabel(anchor, breaker, place(270), 2).dy).toBe(-LABEL_LINE_HEIGHT);
+  });
+});
+
+describe('export honors the document label size', () => {
+  // Three lines: name + two showOnCanvas params. The breaker declares an
+  // explicit label anchor, so the anchor point is size-independent and the
+  // baselines isolate the line-height behavior.
+  const diagram: DiagramFile = {
+    version: '1',
+    elements: [
+      { id: 'QF1', kind: 'breaker', name: 'QF1', params: { In: 40, poles: 4 } },
+    ],
+    layout: { QF1: { at: [100, 100] } },
+    wires: [],
+  };
+  const model = compile(diagram);
+  const baselines = (svg: string): number[] =>
+    [...svg.matchAll(/<text x="106" y="([-\d.]+)" text-anchor="start">/g)].map((m) =>
+      Number(m[1]),
+    );
+
+  it('renders the pre-setting output when the field is absent', () => {
+    const svg = buildExportSvg(model);
+    expect(svg).toContain('font-size="7"');
+    // Anchor (6,-2) + placement (100,100); lines step by LABEL_LINE_HEIGHT.
+    expect(svg).toContain('<text x="106" y="98" text-anchor="start">QF1</text>');
+    expect(svg).toContain('<text x="106" y="107" text-anchor="start">40A</text>');
+    expect(svg).toContain('<text x="106" y="116" text-anchor="start">4P</text>');
+    // Absent and explicit-default must be byte-identical, viewBox included.
+    expect(svg).toBe(buildExportSvg(model, { labelFontSize: LABEL_FONT_SIZE }));
+  });
+
+  it('carries a non-default size into the SVG', () => {
+    const svg = buildExportSvg(model, { labelFontSize: 14 });
+    expect(svg).toContain('font-size="14"');
+    expect(svg).not.toContain('font-size="7"');
+    expect(baselines(svg)).toEqual([98, 116, 134]);
+  });
+
+  it('keeps enlarged multi-line labels from overlapping', () => {
+    for (const fs of [LABEL_FONT_SIZE_MIN, 10, 16, LABEL_FONT_SIZE_MAX]) {
+      const rows = baselines(buildExportSvg(model, { labelFontSize: fs }));
+      expect(rows).toHaveLength(3);
+      for (let i = 1; i < rows.length; i++) {
+        // Consecutive baselines must clear the glyph height, or a descender
+        // of line i lands on the cap height of line i+1.
+        expect(rows[i] - rows[i - 1]).toBeGreaterThan(fs);
+      }
+    }
+  });
+
+  it('grows the content bbox so big labels are not cropped', () => {
+    const vb = (svg: string) =>
+      svg.match(/viewBox="([-\d. ]+)"/)![1].split(' ').map(Number);
+    const small = vb(buildExportSvg(model));
+    const big = vb(buildExportSvg(model, { labelFontSize: LABEL_FONT_SIZE_MAX }));
+    // Wider (longer text run) and taller (three tall lines).
+    expect(big[2]).toBeGreaterThan(small[2]);
+    expect(big[3]).toBeGreaterThan(small[3]);
+  });
+
+  it('clamps an out-of-range size rather than emitting it', () => {
+    expect(buildExportSvg(model, { labelFontSize: 500 })).toContain(
+      `font-size="${LABEL_FONT_SIZE_MAX}"`,
+    );
+    expect(buildExportSvg(model, { labelFontSize: 1 })).toContain(
+      `font-size="${LABEL_FONT_SIZE_MIN}"`,
+    );
+  });
+
+  // DXF is covered in wire-labels.test.ts: `buildExportDxf` needs a DOMParser
+  // to rasterize symbol artwork, which the node test env lacks, so the
+  // element-free wire-label diagram is the only DXF path testable here.
 });
 
 describe('terminal-number glyphs (pin digits)', () => {

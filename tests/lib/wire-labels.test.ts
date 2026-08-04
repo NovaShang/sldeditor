@@ -8,7 +8,10 @@
 
 import { describe, expect, it } from 'vitest';
 import { compile } from '../../src/compiler';
-import { LABEL_FONT_SIZE } from '../../src/lib/element-labels';
+import {
+  LABEL_FONT_SIZE,
+  LABEL_FONT_SIZE_MAX,
+} from '../../src/lib/element-labels';
 import {
   WIRE_LABEL_OFFSET,
   placeWireLabel,
@@ -86,6 +89,31 @@ describe('placeWireLabel', () => {
     expect(p!.textAnchor).toBe('start');
   });
 
+  it('scales the clearance and baseline nudge with the document size', () => {
+    // `DiagramMeta.labelFontSize` = 14 (double the default): the perpendicular
+    // gap and the on-wire centering nudge both double, so a big label sits off
+    // the line by the same optical distance as a small one.
+    const h = placeWireLabel(
+      [
+        [0, 100],
+        [200, 100],
+      ],
+      LABEL_FONT_SIZE * 2,
+    );
+    expect(h!.world).toEqual([100, 100 - WIRE_LABEL_OFFSET * 2]);
+    const v = placeWireLabel(
+      [
+        [50, 0],
+        [50, 200],
+      ],
+      LABEL_FONT_SIZE * 2,
+    );
+    expect(v!.world).toEqual([
+      50 + WIRE_LABEL_OFFSET * 2,
+      100 + (LABEL_FONT_SIZE * 2) / 3,
+    ]);
+  });
+
   it('returns null for degenerate paths', () => {
     expect(placeWireLabel([])).toBeNull();
     expect(placeWireLabel([[5, 5]])).toBeNull();
@@ -151,6 +179,20 @@ describe('export SVG', () => {
     expect(Number(m![2])).toBeCloseTo(100 + LABEL_FONT_SIZE / 3, 6);
   });
 
+  it('carries the document label size into the file', () => {
+    const model = compile(wireBetween([0, 100], [200, 100], 'L1'));
+    const dflt = buildExportSvg(model);
+    expect(dflt).toContain(`font-size="${LABEL_FONT_SIZE}"`);
+    // Absent === explicit default, so untouched diagrams export as before.
+    expect(dflt).toBe(buildExportSvg(model, { labelFontSize: LABEL_FONT_SIZE }));
+
+    const big = buildExportSvg(model, { labelFontSize: 14 });
+    expect(big).toContain('font-size="14"');
+    expect(big).toMatch(
+      new RegExp(`<text x="100" y="${100 - WIRE_LABEL_OFFSET * 2}" [^>]*>L1<`),
+    );
+  });
+
   it('renders nothing for an absent label and hides at labelMode off', () => {
     const plain = buildExportSvg(compile(wireBetween([0, 100], [200, 100])));
     expect(plain).not.toContain('text-anchor');
@@ -174,4 +216,31 @@ describe('export DXF', () => {
     const dxf = buildExportDxf(compile(wireBetween([0, 100], [200, 100])));
     expect(dxf).not.toContain('TEXT');
   });
+
+  it('uses the document label size as the TEXT height', () => {
+    // Third renderer of the same setting — a DXF that disagreed with the
+    // canvas would be the same class of bug the shared placement modules exist
+    // to prevent. Out-of-range values clamp here too.
+    const model = compile(wireBetween([0, 100], [200, 100], 'L1'));
+    expect(dxfTextHeight(buildExportDxf(model), 'L1')).toBe(LABEL_FONT_SIZE);
+    expect(dxfTextHeight(buildExportDxf(model, { labelFontSize: 14 }), 'L1')).toBe(14);
+    expect(dxfTextHeight(buildExportDxf(model, { labelFontSize: 900 }), 'L1')).toBe(
+      LABEL_FONT_SIZE_MAX,
+    );
+  });
 });
+
+/**
+ * Height (group 40) of the DXF TEXT entity carrying `text`. Entities are
+ * code/value line pairs and our writer emits the height immediately before the
+ * string (group 1), so that pair identifies the entity.
+ */
+function dxfTextHeight(dxf: string, text: string): number | undefined {
+  const lines = dxf.split('\n').map((l) => l.trim());
+  for (let i = 0; i < lines.length - 3; i++) {
+    if (lines[i] === '40' && lines[i + 2] === '1' && lines[i + 3] === text) {
+      return Number(lines[i + 1]);
+    }
+  }
+  return undefined;
+}
