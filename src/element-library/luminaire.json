@@ -1,0 +1,23 @@
+{
+  "id": "luminaire",
+  "name": "灯具 / 照明负荷",
+  "category": "load",
+  "description": "照明负荷（IEC 60617 荧光灯具通用符号）。区别于 indicator-light：那是面板信号灯，这是回路末端的照明负荷。",
+  "viewBox": "-27 -7 54 14",
+  "width": 54,
+  "height": 14,
+  "svg": "<line x1=\"-25\" y1=\"0\" x2=\"25\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-25\" y1=\"-5\" x2=\"-25\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"25\" y1=\"-5\" x2=\"25\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_top",
+      "x": 0,
+      "y": 0,
+      "orientation": "n"
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_11/en_60617_11_15/en_60617_11_15_04.elmt",
+    "qetEnglishName": "Luminaire, general symbol; Fluorescent lamp, general symbol"
+  }
+}

@@ -256,6 +256,7 @@ export const library: Record<string, string> = {
   'inverter.name': 'عاكس (DC→AC)',
   'load-switch.name': 'مفتاح قطع الحمل',
   'load.name': 'حمل',
+  'luminaire.name': 'مصباح (حمل إنارة)',
   'panelboard.name': 'لوحة توزيع / مركز أحمال',
   'ngr.name': 'مقاومة تأريض المحايد (NGR)',
   'pt.name': 'محول الجهد (PT)',
@@ -297,6 +298,7 @@ export const library: Record<string, string> = {
   'grid-source.desc': 'شريط ناقل لانهائي / شبكة خارجية',
   'grounding-transformer.desc': 'محول نجمي-متعرج لتأريض المحايد',
   'load.desc': 'حمل تجريدي (سهم خروج التيار)',
+  'luminaire.desc': 'حمل إنارة (رمز عام للمصباح وفق IEC 60617)',
   'ngr.desc': 'تأريض بمقاومة منخفضة: محايد المحول إلى الأرض',
   'series-reactor.desc': 'نفس رمز مفاعل التوازي؛ يُميَّز حسب الاستخدام',
   'wind-turbine.desc': 'توربين رياح: مولد + علامة دوار ثلاثي الريش',
@@ -344,6 +346,11 @@ export const library: Record<string, string> = {
   'gfci-breaker.param.In': 'التيار الاسمي',
   'gfci-breaker.param.IDn': 'تيار التشغيل المتبقي',
   'rcd.param.IDn': 'تيار التشغيل المتبقي',
+  'breaker.param.In': 'التيار الاسمي',
+  'breaker.param.poles': 'عدد الأقطاب',
+  'breaker.param.Icu': 'قدرة القطع',
+  'disconnector.param.In': 'التيار الاسمي',
+  'fuse.param.In': 'التيار الاسمي',
 
   // ---- v0.3 additions ----
   // Names

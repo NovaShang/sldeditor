@@ -256,6 +256,7 @@ export const library: Record<string, string> = {
   'inverter.name': 'Onduleur (DC→AC)',
   'load-switch.name': 'Interrupteur de charge',
   'load.name': 'Charge',
+  'luminaire.name': 'Luminaire (charge d\'éclairage)',
   'panelboard.name': 'Tableau de répartition',
   'ngr.name': 'Résistance de mise à la terre du neutre (NGR)',
   'pt.name': 'Transformateur de tension (PT)',
@@ -296,6 +297,7 @@ export const library: Record<string, string> = {
   'grid-source.desc': 'Jeu de barres infini / réseau externe',
   'grounding-transformer.desc': 'Transformateur étoile-zigzag pour mise à la terre du neutre',
   'load.desc': 'Charge abstraite (flèche de sortie de courant)',
+  'luminaire.desc': 'Charge d\'éclairage (symbole général de luminaire CEI 60617)',
   'ngr.desc': 'Mise à la terre à faible résistance : neutre du transformateur relié à la terre',
   'series-reactor.desc': 'Même symbole que la réactance shunt ; distingué par l\'usage',
   'wind-turbine.desc': 'Éolienne : génératrice + repère de rotor tripale',
@@ -341,6 +343,11 @@ export const library: Record<string, string> = {
   'gfci-breaker.param.In': 'Courant nominal',
   'gfci-breaker.param.IDn': 'Courant différentiel résiduel nominal',
   'rcd.param.IDn': 'Courant différentiel résiduel nominal',
+  'breaker.param.In': 'Courant nominal',
+  'breaker.param.poles': 'Pôles',
+  'breaker.param.Icu': 'Pouvoir de coupure',
+  'disconnector.param.In': 'Courant nominal',
+  'fuse.param.In': 'Courant nominal',
 
   // ---- v0.3 additions (zh falls back to each entry's JSON `name`/labels) ----
   // Names

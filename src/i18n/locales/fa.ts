@@ -256,6 +256,7 @@ export const library: Record<string, string> = {
   'inverter.name': 'اینورتر (DC→AC)',
   'load-switch.name': 'کلید قطع بار',
   'load.name': 'بار',
+  'luminaire.name': 'چراغ (بار روشنایی)',
   'panelboard.name': 'تابلو برق / مرکز بار',
   'ngr.name': 'مقاومت زمین نوترال (NGR)',
   'pt.name': 'ترانسفورماتور ولتاژ (PT)',
@@ -297,6 +298,7 @@ export const library: Record<string, string> = {
   'grid-source.desc': 'شینه بی‌نهایت / شبکه خارجی',
   'grounding-transformer.desc': 'ترانسفورماتور ستاره-زیگزاگ برای اتصال زمین نقطه نوترال',
   'load.desc': 'بار انتزاعی (پیکان خروجی جریان)',
+  'luminaire.desc': 'بار روشنایی (نماد عمومی چراغ IEC 60617)',
   'ngr.desc': 'اتصال زمین با مقاومت کم: نوترال ترانسفورماتور به زمین',
   'series-reactor.desc': 'نماد مشابه راکتور موازی؛ تمایز بر اساس کاربرد',
   'wind-turbine.desc': 'توربین بادی: ژنراتور + نشان روتور سه‌پره',
@@ -344,6 +346,11 @@ export const library: Record<string, string> = {
   'gfci-breaker.param.In': 'جریان نامی',
   'gfci-breaker.param.IDn': 'جریان عملکرد نشتی',
   'rcd.param.IDn': 'جریان عملکرد نشتی',
+  'breaker.param.In': 'جریان نامی',
+  'breaker.param.poles': 'تعداد قطب',
+  'breaker.param.Icu': 'قدرت قطع',
+  'disconnector.param.In': 'جریان نامی',
+  'fuse.param.In': 'جریان نامی',
 
   // ---- v0.3 additions ----
   // Names

@@ -75,6 +75,14 @@ const MANIFEST = [
     category: 'switching',
     source: { kind: 'elmt', path: '11_singlepole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur1.elmt' },
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    // No defaults: a value equal to the default is dropped by the property
+    // panel and would never reach the canvas, and no rating is right for
+    // every breaker.
+    params: [
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true },
+      { name: 'poles', label: '极数', type: 'number', unit: 'P', showOnCanvas: true },
+      { name: 'Icu', label: '分断能力', type: 'number', unit: 'kA', showOnCanvas: true },
+    ],
     label: { x: 6, y: -2, anchor: 'start' },
     // QET ships the "1"/"2" pin numbers at font-size 4 — bump for legibility.
     textFontSize: 6,
@@ -85,6 +93,9 @@ const MANIFEST = [
     category: 'switching',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_13/en_60617_07_13_06.elmt' },
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    params: [
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true },
+    ],
     label: { x: 6, y: -10, anchor: 'start' },
   },
   {
@@ -127,6 +138,9 @@ const MANIFEST = [
       { id: 't2', x: 0, y: 30, orientation: 's' },
     ],
     state: [{ name: 'blown', type: 'boolean', default: false, label: '熔断' }],
+    params: [
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true },
+    ],
     label: { x: 7, y: -2, anchor: 'start' },
   },
 
@@ -247,6 +261,45 @@ const MANIFEST = [
     category: 'load',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_08/en_60617_06_08_01.elmt' },
     textFontSize: 14,
+  },
+  {
+    id: 'luminaire',
+    name: '灯具 / 照明负荷',
+    category: 'load',
+    description:
+      '照明负荷（IEC 60617 荧光灯具通用符号）。区别于 indicator-light：那是面板信号灯，这是回路末端的照明负荷。',
+    // IEC 60617-11-15-04 "Luminaire, general symbol". Chapter 11 is the
+    // architectural-installation set, which is where a lighting LOAD lives.
+    // Chapter 08's lamp is already used by `indicator-light` (a signalling
+    // device), so reusing it here would render a lighting circuit and a panel
+    // pilot lamp identically.
+    source: {
+      kind: 'elmt',
+      path: '91_en_60617/en_60617_11/en_60617_11_15/en_60617_11_15_04.elmt',
+    },
+    // QET draws the tube from x −20 to x 30, i.e. centred on x=5, not on the
+    // symbol axis. Shift the authentic geometry 5 units left so the tube is
+    // centred on x=0. This is a pure translation of the standard symbol, not a
+    // redrawing of it. Without it we would have to choose between an off-axis
+    // pin (every luminaire in a column then trips the W101 jogged-wire
+    // diagnostic) and a tube that hangs visibly to one side of its feeder.
+    transformPrimitive: (p) =>
+      p.tag === 'line'
+        ? {
+            ...p,
+            attrs: {
+              ...p.attrs,
+              x1: String(+p.attrs.x1 - 5),
+              x2: String(+p.attrs.x2 - 5),
+            },
+          }
+        : p,
+    // QET ships this symbol with no terminals. A lighting load takes its feeder
+    // from above, so it gets a single top terminal like `load` / `ev-charger`.
+    // The glyph is a bare tube with no lead stub, so the terminal sits ON the
+    // tube line rather than above it — otherwise the incoming wire would stop
+    // in empty space.
+    extraTerminals: [{ id: 't_top', x: 0, y: 0, orientation: 'n' }],
   },
   {
     id: 'load',
@@ -494,8 +547,8 @@ const MANIFEST = [
     ],
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
     params: [
-      { name: 'In', label: '额定电流', type: 'number', unit: 'A' },
-      { name: 'IDn', label: '剩余动作电流', type: 'number', unit: 'mA', default: 30 },
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true },
+      { name: 'IDn', label: '剩余动作电流', type: 'number', unit: 'mA', default: 30, showOnCanvas: true },
     ],
   },
   {
@@ -506,7 +559,7 @@ const MANIFEST = [
     source: { kind: 'elmt', path: '11_singlepole/200_fuses_protective_gears/50_residual_current_circuit_breaker/ddr1.elmt' },
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
     params: [
-      { name: 'IDn', label: '剩余动作电流', type: 'number', unit: 'mA', default: 30 },
+      { name: 'IDn', label: '剩余动作电流', type: 'number', unit: 'mA', default: 30, showOnCanvas: true },
     ],
   },
   {

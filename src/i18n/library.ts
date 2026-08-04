@@ -39,6 +39,7 @@ const zh: Table = {
   'inverter.name': '逆变器 (DC→AC)',
   'load-switch.name': '负荷开关',
   'load.name': '负荷',
+  'luminaire.name': '灯具 / 照明负荷',
   'panelboard.name': '配电箱',
   'ngr.name': '中性点电阻 (NGR)',
   'pt.name': '电压互感器 (PT)',
@@ -80,6 +81,7 @@ const zh: Table = {
   'grid-source.desc': '无穷大母线 / 外部电网',
   'grounding-transformer.desc': '星-曲折接线变压器，中性点接地用',
   'load.desc': '抽象负荷（电流流出箭头）',
+  'luminaire.desc': '照明负荷（IEC 60617 荧光灯具通用符号）',
   'panelboard.desc': '配电箱 / 负荷中心（IEC 分配中心符号）：底部进线，箱顶分路示意',
   'ngr.desc': '小电阻接地：连接变压器中性点到地',
   'series-reactor.desc': '与并联电抗器同符号；通过用法区分',
@@ -128,6 +130,11 @@ const zh: Table = {
   'gfci-breaker.param.In': '额定电流',
   'gfci-breaker.param.IDn': '剩余动作电流',
   'rcd.param.IDn': '剩余动作电流',
+  'breaker.param.In': '额定电流',
+  'breaker.param.poles': '极数',
+  'breaker.param.Icu': '分断能力',
+  'disconnector.param.In': '额定电流',
+  'fuse.param.In': '额定电流',
 };
 
 const en: Table = {
@@ -152,6 +159,7 @@ const en: Table = {
   'inverter.name': 'Inverter (DC→AC)',
   'load-switch.name': 'Load break switch',
   'load.name': 'Load',
+  'luminaire.name': 'Luminaire (lighting load)',
   'panelboard.name': 'Panelboard / load center',
   'ngr.name': 'Neutral grounding resistor (NGR)',
   'pt.name': 'Voltage transformer (PT)',
@@ -192,6 +200,7 @@ const en: Table = {
   'grid-source.desc': 'Infinite bus / external grid',
   'grounding-transformer.desc': 'Wye-zigzag transformer for neutral grounding',
   'load.desc': 'Abstract load (current-out arrow)',
+  'luminaire.desc': 'Lighting load (IEC 60617 general luminaire symbol)',
   'ngr.desc': 'Low-resistance grounding: transformer neutral to earth',
   'series-reactor.desc': 'Same symbol as shunt reactor; distinguished by usage',
   'wind-turbine.desc': 'Wind turbine: generator + three-blade rotor mark',
@@ -237,6 +246,11 @@ const en: Table = {
   'gfci-breaker.param.In': 'Rated current',
   'gfci-breaker.param.IDn': 'Residual operating current',
   'rcd.param.IDn': 'Residual operating current',
+  'breaker.param.In': 'Rated current',
+  'breaker.param.poles': 'Poles',
+  'breaker.param.Icu': 'Breaking capacity',
+  'disconnector.param.In': 'Rated current',
+  'fuse.param.In': 'Rated current',
 
   // ---- v0.3 additions (zh falls back to each entry's JSON `name`/labels) ----
   // Names

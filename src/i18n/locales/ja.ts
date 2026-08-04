@@ -257,6 +257,7 @@ export const library: Record<string, string> = {
   'inverter.name': 'インバータ (DC→AC)',
   'load-switch.name': '負荷開閉器',
   'load.name': '負荷',
+  'luminaire.name': '照明器具（照明負荷）',
   'panelboard.name': '分電盤',
   'ngr.name': '中性点接地抵抗器 (NGR)',
   'pt.name': '計器用変圧器 (PT)',
@@ -298,6 +299,7 @@ export const library: Record<string, string> = {
   'grid-source.desc': '無限大母線／外部系統',
   'grounding-transformer.desc': '中性点接地用のスター・ジグザグ結線変圧器',
   'load.desc': '抽象負荷（電流流出方向の矢印）',
+  'luminaire.desc': '照明負荷（IEC 60617 照明器具一般図記号）',
   'ngr.desc': '低抵抗接地：変圧器中性点と大地間に接続',
   'series-reactor.desc': '並列リアクトルと同一記号。用途によって区別',
   'wind-turbine.desc': '風力発電機：発電機と三枚羽根ローターの記号',
@@ -345,6 +347,11 @@ export const library: Record<string, string> = {
   'gfci-breaker.param.In': '定格電流',
   'gfci-breaker.param.IDn': '定格感度電流',
   'rcd.param.IDn': '定格感度電流',
+  'breaker.param.In': '定格電流',
+  'breaker.param.poles': '極数',
+  'breaker.param.Icu': '定格遮断容量',
+  'disconnector.param.In': '定格電流',
+  'fuse.param.In': '定格電流',
 
   // ---- v0.3 additions ----
   // Names

@@ -256,6 +256,7 @@ export const library: Record<string, string> = {
   'inverter.name': 'Wechselrichter (DC→AC)',
   'load-switch.name': 'Lastschalter',
   'load.name': 'Last',
+  'luminaire.name': 'Leuchte (Beleuchtungslast)',
   'panelboard.name': 'Verteilerschrank / Lastzentrum',
   'ngr.name': 'Sternpunkt-Erdungswiderstand (NGR)',
   'pt.name': 'Spannungswandler (PT)',
@@ -295,6 +296,7 @@ export const library: Record<string, string> = {
   'grid-source.desc': 'Starres Netz / externes Versorgungsnetz',
   'grounding-transformer.desc': 'Stern-Zickzack-Transformator zur Sternpunkterdung',
   'load.desc': 'Abstrakte Last (Pfeil für Stromabgang)',
+  'luminaire.desc': 'Beleuchtungslast (allgemeines Leuchtensymbol IEC 60617)',
   'ngr.desc': 'Niederohmige Erdung: Transformator-Sternpunkt gegen Erde',
   'series-reactor.desc': 'Gleiches Symbol wie die Querdrosselspule; Unterscheidung nach Verwendungszweck',
   'wind-turbine.desc': 'Windenergieanlage: Generator + Drei-Blatt-Rotor-Kennzeichnung',
@@ -340,6 +342,11 @@ export const library: Record<string, string> = {
   'gfci-breaker.param.In': 'Bemessungsstrom',
   'gfci-breaker.param.IDn': 'Bemessungsdifferenzstrom',
   'rcd.param.IDn': 'Bemessungsdifferenzstrom',
+  'breaker.param.In': 'Bemessungsstrom',
+  'breaker.param.poles': 'Polzahl',
+  'breaker.param.Icu': 'Ausschaltvermögen',
+  'disconnector.param.In': 'Bemessungsstrom',
+  'fuse.param.In': 'Bemessungsstrom',
 
   // ---- v0.3 additions ----
   'resistor.name': 'Widerstand (R)',

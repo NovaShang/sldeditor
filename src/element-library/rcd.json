@@ -35,7 +35,8 @@
       "label": "剩余动作电流",
       "type": "number",
       "unit": "mA",
-      "default": 30
+      "default": 30,
+      "showOnCanvas": true
     }
   ],
   "source": {
