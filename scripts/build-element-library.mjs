@@ -430,6 +430,17 @@ const MANIFEST = [
     // moves t_in to the top and its orientation s→n (see `applyTransform`).
     transform: { flipV: true },
     extraTerminals: [{ id: 't_in', x: -25, y: 0, orientation: 's' }],
+    // A board has to show a name AND a rating. With no params it could show
+    // only `name`, so users named the element after its rating ("63A") and put
+    // the board name in a floating text annotation next to it — 129 instances
+    // of that exact pattern in the 2026-08-04 diagram sweep. No defaults:
+    // no incoming rating or way count is right for most boards.
+    // `ways` deliberately omitted: the measured workaround is about showing a
+    // name and a rating together, and a bare "12" on the canvas reads as
+    // nothing in particular. Add it when something actually asks for it.
+    params: [
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true },
+    ],
   },
   // ---- 新能源 / 电力电子 ----
   {

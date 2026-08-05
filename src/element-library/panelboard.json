@@ -15,6 +15,15 @@
       "orientation": "n"
     }
   ],
+  "params": [
+    {
+      "name": "In",
+      "label": "额定电流",
+      "type": "number",
+      "unit": "A",
+      "showOnCanvas": true
+    }
+  ],
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_11/en_60617_11_12/en_60617_11_12_07.elmt",

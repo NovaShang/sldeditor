@@ -114,7 +114,7 @@ export function CanvasSvg() {
       const annotationId = hitAnnotation(target);
       const elementId = annotationId ? null : hitElement(target);
       if (annotationId) {
-        if (store.selectedAnnotation !== annotationId) {
+        if (!store.selectedAnnotations.includes(annotationId)) {
           store.setSelectedAnnotation(annotationId);
         }
       } else if (elementId) {
@@ -130,7 +130,7 @@ export function CanvasSvg() {
 
       const s = useEditorStore.getState();
       const hasElementSelection = s.selection.length > 0;
-      const hasAnnotationSelection = s.selectedAnnotation != null;
+      const hasAnnotationSelection = s.selectedAnnotations.length > 0;
       // Cut/copy/delete cover both channels; rotate/mirror are element-only.
       const hasSelection = hasElementSelection || hasAnnotationSelection;
       const hasNodeSelection = s.selectedNode != null;
@@ -207,10 +207,10 @@ export function CanvasSvg() {
           destructive: true,
           onSelect: () => {
             const st = useEditorStore.getState();
+            // `deleteSelection` covers the mixed set (elements + annotations)
+            // in one undo entry.
             if (hasNodeSelection && !hasSelection) st.deleteSelectedNode();
-            else if (hasAnnotationSelection && st.selectedAnnotation) {
-              st.deleteAnnotation(st.selectedAnnotation);
-            } else st.deleteSelection();
+            else st.deleteSelection();
           },
           disabled: !hasSelection && !hasNodeSelection,
         },

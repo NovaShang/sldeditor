@@ -54,6 +54,7 @@ import {
   wireIdFromEnds,
 } from './id-allocator';
 import { normalizePath } from '../model/wire-path';
+import { endOwner, translateManualWirePaths } from './group-move';
 import { pruneOrphanedJunctions } from './prune-junctions';
 
 const EMPTY_DIAGRAM: DiagramFile = { version: '1', elements: [] };
@@ -82,7 +83,7 @@ export interface ClipboardData {
   placements: Record<ElementId, Placement>;
   busLayouts: Record<BusId, BusLayout>;
   wires: Wire[];
-  /** Copied free annotations (from the single-annotation selection channel). */
+  /** Copied free annotations (from the `selectedAnnotations` channel). */
   annotations: Annotation[];
 }
 
@@ -140,14 +141,26 @@ export interface EditorState {
   placeFromTerminal: WireEnd | null;
   busbarDrawStart: [number, number] | null;
   cursorSvg: [number, number] | null;
-  /** Selected devices and/or buses (shared id namespace). */
+  /** Selected devices, buses and/or junctions (shared id namespace). */
   selection: ElementId[];
   /** Selected single wire (mutually exclusive with selection/selectedNode). */
   selectedWire: WireId | null;
   /** Selected ConnectivityNode — used for "select the whole electrical
    *  node" operations. Mutually exclusive with the others. */
   selectedNode: NodeId | null;
-  selectedAnnotation: AnnotationId | null;
+  /**
+   * Selected free annotations. A *separate* channel from `selection` rather
+   * than extra members in it: annotation ids live in their own namespace and
+   * every consumer of `selection` (layout, rotate/mirror, wire endpoints,
+   * auto-arrange) assumes element/bus/junction ids. The two coexist — a
+   * marquee can produce a mixed selection and drag it as one — while wire and
+   * node selection stay mutually exclusive with both.
+   *
+   * Annotation-only affordances (resize handles, the annotation property
+   * panel, click-again-to-edit) are single-target by nature and key off
+   * `soleSelectedAnnotation` rather than this list.
+   */
+  selectedAnnotations: AnnotationId[];
   editingAnnotation: AnnotationId | null;
   /** Table cell being edited (`[row, col]`), only with `editingAnnotation`. */
   editingCell: [number, number] | null;
@@ -192,12 +205,20 @@ export interface EditorState {
   setBusbarDrawStart: (pt: [number, number] | null) => void;
   setCursorSvg: (pt: [number, number] | null) => void;
 
-  setSelection: (ids: ElementId[]) => void;
+  /**
+   * Replace the element/bus/junction selection. `annIds` replaces the
+   * annotation selection in the same update (the marquee commits both at
+   * once); omitted, annotations are cleared unless `ids` is empty.
+   */
+  setSelection: (ids: ElementId[], annIds?: AnnotationId[]) => void;
   toggleInSelection: (id: ElementId) => void;
   clearSelection: () => void;
   setSelectedWire: (id: WireId | null) => void;
   setSelectedNode: (nodeId: NodeId | null) => void;
+  /** Select exactly one annotation (replacing both selection channels). */
   setSelectedAnnotation: (id: AnnotationId | null) => void;
+  /** Shift-click equivalent for annotations: add/remove without replacing. */
+  toggleAnnotationInSelection: (id: AnnotationId) => void;
   setEditingAnnotation: (id: AnnotationId | null) => void;
   setEditingCell: (cell: [number, number] | null) => void;
   setAnnotationDraft: (draft: AnnotationDraft | null) => void;
@@ -217,7 +238,18 @@ export interface EditorState {
   fillUnplacedSelection: () => void;
 
   // ---- Document edit shortcuts ----------------------------------------
-  moveElements: (deltas: Map<ElementId, [number, number]>) => void;
+  /**
+   * Translate elements / buses / junctions (and optionally annotations) in a
+   * single dispatch, so one drag gesture is one undo entry. Manual wire
+   * routes whose *both* endpoints are in `deltas` travel with the move (see
+   * `translateManualWirePaths`).
+   */
+  moveElements: (
+    deltas: Map<ElementId, [number, number]>,
+    annotationDeltas?: Map<AnnotationId, [number, number]>,
+  ) => void;
+  /** Delete everything selected — elements, buses, junctions *and*
+   *  annotations — in one undo entry. */
   deleteSelection: () => void;
   /** Drop a single wire by id. */
   deleteSelectedWire: () => void;
@@ -283,7 +315,7 @@ export const useEditorStore = create<EditorState>()(
   selection: [],
   selectedWire: null,
   selectedNode: null,
-  selectedAnnotation: null,
+  selectedAnnotations: [],
   editingAnnotation: null,
   editingCell: null,
   annotationDraft: null,
@@ -306,7 +338,7 @@ export const useEditorStore = create<EditorState>()(
       selection: [],
       selectedWire: null,
       selectedNode: null,
-      selectedAnnotation: null,
+      selectedAnnotations: [],
       editingAnnotation: null,
       editingCell: null,
       annotationDraft: null,
@@ -331,7 +363,7 @@ export const useEditorStore = create<EditorState>()(
       selection: [],
       selectedWire: null,
       selectedNode: null,
-      selectedAnnotation: null,
+      selectedAnnotations: [],
       editingAnnotation: null,
       editingCell: null,
       annotationDraft: null,
@@ -421,12 +453,16 @@ export const useEditorStore = create<EditorState>()(
   setBusbarDrawStart: (pt) => set({ busbarDrawStart: pt }),
   setCursorSvg: (pt) => set({ cursorSvg: pt }),
 
-  setSelection: (ids) =>
+  setSelection: (ids, annIds) =>
     set({
       selection: dedupe(ids),
       selectedWire: null,
       selectedNode: null,
-      selectedAnnotation: ids.length ? null : get().selectedAnnotation,
+      selectedAnnotations: annIds
+        ? dedupe(annIds)
+        : ids.length
+          ? []
+          : get().selectedAnnotations,
     }),
   toggleInSelection: (id) => {
     const sel = get().selection;
@@ -434,7 +470,8 @@ export const useEditorStore = create<EditorState>()(
       selection: sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id],
       selectedWire: null,
       selectedNode: null,
-      selectedAnnotation: null,
+      // Shift-click *extends* — it must not silently drop annotations the
+      // user picked up with the marquee.
     });
   },
   clearSelection: () =>
@@ -442,7 +479,7 @@ export const useEditorStore = create<EditorState>()(
       selection: [],
       selectedWire: null,
       selectedNode: null,
-      selectedAnnotation: null,
+      selectedAnnotations: [],
       editingAnnotation: null,
       editingCell: null,
       editingElement: null,
@@ -452,28 +489,40 @@ export const useEditorStore = create<EditorState>()(
       selectedWire: id,
       selection: id ? [] : get().selection,
       selectedNode: null,
-      selectedAnnotation: id ? null : get().selectedAnnotation,
+      selectedAnnotations: id ? [] : get().selectedAnnotations,
     }),
   setSelectedNode: (nodeId) =>
     set({
       selectedNode: nodeId,
       selection: nodeId ? [] : get().selection,
       selectedWire: null,
-      selectedAnnotation: nodeId ? null : get().selectedAnnotation,
+      selectedAnnotations: nodeId ? [] : get().selectedAnnotations,
     }),
   setSelectedAnnotation: (id) =>
     set({
-      selectedAnnotation: id,
+      selectedAnnotations: id ? [id] : [],
       selection: id ? [] : get().selection,
       selectedWire: id ? null : get().selectedWire,
       selectedNode: id ? null : get().selectedNode,
       editingAnnotation: id ? get().editingAnnotation : null,
       editingCell: id ? get().editingCell : null,
     }),
+  toggleAnnotationInSelection: (id) => {
+    const sel = get().selectedAnnotations;
+    set({
+      selectedAnnotations: sel.includes(id)
+        ? sel.filter((x) => x !== id)
+        : [...sel, id],
+      selectedWire: null,
+      selectedNode: null,
+      editingAnnotation: null,
+      editingCell: null,
+    });
+  },
   setEditingAnnotation: (id) =>
     set({
       editingAnnotation: id,
-      selectedAnnotation: id ?? get().selectedAnnotation,
+      selectedAnnotations: id ? [id] : get().selectedAnnotations,
       editingElement: id ? null : get().editingElement,
       // Cell targeting is per-edit-session; the caller re-sets it when
       // entering a table cell right after this.
@@ -487,21 +536,22 @@ export const useEditorStore = create<EditorState>()(
       editingElement: id,
       selection: id ? [id] : get().selection,
       editingAnnotation: id ? null : get().editingAnnotation,
-      selectedAnnotation: id ? null : get().selectedAnnotation,
+      selectedAnnotations: id ? [] : get().selectedAnnotations,
       selectedWire: id ? null : get().selectedWire,
       selectedNode: id ? null : get().selectedNode,
     }),
 
   copySelection: () => {
-    const { selection, selectedAnnotation, diagram, internal } = get();
-    // Annotation channel: single-annotation selection is separate from the
-    // element selection, so copy it as an annotations-only clipboard.
+    const { selection, selectedAnnotations, diagram, internal } = get();
+    if (selection.length === 0 && selectedAnnotations.length === 0) return;
+    const annSet = new Set(selectedAnnotations);
+    const copiedAnnotations = (diagram.annotations ?? [])
+      .filter((a) => annSet.has(a.id))
+      .map((a) => structuredClone(a));
+    // Annotations live in their own channel, so an annotation-only selection
+    // produces an annotations-only clipboard (see the paste fast path).
     if (selection.length === 0) {
-      if (!selectedAnnotation) return;
-      const ann = (diagram.annotations ?? []).find(
-        (a) => a.id === selectedAnnotation,
-      );
-      if (!ann) return;
+      if (copiedAnnotations.length === 0) return;
       set({
         clipboard: {
           elements: [],
@@ -510,7 +560,7 @@ export const useEditorStore = create<EditorState>()(
           placements: {},
           busLayouts: {},
           wires: [],
-          annotations: [structuredClone(ann)],
+          annotations: copiedAnnotations,
         },
         clipboardPasteIndex: 0,
       });
@@ -571,21 +621,17 @@ export const useEditorStore = create<EditorState>()(
         placements,
         busLayouts,
         wires,
-        annotations: [],
+        annotations: copiedAnnotations,
       },
       clipboardPasteIndex: 0,
     });
   },
 
   cutSelection: () => {
-    const { selection, selectedAnnotation } = get();
-    if (selection.length === 0 && !selectedAnnotation) return;
+    const { selection, selectedAnnotations } = get();
+    if (selection.length === 0 && selectedAnnotations.length === 0) return;
     get().copySelection();
-    if (selection.length === 0 && selectedAnnotation) {
-      get().deleteAnnotation(selectedAnnotation);
-    } else {
-      get().deleteSelection();
-    }
+    get().deleteSelection();
   },
 
   pasteClipboard: () => {
@@ -602,12 +648,12 @@ export const useEditorStore = create<EditorState>()(
       if (anns.length === 0) return;
       const step = clipboardPasteIndex + 1;
       const off = PASTE_OFFSET * step;
-      let lastId: AnnotationId | null = null;
+      const newIds: AnnotationId[] = [];
       get().dispatch((d) => {
         let working = d;
         for (const ann of anns) {
           const id = newAnnotationId(working);
-          lastId = id;
+          newIds.push(id);
           const moved = {
             ...structuredClone(ann),
             id,
@@ -620,9 +666,9 @@ export const useEditorStore = create<EditorState>()(
         }
         return working;
       });
-      if (lastId) {
+      if (newIds.length) {
         set({
-          selectedAnnotation: lastId,
+          selectedAnnotations: newIds,
           selection: [],
           selectedWire: null,
           selectedNode: null,
@@ -659,6 +705,23 @@ export const useEditorStore = create<EditorState>()(
       working = {
         ...working,
         junctions: [...(working.junctions ?? []), { id: newId }],
+      };
+    }
+
+    // Mixed clipboard: annotations ride along with the elements, offset by the
+    // same cascade step so the pasted copy keeps its relative arrangement.
+    const newAnnotations: Annotation[] = [];
+    for (const ann of clipboard.annotations ?? []) {
+      const id = newAnnotationId(working);
+      const moved = {
+        ...structuredClone(ann),
+        id,
+        at: [ann.at[0] + dx, ann.at[1] + dy] as [number, number],
+      };
+      newAnnotations.push(moved);
+      working = {
+        ...working,
+        annotations: [...(working.annotations ?? []), moved],
       };
     }
 
@@ -736,11 +799,15 @@ export const useEditorStore = create<EditorState>()(
           : d.junctions,
         wires: wires.length ? wires : undefined,
         layout: Object.keys(newLayout).length ? newLayout : undefined,
+        annotations: newAnnotations.length
+          ? [...(d.annotations ?? []), ...newAnnotations]
+          : d.annotations,
       };
     });
 
     set({
       selection: Array.from(idMap.values()),
+      selectedAnnotations: newAnnotations.map((a) => a.id),
       clipboardPasteIndex: step,
     });
   },
@@ -872,8 +939,8 @@ export const useEditorStore = create<EditorState>()(
     });
   },
 
-  moveElements: (deltas) => {
-    if (deltas.size === 0) return;
+  moveElements: (deltas, annotationDeltas) => {
+    if (deltas.size === 0 && !annotationDeltas?.size) return;
     const internal = get().internal;
     get().dispatch((d) => {
       const layout = { ...(d.layout ?? {}) };
@@ -921,14 +988,30 @@ export const useEditorStore = create<EditorState>()(
           return { ...j, layout: { at: [at[0] + delta[0], at[1] + delta[1]] } };
         });
       }
-      return { ...d, layout, buses, junctions };
+      let annotations = d.annotations;
+      if (annotationDeltas?.size && annotations) {
+        annotations = annotations.map((a) => {
+          const delta = annotationDeltas.get(a.id);
+          if (!delta) return a;
+          return {
+            ...a,
+            at: [a.at[0] + delta[0], a.at[1] + delta[1]] as [number, number],
+          };
+        });
+      }
+      // Manual wire routes follow the move only when the whole conductor is
+      // inside it — see `translateManualWirePaths` for why this can't live in
+      // the compiler.
+      const wires = translateManualWirePaths(d.wires, deltas);
+      return { ...d, layout, buses, junctions, wires, annotations };
     });
   },
 
   deleteSelection: () => {
-    const { selection } = get();
-    if (selection.length === 0) return;
+    const { selection, selectedAnnotations } = get();
+    if (selection.length === 0 && selectedAnnotations.length === 0) return;
     const ids = new Set(selection);
+    const annIds = new Set(selectedAnnotations);
     get().dispatch((d) => {
       const elements = d.elements.filter((e) => !ids.has(e.id));
       const buses = (d.buses ?? []).filter((b) => !ids.has(b.id));
@@ -936,6 +1019,11 @@ export const useEditorStore = create<EditorState>()(
       const wires = (d.wires ?? []).filter(
         (w) => !ids.has(endOwner(w.ends[0])) && !ids.has(endOwner(w.ends[1])),
       );
+      // Annotations are a separate channel but share the gesture, so they go
+      // in the same dispatch — one undo entry for the whole mixed selection.
+      const annotations = annIds.size
+        ? (d.annotations ?? []).filter((a) => !annIds.has(a.id))
+        : d.annotations;
       // Also drop junctions left orphaned by the wires we just removed.
       const prunedJunctions = pruneOrphanedJunctions(d.wires ?? [], wires, junctions);
       const layout = d.layout
@@ -950,9 +1038,15 @@ export const useEditorStore = create<EditorState>()(
         junctions: prunedJunctions.length ? prunedJunctions : undefined,
         wires: wires.length ? wires : undefined,
         layout: layout && Object.keys(layout).length ? layout : undefined,
+        annotations: annotations?.length ? annotations : undefined,
       };
     });
-    set({ selection: [] });
+    set({
+      selection: [],
+      selectedAnnotations: [],
+      editingAnnotation: null,
+      editingCell: null,
+    });
   },
 
   deleteSelectedWire: () => {
@@ -1327,8 +1421,12 @@ export const useEditorStore = create<EditorState>()(
         annotations: next.length ? next : undefined,
       };
     });
-    if (get().selectedAnnotation === id) {
-      set({ selectedAnnotation: null, editingAnnotation: null, editingCell: null });
+    if (get().selectedAnnotations.includes(id)) {
+      set({
+        selectedAnnotations: get().selectedAnnotations.filter((x) => x !== id),
+        editingAnnotation: null,
+        editingCell: null,
+      });
     }
     if (get().annotationPreview?.id === id) {
       set({ annotationPreview: null });
@@ -1366,13 +1464,23 @@ export const useEditorStore = create<EditorState>()(
 // Helpers
 // ---------------------------------------------------------------------------
 
-function dedupe<T>(arr: T[]): T[] {
-  return Array.from(new Set(arr));
+/**
+ * The one annotation that *is* the entire selection, or null.
+ *
+ * Annotation editing affordances — the resize/vertex handles, the annotation
+ * property panel, click-again-to-edit — are single-target by nature, so they
+ * derive from `selectedAnnotations` instead of storing a second, drift-prone
+ * copy of it. A mixed or multi-annotation selection deliberately resolves to
+ * null: showing resize grips for one member of a group reads as a bug.
+ */
+export function soleSelectedAnnotation(s: EditorState): AnnotationId | null {
+  return s.selectedAnnotations.length === 1 && s.selection.length === 0
+    ? s.selectedAnnotations[0]
+    : null;
 }
 
-function endOwner(end: WireEnd): ElementId {
-  const dot = end.indexOf('.');
-  return dot < 0 ? end : end.slice(0, dot);
+function dedupe<T>(arr: T[]): T[] {
+  return Array.from(new Set(arr));
 }
 
 /** Concatenate two wire lists, dropping duplicates (by content-hash id). */

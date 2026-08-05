@@ -46,18 +46,20 @@ const LINE_HEIGHT = 1.25;
 
 export function FreeAnnotationLayer() {
   const annotations = useEditorStore((s) => s.diagram.annotations);
-  const selected = useEditorStore((s) => s.selectedAnnotation);
+  const selected = useEditorStore((s) => s.selectedAnnotations);
   const editing = useEditorStore((s) => s.editingAnnotation);
   const editingCell = useEditorStore((s) => s.editingCell);
   const preview = useEditorStore((s) => s.annotationPreview);
 
   if (!annotations || annotations.length === 0) return null;
 
+  const selectedSet = new Set(selected);
+
   return (
     <g className="ole-free-annotation-layer">
       {annotations.map((a) => {
         const eff: Annotation = preview?.id === a.id ? preview : a;
-        const isSelected = selected === a.id;
+        const isSelected = selectedSet.has(a.id);
         switch (annotationKind(eff)) {
           case 'rect':
             return (

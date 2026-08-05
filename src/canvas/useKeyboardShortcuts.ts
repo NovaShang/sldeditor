@@ -62,7 +62,7 @@ export function exitDrawingState(): void {
     store.selectedNode ||
     store.selectedWire ||
     store.selection.length > 0 ||
-    store.selectedAnnotation
+    store.selectedAnnotations.length > 0
   ) {
     store.clearSelection();
   }
@@ -101,11 +101,11 @@ export function useKeyboardShortcuts(): void {
         return;
       }
       // Cmd+C / Cmd+X / Cmd+V — copy / cut / paste. Covers both selection
-      // channels: elements/buses/junctions and the single annotation.
+      // channels: elements/buses/junctions and annotations.
       if (mod && !e.shiftKey && !e.altKey) {
         const k = e.key.toLowerCase();
         const hasCopyable =
-          store.selection.length > 0 || store.selectedAnnotation != null;
+          store.selection.length > 0 || store.selectedAnnotations.length > 0;
         if (k === 'c') {
           if (!hasCopyable) return;
           e.preventDefault();
@@ -186,18 +186,17 @@ export function useKeyboardShortcuts(): void {
           return;
         case 'Delete':
         case 'Backspace':
-          if (store.selectedAnnotation) {
+          // One call covers the mixed set (elements/buses/junctions +
+          // annotations) in a single undo entry.
+          if (store.selection.length > 0 || store.selectedAnnotations.length > 0) {
             e.preventDefault();
-            store.deleteAnnotation(store.selectedAnnotation);
+            store.deleteSelection();
           } else if (store.selectedWire) {
             e.preventDefault();
             store.deleteSelectedWire();
           } else if (store.selectedNode) {
             e.preventDefault();
             store.deleteSelectedNode();
-          } else if (store.selection.length > 0) {
-            e.preventDefault();
-            store.deleteSelection();
           }
           return;
         case 'Escape':

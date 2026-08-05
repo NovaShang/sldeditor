@@ -1,5 +1,6 @@
 export {
   useEditorStore,
+  soleSelectedAnnotation,
   type EditorState,
   type ToolId,
   type WireEndSpec,

@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { libraryById } from '../element-library';
 import { useT } from '../i18n';
 import { useLibT } from '../i18n/library';
-import { useEditorStore } from '../store';
+import { soleSelectedAnnotation, useEditorStore } from '../store';
 import {
   annotationKind,
   type AnnotationId,
@@ -42,13 +42,19 @@ export function PropertyPanel() {
   const junctions = useEditorStore((s) => s.diagram.junctions);
   const selectedNode = useEditorStore((s) => s.selectedNode);
   const selectedWire = useEditorStore((s) => s.selectedWire);
-  const selectedAnnotation = useEditorStore((s) => s.selectedAnnotation);
+  const selectedAnnotations = useEditorStore((s) => s.selectedAnnotations);
+  const soleAnnotation = useEditorStore(soleSelectedAnnotation);
 
   if (selectedWire) return <WirePanel wireId={selectedWire} />;
   if (selectedNode) return <NodePanel nodeId={selectedNode} />;
-  if (selectedAnnotation) return <AnnotationPanel annId={selectedAnnotation} />;
+  if (soleAnnotation) return <AnnotationPanel annId={soleAnnotation} />;
 
-  if (selection.length === 0) {
+  // Mixed / multi selections get a plain count. There is no bulk editing for
+  // anything, so the only requirement is that a mixed set doesn't fall
+  // through to a single-object editor.
+  const total = selection.length + selectedAnnotations.length;
+
+  if (total === 0) {
     return (
       <div className="px-4 py-5 text-center text-xs text-muted-foreground">
         {t('props.empty')}
@@ -56,10 +62,10 @@ export function PropertyPanel() {
     );
   }
 
-  if (selection.length > 1) {
+  if (total > 1) {
     return (
       <div className="px-4 py-5 text-center text-xs text-muted-foreground">
-        {t('props.multi', { n: selection.length })}
+        {t('props.multi', { n: total })}
       </div>
     );
   }
@@ -167,7 +173,15 @@ function SchemaParamField({
   const label = libT(`${element.kind}.param.${field.name}`, field.label ?? field.name);
   const onCommit = (next: ParamValue | undefined) => {
     const params = { ...(element.params ?? {}) };
-    if (next === undefined || next === field.default) delete params[field.name];
+    // Only an empty value drops the key. A value that merely *equals* the
+    // library default is still an explicit choice and has to persist: canvas
+    // labels render from `element.params` without consulting defaults, so
+    // discarding it made the most common ratings unlabelable — an RCD left at
+    // its default 30 mA could never display "30mA", which is exactly the text
+    // users were typing by hand as floating annotations. It also made the two
+    // authoring paths disagree, since the AI writing `IDn: 30` through
+    // apply_ops did produce a label.
+    if (next === undefined || next === '') delete params[field.name];
     else params[field.name] = next;
     useEditorStore.getState().updateElement(id, {
       params: Object.keys(params).length > 0 ? params : undefined,

@@ -72,7 +72,7 @@ export type {
   WireRender,
 } from './compiler';
 
-export { useEditorStore } from './store';
+export { useEditorStore, soleSelectedAnnotation } from './store';
 export type { EditorState } from './store';
 
 // ID allocator — for embedding apps (e.g. AI agents) that build elements

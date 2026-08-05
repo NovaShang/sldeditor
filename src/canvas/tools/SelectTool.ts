@@ -1,8 +1,9 @@
 /**
  * Select tool: click to select, shift-click to add/remove from selection,
- * drag a selected element (or one just clicked) to move all selected
- * elements together. Drag in *empty space* draws a marquee box and selects
- * every element whose bbox intersects the box (replace, or add with shift).
+ * drag a selected object (or one just clicked) to move the whole selection
+ * together. Drag in *empty space* draws a marquee box and selects every
+ * device, bus, junction and annotation whose bbox intersects the box
+ * (replace, or toggle with shift).
  *
  * Movement uses DOM-direct mutation (`setAttribute('transform')`) during
  * the drag and dispatches a single `moveElements` action on pointer-up.
@@ -10,7 +11,7 @@
  * recompile on every pointermove.
  */
 
-import { useEditorStore } from '../../store';
+import { soleSelectedAnnotation, useEditorStore } from '../../store';
 import type { ResolvedPlacement } from '../../compiler';
 import {
   annotationKind,
@@ -25,6 +26,7 @@ import {
 import { tableCellAt } from '../../lib/annotation-geom';
 import { snap } from '../grid';
 import { hitAnnotation, hitElement, hitNode, hitTerminal, hitWire } from '../hit-test';
+import { hitsInRect } from '../marquee-hit';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
 import {
   resolveDragTarget,
@@ -36,7 +38,7 @@ import {
 } from '../wire-drag';
 import { transformAttr } from '../transform-attr';
 import { publishWireTarget } from '../wire-target-bus';
-import type { Tool } from './types';
+import type { Tool, ToolContext } from './types';
 
 const MARQUEE_THRESHOLD = 3;
 
@@ -51,6 +53,9 @@ interface DragState {
   /** Original world point of every dragged junction. Like buses, junctions
    *  live outside `internal.layout`; preview translates the wrapper `<g>`. */
   junctionOriginals: Map<JunctionId, [number, number]>;
+  /** Original anchor of every dragged annotation (separate id namespace;
+   *  preview translates the `[data-annotation-id]` wrapper `<g>`). */
+  annotationOriginals: Map<AnnotationId, [number, number]>;
   moved: boolean;
 }
 
@@ -60,6 +65,8 @@ interface MarqueeState {
   shiftKey: boolean;
   /** Selection at gesture start; used as the base when shift-extending. */
   baseSelection: ElementId[];
+  /** Annotation selection at gesture start (same role, other channel). */
+  baseAnnotations: AnnotationId[];
 }
 
 interface WireDragState {
@@ -114,7 +121,21 @@ export const SelectTool: Tool = {
       e.stopPropagation();
       const ann = store.diagram.annotations?.find((a) => a.id === annId);
       if (!ann) return;
-      const wasSelected = store.selectedAnnotation === annId;
+      if (e.shiftKey) {
+        // Shift extends the mixed selection rather than replacing it.
+        store.toggleAnnotationInSelection(annId);
+        return;
+      }
+      // Grabbing any member of a multi-selection drags the whole set — same
+      // gesture as grabbing one of its devices.
+      if (
+        store.selectedAnnotations.includes(annId) &&
+        store.selection.length + store.selectedAnnotations.length > 1
+      ) {
+        beginGroupDrag(e, ctx, store.selection, store.selectedAnnotations);
+        return;
+      }
+      const wasSelected = soleSelectedAnnotation(store) === annId;
       store.setSelectedAnnotation(annId);
       annDrag = {
         pointerId: e.pointerId,
@@ -245,6 +266,7 @@ export const SelectTool: Tool = {
         startSvg: ctx.viewport.screenToSvg(e.clientX, e.clientY),
         shiftKey: e.shiftKey,
         baseSelection: e.shiftKey ? store.selection.slice() : [],
+        baseAnnotations: e.shiftKey ? store.selectedAnnotations.slice() : [],
       };
       ctx.hostEl.setPointerCapture(e.pointerId);
       e.preventDefault();
@@ -259,43 +281,11 @@ export const SelectTool: Tool = {
       store.setSelection([id]);
     }
 
-    // Begin drag with the post-click selection.
-    const targets = e.shiftKey
-      ? useEditorStore.getState().selection
-      : sel.includes(id)
-        ? sel
-        : [id];
-    if (targets.length === 0) return;
-
-    const internal = useEditorStore.getState().internal;
-    const originals = new Map<ElementId, ResolvedPlacement>();
-    const busOriginals = new Map<BusId, [number, number]>();
-    const junctionOriginals = new Map<JunctionId, [number, number]>();
-    for (const tid of targets) {
-      const rb = internal.buses.get(tid);
-      if (rb) {
-        busOriginals.set(tid, [rb.geometry.at[0], rb.geometry.at[1]]);
-        continue;
-      }
-      const rj = internal.junctions.get(tid);
-      if (rj) {
-        junctionOriginals.set(tid, [rj.world[0], rj.world[1]]);
-        continue;
-      }
-      const p = internal.layout.get(tid);
-      if (p) originals.set(tid, { ...p });
-    }
-    if (originals.size === 0 && busOriginals.size === 0 && junctionOriginals.size === 0)
-      return;
-
-    drag = {
-      pointerId: e.pointerId,
-      startSvg: ctx.viewport.screenToSvg(e.clientX, e.clientY),
-      originals,
-      busOriginals,
-      junctionOriginals,
-      moved: false,
-    };
+    // Begin drag with the post-click selection. Annotations caught by a
+    // marquee ride along, so the whole mixed set translates as one.
+    const post = useEditorStore.getState();
+    const targets = e.shiftKey ? post.selection : sel.includes(id) ? sel : [id];
+    if (!beginGroupDrag(e, ctx, targets, post.selectedAnnotations)) return;
     // Defer pointer capture until the user actually starts moving (in
     // onPointerMove) — capturing on pointerdown can interfere with the
     // browser synthesizing `dblclick` from a click pair on the same target.
@@ -381,6 +371,14 @@ export const SelectTool: Tool = {
         if (!node) continue;
         node.setAttribute('transform', `translate(${dx} ${dy})`);
       }
+      // Annotations: same wrapper-translate preview, keyed by annotation id.
+      for (const id of drag.annotationOriginals.keys()) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-annotation-id="${cssEscape(id)}"]`,
+        );
+        if (!node) continue;
+        node.setAttribute('transform', `translate(${dx} ${dy})`);
+      }
       return;
     }
 
@@ -459,7 +457,11 @@ export const SelectTool: Tool = {
           for (const id of drag.originals.keys()) deltas.set(id, [dx, dy]);
           for (const id of drag.busOriginals.keys()) deltas.set(id, [dx, dy]);
           for (const id of drag.junctionOriginals.keys()) deltas.set(id, [dx, dy]);
-          useEditorStore.getState().moveElements(deltas);
+          const annDeltas = new Map<AnnotationId, [number, number]>();
+          for (const id of drag.annotationOriginals.keys()) {
+            annDeltas.set(id, [dx, dy]);
+          }
+          useEditorStore.getState().moveElements(deltas, annDeltas);
         }
         // Clear bus / junction preview transforms — the store update repaints.
         for (const id of drag.busOriginals.keys()) {
@@ -471,6 +473,12 @@ export const SelectTool: Tool = {
         for (const id of drag.junctionOriginals.keys()) {
           const node = ctx.hostEl.querySelector<SVGGElement>(
             `[data-element-id="${cssEscape(id)}"]`,
+          );
+          if (node) node.removeAttribute('transform');
+        }
+        for (const id of drag.annotationOriginals.keys()) {
+          const node = ctx.hostEl.querySelector<SVGGElement>(
+            `[data-annotation-id="${cssEscape(id)}"]`,
           );
           if (node) node.removeAttribute('transform');
         }
@@ -487,17 +495,17 @@ export const SelectTool: Tool = {
       const rect = rectFromPoints(marquee.startSvg, end);
       // Only treat as a real marquee if the user actually dragged.
       if (rect.w >= MARQUEE_THRESHOLD || rect.h >= MARQUEE_THRESHOLD) {
-        const hit = elementsInRect(rect);
+        const store = useEditorStore.getState();
+        const hit = hitsInRect(store.internal, store.diagram.annotations, rect);
         if (marquee.shiftKey) {
-          // Shift-marquee toggles each hit element's membership.
-          const baseSet = new Set(marquee.baseSelection);
-          for (const id of hit) {
-            if (baseSet.has(id)) baseSet.delete(id);
-            else baseSet.add(id);
-          }
-          useEditorStore.getState().setSelection([...baseSet]);
+          // Shift-marquee toggles each hit object's membership, in both
+          // channels.
+          store.setSelection(
+            toggleAll(marquee.baseSelection, hit.elements),
+            toggleAll(marquee.baseAnnotations, hit.annotations),
+          );
         } else {
-          useEditorStore.getState().setSelection(hit);
+          store.setSelection(hit.elements, hit.annotations);
         }
       }
       publishMarquee(null);
@@ -542,6 +550,12 @@ export const SelectTool: Tool = {
       for (const id of drag.junctionOriginals.keys()) {
         const node = ctx.hostEl.querySelector<SVGGElement>(
           `[data-element-id="${cssEscape(id)}"]`,
+        );
+        if (node) node.removeAttribute('transform');
+      }
+      for (const id of drag.annotationOriginals.keys()) {
+        const node = ctx.hostEl.querySelector<SVGGElement>(
+          `[data-annotation-id="${cssEscape(id)}"]`,
         );
         if (node) node.removeAttribute('transform');
       }
@@ -618,6 +632,64 @@ export const SelectTool: Tool = {
 };
 
 /**
+ * Arm a group move over the given selection. Snapshots every dragged object's
+ * original geometry so pointermove can preview with DOM transforms and
+ * pointerup can commit one `moveElements` dispatch (= one undo entry).
+ * Returns false when there was nothing draggable to arm.
+ */
+function beginGroupDrag(
+  e: PointerEvent,
+  ctx: ToolContext,
+  targets: ElementId[],
+  annotationTargets: AnnotationId[],
+): boolean {
+  const store = useEditorStore.getState();
+  const internal = store.internal;
+  const originals = new Map<ElementId, ResolvedPlacement>();
+  const busOriginals = new Map<BusId, [number, number]>();
+  const junctionOriginals = new Map<JunctionId, [number, number]>();
+  const annotationOriginals = new Map<AnnotationId, [number, number]>();
+  for (const tid of targets) {
+    const rb = internal.buses.get(tid);
+    if (rb) {
+      busOriginals.set(tid, [rb.geometry.at[0], rb.geometry.at[1]]);
+      continue;
+    }
+    const rj = internal.junctions.get(tid);
+    if (rj) {
+      junctionOriginals.set(tid, [rj.world[0], rj.world[1]]);
+      continue;
+    }
+    const p = internal.layout.get(tid);
+    if (p) originals.set(tid, { ...p });
+  }
+  const annotations = store.diagram.annotations ?? [];
+  for (const aid of annotationTargets) {
+    const ann = annotations.find((a) => a.id === aid);
+    if (ann) annotationOriginals.set(aid, [ann.at[0], ann.at[1]]);
+  }
+  if (
+    originals.size === 0 &&
+    busOriginals.size === 0 &&
+    junctionOriginals.size === 0 &&
+    annotationOriginals.size === 0
+  ) {
+    return false;
+  }
+
+  drag = {
+    pointerId: e.pointerId,
+    startSvg: ctx.viewport.screenToSvg(e.clientX, e.clientY),
+    originals,
+    busOriginals,
+    junctionOriginals,
+    annotationOriginals,
+    moved: false,
+  };
+  return true;
+}
+
+/**
  * Enter inline editing for an annotation the user activated (click-again or
  * double-click). Text opens its editor; a table opens the cell under `point`.
  * Rect / line carry no inline text body — their label/style live in the
@@ -648,100 +720,14 @@ function rectFromPoints(a: [number, number], b: [number, number]): MarqueeRect {
   return { x, y, w, h };
 }
 
-/**
- * Pick all element IDs whose library viewBox (transformed to world coords)
- * intersects the marquee rect. We approximate with the axis-aligned bbox of
- * the four corners after applying placement.
- */
-function elementsInRect(rect: MarqueeRect): ElementId[] {
-  const { internal } = useEditorStore.getState();
-  const hits: ElementId[] = [];
-  for (const re of internal.elements.values()) {
-    if (!re.libraryDef) continue;
-    const place = internal.layout.get(re.element.id);
-    if (!place) continue;
-    const vb = parseViewBox(re.libraryDef.viewBox);
-    if (!vb) continue;
-    const corners: [number, number][] = [
-      [vb.x, vb.y],
-      [vb.x + vb.w, vb.y],
-      [vb.x, vb.y + vb.h],
-      [vb.x + vb.w, vb.y + vb.h],
-    ].map(([x, y]) => transformLocalCorner([x, y], place));
-
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const [x, y] of corners) {
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-    }
-    if (
-      maxX >= rect.x &&
-      minX <= rect.x + rect.w &&
-      maxY >= rect.y &&
-      minY <= rect.y + rect.h
-    ) {
-      hits.push(re.element.id);
-    }
+/** Flip each hit id's membership in `base` (shift-marquee semantics). */
+function toggleAll<T>(base: readonly T[], hits: readonly T[]): T[] {
+  const set = new Set(base);
+  for (const id of hits) {
+    if (set.has(id)) set.delete(id);
+    else set.add(id);
   }
-  // Buses: a horizontal/vertical segment is a tight rect.
-  for (const { bus, geometry } of internal.buses.values()) {
-    const { axis, at, span } = geometry;
-    const half = span / 2;
-    const minX = axis === 'x' ? at[0] - half : at[0];
-    const maxX = axis === 'x' ? at[0] + half : at[0];
-    const minY = axis === 'x' ? at[1] : at[1] - half;
-    const maxY = axis === 'x' ? at[1] : at[1] + half;
-    if (
-      maxX >= rect.x &&
-      minX <= rect.x + rect.w &&
-      maxY >= rect.y &&
-      minY <= rect.y + rect.h
-    ) {
-      hits.push(bus.id);
-    }
-  }
-  // Junctions: a point inside the rect.
-  for (const { junction, world } of internal.junctions.values()) {
-    if (
-      world[0] >= rect.x &&
-      world[0] <= rect.x + rect.w &&
-      world[1] >= rect.y &&
-      world[1] <= rect.y + rect.h
-    ) {
-      hits.push(junction.id);
-    }
-  }
-  return hits;
-}
-
-function transformLocalCorner(
-  pt: [number, number],
-  p: ResolvedPlacement,
-): [number, number] {
-  let [x, y] = pt;
-  if (p.mirror) x = -x;
-  switch (p.rot) {
-    case 0:
-      break;
-    case 90:
-      [x, y] = [-y, x];
-      break;
-    case 180:
-      [x, y] = [-x, -y];
-      break;
-    case 270:
-      [x, y] = [y, -x];
-      break;
-  }
-  return [x + p.at[0], y + p.at[1]];
-}
-
-function parseViewBox(s: string) {
-  const parts = s.trim().split(/\s+/).map(Number);
-  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return null;
-  return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
+  return [...set];
 }
 
 function cssEscape(s: string): string {

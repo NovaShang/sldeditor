@@ -15,7 +15,7 @@
  */
 
 import { useRef } from 'react';
-import { useEditorStore } from '../store';
+import { soleSelectedAnnotation, useEditorStore } from '../store';
 import {
   annotationKind,
   type Annotation,
@@ -40,7 +40,9 @@ const HANDLE_SIZE = 7;
 const STRIP_HALF = 3;
 
 export function AnnotationHandles() {
-  const selectedId = useEditorStore((s) => s.selectedAnnotation);
+  // Resize/vertex grips are single-target: a multi- or mixed selection shows
+  // none (dragging one member's grip would resize just that member).
+  const selectedId = useEditorStore(soleSelectedAnnotation);
   const annotations = useEditorStore((s) => s.diagram.annotations);
   const preview = useEditorStore((s) => s.annotationPreview);
   const readOnly = useEditorStore((s) => s.readOnly);

@@ -27,7 +27,7 @@ import { usePanels } from '../hooks/use-panels';
 import { useT, type LocaleKey } from '../i18n';
 import { cn } from '../lib/utils';
 import { annotationKind } from '../model';
-import { useEditorStore, type ToolId } from '../store';
+import { soleSelectedAnnotation, useEditorStore, type ToolId } from '../store';
 import { ViewMenuButton } from './ViewToolbar';
 
 interface ToolDef {
@@ -158,7 +158,9 @@ function ToolHint() {
   );
   const editingAnnotation = useEditorStore((s) => s.editingAnnotation);
   const annSelKind = useEditorStore((s) => {
-    const id = s.selectedAnnotation;
+    // Only a solo annotation gets the "click again to edit" hint — a mixed
+    // selection falls through to the generic selection hint.
+    const id = soleSelectedAnnotation(s);
     if (!id) return null;
     const a = s.diagram.annotations?.find((x) => x.id === id);
     return a ? annotationKind(a) : null;
