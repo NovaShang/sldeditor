@@ -5,14 +5,14 @@
  *
  * Mapping summary:
  *   <line>          → LINE
- *   <polyline>      → LWPOLYLINE (open)
- *   <polygon>       → LWPOLYLINE (closed)
- *   <rect>          → LWPOLYLINE (closed, 4 corners; rx/ry ignored)
+ *   <polyline>      → POLYLINE (open)
+ *   <polygon>       → POLYLINE (closed)
+ *   <rect>          → POLYLINE (closed, 4 corners; rx/ry ignored)
  *   <circle>        → CIRCLE
- *   <ellipse>       → CIRCLE if rx≈ry, else sampled LWPOLYLINE (closed)
- *   <path d="M..A..">→ sampled LWPOLYLINE (open)
+ *   <ellipse>       → CIRCLE if rx≈ry, else sampled POLYLINE (closed)
+ *   <path d="M..A..">→ sampled POLYLINE (open)
  *   <text>          → TEXT
- *   wire route      → LWPOLYLINE (open)
+ *   wire route      → POLYLINE (open)
  *   free annotation → TEXT (one per line)
  *   element label   → TEXT (one per line, ID + showOnCanvas params)
  *   wire label      → TEXT (mid-wire, phase designation etc.)
@@ -101,7 +101,7 @@ export function buildExportDxf(
   // Wires (already in world coordinates).
   for (const r of model.wireRenders.values()) {
     if (r.path.length < 2) continue;
-    w.lwpolyline(LAYER_WIRES, r.path.map(worldToDxf), false);
+    w.polyline(LAYER_WIRES, r.path.map(worldToDxf), false);
   }
 
   // Buses (drawn after wires so the heavier bar sits on top).
@@ -110,7 +110,7 @@ export function buildExportDxf(
     const half = span / 2;
     const a: [number, number] = axis === 'x' ? [at[0] - half, at[1]] : [at[0], at[1] - half];
     const b: [number, number] = axis === 'x' ? [at[0] + half, at[1]] : [at[0], at[1] + half];
-    w.lwpolyline(LAYER_WIRES, [a, b].map(worldToDxf), false);
+    w.polyline(LAYER_WIRES, [a, b].map(worldToDxf), false);
   }
 
   // Element symbols.
@@ -165,7 +165,7 @@ export function buildExportDxf(
         const r = ann as RectAnnotation;
         const [x, y] = r.at;
         const [rw, rh] = r.size;
-        w.lwpolyline(
+        w.polyline(
           LAYER_ANNOTATIONS,
           (
             [
@@ -190,9 +190,9 @@ export function buildExportDxf(
         const l = ann as LineAnnotation;
         const pts = lineAbsPoints(l);
         if (pts.length < 2) break;
-        w.lwpolyline(LAYER_ANNOTATIONS, pts.map(worldToDxf), false);
+        w.polyline(LAYER_ANNOTATIONS, pts.map(worldToDxf), false);
         for (const tri of lineArrowHeads(pts, l.arrow)) {
-          w.lwpolyline(LAYER_ANNOTATIONS, tri.map(worldToDxf), true);
+          w.polyline(LAYER_ANNOTATIONS, tri.map(worldToDxf), true);
         }
         break;
       }
@@ -203,7 +203,7 @@ export function buildExportDxf(
         const colE = tableColEdges(tb);
         const rowE = tableRowEdges(tb);
         const fs = tb.fontSize ?? ANN_FONT_SIZE;
-        w.lwpolyline(
+        w.polyline(
           LAYER_ANNOTATIONS,
           (
             [
@@ -353,7 +353,7 @@ function emitPoly(
   const pts = parsePoints(el.getAttribute('points') ?? '');
   if (pts.length < 2) return;
   const out = pts.map((p) => worldToDxf(localToWorld(p, place)));
-  w.lwpolyline(LAYER_ELEMENTS, out, closed);
+  w.polyline(LAYER_ELEMENTS, out, closed);
 }
 
 function emitRect(
@@ -372,7 +372,7 @@ function emitRect(
     [x, y + hh],
   ];
   const out = corners.map((p) => worldToDxf(localToWorld(p, place)));
-  w.lwpolyline(LAYER_ELEMENTS, out, true);
+  w.polyline(LAYER_ELEMENTS, out, true);
 }
 
 function emitCircle(
@@ -431,7 +431,7 @@ function sampleEllipse(
       ),
     );
   }
-  w.lwpolyline(LAYER_ELEMENTS, pts, true);
+  w.polyline(LAYER_ELEMENTS, pts, true);
 }
 
 function emitText(
@@ -451,7 +451,7 @@ function emitText(
 }
 
 // -----------------------------------------------------------------------------
-// SVG path (M / A subset) → sampled LWPOLYLINE
+// SVG path (M / A subset) → sampled POLYLINE
 // -----------------------------------------------------------------------------
 
 function emitPath(
@@ -467,7 +467,7 @@ function emitPath(
   let buffer: [number, number][] = [];
   const flush = () => {
     if (buffer.length >= 2) {
-      w.lwpolyline(
+      w.polyline(
         LAYER_ELEMENTS,
         buffer.map((p) => worldToDxf(localToWorld(p, place))),
         false,
@@ -645,7 +645,31 @@ class DxfWriter {
     this.precision = precision;
   }
 
+  /** Drawing extents, accumulated as entities are written. */
+  private minX = Infinity;
+  private minY = Infinity;
+  private maxX = -Infinity;
+  private maxY = -Infinity;
+  /** Index in `out` reserved by `header()` for the extents group codes. */
+  private extentsSlot = -1;
+
+  private track(x: number, y: number): void {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (x < this.minX) this.minX = x;
+    if (x > this.maxX) this.maxX = x;
+    if (y < this.minY) this.minY = y;
+    if (y > this.maxY) this.maxY = y;
+  }
+
   toString(): string {
+    // Fill the slot `header()` reserved. A drawing with no finite geometry gets
+    // no extents at all rather than a made-up rectangle — a wrong $EXTMIN is
+    // worse than none, since it strands the viewport somewhere empty.
+    if (this.extentsSlot >= 0 && Number.isFinite(this.minX)) {
+      this.out[this.extentsSlot] =
+        `9\n$EXTMIN\n10\n${this.fmt(this.minX)}\n20\n${this.fmt(this.minY)}\n30\n0\n` +
+        `9\n$EXTMAX\n10\n${this.fmt(this.maxX)}\n20\n${this.fmt(this.maxY)}\n30\n0\n`;
+    }
     return this.out.join('');
   }
 
@@ -669,6 +693,13 @@ class DxfWriter {
     this.g(1, 'AC1009');
     this.g(9, '$INSUNITS');
     this.g(70, 0);
+    // Reserve a slot for $EXTMIN/$EXTMAX, filled in `toString()` once every
+    // entity has been written. Without stored extents (and with no VPORT table)
+    // a CAD app opens on a default window near the origin — SLDs commonly sit
+    // at y = -700…0 and run past x = 1900, i.e. entirely off-screen, which is
+    // the *other* thing a user means by "the export is blank".
+    this.extentsSlot = this.out.length;
+    this.out.push('');
     if (title) {
       this.g(9, '$PROJECTNAME');
       this.g(1, sanitizeText(title));
@@ -712,18 +743,49 @@ class DxfWriter {
     this.g(11, p2[0]);
     this.g(21, p2[1]);
     this.g(31, 0);
+    this.track(p1[0], p1[1]);
+    this.track(p2[0], p2[1]);
   }
 
-  lwpolyline(layer: string, points: [number, number][], closed: boolean): void {
+  /**
+   * Polyline, as R12 `POLYLINE` / `VERTEX` / `SEQEND`.
+   *
+   * This used to emit `LWPOLYLINE`, which is a bug that made every exported
+   * file unopenable: the header declares `$ACADVER = AC1009` (R12), and
+   * `LWPOLYLINE` did not exist until R14. A reader that honours the header
+   * skips the entity — and since every wire and bus is one, the electrical
+   * content simply vanished. A reader that goes by entity type instead hit a
+   * `LWPOLYLINE` with no `AcDbEntity`/`AcDbPolyline` subclass markers (R13+
+   * requires them) and rejected the whole file; `ezdxf` cannot even recover it.
+   * Reported in the field as "dxf downloaded is blank".
+   *
+   * R12 is the right target — the rest of this writer is R12-shaped (no BLOCKS
+   * section, no handles), so promoting `$ACADVER` instead would mean adding
+   * handles to every entity. `POLYLINE` is R12's own polyline and is read by
+   * everything from AutoCAD R12 to current.
+   */
+  polyline(layer: string, points: [number, number][], closed: boolean): void {
     if (points.length < 2) return;
-    this.g(0, 'LWPOLYLINE');
+    this.g(0, 'POLYLINE');
     this.g(8, layer);
-    this.g(90, points.length);
+    // 66 = "vertices follow", mandatory for POLYLINE; without it a reader has
+    // no reason to expect the VERTEX records that come next.
+    this.g(66, 1);
     this.g(70, closed ? 1 : 0);
+    // Elevation point: structural, not geometry — deliberately not tracked.
+    this.g(10, 0);
+    this.g(20, 0);
+    this.g(30, 0);
     for (const [x, y] of points) {
+      this.g(0, 'VERTEX');
+      this.g(8, layer);
       this.g(10, x);
       this.g(20, y);
+      this.g(30, 0);
+      this.track(x, y);
     }
+    this.g(0, 'SEQEND');
+    this.g(8, layer);
   }
 
   circle(layer: string, center: [number, number], radius: number): void {
@@ -733,6 +795,8 @@ class DxfWriter {
     this.g(20, center[1]);
     this.g(30, 0);
     this.g(40, radius);
+    this.track(center[0] - radius, center[1] - radius);
+    this.track(center[0] + radius, center[1] + radius);
   }
 
   text(
@@ -751,6 +815,8 @@ class DxfWriter {
     this.g(30, 0);
     this.g(40, height);
     this.g(1, sanitizeText(text));
+    this.track(p[0], p[1]);
+    this.track(p[0], p[1] + height);
     if (rotationDeg !== 0) this.g(50, rotationDeg);
     if (mirrorX) this.g(71, 2);
     if (halign !== 'start') {

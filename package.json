@@ -92,6 +92,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "jsdom": "^30.0.1",
     "postcss": "^8.5.14",
     "postcss-prefix-selector": "^2.1.1",
     "prettier": "^3.4.2",

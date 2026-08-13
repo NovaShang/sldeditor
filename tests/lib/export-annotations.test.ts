@@ -89,7 +89,12 @@ describe('DXF export with annotations', () => {
   it('emits entities for every variant', () => {
     expect(dxf).toContain('legacy note'); // TEXT
     expect(dxf).toContain('Panel #1'); // rect label TEXT
-    expect(dxf).toContain('LWPOLYLINE'); // rect/line/table outlines
+    // Was `toContain('LWPOLYLINE')`, which pinned the defect in place instead
+    // of catching it: the header declares R12, where LWPOLYLINE does not
+    // exist, so every file this produced was unopenable. See
+    // tests/lib/export-dxf.test.ts.
+    expect(dxf).toContain('POLYLINE'); // rect/line/table outlines
+    expect(dxf).not.toContain('LWPOLYLINE');
     expect(dxf).toContain('h1'); // table cell TEXT
   });
 });
