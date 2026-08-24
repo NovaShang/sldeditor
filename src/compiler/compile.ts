@@ -29,7 +29,7 @@ import type {
 import { normalizePath } from '../model/wire-path';
 import { autoLayout } from './auto-layout';
 import { routeWire, wireEndWorld } from './auto-route';
-import { LIBRARY } from './library-index';
+import { mergeCustomKinds } from './library-index';
 import {
   emptyInternalModel,
   resolvePlacement,
@@ -64,6 +64,10 @@ const DEFAULT_BUS_SPAN = 320;
 
 export function compile(diagram: DiagramFile): InternalModel {
   const m = emptyInternalModel();
+  // Resolve kinds against the built-ins AND whatever this document defines.
+  // Computed once and published on the model so no consumer has to redo it.
+  const library = mergeCustomKinds(diagram.customKinds);
+  m.library = library;
 
   // ---- 1. Resolve elements + library ------------------------------------
   const elementById = new Map<ElementId, Element>();
@@ -78,7 +82,7 @@ export function compile(diagram: DiagramFile): InternalModel {
       return;
     }
     elementById.set(el.id, el);
-    const libDef = LIBRARY.get(el.kind);
+    const libDef = library.get(el.kind);
     if (!libDef) {
       m.diagnostics.push({
         code: 'E003',
@@ -204,7 +208,7 @@ export function compile(diagram: DiagramFile): InternalModel {
     buses: diagram.buses ?? [],
     junctions: diagram.junctions ?? [],
     wires: validWires,
-    library: LIBRARY,
+    library,
     userLayout,
     userBusLayout,
   });

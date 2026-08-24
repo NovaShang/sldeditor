@@ -39,6 +39,23 @@ export interface DiagramFile {
   layout?: Record<ElementId, Placement>;
   /** Free annotations (text / rect / line / table). Typeless = text. */
   annotations?: Annotation[];
+  /**
+   * Symbol definitions that live in THIS document rather than in the built-in
+   * library. Same `LibraryEntry` contract as a built-in, so a custom kind is a
+   * real device everywhere it matters: it compiles, wires up, joins
+   * connectivity nodes, reports diagnostics, and exports to DXF through
+   * exactly the paths a built-in does — no parallel rendering or export
+   * machinery exists for it, by design.
+   *
+   * Embedded rather than referenced on purpose. A diagram travels: public
+   * `/v/:id` links, forks, downloaded files. A reference would mean the
+   * recipient opens a drawing full of kinds they cannot resolve. A user-level
+   * library is a catalogue you copy FROM, never a dependency you point AT.
+   *
+   * Ids are namespaced (`custom:…`) so they cannot collide with a built-in and
+   * read as custom at a glance.
+   */
+  customKinds?: LibraryEntry[];
 }
 
 export interface DiagramMeta {

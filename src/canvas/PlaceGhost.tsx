@@ -14,7 +14,6 @@
  */
 
 import { useEditorStore } from '../store';
-import { getLibraryEntry } from '../compiler';
 import {
   pickConnectTerminal,
   pickPlaceCursorTerminal,
@@ -26,9 +25,12 @@ export function PlaceGhost() {
   const placeKind = useEditorStore((s) => s.placeKind);
   const cursor = useEditorStore((s) => s.cursorSvg);
   const fromRef = useEditorStore((s) => s.placeFromTerminal);
+  // Through the compiled model, not the module-level lookup: the kind being
+  // placed may be one this document defines.
+  const library = useEditorStore((s) => s.internal.library);
 
   if (tool !== 'place' || !placeKind || !cursor) return null;
-  const lib = getLibraryEntry(placeKind);
+  const lib = library.get(placeKind);
   if (!lib) return null;
 
   // Anchor: cursor always carries one of the ghost's pins, so the visual

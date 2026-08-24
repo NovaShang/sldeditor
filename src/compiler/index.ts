@@ -1,5 +1,11 @@
 export { compile } from './compile';
-export { LIBRARY, getLibraryEntry } from './library-index';
+export {
+  LIBRARY,
+  getLibraryEntry,
+  mergeCustomKinds,
+  isCustomKind,
+  CUSTOM_KIND_PREFIX,
+} from './library-index';
 export {
   busAxisFromRot,
   emptyInternalModel,

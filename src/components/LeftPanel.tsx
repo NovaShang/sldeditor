@@ -1,5 +1,4 @@
 import { ListTree, PanelBottomClose } from 'lucide-react';
-import { libraryById } from '../element-library';
 import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { usePanels } from '../hooks/use-panels';
 import { useT } from '../i18n';
@@ -133,7 +132,8 @@ function OutlinePanel({
 }
 
 function OutlineRow({ element }: { element: Element }) {
-  const lib = libraryById[element.kind];
+  // Document-aware: a custom kind has no entry in the shipped index.
+  const lib = useEditorStore((s) => s.internal.library.get(element.kind));
   const selected = useEditorStore((s) => s.selection.includes(element.id));
   const setSelection = useEditorStore((s) => s.setSelection);
   const toggleInSelection = useEditorStore((s) => s.toggleInSelection);

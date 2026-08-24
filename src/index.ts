@@ -56,6 +56,15 @@ export { annotationKind, isTextAnnotation } from './model';
 // of hard-coding hex values that would drift from the editor's.
 export { COLOR_ORDER, NAMED_COLORS, dxfColor, exportInk, inkClass } from './lib/colors';
 export type { ColorSpec } from './lib/colors';
+// Gates on a document-defined symbol. Exported because the app that hosts the
+// agent is the one that has to run them before a generated kind reaches a file.
+export {
+  ALLOWED_ELEMENTS,
+  ALLOWED_ATTRS,
+  sanitizeSymbolSvg,
+  validateCustomKind,
+} from './lib/custom-kind';
+export type { SanitizeResult, KindProblem } from './lib/custom-kind';
 
 // Compiler / runtime model — exported so library consumers can build their
 // own renderers or analysis tools on top of the same DiagramFile pipeline.
@@ -63,6 +72,9 @@ export {
   compile,
   LIBRARY,
   getLibraryEntry,
+  mergeCustomKinds,
+  isCustomKind,
+  CUSTOM_KIND_PREFIX,
   emptyInternalModel,
   resolvePlacement,
   transformPoint,

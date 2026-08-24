@@ -17,6 +17,7 @@ import type {
   TerminalRef,
   WireEnd,
 } from '../model';
+import { LIBRARY } from './library-index';
 
 /** Element + the resolved library record for its `kind`. */
 export interface ResolvedElement {
@@ -114,6 +115,18 @@ export interface InternalModel {
   terminalToNode: Map<WireEnd, NodeId>;
   elementToTerminals: Map<ElementId, TerminalRef[]>;
   diagnostics: Diagnostic[];
+  /**
+   * The kinds this document can resolve: the built-in library plus its own
+   * `customKinds`, merged once per compile.
+   *
+   * It lives here because `getLibraryEntry` is a module-level lookup and a
+   * custom kind is per-document — a global function has no way to know which
+   * drawing is asking. Everything that needs to resolve a kind (the palette,
+   * the place ghost, the property panel, the agent's geometry checks) already
+   * holds the compiled model, so putting the merged view on it means one
+   * source of truth instead of each consumer doing its own merge and drifting.
+   */
+  library: ReadonlyMap<string, LibraryEntry>;
 }
 
 export function emptyInternalModel(): InternalModel {
@@ -128,6 +141,7 @@ export function emptyInternalModel(): InternalModel {
     terminalToNode: new Map(),
     elementToTerminals: new Map(),
     diagnostics: [],
+    library: LIBRARY,
   };
 }
 

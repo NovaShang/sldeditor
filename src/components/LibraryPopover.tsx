@@ -9,7 +9,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import {
   CATEGORY_ORDER,
-  libraryByCategory,
 } from '../element-library';
 import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { usePanels } from '../hooks/use-panels';
@@ -27,23 +26,35 @@ const PALETTE_COLLAPSE_STORAGE_KEY = 'ole-palette-collapsed';
  */
 const PALETTE_HIDDEN_IDS = new Set<string>(['busbar']);
 
-const PALETTE_BY_CATEGORY: Record<string, LibraryEntry[]> = (() => {
+/**
+ * Group the palette by category.
+ *
+ * Derived from the document's merged library rather than snapshotted at module
+ * load: a kind this drawing defines itself has to appear here, and it does not
+ * exist until the file is open. Built-ins dominate and never change, so the
+ * result is memoised on the map identity — `mergeCustomKinds` returns the
+ * shipped map unchanged when a document defines nothing, which is the usual
+ * case, so this recomputes approximately never.
+ */
+function groupByCategory(
+  library: ReadonlyMap<string, LibraryEntry>,
+): Record<string, LibraryEntry[]> {
   const out: Record<string, LibraryEntry[]> = {};
-  for (const [cat, entries] of Object.entries(libraryByCategory)) {
-    const visible = entries.filter((e) => !PALETTE_HIDDEN_IDS.has(e.id));
-    if (visible.length) out[cat] = visible;
+  for (const entry of library.values()) {
+    if (PALETTE_HIDDEN_IDS.has(entry.id)) continue;
+    (out[entry.category] ??= []).push(entry);
   }
   return out;
-})();
+}
 
-const CATEGORY_IDS: readonly string[] = (() => {
+function categoryIds(byCat: Record<string, LibraryEntry[]>): string[] {
   const known = new Set(CATEGORY_ORDER);
-  const extras = Object.keys(PALETTE_BY_CATEGORY).filter((c) => !known.has(c));
+  const extras = Object.keys(byCat).filter((c) => !known.has(c));
   return [
-    ...CATEGORY_ORDER.filter((c) => PALETTE_BY_CATEGORY[c]?.length),
+    ...CATEGORY_ORDER.filter((c) => byCat[c]?.length),
     ...extras,
   ];
-})();
+}
 
 function readPaletteCollapsed(): Set<string> {
   try {
@@ -150,12 +161,15 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(() =>
     readPaletteCollapsed(),
   );
+  const library = useEditorStore((s) => s.internal.library);
+  const paletteByCat = useMemo(() => groupByCategory(library), [library]);
+  const categories = useMemo(() => categoryIds(paletteByCat), [paletteByCat]);
 
   const filteredByCat = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return PALETTE_BY_CATEGORY;
+    if (!q) return paletteByCat;
     const out: Record<string, LibraryEntry[]> = {};
-    for (const [cat, entries] of Object.entries(PALETTE_BY_CATEGORY)) {
+    for (const [cat, entries] of Object.entries(paletteByCat)) {
       const hits = entries.filter((e) => {
         const name = libT(`${e.id}.name`, e.name).toLowerCase();
         const desc = libT(`${e.id}.desc`, e.description ?? '').toLowerCase();
@@ -168,7 +182,7 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
       if (hits.length) out[cat] = hits;
     }
     return out;
-  }, [query, libT]);
+  }, [query, libT, paletteByCat]);
 
   const isSearching = query.trim().length > 0;
   const noMatch =
@@ -195,10 +209,10 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
             {t('library.empty')}
           </p>
         ) : (
-          CATEGORY_IDS.map((catId) => {
+          categories.map((catId) => {
             const entries = filteredByCat[catId];
             if (!entries?.length) return null;
-            const total = PALETTE_BY_CATEGORY[catId]?.length ?? entries.length;
+            const total = paletteByCat[catId]?.length ?? entries.length;
             const label = t(`cat.${catId}` as LocaleKey);
             const isOpen = isSearching || !collapsed.has(catId);
             return (
