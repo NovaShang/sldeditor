@@ -110,6 +110,7 @@ export const ui: UiTable = {
   'view.labelSizeReset': 'Redefinir o tamanho dos rótulos',
   'library.title': 'Biblioteca',
   'library.empty': 'Nenhum elemento encontrado',
+  'library.createComponent': 'Novo componente…',
   'library.searchPlaceholder': 'Buscar elementos…',
   'library.searchAria': 'Buscar elementos',
   'library.clearSearch': 'Limpar busca',

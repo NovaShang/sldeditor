@@ -118,6 +118,7 @@ export const ui: UiTable = {
 
   'library.title': 'المكتبة',
   'library.empty': 'لا توجد عناصر مطابقة',
+  'library.createComponent': 'مكوّن جديد…',
   'library.searchPlaceholder': 'البحث في العناصر…',
   'library.searchAria': 'البحث في العناصر',
   'library.clearSearch': 'مسح البحث',

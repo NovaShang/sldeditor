@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Search, X } from 'lucide-react';
+import { ChevronDown, Plus, Search, X } from 'lucide-react';
 import {
   CATEGORY_ORDER,
 } from '../element-library';
@@ -15,6 +15,7 @@ import { usePanels } from '../hooks/use-panels';
 import { useT, type LocaleKey } from '../i18n';
 import { useLibT } from '../i18n/library';
 import { useEditorStore } from '../store';
+import { useHostActions } from '../hooks/use-host-actions';
 import type { LibraryEntry } from '../model/library';
 
 const PALETTE_COLLAPSE_STORAGE_KEY = 'ole-palette-collapsed';
@@ -162,6 +163,7 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
     readPaletteCollapsed(),
   );
   const library = useEditorStore((s) => s.internal.library);
+  const onCreateComponent = useHostActions((s) => s.onCreateComponent);
   const paletteByCat = useMemo(() => groupByCategory(library), [library]);
   const categories = useMemo(() => categoryIds(paletteByCat), [paletteByCat]);
 
@@ -200,8 +202,20 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
 
   return (
     <>
-      <div className="px-2 pb-1.5 pt-2">
+      <div className="space-y-1.5 px-2 pb-1.5 pt-2">
         <SearchBox value={query} onChange={setQuery} />
+        {onCreateComponent && (
+          /* Offered here rather than in a menu because the moment you need it
+             is the moment you have searched the palette and come up empty. */
+          <button
+            type="button"
+            onClick={onCreateComponent}
+            className="flex w-full cursor-pointer items-center gap-1.5 rounded-md border border-dashed border-border px-2 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-solid hover:bg-accent hover:text-accent-foreground"
+          >
+            <Plus className="size-3.5 shrink-0" />
+            <span className="truncate">{t('library.createComponent')}</span>
+          </button>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto px-2 pb-2">
         {noMatch ? (

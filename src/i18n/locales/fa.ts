@@ -118,6 +118,7 @@ export const ui: UiTable = {
 
   'library.title': 'کتابخانه',
   'library.empty': 'عنصر منطبقی یافت نشد',
+  'library.createComponent': 'قطعهٔ جدید…',
   'library.searchPlaceholder': 'جستجوی عناصر…',
   'library.searchAria': 'جستجوی عناصر',
   'library.clearSearch': 'پاک کردن جستجو',

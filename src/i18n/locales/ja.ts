@@ -118,6 +118,7 @@ export const ui: UiTable = {
 
   'library.title': 'ライブラリ',
   'library.empty': '該当する要素がありません',
+  'library.createComponent': '新しい部品…',
   'library.searchPlaceholder': '要素を検索…',
   'library.searchAria': '要素を検索',
   'library.clearSearch': '検索をクリア',

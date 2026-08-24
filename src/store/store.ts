@@ -298,6 +298,15 @@ export interface EditorState {
   insertAnnotation: (ann: NewAnnotation) => AnnotationId;
   updateAnnotation: (id: AnnotationId, patch: AnnotationPatch) => void;
   deleteAnnotation: (id: AnnotationId) => void;
+  /**
+   * Drop a symbol this document defines.
+   *
+   * Refuses while anything is still placed, and says how many — removing the
+   * definition out from under live elements would turn them into unresolvable
+   * kinds, which is the one failure mode that makes a file unopenable rather
+   * than merely wrong. Returns the blocking count, or 0 on success.
+   */
+  removeCustomKind: (kindId: string) => number;
 }
 
 export const useEditorStore = create<EditorState>()(
@@ -1414,6 +1423,18 @@ export const useEditorStore = create<EditorState>()(
       return { ...d, annotations: next };
     });
   },
+  removeCustomKind: (kindId) => {
+    const d = get().diagram;
+    const inUse = d.elements.filter((e) => e.kind === kindId).length;
+    if (inUse > 0) return inUse;
+    if (!(d.customKinds ?? []).some((k) => k.id === kindId)) return 0;
+    get().dispatch((doc) => {
+      const next = (doc.customKinds ?? []).filter((k) => k.id !== kindId);
+      return { ...doc, customKinds: next.length ? next : undefined };
+    }, 'remove custom kind');
+    return 0;
+  },
+
   deleteAnnotation: (id) => {
     get().dispatch((d) => {
       const list = d.annotations ?? [];

@@ -128,6 +128,7 @@ const base = {
 
     'library.title': '元件库',
     'library.empty': '没有匹配的元件',
+    'library.createComponent': '新建元件…',
     'library.searchPlaceholder': '搜索元件…',
     'library.searchAria': '搜索元件',
     'library.clearSearch': '清除搜索',
@@ -380,6 +381,7 @@ const base = {
 
     'library.title': 'Library',
     'library.empty': 'No matching elements',
+    'library.createComponent': 'New component…',
     'library.searchPlaceholder': 'Search elements…',
     'library.searchAria': 'Search elements',
     'library.clearSearch': 'Clear search',

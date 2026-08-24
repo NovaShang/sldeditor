@@ -5,6 +5,7 @@ import type { DiagramFile } from './model';
 import { useEditorStore } from './store';
 import { useLocale, type Locale } from './i18n';
 import { applyTheme, type Theme } from './hooks/use-theme';
+import { useHostActions } from './hooks/use-host-actions';
 
 export interface OneLineEditorProps {
   className?: string;
@@ -31,9 +32,29 @@ export interface OneLineEditorProps {
    * the same documentElement will see the same class.
    */
   theme?: Theme;
+  /**
+   * Open the host's "create a component" flow, surfaced as a button in the
+   * component palette. Authoring a symbol means asking an AI agent, which
+   * lives in the embedding app — the editor owns the affordance, the host owns
+   * the behaviour. Omit it and the button is not offered.
+   */
+  onCreateComponent?: () => void;
 }
 
-export function OneLineEditor({ className, diagram, readOnly, locale, theme }: OneLineEditorProps) {
+export function OneLineEditor({
+  className,
+  diagram,
+  readOnly,
+  locale,
+  theme,
+  onCreateComponent,
+}: OneLineEditorProps) {
+  useEffect(() => {
+    useHostActions.getState().setHostActions({
+      onCreateComponent: readOnly ? null : (onCreateComponent ?? null),
+    });
+  }, [onCreateComponent, readOnly]);
+
   // Keep the store's view-only flag in sync with the prop. Declared before the
   // seed effect so it runs first (effect order = declaration order) — by the
   // time we force-seed below, storage writes are already suppressed.

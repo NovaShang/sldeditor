@@ -110,6 +110,7 @@ export const ui: UiTable = {
   'view.labelSizeReset': 'Сбросить размер подписей',
   'library.title': 'Библиотека',
   'library.empty': 'Нет подходящих элементов',
+  'library.createComponent': 'Новый компонент…',
   'library.searchPlaceholder': 'Поиск элементов…',
   'library.searchAria': 'Поиск элементов',
   'library.clearSearch': 'Очистить поиск',

@@ -118,6 +118,7 @@ export const ui: UiTable = {
 
   'library.title': 'Bibliothèque',
   'library.empty': 'Aucun élément correspondant',
+  'library.createComponent': 'Nouveau composant…',
   'library.searchPlaceholder': 'Rechercher des éléments…',
   'library.searchAria': 'Rechercher des éléments',
   'library.clearSearch': 'Effacer la recherche',

@@ -110,6 +110,7 @@ export const ui: UiTable = {
   'view.labelSizeReset': 'איפוס גודל התוויות',
   'library.title': 'ספריית רכיבים',
   'library.empty': 'לא נמצאו רכיבים תואמים',
+  'library.createComponent': 'רכיב חדש…',
   'library.searchPlaceholder': 'חיפוש רכיבים…',
   'library.searchAria': 'חיפוש רכיבים',
   'library.clearSearch': 'נקה חיפוש',

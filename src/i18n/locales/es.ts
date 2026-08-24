@@ -110,6 +110,7 @@ export const ui: UiTable = {
   'view.labelSizeReset': 'Restablecer el tamaño de las etiquetas',
   'library.title': 'Biblioteca',
   'library.empty': 'No hay elementos coincidentes',
+  'library.createComponent': 'Nuevo componente…',
   'library.searchPlaceholder': 'Buscar elementos…',
   'library.searchAria': 'Buscar elementos',
   'library.clearSearch': 'Borrar búsqueda',
