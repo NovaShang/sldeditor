@@ -7,6 +7,7 @@ import { BusbarTool } from './BusbarTool';
 import { JunctionTool } from './JunctionTool';
 import { TextTool } from './TextTool';
 import { RectTool } from './RectTool';
+import { EllipseTool } from './EllipseTool';
 import { LineTool } from './LineTool';
 import { TableTool } from './TableTool';
 
@@ -19,6 +20,7 @@ export const TOOLS: Record<ToolId, Tool> = {
   junction: JunctionTool,
   text: TextTool,
   rect: RectTool,
+  ellipse: EllipseTool,
   line: LineTool,
   table: TableTool,
 };

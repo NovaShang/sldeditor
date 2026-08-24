@@ -96,6 +96,10 @@ export interface WireRender {
   userEdited?: boolean;
   /** Display label carried over from `Wire.label` (phase designation etc.). */
   label?: string;
+  /** Ink colour carried over from `Wire.color`. Same pass-through as `label`:
+   *  the canvas and the exporters both read the compiled model, so copying it
+   *  here keeps them from disagreeing about a wire's colour. */
+  color?: import('../model').DiagramColor;
 }
 
 export interface InternalModel {

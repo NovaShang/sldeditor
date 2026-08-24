@@ -17,6 +17,7 @@
 import { useEditorStore } from '../store';
 import type { LibraryEntry } from '../model';
 import { transformAttr } from './transform-attr';
+import { inkClass } from '../lib/colors';
 
 interface BBox {
   x: number;
@@ -116,7 +117,14 @@ export function ElementLayer() {
             data-selected={isSelected ? 'true' : undefined}
             data-node-related={isNodeRelated ? 'true' : undefined}
             transform={transformAttr(place)}
-            className="ole-element"
+            /* The library SVG carries literal black; styles.css rewrites that
+               to `currentColor`, so an ink class on this group recolours the
+               whole symbol without touching a single element-library JSON. */
+            className={
+              inkClass(re.element.color)
+                ? `ole-element ${inkClass(re.element.color)}`
+                : 'ole-element'
+            }
           >
             <HitRect lib={re.libraryDef} />
             <g dangerouslySetInnerHTML={{ __html: re.libraryDef.svg }} />

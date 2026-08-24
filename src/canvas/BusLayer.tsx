@@ -6,6 +6,7 @@
  */
 
 import { useEditorStore } from '../store';
+import { inkClass } from '../lib/colors';
 
 const STROKE_WIDTH = 3;
 /** Invisible click target wider than the visible stroke, mirroring
@@ -63,7 +64,9 @@ export function BusLayer() {
             data-node-id={nodeId}
             data-selected={isSelected ? 'true' : undefined}
             data-node-related={isNodeRelated ? 'true' : undefined}
-            className="ole-bus"
+            className={
+              inkClass(bus.color) ? `ole-bus ${inkClass(bus.color)}` : 'ole-bus'
+            }
           >
             <rect
               x={hx}

@@ -29,6 +29,7 @@ import {
 import {
   annotationKind,
   type Annotation,
+  type EllipseAnnotation,
   type LabelMode,
   type LineAnnotation,
   type RectAnnotation,
@@ -37,6 +38,7 @@ import {
 } from '../model';
 import {
   ANNOTATION_FONT_SIZE as ANN_FONT_SIZE,
+  ellipsePolygon,
   lineAbsPoints,
   lineArrowHeads,
   RECT_LABEL_PAD,
@@ -45,6 +47,7 @@ import {
   tableRowEdges,
   tableSize,
 } from './annotation-geom';
+import { dxfColor } from './colors';
 import {
   fallbackAnchor,
   labelLineHeight,
@@ -101,25 +104,32 @@ export function buildExportDxf(
   // Wires (already in world coordinates).
   for (const r of model.wireRenders.values()) {
     if (r.path.length < 2) continue;
+    w.setColor(dxfColor(r.color));
     w.polyline(LAYER_WIRES, r.path.map(worldToDxf), false);
   }
+  w.setColor(undefined);
 
   // Buses (drawn after wires so the heavier bar sits on top).
-  for (const { geometry } of model.buses.values()) {
+  for (const { bus, geometry } of model.buses.values()) {
     const { axis, at, span } = geometry;
     const half = span / 2;
     const a: [number, number] = axis === 'x' ? [at[0] - half, at[1]] : [at[0], at[1] - half];
     const b: [number, number] = axis === 'x' ? [at[0] + half, at[1]] : [at[0], at[1] + half];
+    w.setColor(dxfColor(bus.color));
     w.polyline(LAYER_WIRES, [a, b].map(worldToDxf), false);
   }
+  w.setColor(undefined);
 
-  // Element symbols.
+  // Element symbols. The ambient colour spans one whole symbol expansion —
+  // a symbol is many entities and they all take the element's ink.
   for (const re of model.elements.values()) {
     const place = model.layout.get(re.element.id);
     const lib = re.libraryDef;
     if (!place || !lib) continue;
+    w.setColor(dxfColor(re.element.color));
     emitLibrarySvg(w, lib.svg, place);
   }
+  w.setColor(undefined);
 
   // Element structural labels (ID + showOnCanvas params).
   const mode: LabelMode = opts.labelMode ?? 'all';
@@ -160,7 +170,29 @@ export function buildExportDxf(
   // continuous lines — R12 linetype tables aren't worth the compatibility
   // risk, and the geometry carries the meaning in CAD.
   for (const ann of opts.annotations ?? []) {
+    w.setColor(dxfColor(ann.color));
     switch (annotationKind(ann)) {
+      case 'ellipse': {
+        // R12 has no ELLIPSE entity — it arrived in R13, and this writer
+        // declares $ACADVER = AC1009. Emitting one would repeat the
+        // LWPOLYLINE mistake documented on `polyline()`, where a post-R12
+        // entity made whole files unreadable. A closed polygon is exact
+        // enough at drawing scale and every reader understands it.
+        const e = ann as EllipseAnnotation;
+        w.polyline(
+          LAYER_ANNOTATIONS,
+          ellipsePolygon(e).map(worldToDxf),
+          true,
+        );
+        if (e.label) {
+          const p = worldToDxf([
+            e.at[0] + RECT_LABEL_PAD,
+            e.at[1] + RECT_LABEL_PAD + ANN_FONT_SIZE,
+          ]);
+          w.text(LAYER_ANNOTATIONS, p, e.label, ANN_FONT_SIZE, 0, false);
+        }
+        break;
+      }
       case 'rect': {
         const r = ann as RectAnnotation;
         const [x, y] = r.at;
@@ -734,9 +766,32 @@ class DxfWriter {
     this.g(0, 'EOF');
   }
 
+  /**
+   * ACI colour applied to every entity written until it is cleared.
+   *
+   * Ambient rather than a per-call argument because a single symbol expands
+   * into a whole family of emitters (line / polyline / rect / circle /
+   * ellipse / path / text); threading a colour through all of them would put
+   * the same parameter in seven signatures and guarantee one gets missed.
+   * `undefined` omits group 62 entirely, so the entity inherits its layer
+   * colour and an uncoloured diagram writes the bytes it always did.
+   */
+  private currentColor: number | undefined;
+
+  setColor(aci: number | undefined): void {
+    this.currentColor = aci;
+  }
+
+  /** Emit the colour override, if any. Called right after the layer code,
+   *  which is where readers expect group 62 on an entity. */
+  private color(): void {
+    if (this.currentColor !== undefined) this.g(62, this.currentColor);
+  }
+
   line(layer: string, p1: [number, number], p2: [number, number]): void {
     this.g(0, 'LINE');
     this.g(8, layer);
+    this.color();
     this.g(10, p1[0]);
     this.g(20, p1[1]);
     this.g(30, 0);
@@ -768,6 +823,7 @@ class DxfWriter {
     if (points.length < 2) return;
     this.g(0, 'POLYLINE');
     this.g(8, layer);
+    this.color();
     // 66 = "vertices follow", mandatory for POLYLINE; without it a reader has
     // no reason to expect the VERTEX records that come next.
     this.g(66, 1);
@@ -791,6 +847,7 @@ class DxfWriter {
   circle(layer: string, center: [number, number], radius: number): void {
     this.g(0, 'CIRCLE');
     this.g(8, layer);
+    this.color();
     this.g(10, center[0]);
     this.g(20, center[1]);
     this.g(30, 0);
@@ -810,6 +867,7 @@ class DxfWriter {
   ): void {
     this.g(0, 'TEXT');
     this.g(8, layer);
+    this.color();
     this.g(10, p[0]);
     this.g(20, p[1]);
     this.g(30, 0);

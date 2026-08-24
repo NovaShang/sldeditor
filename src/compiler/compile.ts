@@ -411,6 +411,7 @@ export function compile(diagram: DiagramFile): InternalModel {
             path: cleaned,
             userEdited: true,
             ...(w.label ? { label: w.label } : {}),
+            ...(w.color ? { color: w.color } : {}),
           });
           continue;
         }
@@ -418,7 +419,13 @@ export function compile(diagram: DiagramFile): InternalModel {
       // Endpoint resolution failed; fall back to auto-route below.
     }
     const r = routeWire(w, m);
-    if (r) m.wireRenders.set(w.id, w.label ? { ...r, label: w.label } : r);
+    if (r) {
+      m.wireRenders.set(w.id, {
+        ...r,
+        ...(w.label ? { label: w.label } : {}),
+        ...(w.color ? { color: w.color } : {}),
+      });
+    }
   }
 
   return m;

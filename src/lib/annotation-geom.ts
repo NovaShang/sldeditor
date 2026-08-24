@@ -1,13 +1,15 @@
 /**
- * Shared geometry + defaults for free annotations (text / rect / line /
- * table). The canvas layer, the draft previews, the SVG exporter and the DXF
- * exporter all read from here so their renderings can't drift apart.
+ * Shared geometry + defaults for free annotations (text / rect / ellipse /
+ * line / table). The canvas layer, the draft previews, the SVG exporter and
+ * the DXF exporter all read from here so their renderings can't drift apart.
  */
 
 import type {
   Annotation,
+  AnnotationStroke,
+  AnnotationStrokeWidth,
+  BoxAnnotation,
   LineAnnotation,
-  RectAnnotation,
   TableAnnotation,
   TextAnnotation,
 } from '../model';
@@ -20,6 +22,24 @@ export const ANNOTATION_LINE_HEIGHT = 1.25;
 
 /** SVG dash pattern used by `stroke: 'dashed'` rects and lines. */
 export const ANNOTATION_DASH = '6 4';
+/** SVG dash pattern for `stroke: 'dotted'`. */
+export const ANNOTATION_DOT = '1 3';
+
+/**
+ * `stroke-dasharray` for a stroke style, or undefined for a solid line.
+ * Every renderer goes through this so a new style can never be added to the
+ * canvas and forgotten in the exporters.
+ */
+export function strokeDash(style: AnnotationStroke | undefined): string | undefined {
+  if (style === 'dashed') return ANNOTATION_DASH;
+  if (style === 'dotted') return ANNOTATION_DOT;
+  return undefined;
+}
+
+/** Nominal stroke width, defaulting to the 1-unit hairline used until now. */
+export function strokeW(w: AnnotationStrokeWidth | undefined): number {
+  return w ?? 1;
+}
 
 /** Faint wash used by `fill: 'tint'` (foreground color at this opacity). */
 export const TINT_OPACITY = 0.05;
@@ -38,7 +58,7 @@ export const TABLE_DEFAULT_CELL_H = 20;
 export const TABLE_MIN_COL_W = 16;
 export const TABLE_MIN_ROW_H = 12;
 
-/** Minimum committed rect size / line length; smaller gestures are ignored. */
+/** Minimum committed box size / line length; smaller gestures are ignored. */
 export const MIN_RECT_SIZE = 10;
 export const MIN_LINE_LEN = 10;
 
@@ -104,6 +124,46 @@ function arrowTriangle(
   ];
 }
 
+// ---- Ellipse -------------------------------------------------------------
+
+/**
+ * Centre + radii of a box-anchored ellipse. Stored as a bounding box (see
+ * `EllipseAnnotation`) but every renderer wants cx/cy/rx/ry, so convert in
+ * exactly one place.
+ */
+export function ellipseGeom(ann: BoxAnnotation): {
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+} {
+  const [x, y] = ann.at;
+  const [w, h] = ann.size;
+  return { cx: x + w / 2, cy: y + h / 2, rx: w / 2, ry: h / 2 };
+}
+
+/**
+ * Polygonal approximation of an ellipse, for writers that have no ellipse
+ * primitive. R12 DXF is exactly that case — `ELLIPSE` did not exist until R13,
+ * and emitting a post-R12 entity into an `AC1009` file is the same mistake
+ * that made every export blank when this writer once emitted `LWPOLYLINE`.
+ *
+ * 48 segments keeps the facets under a canvas unit for shapes up to a few
+ * hundred units across, which is every ellipse a user draws here.
+ */
+export function ellipsePolygon(
+  ann: BoxAnnotation,
+  segments = 48,
+): [number, number][] {
+  const { cx, cy, rx, ry } = ellipseGeom(ann);
+  const pts: [number, number][] = [];
+  for (let i = 0; i < segments; i++) {
+    const t = (i / segments) * Math.PI * 2;
+    pts.push([cx + rx * Math.cos(t), cy + ry * Math.sin(t)]);
+  }
+  return pts;
+}
+
 // ---- Table ---------------------------------------------------------------
 
 export function tableSize(ann: TableAnnotation): [number, number] {
@@ -162,7 +222,7 @@ function sum(xs: number[]): number {
 
 /** In-progress drag published by the rect/line/table tools. */
 export interface AnnotationDraft {
-  kind: 'rect' | 'line' | 'table';
+  kind: 'rect' | 'ellipse' | 'line' | 'table';
   start: [number, number];
   current: [number, number];
   /** Shift held: square rects / 45°-stepped lines. */
@@ -251,8 +311,12 @@ export interface AnnBBox {
 /** World-space bbox of any annotation (text uses the width heuristic). */
 export function annotationBBox(a: Annotation): AnnBBox {
   switch (a.type) {
-    case 'rect': {
-      const r = a as RectAnnotation;
+    // An ellipse is anchored by the same bounding box as a rect, so the two
+    // share this branch — that equivalence is why resize grips and marquee
+    // hit-testing needed no ellipse-specific code at all.
+    case 'rect':
+    case 'ellipse': {
+      const r = a as BoxAnnotation;
       return {
         minX: r.at[0],
         minY: r.at[1],

@@ -15,6 +15,7 @@
  */
 
 import { useEditorStore } from '../store';
+import { inkClass } from '../lib/colors';
 
 type Pt = [number, number];
 
@@ -145,7 +146,9 @@ export function WireLayer() {
               data-node-id={nodeId}
               data-manual={r.userEdited ? 'true' : undefined}
               data-selected={selected}
-              className="ole-wire"
+              className={
+                inkClass(r.color) ? `ole-wire ${inkClass(r.color)}` : 'ole-wire'
+              }
               points={seg.map((p) => `${p[0]},${p[1]}`).join(' ')}
             />
           )),

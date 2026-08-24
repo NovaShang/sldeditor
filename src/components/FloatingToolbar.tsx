@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import {
   Cable,
+  Circle,
   CircleDot,
   Clipboard,
   Copy,
@@ -122,6 +123,15 @@ const TOOLS: ToolDef[] = [
     iconOnly: true,
   },
   {
+    id: 'ellipse',
+    labelKey: 'tool.ellipse',
+    hotkey: 'O',
+    descriptionKey: 'tool.ellipseHint',
+    icon: Circle,
+    switchTo: 'ellipse',
+    iconOnly: true,
+  },
+  {
     id: 'line',
     labelKey: 'tool.line',
     hotkey: 'L',
@@ -223,6 +233,10 @@ function ToolHint() {
       break;
     case 'rect':
       text = t('mode.rect');
+      cancelHint = true;
+      break;
+    case 'ellipse':
+      text = t('mode.ellipse');
       cancelHint = true;
       break;
     case 'line':

@@ -1,5 +1,5 @@
 /**
- * Live ghost for the annotation drawing tools (rect / line / table). Reads
+ * Live ghost for the annotation drawing tools (rect / ellipse / line / table). Reads
  * `annotationDraft` from the store and renders exactly the geometry the tool
  * would commit — both sides call the same `draft*` helpers in
  * `lib/annotation-geom`, so the preview can never lie about the result.
@@ -27,6 +27,22 @@ export function AnnotationDraftPreview() {
     return (
       <g className="ole-ann-draft" pointerEvents="none">
         <rect x={at[0]} y={at[1]} width={size[0]} height={size[1]} strokeDasharray={ANNOTATION_DASH} />
+      </g>
+    );
+  }
+
+  if (draft.kind === 'ellipse') {
+    // Same swept box as a rect (`draftRect` handles the Shift constraint), so
+    // the circle-vs-square gesture is identical in both tools.
+    const { at, size } = draftRect(draft);
+    return (
+      <g className="ole-ann-draft" pointerEvents="none">
+        <ellipse
+          cx={at[0] + size[0] / 2}
+          cy={at[1] + size[1] / 2}
+          rx={size[0] / 2}
+          ry={size[1] / 2}
+        />
       </g>
     );
   }

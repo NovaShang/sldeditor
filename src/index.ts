@@ -11,14 +11,18 @@ export type {
   AnnotationKind,
   AnnotationPatch,
   AnnotationStroke,
+  AnnotationStrokeWidth,
+  BoxAnnotation,
   Bus,
   BusId,
   BusLayout,
+  DiagramColor,
   DiagramFile,
   DiagramMeta,
   DiagramVersion,
   Element,
   ElementId,
+  EllipseAnnotation,
   Junction,
   JunctionId,
   JunctionLayout,
@@ -46,6 +50,12 @@ export type {
 } from './model';
 
 export { annotationKind, isTextAnnotation } from './model';
+
+// Named ink palette — exposed so an embedding app can offer the same six
+// colours in its own UI (and resolve them for its own export paths) instead
+// of hard-coding hex values that would drift from the editor's.
+export { COLOR_ORDER, NAMED_COLORS, dxfColor, exportInk, inkClass } from './lib/colors';
+export type { ColorSpec } from './lib/colors';
 
 // Compiler / runtime model — exported so library consumers can build their
 // own renderers or analysis tools on top of the same DiagramFile pipeline.

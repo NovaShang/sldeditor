@@ -1,6 +1,6 @@
 /**
  * Edit handles for the selected annotation:
- *   - rect / table: 8 resize grips (corners + edge midpoints);
+ *   - rect / ellipse / table: 8 resize grips (corners + edge midpoints);
  *   - table: extra invisible strips over internal column/row borders that
  *     drag individual column widths / row heights (Excel-style);
  *   - line: one grip per vertex (shift = 45° constraint against its
@@ -19,8 +19,8 @@ import { soleSelectedAnnotation, useEditorStore } from '../store';
 import {
   annotationKind,
   type Annotation,
+  type BoxAnnotation,
   type LineAnnotation,
-  type RectAnnotation,
   type TableAnnotation,
 } from '../model';
 import {
@@ -53,8 +53,11 @@ export function AnnotationHandles() {
   const ann = preview?.id === selectedId ? preview : model;
 
   switch (annotationKind(ann)) {
+    // Rect and ellipse are both anchored by `at` + `size`, so one set of box
+    // grips drives both — no ellipse-specific resize maths.
     case 'rect':
-      return <BoxHandles ann={ann as RectAnnotation} model={model} />;
+    case 'ellipse':
+      return <BoxHandles ann={ann as BoxAnnotation} model={model} />;
     case 'table':
       return <TableHandles ann={ann as TableAnnotation} model={model} />;
     case 'line':
@@ -209,14 +212,14 @@ function Grip({
 }
 
 // ---------------------------------------------------------------------------
-// Rect
+// Rect / ellipse
 // ---------------------------------------------------------------------------
 
 function BoxHandles({
   ann,
   model,
 }: {
-  ann: RectAnnotation;
+  ann: BoxAnnotation;
   model: Annotation;
 }) {
   return (
@@ -234,10 +237,10 @@ function RectGrip({
   model,
 }: {
   grip: (typeof GRIPS)[number];
-  ann: RectAnnotation;
+  ann: BoxAnnotation;
   model: Annotation;
 }) {
-  const handlers = useGripDrag<RectAnnotation>(
+  const handlers = useGripDrag<BoxAnnotation>(
     model,
     (orig, dx, dy) => {
       const r = resizeBox(

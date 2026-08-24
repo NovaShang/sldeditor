@@ -272,7 +272,7 @@
    group's hit-rect (transparent) catches clicks for select / drag. */
 .ole-free-annotation-text {
   font-family: ui-sans-serif, system-ui, sans-serif;
-  fill: var(--foreground);
+  fill: currentColor;
   paint-order: stroke;
   stroke: var(--canvas-bg);
   stroke-width: 2px;
@@ -293,27 +293,34 @@
   pointer-events: none;
 }
 
-/* Shape annotations (rect / line / table). Monochrome like wires; selection
-   recolors strokes to the selection color via [data-selected]. */
+/* Shape annotations (rect / ellipse / line / table). Ink flows through
+   `currentColor` rather than `var(--foreground)` directly: the group carries
+   `color`, so `.ole-ink-*` recolours a whole shape in one declaration, and an
+   uncoloured shape still resolves to theme ink because `.ole-ann` sets
+   `color: var(--foreground)`. Selection recolors strokes via [data-selected]. */
+.ole-ann,
+.ole-free-annotation {
+  color: var(--foreground);
+}
 .ole-ann-fill {
-  fill: var(--foreground);
+  fill: currentColor;
   opacity: 0.05;
   pointer-events: none;
 }
 .ole-ann-rect-border {
   fill: none;
-  stroke: var(--foreground);
+  stroke: currentColor;
   stroke-width: 1;
   pointer-events: none;
 }
 .ole-ann-line {
   fill: none;
-  stroke: var(--foreground);
+  stroke: currentColor;
   stroke-width: 1;
   pointer-events: none;
 }
 .ole-ann-arrow {
-  fill: var(--foreground);
+  fill: currentColor;
   stroke: none;
   pointer-events: none;
 }
@@ -329,7 +336,7 @@
 }
 .ole-ann-label {
   font-family: ui-sans-serif, system-ui, sans-serif;
-  fill: var(--foreground);
+  fill: currentColor;
   paint-order: stroke;
   stroke: var(--canvas-bg);
   stroke-width: 2px;
@@ -345,19 +352,19 @@
 }
 .ole-ann-table-grid {
   fill: none;
-  stroke: var(--foreground);
+  stroke: currentColor;
   stroke-width: 0.5;
   pointer-events: none;
 }
 .ole-ann-table-border {
   fill: none;
-  stroke: var(--foreground);
+  stroke: currentColor;
   stroke-width: 1;
   pointer-events: none;
 }
 .ole-ann-table-text {
   font-family: ui-sans-serif, system-ui, sans-serif;
-  fill: var(--foreground);
+  fill: currentColor;
   user-select: none;
   pointer-events: none;
 }
@@ -368,6 +375,53 @@
 }
 .ole-ann[data-selected='true'] .ole-ann-arrow {
   fill: var(--selection);
+}
+
+/* ---- Named ink palette ---------------------------------------------------
+   One class per `DiagramColor`, setting `color` only. Every drawable already
+   paints with `currentColor` (wires and buses always did; symbols get there
+   via the black→currentColor rewrite above; annotations were converted with
+   this change), so a single declaration recolours a whole object — symbol
+   strokes and fills included — without any per-shape plumbing.
+
+   Values track NAMED_COLORS in lib/colors.ts; the dark variants are lifted so
+   they stay legible on the dark canvas, which is the entire reason the palette
+   is a closed set of names rather than free hex. `default` deliberately has no
+   class: an uncoloured object keeps the DOM it had before colours existed. */
+.ole-ink-red {
+  color: #c0392b;
+}
+.ole-ink-blue {
+  color: #1f6feb;
+}
+.ole-ink-green {
+  color: #197d3f;
+}
+.ole-ink-amber {
+  color: #b45309;
+}
+.ole-ink-gray {
+  color: #6b7280;
+}
+.dark .ole-ink-red,
+.ole-root.dark .ole-ink-red {
+  color: #ff6b6b;
+}
+.dark .ole-ink-blue,
+.ole-root.dark .ole-ink-blue {
+  color: #58a6ff;
+}
+.dark .ole-ink-green,
+.ole-root.dark .ole-ink-green {
+  color: #4ade80;
+}
+.dark .ole-ink-amber,
+.ole-root.dark .ole-ink-amber {
+  color: #fbbf24;
+}
+.dark .ole-ink-gray,
+.ole-root.dark .ole-ink-gray {
+  color: #9ca3af;
 }
 
 /* Resize / vertex grips for the selected annotation. Strips (table column /

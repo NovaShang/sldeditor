@@ -10,6 +10,8 @@ import { transformPoint, type InternalModel } from '../compiler';
 import {
   annotationKind,
   type Annotation,
+  type BoxAnnotation,
+  type EllipseAnnotation,
   type LabelMode,
   type LineAnnotation,
   type RectAnnotation,
@@ -17,18 +19,21 @@ import {
   type TextAnnotation,
 } from '../model';
 import {
-  ANNOTATION_DASH,
   ANNOTATION_FONT_SIZE as ANN_FONT_SIZE,
   annotationBBox,
+  ellipseGeom,
   lineAbsPoints,
   lineArrowHeads,
   RECT_LABEL_PAD,
+  strokeDash,
+  strokeW,
   TABLE_CELL_PAD_X,
   tableColEdges,
   tableRowEdges,
   tableSize,
   TINT_OPACITY,
 } from './annotation-geom';
+import { exportInk } from './colors';
 import {
   fallbackAnchor,
   labelLineHeight,
@@ -90,12 +95,15 @@ export function buildExportSvg(
     );
   }
 
-  // Wires first (rendered behind elements).
+  // Wires first (rendered behind elements). The group keeps the default ink;
+  // a coloured wire overrides `stroke` on its own polyline, so an uncoloured
+  // diagram emits exactly the markup it did before colours existed.
   out.push('  <g fill="none" stroke="black" stroke-width="1">');
   for (const r of model.wireRenders.values()) {
     if (r.path.length < 2) continue;
     const pts = r.path.map(([px, py]) => `${px},${py}`).join(' ');
-    out.push(`    <polyline points="${pts}"/>`);
+    const ink = r.color ? ` stroke="${exportInk(r.color)}"` : '';
+    out.push(`    <polyline points="${pts}"${ink}/>`);
   }
   out.push('  </g>');
 
@@ -108,7 +116,7 @@ export function buildExportSvg(
     const x2 = axis === 'x' ? at[0] + half : at[0];
     const y2 = axis === 'x' ? at[1] : at[1] + half;
     out.push(
-      `  <line id="${escapeXml(bus.id)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+      `  <line id="${escapeXml(bus.id)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${exportInk(bus.color)}" stroke-width="3" stroke-linecap="round" fill="none"/>`,
     );
   }
 
@@ -132,7 +140,7 @@ export function buildExportSvg(
     out.push(
       `  <g id="${escapeXml(re.element.id)}" transform="${transformAttr(place)}">`,
     );
-    out.push(`    ${re.libraryDef.svg}`);
+    out.push(`    ${recolorSymbol(re.libraryDef.svg, re.element.color)}`);
     out.push('  </g>');
   }
 
@@ -192,6 +200,9 @@ export function buildExportSvg(
         case 'rect':
           exportRect(out, ann as RectAnnotation, fontAttrs);
           break;
+        case 'ellipse':
+          exportEllipse(out, ann as EllipseAnnotation, fontAttrs);
+          break;
         case 'line':
           exportLine(out, ann as LineAnnotation);
           break;
@@ -209,13 +220,36 @@ export function buildExportSvg(
   return out.join('\n');
 }
 
+/**
+ * Recolour an inlined library symbol.
+ *
+ * The canvas gets this for free: `styles.css` rewrites the library's literal
+ * `black` / `#000000` to `currentColor` with attribute selectors, so setting
+ * `color` on the group is enough. A standalone SVG file has no stylesheet, so
+ * the export has to perform the identical substitution on the markup — same
+ * three literals, same two attributes, so the two paths can't disagree about
+ * which parts of a symbol are ink and which are deliberate (e.g. `fill="none"`
+ * stays untouched).
+ *
+ * A default-coloured element returns the string unchanged, which is what keeps
+ * pre-colour diagrams exporting byte-for-byte as before.
+ */
+function recolorSymbol(svg: string, color: Annotation['color']): string {
+  if (!color || color === 'default') return svg;
+  const ink = exportInk(color);
+  return svg.replace(
+    /(stroke|fill)="(black|#000|#000000)"/gi,
+    (_m, attr: string) => `${attr}="${ink}"`,
+  );
+}
+
 // ---- Annotation emitters (mirror FreeAnnotationLayer) ---------------------
 
 function exportText(out: string[], ann: TextAnnotation, fontAttrs: string): void {
   if (!ann.text) return;
   const fs = ann.fontSize ?? ANN_FONT_SIZE;
   const lines = ann.text.split('\n');
-  out.push(`  <g fill="black" ${fontAttrs}>`);
+  out.push(`  <g fill="${exportInk(ann.color)}" ${fontAttrs}>`);
   for (let i = 0; i < lines.length; i++) {
     const y = ann.at[1] + fs * 0.85 + i * fs * ANNOTATION_LINE_HEIGHT;
     out.push(
@@ -228,47 +262,74 @@ function exportText(out: string[], ann: TextAnnotation, fontAttrs: string): void
 function exportRect(out: string[], ann: RectAnnotation, fontAttrs: string): void {
   const [x, y] = ann.at;
   const [w, h] = ann.size;
-  const dash =
-    (ann.stroke ?? 'dashed') === 'dashed'
-      ? ` stroke-dasharray="${ANNOTATION_DASH}"`
-      : '';
+  const ink = exportInk(ann.color);
   if (ann.fill === 'tint') {
     out.push(
-      `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="black" fill-opacity="${TINT_OPACITY}"/>`,
+      `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${ink}" fill-opacity="${TINT_OPACITY}"/>`,
     );
   }
   out.push(
-    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="black" stroke-width="1"${dash}/>`,
+    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${ink}" stroke-width="${strokeW(ann.strokeWidth)}"${dashAttr(ann.stroke ?? 'dashed')}/>`,
   );
-  if (ann.label) {
-    out.push(`  <g fill="black" ${fontAttrs}>`);
+  exportBoxLabel(out, ann, fontAttrs);
+}
+
+function exportEllipse(
+  out: string[],
+  ann: EllipseAnnotation,
+  fontAttrs: string,
+): void {
+  const { cx, cy, rx, ry } = ellipseGeom(ann);
+  const ink = exportInk(ann.color);
+  if (ann.fill === 'tint') {
     out.push(
-      `    <text x="${x + RECT_LABEL_PAD}" y="${y + RECT_LABEL_PAD + ANN_FONT_SIZE * 0.85}" font-size="${ANN_FONT_SIZE}">${escapeXml(ann.label)}</text>`,
+      `  <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${ink}" fill-opacity="${TINT_OPACITY}"/>`,
     );
-    out.push('  </g>');
   }
+  out.push(
+    `  <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${ink}" stroke-width="${strokeW(ann.strokeWidth)}"${dashAttr(ann.stroke)}/>`,
+  );
+  exportBoxLabel(out, ann, fontAttrs);
+}
+
+function exportBoxLabel(
+  out: string[],
+  ann: BoxAnnotation,
+  fontAttrs: string,
+): void {
+  if (!ann.label) return;
+  const [x, y] = ann.at;
+  out.push(`  <g fill="${exportInk(ann.color)}" ${fontAttrs}>`);
+  out.push(
+    `    <text x="${x + RECT_LABEL_PAD}" y="${y + RECT_LABEL_PAD + ANN_FONT_SIZE * 0.85}" font-size="${ANN_FONT_SIZE}">${escapeXml(ann.label)}</text>`,
+  );
+  out.push('  </g>');
+}
+
+/** `stroke-dasharray` attribute, or '' for a solid stroke. */
+function dashAttr(style: Parameters<typeof strokeDash>[0]): string {
+  const d = strokeDash(style);
+  return d ? ` stroke-dasharray="${d}"` : '';
 }
 
 function exportLine(out: string[], ann: LineAnnotation): void {
   const pts = lineAbsPoints(ann);
   if (pts.length < 2) return;
-  const dash =
-    (ann.stroke ?? 'solid') === 'dashed'
-      ? ` stroke-dasharray="${ANNOTATION_DASH}"`
-      : '';
+  const ink = exportInk(ann.color);
   const ptsAttr = pts.map(([px, py]) => `${px},${py}`).join(' ');
   out.push(
-    `  <polyline points="${ptsAttr}" fill="none" stroke="black" stroke-width="1"${dash}/>`,
+    `  <polyline points="${ptsAttr}" fill="none" stroke="${ink}" stroke-width="${strokeW(ann.strokeWidth)}"${dashAttr(ann.stroke)}/>`,
   );
   for (const tri of lineArrowHeads(pts, ann.arrow)) {
     out.push(
-      `  <polygon points="${tri.map(([px, py]) => `${px},${py}`).join(' ')}" fill="black"/>`,
+      `  <polygon points="${tri.map(([px, py]) => `${px},${py}`).join(' ')}" fill="${ink}"/>`,
     );
   }
 }
 
 function exportTable(out: string[], ann: TableAnnotation, cellBg: string): void {
   const [x, y] = ann.at;
+  const ink = exportInk(ann.color);
   const [w, h] = tableSize(ann);
   const colE = tableColEdges(ann);
   const rowE = tableRowEdges(ann);
@@ -286,10 +347,10 @@ function exportTable(out: string[], ann: TableAnnotation, cellBg: string): void 
     grid += `M${x} ${y + rowE[r]}H${x + w}`;
   }
   if (grid) {
-    out.push(`  <path d="${grid}" fill="none" stroke="black" stroke-width="0.5"/>`);
+    out.push(`  <path d="${grid}" fill="none" stroke="${ink}" stroke-width="0.5"/>`);
   }
   out.push(
-    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="black" stroke-width="1"/>`,
+    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${ink}" stroke-width="1"/>`,
   );
   const texts: string[] = [];
   for (let r = 0; r < ann.rowHeights.length; r++) {
@@ -305,7 +366,7 @@ function exportTable(out: string[], ann: TableAnnotation, cellBg: string): void 
   }
   if (texts.length > 0) {
     out.push(
-      '  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif">',
+      `  <g fill="${ink}" font-family="ui-sans-serif, system-ui, sans-serif">`,
     );
     out.push(...texts);
     out.push('  </g>');

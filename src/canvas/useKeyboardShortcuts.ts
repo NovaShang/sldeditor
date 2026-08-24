@@ -46,6 +46,7 @@ export function exitDrawingState(): void {
     tool === 'junction' ||
     tool === 'text' ||
     tool === 'rect' ||
+    tool === 'ellipse' ||
     tool === 'line' ||
     tool === 'table'
   ) {
@@ -161,6 +162,10 @@ export function useKeyboardShortcuts(): void {
         case 'f':
         case 'F':
           store.setActiveTool('rect');
+          return;
+        case 'o':
+        case 'O':
+          store.setActiveTool('ellipse');
           return;
         case 'l':
         case 'L':

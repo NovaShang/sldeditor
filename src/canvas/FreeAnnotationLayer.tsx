@@ -24,22 +24,27 @@ import { useEditorStore } from '../store';
 import {
   annotationKind,
   type Annotation,
+  type BoxAnnotation,
+  type EllipseAnnotation,
   type LineAnnotation,
   type RectAnnotation,
   type TableAnnotation,
   type TextAnnotation,
 } from '../model';
 import {
-  ANNOTATION_DASH,
   ANNOTATION_FONT_SIZE,
+  ellipseGeom,
   lineAbsPoints,
   lineArrowHeads,
   RECT_LABEL_PAD,
+  strokeDash,
+  strokeW,
   TABLE_CELL_PAD_X,
   tableColEdges,
   tableRowEdges,
   tableSize,
 } from '../lib/annotation-geom';
+import { inkClass } from '../lib/colors';
 
 const DEFAULT_FONT_SIZE = ANNOTATION_FONT_SIZE;
 const LINE_HEIGHT = 1.25;
@@ -66,6 +71,14 @@ export function FreeAnnotationLayer() {
               <RectView
                 key={a.id}
                 ann={eff as RectAnnotation}
+                isSelected={isSelected}
+              />
+            );
+          case 'ellipse':
+            return (
+              <EllipseView
+                key={a.id}
+                ann={eff as EllipseAnnotation}
                 isSelected={isSelected}
               />
             );
@@ -115,12 +128,10 @@ function RectView({
 }) {
   const [x, y] = ann.at;
   const [w, h] = ann.size;
-  const dash =
-    (ann.stroke ?? 'dashed') === 'dashed' ? ANNOTATION_DASH : undefined;
   return (
     <g
       data-annotation-id={ann.id}
-      className="ole-ann ole-ann-rect"
+      className={cx('ole-ann ole-ann-rect', inkClass(ann.color))}
       data-selected={isSelected ? 'true' : undefined}
     >
       {ann.fill === 'tint' && (
@@ -136,20 +147,76 @@ function RectView({
         y={y}
         width={w}
         height={h}
-        strokeDasharray={dash}
+        strokeDasharray={strokeDash(ann.stroke ?? 'dashed')}
+        strokeWidth={strokeW(ann.strokeWidth)}
       />
-      {ann.label && (
-        <text
-          className="ole-ann-label"
-          x={x + RECT_LABEL_PAD}
-          y={y + RECT_LABEL_PAD + DEFAULT_FONT_SIZE * 0.85}
-          fontSize={DEFAULT_FONT_SIZE}
-        >
-          {ann.label}
-        </text>
-      )}
+      <BoxLabel ann={ann} />
     </g>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Ellipse — same bounding box as a rect, so the same grips and label rules.
+// ---------------------------------------------------------------------------
+
+function EllipseView({
+  ann,
+  isSelected,
+}: {
+  ann: EllipseAnnotation;
+  isSelected: boolean;
+}) {
+  const { cx: ecx, cy, rx, ry } = ellipseGeom(ann);
+  return (
+    <g
+      data-annotation-id={ann.id}
+      className={cx('ole-ann ole-ann-ellipse', inkClass(ann.color))}
+      data-selected={isSelected ? 'true' : undefined}
+    >
+      {ann.fill === 'tint' && (
+        <ellipse className="ole-ann-fill" cx={ecx} cy={cy} rx={rx} ry={ry} />
+      )}
+      {/* Border-band hit only, matching the rect: an ellipse drawn around a
+          group of devices must not swallow clicks on what it encircles. */}
+      <ellipse
+        className="ole-ann-shape-hit"
+        cx={ecx}
+        cy={cy}
+        rx={rx}
+        ry={ry}
+      />
+      <ellipse
+        className="ole-ann-rect-border"
+        cx={ecx}
+        cy={cy}
+        rx={rx}
+        ry={ry}
+        strokeDasharray={strokeDash(ann.stroke)}
+        strokeWidth={strokeW(ann.strokeWidth)}
+      />
+      <BoxLabel ann={ann} />
+    </g>
+  );
+}
+
+/** Caption inside the top-left of a box shape's bounding box. */
+function BoxLabel({ ann }: { ann: BoxAnnotation }) {
+  if (!ann.label) return null;
+  return (
+    <text
+      className="ole-ann-label"
+      x={ann.at[0] + RECT_LABEL_PAD}
+      y={ann.at[1] + RECT_LABEL_PAD + DEFAULT_FONT_SIZE * 0.85}
+      fontSize={DEFAULT_FONT_SIZE}
+    >
+      {ann.label}
+    </text>
+  );
+}
+
+/** Join class names, dropping the undefined an absent ink colour produces. */
+function cx(...parts: (string | undefined)[]): string {
+  return parts.filter(Boolean).join(' ');
 }
 
 // ---------------------------------------------------------------------------
@@ -165,19 +232,18 @@ function LineView({
 }) {
   const pts = lineAbsPoints(ann);
   const ptsAttr = pts.map((p) => `${p[0]},${p[1]}`).join(' ');
-  const dash =
-    (ann.stroke ?? 'solid') === 'dashed' ? ANNOTATION_DASH : undefined;
   return (
     <g
       data-annotation-id={ann.id}
-      className="ole-ann ole-ann-line-group"
+      className={cx('ole-ann ole-ann-line-group', inkClass(ann.color))}
       data-selected={isSelected ? 'true' : undefined}
     >
       <polyline className="ole-ann-shape-hit" points={ptsAttr} />
       <polyline
         className="ole-ann-line"
         points={ptsAttr}
-        strokeDasharray={dash}
+        strokeDasharray={strokeDash(ann.stroke)}
+        strokeWidth={strokeW(ann.strokeWidth)}
       />
       {lineArrowHeads(pts, ann.arrow).map((tri, i) => (
         <polygon
@@ -261,7 +327,7 @@ function TableView({
   return (
     <g
       data-annotation-id={ann.id}
-      className="ole-ann ole-ann-table"
+      className={cx('ole-ann ole-ann-table', inkClass(ann.color))}
       data-selected={isSelected ? 'true' : undefined}
     >
       {clips.length > 0 && <defs>{clips}</defs>}
@@ -416,7 +482,7 @@ function IdleAnnotation({
   return (
     <g
       data-annotation-id={ann.id}
-      className="ole-free-annotation"
+      className={cx('ole-free-annotation', inkClass(ann.color))}
       data-selected={isSelected ? 'true' : undefined}
     >
       {/* Invisible hit-rect for easier dragging on whitespace within the text block. */}

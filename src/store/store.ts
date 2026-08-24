@@ -34,6 +34,7 @@ import type {
   DiagramFile,
   Element,
   ElementId,
+  EllipseAnnotation,
   Junction,
   JunctionId,
   LineAnnotation,
@@ -96,6 +97,7 @@ export type ToolId =
   | 'junction'
   | 'text'
   | 'rect'
+  | 'ellipse'
   | 'line'
   | 'table';
 
@@ -103,6 +105,7 @@ export type ToolId =
 export type NewAnnotation =
   | Omit<TextAnnotation, 'id'>
   | Omit<RectAnnotation, 'id'>
+  | Omit<EllipseAnnotation, 'id'>
   | Omit<LineAnnotation, 'id'>
   | Omit<TableAnnotation, 'id'>;
 
@@ -283,10 +286,10 @@ export interface EditorState {
   /** Clear a wire's manual route (alias for `updateWirePath(id, null)`). */
   resetWirePath: (id: WireId) => void;
   /**
-   * Patch a wire's decoration fields (label). Route edits go through
+   * Patch a wire's decoration fields (label, colour). Route edits go through
    * `updateWirePath`; endpoints are immutable (delete + redraw instead).
    */
-  updateWire: (id: WireId, patch: Partial<Pick<Wire, 'label'>>) => void;
+  updateWire: (id: WireId, patch: Partial<Pick<Wire, 'label' | 'color'>>) => void;
   updateElement: (id: ElementId, patch: Partial<Element>) => void;
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
   updateBus: (id: BusId, patch: Partial<BusLayout>) => void;

@@ -69,6 +69,11 @@ export interface Element {
   note?: string;
   params?: Record<string, ParamValue>;
   state?: Record<string, ParamValue>;
+  /**
+   * Ink colour of the symbol. Purely presentational — it never reaches the
+   * compiler, connectivity or diagnostics. Absent = theme ink.
+   */
+  color?: DiagramColor;
 }
 
 export interface Bus {
@@ -78,6 +83,8 @@ export interface Bus {
   params?: Record<string, ParamValue>;
   /** If absent, auto-layout computes geometry. */
   layout?: BusLayout;
+  /** Ink colour. Colour-coding busbars was the single most-asked-for use. */
+  color?: DiagramColor;
 }
 
 export interface BusLayout {
@@ -110,6 +117,8 @@ export interface Wire {
    * effect on routing or connectivity.
    */
   label?: string;
+  /** Ink colour. Presentational only — routing and connectivity ignore it. */
+  color?: DiagramColor;
 }
 
 export interface Placement {
@@ -120,8 +129,32 @@ export interface Placement {
 
 export type AnnotationId = string;
 
-/** Stroke style shared by rect / line annotations. */
-export type AnnotationStroke = 'solid' | 'dashed';
+/**
+ * Ink colour for anything drawn on the canvas — devices, buses, wires and
+ * free annotations alike.
+ *
+ * A closed set of NAMES rather than free hex, because the canvas has a dark
+ * theme: a literal colour cannot follow it, so a user who picked black would
+ * watch their drawing disappear the moment they switched. Each name resolves
+ * to a light/dark pair (and a DXF ACI index) in `lib/colors.ts`, so the same
+ * choice reads correctly in both themes and survives export to CAD.
+ *
+ * `default` deliberately means "whatever ink the theme uses" — absent is the
+ * same as `default`, which is why every colour field is optional and why a
+ * diagram written before colours existed renders byte-identically.
+ */
+export type DiagramColor =
+  | 'default'
+  | 'red'
+  | 'blue'
+  | 'green'
+  | 'amber'
+  | 'gray';
+
+/** Stroke style shared by rect / ellipse / line annotations. */
+export type AnnotationStroke = 'solid' | 'dashed' | 'dotted';
+/** Stroke weight for shape annotations, in nominal canvas units. */
+export type AnnotationStrokeWidth = 1 | 2 | 3;
 /** Rect fill: `tint` is a faint foreground wash that never occludes content. */
 export type AnnotationFill = 'none' | 'tint';
 /** Arrowheads on a line annotation (leader / callout use). */
@@ -141,6 +174,7 @@ export interface TextAnnotation {
   at: [number, number];
   text: string;
   fontSize?: number;
+  color?: DiagramColor;
 }
 
 /**
@@ -155,9 +189,38 @@ export interface RectAnnotation {
   size: [number, number];
   /** Default `dashed` — the group-frame convention. */
   stroke?: AnnotationStroke;
+  /** Default 1. */
+  strokeWidth?: AnnotationStrokeWidth;
   /** Default `none`. */
   fill?: AnnotationFill;
+  /** Default `default` (theme ink). */
+  color?: DiagramColor;
   /** Optional caption drawn inside the top-left corner. */
+  label?: string;
+}
+
+/**
+ * Ellipse / circle — the shape the rect tool could never stand in for.
+ *
+ * Anchored by its BOUNDING BOX (`at` = top-left, `size` = w×h) rather than
+ * centre+radii, so every box-shaped affordance already written for rects —
+ * the 8 resize grips, the drag-to-draw gesture, the bbox helpers, marquee
+ * hit-testing — applies unchanged. Shift while drawing constrains to a circle.
+ */
+export interface EllipseAnnotation {
+  id: AnnotationId;
+  type: 'ellipse';
+  at: [number, number];
+  size: [number, number];
+  /** Default `solid` — unlike a rect, an ellipse is a drawn shape, not a frame. */
+  stroke?: AnnotationStroke;
+  /** Default 1. */
+  strokeWidth?: AnnotationStrokeWidth;
+  /** Default `none`. */
+  fill?: AnnotationFill;
+  /** Default `default` (theme ink). */
+  color?: DiagramColor;
+  /** Optional caption drawn inside the top-left of the bounding box. */
   label?: string;
 }
 
@@ -170,6 +233,10 @@ export interface LineAnnotation {
   points: [number, number][];
   /** Default `solid`. */
   stroke?: AnnotationStroke;
+  /** Default 1. */
+  strokeWidth?: AnnotationStrokeWidth;
+  /** Default `default` (theme ink). */
+  color?: DiagramColor;
   /** Default `none`. */
   arrow?: LineArrow;
 }
@@ -184,16 +251,24 @@ export interface TableAnnotation {
   /** `cells[row][col]`, sized `rowHeights.length × colWidths.length`. */
   cells: string[][];
   fontSize?: number;
+  color?: DiagramColor;
 }
 
 export type Annotation =
   | TextAnnotation
   | RectAnnotation
+  | EllipseAnnotation
   | LineAnnotation
   | TableAnnotation;
 
 /** `type` of an annotation with the text default applied. */
-export type AnnotationKind = 'text' | 'rect' | 'line' | 'table';
+export type AnnotationKind = 'text' | 'rect' | 'ellipse' | 'line' | 'table';
+
+/**
+ * The box-anchored shapes. They share `at` + `size`, which is the whole reason
+ * the resize grips and bbox code can treat them as one thing.
+ */
+export type BoxAnnotation = RectAnnotation | EllipseAnnotation;
 
 export function annotationKind(a: Annotation): AnnotationKind {
   return a.type ?? 'text';
@@ -211,6 +286,7 @@ export function isTextAnnotation(a: Annotation): a is TextAnnotation {
 export type AnnotationPatch = Partial<
   Omit<TextAnnotation, 'id' | 'type'> &
     Omit<RectAnnotation, 'id' | 'type'> &
+    Omit<EllipseAnnotation, 'id' | 'type'> &
     Omit<LineAnnotation, 'id' | 'type'> &
     Omit<TableAnnotation, 'id' | 'type'>
 >;

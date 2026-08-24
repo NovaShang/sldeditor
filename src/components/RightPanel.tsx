@@ -38,14 +38,17 @@ export function RightPanel() {
   } else if (soleAnnotation) {
     const ann = (annotations ?? []).find((a) => a.id === soleAnnotation);
     const kind = ann ? annotationKind(ann) : 'text';
-    title =
-      kind === 'rect'
-        ? t('props.annRect')
-        : kind === 'line'
-          ? t('props.annLine')
-          : kind === 'table'
-            ? t('props.annTable')
-            : t('props.annText');
+    // A lookup rather than a ternary chain: the chain's `else` branch silently
+    // titled every unknown kind "TEXT", which is how a freshly drawn ellipse
+    // came out labelled TEXT.
+    const ANN_TITLE = {
+      rect: 'props.annRect',
+      ellipse: 'props.annEllipse',
+      line: 'props.annLine',
+      table: 'props.annTable',
+      text: 'props.annText',
+    } as const;
+    title = t(ANN_TITLE[kind]);
   } else if (selection.length === 1 && selectedAnnotations.length === 0) {
     const id = selection[0];
     const bus = (buses ?? []).find((b) => b.id === id);

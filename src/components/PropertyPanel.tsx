@@ -20,9 +20,12 @@ import {
   type Junction,
   type LibraryParamField,
   type LibraryStateField,
+  type AnnotationStroke,
+  type AnnotationStrokeWidth,
+  type BoxAnnotation,
+  type DiagramColor,
   type LineAnnotation,
   type ParamValue,
-  type RectAnnotation,
   type TableAnnotation,
   type TextAnnotation,
   type WireId,
@@ -32,6 +35,7 @@ import {
   TABLE_DEFAULT_CELL_H,
   TABLE_DEFAULT_CELL_W,
 } from '../lib/annotation-geom';
+import { COLOR_ORDER, inkClass } from '../lib/colors';
 import { cn } from '../lib/utils';
 
 export function PropertyPanel() {
@@ -99,6 +103,15 @@ export function PropertyPanel() {
           useEditorStore
             .getState()
             .updateElement(id, { note: v.trim() === '' ? undefined : v.trim() })
+        }
+      />
+      <ColorRow
+        label={t('props.color')}
+        value={element.color}
+        onChange={(c) =>
+          useEditorStore
+            .getState()
+            .updateElement(id, { color: c === 'default' ? undefined : c })
         }
       />
       {lib?.state && lib.state.length > 0 && (
@@ -293,6 +306,11 @@ function BusInspector({ bus }: { bus: Bus }) {
           updateBusEntry(id, { note: v.trim() === '' ? undefined : v.trim() })
         }
       />
+      <ColorRow
+        label={t('props.color')}
+        value={bus.color}
+        onChange={(c) => updateBusEntry(id, { color: c === 'default' ? undefined : c })}
+      />
       <BusParams bus={bus} />
     </div>
   );
@@ -346,9 +364,13 @@ function AnnotationPanel({ annId }: { annId: AnnotationId }) {
   const patch = (p: Record<string, unknown>) =>
     useEditorStore.getState().updateAnnotation(annId, p);
 
-  switch (annotationKind(ann)) {
-    case 'rect': {
-      const r = ann as RectAnnotation;
+  const kind = annotationKind(ann);
+  switch (kind) {
+    // Rect and ellipse expose the same controls; only the stroke default
+    // differs (a rect is a group frame, an ellipse is a drawn shape).
+    case 'rect':
+    case 'ellipse': {
+      const r = ann as BoxAnnotation;
       return (
         <div className="flex flex-col gap-2.5 px-3 py-3 text-xs">
           <TextRow
@@ -359,14 +381,16 @@ function AnnotationPanel({ annId }: { annId: AnnotationId }) {
               patch({ label: v.trim() === '' ? undefined : v.trim() })
             }
           />
-          <SegRow
-            label={t('props.annStroke')}
-            value={r.stroke ?? 'dashed'}
-            options={[
-              { value: 'solid', label: t('props.annStrokeSolid') },
-              { value: 'dashed', label: t('props.annStrokeDashed') },
-            ]}
-            onChange={(v) => patch({ stroke: v })}
+          <ColorRow
+            label={t('props.color')}
+            value={r.color}
+            onChange={(c) => patch({ color: c === 'default' ? undefined : c })}
+          />
+          <StrokeRows
+            stroke={r.stroke}
+            strokeWidth={r.strokeWidth}
+            defaultStroke={kind === 'rect' ? 'dashed' : 'solid'}
+            patch={patch}
           />
           <SegRow
             label={t('props.annFill')}
@@ -384,14 +408,16 @@ function AnnotationPanel({ annId }: { annId: AnnotationId }) {
       const l = ann as LineAnnotation;
       return (
         <div className="flex flex-col gap-2.5 px-3 py-3 text-xs">
-          <SegRow
-            label={t('props.annStroke')}
-            value={l.stroke ?? 'solid'}
-            options={[
-              { value: 'solid', label: t('props.annStrokeSolid') },
-              { value: 'dashed', label: t('props.annStrokeDashed') },
-            ]}
-            onChange={(v) => patch({ stroke: v })}
+          <ColorRow
+            label={t('props.color')}
+            value={l.color}
+            onChange={(c) => patch({ color: c === 'default' ? undefined : c })}
+          />
+          <StrokeRows
+            stroke={l.stroke}
+            strokeWidth={l.strokeWidth}
+            defaultStroke="solid"
+            patch={patch}
           />
           <SegRow
             label={t('props.annArrow')}
@@ -422,6 +448,11 @@ function AnnotationPanel({ annId }: { annId: AnnotationId }) {
             min={1}
             onChange={(n) => patch(resizeTableCols(tb, n))}
           />
+          <ColorRow
+            label={t('props.color')}
+            value={tb.color}
+            onChange={(c) => patch({ color: c === 'default' ? undefined : c })}
+          />
           <FontSizeRow
             label={t('props.annFontSize')}
             value={tb.fontSize}
@@ -434,6 +465,11 @@ function AnnotationPanel({ annId }: { annId: AnnotationId }) {
       const tx = ann as TextAnnotation;
       return (
         <div className="flex flex-col gap-2.5 px-3 py-3 text-xs">
+          <ColorRow
+            label={t('props.color')}
+            value={tx.color}
+            onChange={(c) => patch({ color: c === 'default' ? undefined : c })}
+          />
           <FontSizeRow
             label={t('props.annFontSize')}
             value={tx.fontSize}
@@ -476,6 +512,95 @@ function resizeTableCols(
 }
 
 /** Segmented single-choice control (2–3 options). */
+/**
+ * Six swatches — the whole palette, always visible.
+ *
+ * A row of swatches rather than a dropdown because colour is a glanceable
+ * property: the user is looking at the drawing, not reading a list, and one
+ * click has to be enough. `default` shows as the theme's own ink so "back to
+ * normal" is a swatch like any other rather than a hidden reset.
+ */
+function ColorRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: DiagramColor | undefined;
+  onChange: (c: DiagramColor) => void;
+}) {
+  const t = useT();
+  const current = value ?? 'default';
+  return (
+    <Field label={label}>
+      <div className="flex gap-1">
+        {COLOR_ORDER.map((c) => (
+          <button
+            key={c}
+            type="button"
+            aria-pressed={current === c}
+            aria-label={t(`props.color.${c}` as Parameters<typeof t>[0])}
+            title={t(`props.color.${c}` as Parameters<typeof t>[0])}
+            onClick={() => onChange(c)}
+            className={cn(
+              'size-6 rounded-md border transition-shadow',
+              current === c
+                ? 'border-primary ring-1 ring-primary'
+                : 'border-border/60 hover:border-border',
+            )}
+          >
+            <span
+              className={cn('block size-full rounded-[3px]', inkClass(c))}
+              style={{
+                backgroundColor: c === 'default' ? 'var(--foreground)' : 'currentColor',
+              }}
+            />
+          </button>
+        ))}
+      </div>
+    </Field>
+  );
+}
+
+/** Stroke style + weight — shared by every shape that has a stroke. */
+function StrokeRows({
+  stroke,
+  strokeWidth,
+  defaultStroke,
+  patch,
+}: {
+  stroke: AnnotationStroke | undefined;
+  strokeWidth: AnnotationStrokeWidth | undefined;
+  defaultStroke: AnnotationStroke;
+  patch: (p: Record<string, unknown>) => void;
+}) {
+  const t = useT();
+  return (
+    <>
+      <SegRow
+        label={t('props.annStroke')}
+        value={stroke ?? defaultStroke}
+        options={[
+          { value: 'solid' as const, label: t('props.annStrokeSolid') },
+          { value: 'dashed' as const, label: t('props.annStrokeDashed') },
+          { value: 'dotted' as const, label: t('props.annStrokeDotted') },
+        ]}
+        onChange={(v) => patch({ stroke: v })}
+      />
+      <SegRow
+        label={t('props.annStrokeWidth')}
+        value={String(strokeWidth ?? 1)}
+        options={[
+          { value: '1', label: t('props.annWidthThin') },
+          { value: '2', label: t('props.annWidthMedium') },
+          { value: '3', label: t('props.annWidthThick') },
+        ]}
+        onChange={(v) => patch({ strokeWidth: Number(v) })}
+      />
+    </>
+  );
+}
+
 function SegRow<T extends string>({
   label,
   value,
@@ -640,6 +765,15 @@ function WirePanel({ wireId }: { wireId: WireId }) {
           useEditorStore
             .getState()
             .updateWire(wireId, { label: v.trim() === '' ? undefined : v.trim() })
+        }
+      />
+      <ColorRow
+        label={t('props.color')}
+        value={wire.color}
+        onChange={(c) =>
+          useEditorStore
+            .getState()
+            .updateWire(wireId, { color: c === 'default' ? undefined : c })
         }
       />
       <ul className="space-y-0.5 border-t border-border/40 pt-2">
