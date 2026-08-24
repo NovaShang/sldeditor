@@ -155,15 +155,19 @@ export function buildExportDxf(
       }
     }
     // Wire labels (phase designations etc.) — anchored mid-wire, matching
-    // the canvas / SVG-export placement.
+    // the canvas / SVG-export placement, and taking the wire's ink the way
+    // they do there. Element structural labels above deliberately stay
+    // neutral; see AnnotationLayer for why the two differ.
     for (const r of model.wireRenders.values()) {
       const label = r.label?.trim();
       if (!label) continue;
       const placed = placeWireLabel(r.path, labelFs);
       if (!placed) continue;
       const p = worldToDxf(placed.world);
+      w.setColor(dxfColor(r.color));
       w.text(LAYER_LABELS, p, label, labelFs, 0, false, placed.textAnchor);
     }
+    w.setColor(undefined);
   }
 
   // Free annotations (text / rect / line / table). Dashed strokes flatten to

@@ -43,7 +43,12 @@ function diagram(colored: boolean): {
         color: c('blue' as const),
       },
     ],
-    wires: [{ id: 'w1', ends: ['QF1.t1', 'B1'], color: c('green' as const) }],
+    // The label matters: a wire label follows its wire's ink, so the fixture
+    // has to carry one or the byte-identical guarantee never exercises that
+    // path.
+    wires: [
+      { id: 'w1', ends: ['QF1.t1', 'B1'], label: 'L1', color: c('green' as const) },
+    ],
     layout: { QF1: { at: [0, 100] } },
   };
   const annotations: Annotation[] = [
@@ -164,5 +169,56 @@ describe('stroke style and weight', () => {
       annotations: shaped('solid', 3),
     });
     expect(svg).toContain('stroke-width="3"');
+  });
+});
+
+/**
+ * Labels split two ways on purpose, so a change to one must not quietly drag
+ * the other with it.
+ *
+ * An element's structural label is the device's IDENTITY (QF1, 630 A) and is
+ * orthogonal to whatever the colour is coding — voltage level, new-vs-existing
+ * — which is why electrical CAD keeps device tags neutral while the conductors
+ * carry the colour. A wire label is a phase designation, and phase
+ * colour-coding is the canonical reason to colour a conductor at all: there
+ * the text is what the colour is saying.
+ */
+describe('wire labels take the wire ink, element labels do not', () => {
+  const wireLabelText = (svg: string) =>
+    svg.match(/<text[^>]*>L1<\/text>/)?.[0] ?? '';
+  const elementLabelText = (svg: string) =>
+    svg.match(/<text[^>]*>QF1<\/text>/)?.[0] ?? '';
+
+  it('paints a coloured wire label with the wire hex', () => {
+    const { file, annotations } = diagram(true);
+    const svg = buildExportSvg(compile(file), { annotations });
+    expect(wireLabelText(svg)).toContain(
+      `fill="${NAMED_COLORS.green.light}"`,
+    );
+  });
+
+  it('leaves the element label neutral even when the element is coloured', () => {
+    const { file, annotations } = diagram(true);
+    const svg = buildExportSvg(compile(file), { annotations });
+    // QF1 is red; its tag must inherit the group's black, carrying no fill.
+    expect(elementLabelText(svg)).not.toContain('fill=');
+  });
+
+  it('adds no fill at all when the wire is uncoloured', () => {
+    const { file, annotations } = diagram(false);
+    const svg = buildExportSvg(compile(file), { annotations });
+    expect(wireLabelText(svg)).not.toContain('fill=');
+  });
+
+  it('carries the wire ink into the DXF label as group 62', () => {
+    const { file, annotations } = diagram(true);
+    const dxf = buildExportDxf(compile(file), { annotations });
+    const ents = entitiesSection(dxf);
+    // The label is a TEXT entity; find it and read the colour that precedes it.
+    const i = ents.indexOf('L1');
+    expect(i).toBeGreaterThan(-1);
+    const before = ents.slice(0, i);
+    const lastColor = [...before.matchAll(/^\s*62\s*\n\s*(\d+)\s*$/gm)].pop();
+    expect(lastColor?.[1]).toBe(String(NAMED_COLORS.green.aci));
   });
 });

@@ -255,10 +255,23 @@
 /* Structural annotations — element ID + showOnCanvas params painted next
    to each symbol by AnnotationLayer. White halo (paint-order: stroke) keeps
    the text readable when it crosses wires or symbols. */
+
+/* Baseline ink for the whole label layer, so `currentColor` below has a
+   defined value to fall back to. Stated here rather than relied upon from an
+   ancestor: nothing else in the tree sets `color`, so without this a label
+   with no ink class would resolve `currentColor` against the UA default. */
+.ole-annotation-layer {
+  color: var(--foreground);
+}
 .ole-annotation-text {
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: var(--ole-label-font-size, 7px);
-  fill: var(--foreground);
+  /* `currentColor`, not `var(--foreground)` directly, so an `.ole-ink-*` class
+     on an individual label can override it — which is how a wire label picks
+     up its wire's colour. An explicit `fill` here would win over the ink class
+     and silently do nothing, which is exactly what it did on first attempt:
+     the class was present in the DOM and the text stayed theme-ink. */
+  fill: currentColor;
   paint-order: stroke;
   stroke: var(--canvas-bg);
   stroke-width: 2px;

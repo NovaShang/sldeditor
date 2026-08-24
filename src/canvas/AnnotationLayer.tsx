@@ -37,6 +37,7 @@ import {
   resolveLabelFontSize,
 } from '../lib/element-labels';
 import { placeWireLabel } from '../lib/wire-labels';
+import { inkClass } from '../lib/colors';
 
 export function AnnotationLayer() {
   const elements = useEditorStore((s) => s.internal.elements);
@@ -115,7 +116,19 @@ export function AnnotationLayer() {
               x={placed.world[0]}
               y={placed.world[1]}
               textAnchor={placed.textAnchor}
-              className="ole-annotation-text"
+              // A wire label takes its wire's ink; an element's structural
+              // label deliberately does not. The two look alike but say
+              // different things. An element label is the device's IDENTITY
+              // (QF1, 630 A), orthogonal to whatever the colour is coding —
+              // which is why electrical CAD (EPLAN, SEE) keeps device tags
+              // neutral while the conductors carry the voltage/potential
+              // colours. A wire label is a phase designation (L1/L2/L3/N/PE),
+              // and phase colour-coding is the canonical reason to colour a
+              // conductor at all: here the text IS what the colour is saying,
+              // so a black "L1" beside a brown conductor reads as a mistake.
+              className={[inkClass(r.color), 'ole-annotation-text']
+                .filter(Boolean)
+                .join(' ')}
             >
               {label}
             </text>

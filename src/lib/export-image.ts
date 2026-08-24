@@ -174,14 +174,22 @@ export function buildExportSvg(
       }
     }
     // Wire labels (phase designations etc.) — anchored mid-wire, same
-    // font/halo treatment as element labels.
+    // font/halo treatment as element labels, but they DO take their wire's
+    // ink where an element's structural label does not (see AnnotationLayer
+    // for the reasoning: a device tag is identity, a wire label is the phase
+    // the colour is coding).
+    //
+    // `fill` is emitted only when the wire is actually coloured, so an
+    // uncoloured diagram still inherits the group's `fill="black"` and its
+    // bytes are unchanged.
     for (const r of model.wireRenders.values()) {
       const label = r.label?.trim();
       if (!label) continue;
       const placed = placeWireLabel(r.path, labelFs);
       if (!placed) continue;
+      const ink = r.color ? ` fill="${exportInk(r.color)}"` : '';
       out.push(
-        `    <text x="${placed.world[0]}" y="${placed.world[1]}" text-anchor="${placed.textAnchor}">${escapeXml(label)}</text>`,
+        `    <text x="${placed.world[0]}" y="${placed.world[1]}" text-anchor="${placed.textAnchor}"${ink}>${escapeXml(label)}</text>`,
       );
     }
     out.push('  </g>');

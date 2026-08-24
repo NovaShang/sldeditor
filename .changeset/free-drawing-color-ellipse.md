@@ -20,6 +20,12 @@ to draw.
   embedding apps that want to offer the same six colours.
 - **Stroke styles and weights** — `dotted` joins `solid`/`dashed`, and shapes
   take `strokeWidth` 1/2/3.
+- **Wire labels take their wire's ink**; element labels deliberately do not.
+  A device tag (QF1, 630 A) is identity and stays neutral, which is what
+  electrical CAD does — the conductors carry the colour, not the tags. A wire
+  label is a phase designation, and phase colour-coding is the canonical
+  reason to colour a conductor at all, so a black `L1` beside a brown
+  conductor reads as a mistake.
 
 Colour reaches element symbols without touching any of the 91 element-library
 files: the stylesheet already rewrote their literal black to `currentColor`,
