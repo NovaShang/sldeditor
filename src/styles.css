@@ -320,16 +320,20 @@
   opacity: 0.05;
   pointer-events: none;
 }
+/* No `stroke-width` here on purpose: these shapes carry a user-chosen weight
+   as an SVG presentation attribute, and a CSS declaration ALWAYS beats one, so
+   stating it here silently pinned every shape at 1 no matter what the property
+   panel said. The component's `strokeW()` already defaults to 1, so the
+   hairline default is unchanged. (Same trap as `fill` on .ole-annotation-text,
+   which pinned label colour until it became `currentColor`.) */
 .ole-ann-rect-border {
   fill: none;
   stroke: currentColor;
-  stroke-width: 1;
   pointer-events: none;
 }
 .ole-ann-line {
   fill: none;
   stroke: currentColor;
-  stroke-width: 1;
   pointer-events: none;
 }
 .ole-ann-arrow {

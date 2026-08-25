@@ -13,6 +13,7 @@ import {
   MousePointer2,
   Redo2,
   Scissors,
+  ChevronDown,
   Shapes,
   Slash,
   Square,
@@ -47,6 +48,13 @@ interface ToolDef {
   presetPlaceKind?: string | null;
   /** Icon-only render (label still goes to aria-label / tooltip). */
   iconOnly?: boolean;
+  /**
+   * Part of the free-drawing cluster, which collapses behind one button.
+   * These five are the only tools that draw decoration rather than electrical
+   * model, they are used far less often than the model tools, and laid out
+   * flat they were half the bar.
+   */
+  drawing?: boolean;
 }
 
 const TOOLS: ToolDef[] = [
@@ -112,6 +120,7 @@ const TOOLS: ToolDef[] = [
     icon: Type,
     switchTo: 'text',
     iconOnly: true,
+    drawing: true,
   },
   {
     id: 'rect',
@@ -121,6 +130,7 @@ const TOOLS: ToolDef[] = [
     icon: Square,
     switchTo: 'rect',
     iconOnly: true,
+    drawing: true,
   },
   {
     id: 'ellipse',
@@ -130,6 +140,7 @@ const TOOLS: ToolDef[] = [
     icon: Circle,
     switchTo: 'ellipse',
     iconOnly: true,
+    drawing: true,
   },
   {
     id: 'line',
@@ -139,6 +150,7 @@ const TOOLS: ToolDef[] = [
     icon: Slash,
     switchTo: 'line',
     iconOnly: true,
+    drawing: true,
   },
   {
     id: 'table',
@@ -148,8 +160,14 @@ const TOOLS: ToolDef[] = [
     icon: Table,
     switchTo: 'table',
     iconOnly: true,
+    drawing: true,
   },
 ];
+
+/** The free-drawing cluster, in menu order. */
+const DRAWING_TOOLS = TOOLS.filter((d) => d.drawing);
+/** Everything that stays on the bar itself. */
+const BAR_TOOLS = TOOLS.filter((d) => !d.drawing);
 
 /**
  * Short usage hint shown above the toolbar for whichever tool is active.
@@ -284,10 +302,10 @@ export function FloatingToolbar() {
   // single-tap selection (see PanTool), and annotation drawing is rare
   // enough on a phone to hide.
   const unifiedBar = atLeast(tier, 'dense');
-  const PHONE_HIDDEN = new Set(['select', 'text', 'rect', 'line', 'table']);
+  const PHONE_HIDDEN = new Set(['select']);
   const visibleTools = unifiedBar
-    ? TOOLS.filter((def) => !PHONE_HIDDEN.has(def.id))
-    : TOOLS;
+    ? BAR_TOOLS.filter((def) => !PHONE_HIDDEN.has(def.id))
+    : BAR_TOOLS;
 
   const isToolActive = (def: ToolDef): boolean => active === def.switchTo;
 
@@ -351,6 +369,7 @@ export function FloatingToolbar() {
             </Fragment>
           );
         })}
+        <DrawingMenuButton stacked={unifiedBar} />
         {!unifiedBar && (
           <div aria-hidden className="mx-1 h-5 w-px bg-border" />
         )}
@@ -426,6 +445,8 @@ function ToolbarButton({
   stacked,
   onClick,
   description,
+  hasMenu,
+  suppressTooltip,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -436,6 +457,14 @@ function ToolbarButton({
   stacked?: boolean;
   onClick: () => void;
   description?: React.ReactNode;
+  /** Draw the corner caret that says "this one opens a menu" — the same cue
+   *  Figma uses for its grouped tools. Without it a collapsed cluster looks
+   *  like a plain tool and the other four are simply gone. */
+  hasMenu?: boolean;
+  /** Hold the tooltip back while this button's own menu is open: the two
+   *  occupy the same band above the bar and the tooltip lands on top of the
+   *  items you are trying to read. */
+  suppressTooltip?: boolean;
 }) {
   const tipContent = (
     <div className="space-y-0.5">
@@ -449,7 +478,7 @@ function ToolbarButton({
     </div>
   );
   return (
-    <Tooltip content={tipContent} disabled={disabled}>
+    <Tooltip content={tipContent} disabled={disabled || suppressTooltip}>
       <button
         type="button"
         onClick={onClick}
@@ -470,6 +499,15 @@ function ToolbarButton({
       >
         <span className="relative inline-flex shrink-0">
           <Icon className="size-4" />
+          {hasMenu && (iconOnly || stacked) && (
+            <span
+              aria-hidden
+              className={cn(
+                'pointer-events-none absolute -bottom-[3px] -right-[3px] border-b-[3px] border-l-[3px] border-b-current border-l-transparent',
+                active ? 'text-primary-foreground/70' : 'text-muted-foreground/60',
+              )}
+            />
+          )}
           {hotkey && !stacked && (
             <span
               aria-hidden
@@ -487,7 +525,20 @@ function ToolbarButton({
         {stacked ? (
           <span className="max-w-full truncate">{label}</span>
         ) : (
-          !iconOnly && <span>{label}</span>
+          !iconOnly && (
+            <>
+              <span>{label}</span>
+              {hasMenu && (
+                <ChevronDown
+                  aria-hidden
+                  className={cn(
+                    '-ml-0.5 size-3 shrink-0',
+                    active ? 'opacity-70' : 'opacity-50',
+                  )}
+                />
+              )}
+            </>
+          )
         )}
       </button>
     </Tooltip>
@@ -572,6 +623,93 @@ function LayoutMenuButton({ iconOnly }: { iconOnly?: boolean }) {
  * (not nested inside the popover via a sub-menu) so users only deal with one
  * level of overlay on a tiny screen.
  */
+/**
+ * Square + circle, overlapping. Deliberately not lucide's `Shapes` (that is
+ * the Place tool's icon) and not a pencil, which would promise freehand
+ * drawing this editor does not do.
+ */
+function DrawGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <rect x="1.25" y="1.25" width="8.5" height="8.5" rx="1" />
+      <circle cx="10.5" cy="10.5" r="4.25" />
+    </svg>
+  );
+}
+
+/**
+ * The five free-drawing tools behind one button.
+ *
+ * Flat, they were half the toolbar — five icon buttons for decoration sitting
+ * beside the six that build the electrical model, which reads as though they
+ * matter equally. They do not: the model tools are what most sessions use, and
+ * drawing is the fallback for what the model cannot say.
+ *
+ * The trigger wears the ACTIVE drawing tool's icon rather than a fixed one, so
+ * the bar still answers "what am I holding?" at a glance while collapsed. Every
+ * hotkey still works — the keyboard path never went through this menu.
+ */
+function DrawingMenuButton({ stacked }: { stacked?: boolean }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const active = useEditorStore((s) => s.activeTool);
+  const setTool = useEditorStore((s) => s.setActiveTool);
+
+  const current = DRAWING_TOOLS.find((d) => d.switchTo === active);
+  // The icon follows what you are holding; the LABEL does not. "Draw" is a
+  // fixed width, and the bar is centre-anchored — swapping in "Rectangle"
+  // would shove every other button sideways each time the tool changed.
+  const TriggerIcon = current?.icon ?? DrawGlyph;
+
+  return (
+    <UpwardPopover
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <ToolbarButton
+          icon={TriggerIcon}
+          label={t('tool.draw')}
+          description={t('tool.drawHint')}
+          active={!!current || open}
+          // Labelled on the full bar (a peer of Place and Wire, which is what
+          // it is); icon-only when the bar collapses on a phone.
+          iconOnly={false}
+          hasMenu
+          suppressTooltip={open}
+          stacked={stacked}
+          onClick={() => setOpen((v) => !v)}
+        />
+      }
+    >
+      {DRAWING_TOOLS.map((def) => {
+        const Icon = def.icon;
+        return (
+          <PopoverItem
+            key={def.id}
+            onClick={() => {
+              setOpen(false);
+              setTool(def.switchTo);
+            }}
+            icon={<Icon />}
+            active={active === def.switchTo}
+            hotkey={def.hotkey}
+          >
+            {t(def.labelKey)}
+          </PopoverItem>
+        );
+      })}
+    </UpwardPopover>
+  );
+}
+
 function OverflowMenuButton({ stacked }: { stacked?: boolean }) {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -676,26 +814,40 @@ function PopoverItem({
   icon,
   onClick,
   disabled,
+  active,
+  hotkey,
 }: {
   children: React.ReactNode;
   icon?: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
+  /** Marks the current choice when the menu holds a set of modes. */
+  active?: boolean;
+  /** Shown right-aligned. The shortcut still works with the menu closed —
+   *  collapsing these tools must not cost the keyboard path. */
+  hotkey?: string;
 }) {
   return (
     <button
       type="button"
       role="menuitem"
+      aria-current={active ? 'true' : undefined}
       disabled={disabled}
       onClick={onClick}
       className={cn(
         'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground [&>svg]:size-4',
+        active && 'bg-accent/60 font-medium text-accent-foreground',
         disabled &&
           'pointer-events-none text-muted-foreground opacity-60 hover:bg-transparent',
       )}
     >
       {icon}
       <span className="flex-1">{children}</span>
+      {hotkey && (
+        <kbd className="ml-2 shrink-0 font-mono text-[10px] text-muted-foreground">
+          {hotkey}
+        </kbd>
+      )}
     </button>
   );
 }

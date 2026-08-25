@@ -117,7 +117,12 @@ export const ui: UiTable = {
   'view.labelSizeReset': 'إعادة تعيين حجم التسميات',
 
   'library.title': 'المكتبة',
+  'tool.draw': 'رسم',
+  'tool.drawHint': 'نصوص وأطر ودوائر وخطوط وجداول — تعليقات حرة فوق المخطط',
   'library.empty': 'لا توجد عناصر مطابقة',
+  'cat.custom': 'في هذا المخطط',
+  'library.customTag': 'مخصّص',
+  'library.customHint': 'معرَّف في هذا المخطط — لا يوجد في مكتبة أحد آخر',
   'library.createComponent': 'مكوّن جديد…',
   'library.searchPlaceholder': 'البحث في العناصر…',
   'library.searchAria': 'البحث في العناصر',

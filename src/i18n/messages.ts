@@ -127,7 +127,11 @@ const base = {
     'view.labelSizeReset': '恢复默认字号',
 
     'library.title': '元件库',
+    'tool.draw': '绘图',
+    'tool.drawHint': '文字、方框、圆、线、表格——图纸上的自由标注',
     'library.empty': '没有匹配的元件',
+    'library.customTag': '自定义',
+    'library.customHint': '本图自带的元件——其他人的元件库里没有它',
     'library.createComponent': '新建元件…',
     'library.searchPlaceholder': '搜索元件…',
     'library.searchAria': '搜索元件',
@@ -241,6 +245,7 @@ const base = {
     'compile.layoutMissingElement': 'layout 键 "{id}" 引用了不存在的元件',
     'compile.elementUnconnected': '元件 "{id}" 没有任何连接',
 
+    'cat.custom': '本图自定义',
     'cat.busbar': '母线 / 接线',
     'cat.switching': '开关',
     'cat.protection': '保护',
@@ -380,7 +385,11 @@ const base = {
     'view.labelSizeReset': 'Reset label size',
 
     'library.title': 'Library',
+    'tool.draw': 'Draw',
+    'tool.drawHint': 'Text, boxes, circles, lines and tables — free annotation over the drawing',
     'library.empty': 'No matching elements',
+    'library.customTag': 'custom',
+    'library.customHint': 'Defined by this drawing — it is not in anyone else\'s library',
     'library.createComponent': 'New component…',
     'library.searchPlaceholder': 'Search elements…',
     'library.searchAria': 'Search elements',
@@ -493,6 +502,8 @@ const base = {
     'compile.singleTerminal': 'Node has only one terminal — ignored',
     'compile.layoutMissingElement': 'layout key "{id}" references an unknown element',
     'compile.elementUnconnected': 'Element "{id}" has no connections',
+
+    'cat.custom': 'In this drawing',
 
     'cat.busbar': 'Busbar / wiring',
     'cat.switching': 'Switching',

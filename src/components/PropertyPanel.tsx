@@ -581,9 +581,9 @@ function StrokeRows({
         label={t('props.annStroke')}
         value={stroke ?? defaultStroke}
         options={[
-          { value: 'solid' as const, label: t('props.annStrokeSolid') },
-          { value: 'dashed' as const, label: t('props.annStrokeDashed') },
-          { value: 'dotted' as const, label: t('props.annStrokeDotted') },
+          { value: 'solid' as const, label: t('props.annStrokeSolid'), glyph: <StrokeGlyph width={1.5} /> },
+          { value: 'dashed' as const, label: t('props.annStrokeDashed'), glyph: <StrokeGlyph width={1.5} dash="5 3" /> },
+          { value: 'dotted' as const, label: t('props.annStrokeDotted'), glyph: <StrokeGlyph width={1.5} dash="0.1 3" /> },
         ]}
         onChange={(v) => patch({ stroke: v })}
       />
@@ -591,9 +591,9 @@ function StrokeRows({
         label={t('props.annStrokeWidth')}
         value={String(strokeWidth ?? 1)}
         options={[
-          { value: '1', label: t('props.annWidthThin') },
-          { value: '2', label: t('props.annWidthMedium') },
-          { value: '3', label: t('props.annWidthThick') },
+          { value: '1', label: t('props.annWidthThin'), glyph: <StrokeGlyph width={1} /> },
+          { value: '2', label: t('props.annWidthMedium'), glyph: <StrokeGlyph width={2.5} /> },
+          { value: '3', label: t('props.annWidthThick'), glyph: <StrokeGlyph width={4} /> },
         ]}
         onChange={(v) => patch({ strokeWidth: Number(v) })}
       />
@@ -609,7 +609,7 @@ function SegRow<T extends string>({
 }: {
   label: string;
   value: T;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; glyph?: React.ReactNode }[];
   onChange: (v: T) => void;
 }) {
   return (
@@ -620,19 +620,47 @@ function SegRow<T extends string>({
             key={o.value}
             type="button"
             aria-pressed={value === o.value}
+            aria-label={o.label}
+            title={o.label}
             onClick={() => onChange(o.value)}
             className={cn(
               'h-7 flex-1 truncate px-1.5 text-[11px] transition-colors',
+              o.glyph && 'flex items-center justify-center',
               value === o.value
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
             )}
           >
-            {o.label}
+            {o.glyph ?? o.label}
           </button>
         ))}
       </div>
     </Field>
+  );
+}
+
+/**
+ * A stroke option drawn rather than named.
+ *
+ * "Thin / Medium / Thick" and "Solid / Dashed / Dotted" do not fit three-across
+ * in a 224px panel in English, and would not fit in German or Russian either —
+ * but a weight is a thing you can simply show, which is what every drawing tool
+ * does. The word survives as the accessible name and the tooltip.
+ */
+function StrokeGlyph({ width, dash }: { width: number; dash?: string }) {
+  return (
+    <svg viewBox="0 0 28 12" className="h-3 w-7" aria-hidden>
+      <line
+        x1="2"
+        y1="6"
+        x2="26"
+        y2="6"
+        stroke="currentColor"
+        strokeWidth={width}
+        strokeDasharray={dash}
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

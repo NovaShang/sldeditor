@@ -117,7 +117,12 @@ export const ui: UiTable = {
   'view.labelSizeReset': '既定のサイズに戻す',
 
   'library.title': 'ライブラリ',
+  'tool.draw': '作図',
+  'tool.drawHint': 'テキスト・枠・円・線・表 — 図面上の自由な注記',
   'library.empty': '該当する要素がありません',
+  'cat.custom': 'この図面で定義',
+  'library.customTag': '独自',
+  'library.customHint': 'この図面が持つ部品 — 他の人のライブラリにはありません',
   'library.createComponent': '新しい部品…',
   'library.searchPlaceholder': '要素を検索…',
   'library.searchAria': '要素を検索',

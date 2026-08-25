@@ -117,7 +117,12 @@ export const ui: UiTable = {
   'view.labelSizeReset': 'بازنشانی اندازهٔ برچسب‌ها',
 
   'library.title': 'کتابخانه',
+  'tool.draw': 'ترسیم',
+  'tool.drawHint': 'متن، کادر، دایره، خط و جدول — یادداشت آزاد روی نقشه',
   'library.empty': 'عنصر منطبقی یافت نشد',
+  'cat.custom': 'در این نقشه',
+  'library.customTag': 'سفارشی',
+  'library.customHint': 'تعریف‌شده در همین نقشه — در کتابخانهٔ دیگران نیست',
   'library.createComponent': 'قطعهٔ جدید…',
   'library.searchPlaceholder': 'جستجوی عناصر…',
   'library.searchAria': 'جستجوی عناصر',

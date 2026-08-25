@@ -117,7 +117,12 @@ export const ui: UiTable = {
   'view.labelSizeReset': 'Réinitialiser la taille des étiquettes',
 
   'library.title': 'Bibliothèque',
+  'tool.draw': 'Dessiner',
+  'tool.drawHint': 'Texte, cadres, cercles, lignes et tableaux — annotation libre sur le schéma',
   'library.empty': 'Aucun élément correspondant',
+  'cat.custom': 'Dans ce schéma',
+  'library.customTag': 'perso',
+  'library.customHint': 'Défini par ce schéma — absent de toute autre bibliothèque',
   'library.createComponent': 'Nouveau composant…',
   'library.searchPlaceholder': 'Rechercher des éléments…',
   'library.searchAria': 'Rechercher des éléments',

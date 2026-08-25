@@ -15,6 +15,7 @@ import { usePanels } from '../hooks/use-panels';
 import { useT, type LocaleKey } from '../i18n';
 import { useLibT } from '../i18n/library';
 import { useEditorStore } from '../store';
+import { isCustomKind } from '../compiler';
 import { useHostActions } from '../hooks/use-host-actions';
 import type { LibraryEntry } from '../model/library';
 
@@ -26,6 +27,17 @@ const PALETTE_COLLAPSE_STORAGE_KEY = 'ole-palette-collapsed';
  * grid would confuse users into trying to drop it like a fixed-size symbol.
  */
 const PALETTE_HIDDEN_IDS = new Set<string>(['busbar']);
+
+/**
+ * Synthetic category for the symbols this document defines itself.
+ *
+ * Named for the DOCUMENT, not the user: a forked or shared drawing carries the
+ * original author's symbols, and calling those "mine" would be a lie in the
+ * one case where knowing the difference matters most. The point of separating
+ * them at all is that a custom symbol is local vocabulary — it will not be in
+ * anyone else's palette, and it is the only kind you can delete.
+ */
+const CUSTOM_CATEGORY = '__custom__';
 
 /**
  * Group the palette by category.
@@ -43,15 +55,19 @@ function groupByCategory(
   const out: Record<string, LibraryEntry[]> = {};
   for (const entry of library.values()) {
     if (PALETTE_HIDDEN_IDS.has(entry.id)) continue;
-    (out[entry.category] ??= []).push(entry);
+    const cat = isCustomKind(entry.id) ? CUSTOM_CATEGORY : entry.category;
+    (out[cat] ??= []).push(entry);
   }
   return out;
 }
 
 function categoryIds(byCat: Record<string, LibraryEntry[]>): string[] {
-  const known = new Set(CATEGORY_ORDER);
+  const known = new Set<string>([...CATEGORY_ORDER, CUSTOM_CATEGORY]);
   const extras = Object.keys(byCat).filter((c) => !known.has(c));
   return [
+    // First, and only when the document has any: the thing you just made is
+    // what you are looking for, and it is at the top of the list.
+    ...(byCat[CUSTOM_CATEGORY]?.length ? [CUSTOM_CATEGORY] : []),
     ...CATEGORY_ORDER.filter((c) => byCat[c]?.length),
     ...extras,
   ];
@@ -227,7 +243,10 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
             const entries = filteredByCat[catId];
             if (!entries?.length) return null;
             const total = paletteByCat[catId]?.length ?? entries.length;
-            const label = t(`cat.${catId}` as LocaleKey);
+            const label =
+              catId === CUSTOM_CATEGORY
+                ? t('cat.custom')
+                : t(`cat.${catId}` as LocaleKey);
             const isOpen = isSearching || !collapsed.has(catId);
             return (
               <details
@@ -308,6 +327,7 @@ function ElementRow({
   const t = useT();
   const libT = useLibT();
   const name = libT(`${entry.id}.name`, entry.name);
+  const custom = isCustomKind(entry.id);
   const description = libT(`${entry.id}.desc`, entry.description ?? '');
   const setTool = useEditorStore((s) => s.setActiveTool);
   const armed = useEditorStore(
@@ -382,6 +402,17 @@ function ElementRow({
       <span className="truncate text-xs text-foreground/80 group-hover:text-accent-foreground">
         {name}
       </span>
+      {custom && (
+        /* The group heading already says these are the document's own, but a
+           search cuts across groups and this is exactly when it matters: a
+           custom symbol is local vocabulary that nobody else's palette has. */
+        <span
+          className="ml-auto shrink-0 rounded-sm border border-border/70 px-1 py-px font-mono text-[9px] leading-none text-muted-foreground/70"
+          title={t('library.customHint')}
+        >
+          {t('library.customTag')}
+        </span>
+      )}
     </li>
   );
 }

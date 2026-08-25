@@ -117,7 +117,12 @@ export const ui: UiTable = {
   'view.labelSizeReset': 'Schriftgröße zurücksetzen',
 
   'library.title': 'Bibliothek',
+  'tool.draw': 'Zeichnen',
+  'tool.drawHint': 'Text, Rahmen, Kreise, Linien und Tabellen — freie Anmerkungen über der Zeichnung',
   'library.empty': 'Keine passenden Elemente',
+  'cat.custom': 'In dieser Zeichnung',
+  'library.customTag': 'eigen',
+  'library.customHint': 'Von dieser Zeichnung definiert — in keiner anderen Bibliothek vorhanden',
   'library.createComponent': 'Neue Komponente…',
   'library.searchPlaceholder': 'Elemente suchen…',
   'library.searchAria': 'Elemente suchen',
