@@ -15,6 +15,20 @@ import { Button } from './ui/button';
 import { Tooltip } from './ui/tooltip';
 import { useT } from '../i18n';
 import { useEditorStore } from '../store';
+import { COLOR_ORDER, inkClass } from '../lib/colors';
+import type { DiagramColor } from '../model';
+import type { LocaleKey } from '../i18n/messages';
+
+/** Swatch labels, spelled out rather than built by template so the keys stay
+ *  greppable and type-checked against the message table. */
+const COLOR_LABEL: Record<DiagramColor, LocaleKey> = {
+  default: 'ctx.colorDefault',
+  red: 'ctx.colorRed',
+  amber: 'ctx.colorAmber',
+  green: 'ctx.colorGreen',
+  blue: 'ctx.colorBlue',
+  gray: 'ctx.colorGray',
+};
 
 const GAP_PX = 12;
 const TOP_FLIP_THRESHOLD_PX = 56;
@@ -28,6 +42,8 @@ export function ContextualToolbar() {
   const rotate = useEditorStore((s) => s.rotateSelection);
   const mirror = useEditorStore((s) => s.mirrorSelection);
   const del = useEditorStore((s) => s.deleteSelection);
+  const setColor = useEditorStore((s) => s.setSelectionColor);
+  const selectedAnnotations = useEditorStore((s) => s.selectedAnnotations);
   const delNode = useEditorStore((s) => s.deleteSelectedNode);
   const delWire = useEditorStore((s) => s.deleteSelectedWire);
   const resetWirePath = useEditorStore((s) => s.resetWirePath);
@@ -111,6 +127,11 @@ export function ContextualToolbar() {
   const isWireMode = selection.length === 0 && selectedWire != null;
   const isNodeMode = selection.length === 0 && !isWireMode && selectedNode != null;
   const hideTransform = isNodeMode || isWireMode;
+  // Junctions carry no `color`, so a node selection has nothing to paint;
+  // everything else (elements, buses, the selected wire, annotations) does.
+  const canColor =
+    !isNodeMode &&
+    (selection.length > 0 || selectedWire != null || selectedAnnotations.length > 0);
 
   return (
     <div
@@ -196,6 +217,39 @@ export function ContextualToolbar() {
               <FlipHorizontal />
             </Button>
           </Tooltip>
+          <div aria-hidden className="mx-0.5 h-4 w-px bg-border" />
+        </>
+      )}
+      {canColor && (
+        <>
+          <div
+            role="group"
+            aria-label={t('ctx.color')}
+            className="flex items-center gap-0.5"
+          >
+            {COLOR_ORDER.map((c) => (
+              <Tooltip key={c} content={t(COLOR_LABEL[c])}>
+                <button
+                  type="button"
+                  onClick={() => setColor(c)}
+                  aria-label={t(COLOR_LABEL[c])}
+                  className="ole-swatch flex size-7 items-center justify-center rounded-md transition-colors hover:bg-accent"
+                >
+                  {/* The dot must show what the canvas will actually do, and
+                      the canvas themes by a `.dark` CLASS, not color-scheme —
+                      so it wears the same `ole-ink-*` class the renderer uses
+                      and paints from `currentColor`. Hard-coding either hex
+                      here would silently disagree in one of the two themes;
+                      `default` has no class and inherits theme ink, which is
+                      exactly what an uncoloured object does. */}
+                  <span
+                    aria-hidden
+                    className={`size-3.5 rounded-full border border-border bg-current ${inkClass(c) ?? ''}`}
+                  />
+                </button>
+              </Tooltip>
+            ))}
+          </div>
           <div aria-hidden className="mx-0.5 h-4 w-px bg-border" />
         </>
       )}

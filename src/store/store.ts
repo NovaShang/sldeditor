@@ -31,6 +31,7 @@ import type {
   Bus,
   BusId,
   BusLayout,
+  DiagramColor,
   DiagramFile,
   Element,
   ElementId,
@@ -260,6 +261,21 @@ export interface EditorState {
   deleteSelectedNode: () => void;
   rotateSelection: (deltaDegrees: 90 | -90 | 180) => void;
   mirrorSelection: () => void;
+  /**
+   * Recolour everything selected — elements, buses, the selected wire *and*
+   * annotations — in one undo entry.
+   *
+   * Colour has been on the model since 0.21 and the agent could already set
+   * it, but by hand it was one object at a time. The only user feedback of the
+   * 2026-08-22→28 week was "I would like to multi select and change colour.
+   * Changing item colour, by colour is hectic." Junctions are excluded because
+   * they carry no `color` — they render as connection dots in theme ink.
+   *
+   * `'default'` DELETES the field rather than storing the word: a diagram with
+   * no colours has to keep serialising exactly as it did before colours
+   * existed, which the SVG/DXF exporters depend on.
+   */
+  setSelectionColor: (color: DiagramColor) => void;
   addElement: (
     kind: string,
     at: [number, number],
@@ -1193,6 +1209,59 @@ export const useEditorStore = create<EditorState>()(
       return { ...d, layout };
     });
   },
+
+  setSelectionColor: (color) => {
+    const { selection, selectedAnnotations, selectedWire } = get();
+    if (
+      selection.length === 0 &&
+      selectedAnnotations.length === 0 &&
+      selectedWire == null
+    )
+      return;
+    const ids = new Set(selection);
+    const annIds = new Set(selectedAnnotations);
+    // `default` is the ABSENCE of a colour, not a stored value — see the
+    // interface note. Everything below goes through this one helper so the
+    // rule cannot drift between object kinds.
+    const paint = <T extends { color?: DiagramColor }>(o: T): T => {
+      if (color === 'default') {
+        if (o.color === undefined) return o;
+        const { color: _drop, ...rest } = o;
+        return rest as T;
+      }
+      return o.color === color ? o : { ...o, color };
+    };
+    // Build first and bail if nothing moved. Without this, recolouring a
+    // junction-only selection (junctions have no colour) or re-picking the
+    // colour something already is would push an undo entry that changes
+    // nothing — and the user would press Ctrl+Z and watch nothing happen.
+    const d = get().diagram;
+    const elements = ids.size
+      ? d.elements.map((e) => (ids.has(e.id) ? paint(e) : e))
+      : d.elements;
+    const buses = ids.size
+      ? d.buses?.map((b) => (ids.has(b.id) ? paint(b) : b))
+      : d.buses;
+    // The wire channel is mutually exclusive with the element selection, but
+    // handling both here keeps one action for "recolour what I have picked".
+    const wires = selectedWire
+      ? d.wires?.map((w) => (w.id === selectedWire ? paint(w) : w))
+      : d.wires;
+    const annotations = annIds.size
+      ? d.annotations?.map((a) => (annIds.has(a.id) ? paint(a) : a))
+      : d.annotations;
+    const same = <T,>(a: readonly T[] | undefined, b: readonly T[] | undefined) =>
+      a === b || (a?.length === b?.length && (a ?? []).every((x, i) => x === b?.[i]));
+    if (
+      same(elements, d.elements) &&
+      same(buses, d.buses) &&
+      same(wires, d.wires) &&
+      same(annotations, d.annotations)
+    )
+      return;
+    get().dispatch((cur) => ({ ...cur, elements, buses, wires, annotations }));
+  },
+
 
   addElement: (kind, at, extra) => {
     if (kind === 'busbar') {
