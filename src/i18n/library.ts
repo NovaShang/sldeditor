@@ -25,6 +25,8 @@ const zh: Table = {
   'battery.name': '电池储能',
   'breaker.name': '断路器 (QF)',
   'busbar.name': '母线段',
+  'busduct.name': '母线槽',
+  'busduct-tap.name': '母线槽插接段',
   'converter-bidir.name': '双向变流器 (PCS)',
   'dc-dc-converter.name': 'DC/DC 变换器',
   'mppt.name': 'MPPT 控制器',
@@ -74,6 +76,8 @@ const zh: Table = {
   // Descriptions
   'arc-suppression-coil.desc': '中性点谐振接地：电感线圈连接到地',
   'busbar.desc': '可拉伸单母线段，多设备挂接',
+  'busduct.desc': '封闭式母线槽直线段（IEC 60617-11-17）',
+  'busduct-tap.desc': '带固定插接口的母线槽段，插接口向下引出',
   'converter-bidir.desc': '储能变流器：双向 AC ↔ DC',
   'dc-dc-converter.desc': 'DC/DC 变换器 / 直流充电器（IEC 60617）',
   'mppt.desc': 'MPPT 太阳能充电控制器（DC/DC，最大功率点跟踪）',
@@ -117,6 +121,10 @@ const zh: Table = {
   // Param labels
   'battery.param.E': '容量',
   'busbar.param.Un': '额定电压',
+  'busduct.param.In': '额定电流',
+  'busduct.param.Un': '额定电压',
+  'busduct-tap.param.In': '额定电流',
+  'busduct-tap.param.Itap': '插接口电流',
   'converter-bidir.param.S': '容量',
   'dc-dc-converter.param.P': '功率',
   'mppt.param.I': '额定电流',
@@ -146,6 +154,8 @@ const en: Table = {
   'battery.name': 'Battery storage',
   'breaker.name': 'Circuit breaker (QF)',
   'busbar.name': 'Busbar segment',
+  'busduct.name': 'Busduct (busway)',
+  'busduct-tap.name': 'Busduct with tap-off',
   'converter-bidir.name': 'Bidirectional converter (PCS)',
   'dc-dc-converter.name': 'DC/DC converter',
   'mppt.name': 'MPPT controller',
@@ -194,6 +204,8 @@ const en: Table = {
 
   'arc-suppression-coil.desc': 'Resonant neutral grounding: inductor to earth',
   'busbar.desc': 'Stretchable single-bus segment with multiple taps',
+  'busduct.desc': 'Straight busbar trunking section (IEC 60617-11-17)',
+  'busduct-tap.desc': 'Busduct section with a fixed tap-off dropping below the run',
   'converter-bidir.desc': 'Storage converter: bidirectional AC ↔ DC',
   'dc-dc-converter.desc': 'DC/DC converter / DC charger (IEC 60617)',
   'mppt.desc': 'MPPT solar charge controller (DC/DC, maximum power point tracking)',
@@ -358,6 +370,10 @@ const en: Table = {
   'ups.param.S': 'Capacity',
   'power-supply.param.Vdc': 'Output voltage',
   'genset.param.P': 'Power',
+  'busduct.param.In': 'Rated current',
+  'busduct.param.Un': 'Rated voltage',
+  'busduct-tap.param.In': 'Rated current',
+  'busduct-tap.param.Itap': 'Tap-off current',
 };
 
 const tables: Record<Locale, Table> = {

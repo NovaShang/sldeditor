@@ -114,6 +114,10 @@ export const ui: UiTable = {
   'view.labelSize': 'Größe',
   'view.labelSizeSmaller': 'Beschriftungen verkleinern',
   'view.labelSizeLarger': 'Beschriftungen vergrößern',
+  'view.standard': 'Symbolnorm',
+  'view.standardIec': 'IEC',
+  'view.standardAnsi': 'ANSI',
+  'view.standardHint': 'Ändert nur die Darstellung der Symbole — Verdrahtung, Positionen und Kennwerte bleiben unberührt. Leistungsschalter und Sicherung werden unterschiedlich gezeichnet.',
   'view.labelSizeReset': 'Schriftgröße zurücksetzen',
 
   'library.title': 'Bibliothek',
@@ -225,6 +229,7 @@ export const ui: UiTable = {
   'menu.paste': 'Einfügen',
   'menu.rotate': 'Um 90° drehen',
   'menu.mirror': 'Spiegeln',
+  'menu.resetLabel': 'Beschriftung zurücksetzen',
   'menu.selectAll': 'Alles auswählen',
   'menu.disconnect': 'Diese Leitung trennen',
   'menu.delete': 'Löschen',

@@ -41,7 +41,7 @@ import { SelectionOverlay } from './SelectionOverlay';
 import { TerminalLayer } from './TerminalLayer';
 import { WireLayer } from './WireLayer';
 import { WirePreview } from './WirePreview';
-import { hitAnnotation, hitElement, hitNode } from './hit-test';
+import { hitAnnotation, hitElement, hitElementLabel, hitNode } from './hit-test';
 import { dispatchSyntheticPointerCancel } from './synthetic-pointer-cancel';
 import { exitDrawingState } from './useKeyboardShortcuts';
 import { useHoverHighlight } from './useHoverHighlight';
@@ -112,7 +112,11 @@ export function CanvasSvg() {
         return;
       }
       const annotationId = hitAnnotation(target);
-      const elementId = annotationId ? null : hitElement(target);
+      // A right-click on the label is a right-click on its device — the label
+      // is decoration derived from the element, not an object of its own.
+      const elementId = annotationId
+        ? null
+        : (hitElementLabel(target) ?? hitElement(target));
       if (annotationId) {
         if (!store.selectedAnnotations.includes(annotationId)) {
           store.setSelectedAnnotation(annotationId);
@@ -136,6 +140,10 @@ export function CanvasSvg() {
       const hasNodeSelection = s.selectedNode != null;
       const hasClipboard = !!s.clipboard;
       const hasAnyElement = s.diagram.elements.length > 0;
+      const selectionIds = new Set(s.selection);
+      const hasMovedLabel = s.diagram.elements.some(
+        (e) => selectionIds.has(e.id) && e.labelOffset !== undefined,
+      );
       const items: ContextMenuEntry[] = [
         {
           label: t('menu.undo'),
@@ -187,6 +195,12 @@ export function CanvasSvg() {
           icon: FlipHorizontal,
           onSelect: () => useEditorStore.getState().mirrorSelection(),
           disabled: !hasElementSelection,
+        },
+        {
+          label: t('menu.resetLabel'),
+          icon: Undo2,
+          onSelect: () => useEditorStore.getState().resetSelectionLabelOffset(),
+          disabled: !hasMovedLabel,
         },
         { type: 'separator' },
         {

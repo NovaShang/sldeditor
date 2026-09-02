@@ -61,6 +61,53 @@ const MANIFEST = [
     ],
     label: { x: 0, y: -6, anchor: 'middle' },
   },
+  // Busbar trunking system (busduct / busway) — IEC 60617-11-17. Unlike
+  // `busbar`, which is a Bus (a hyperedge node that many devices tap), a
+  // busduct run is a two-port CONDUCTOR you put in series, so it is a normal
+  // element with `t_left` / `t_right`. Both entries keep QET's horizontal
+  // axis: it matches `busbar` and puts the tap-off below the run, which is
+  // where the loads hang.
+  //
+  // Only the two symbols QET draws centred on the origin are imported. The
+  // elbow (11-17-04) and tee (11-17-05) have their origin at a corner of the
+  // run, so canvas rotation — which pivots about the origin — would swing
+  // them clear off their own footprint. They need a `translate` option in
+  // this script before they can be added.
+  {
+    id: 'busduct',
+    name: '母线槽',
+    category: 'busbar',
+    description: '封闭式母线槽直线段（IEC 60617-11-17）',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_11/en_60617_11_17/en_60617_11_17_01.elmt' },
+    terminals: [
+      { id: 't_left', x: -20, y: 0, orientation: 'w' },
+      { id: 't_right', x: 20, y: 0, orientation: 'e' },
+    ],
+    params: [
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true },
+      { name: 'Un', label: '额定电压', type: 'number', unit: 'V', showOnCanvas: true },
+    ],
+    label: { x: 0, y: -8, anchor: 'middle' },
+  },
+  {
+    id: 'busduct-tap',
+    name: '母线槽插接段',
+    category: 'busbar',
+    description: '带固定插接口的母线槽段，插接口向下引出',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_11/en_60617_11_17/en_60617_11_17_24.elmt' },
+    // QET declares only the two run ends; the tap-off stub (the short line
+    // dropping out of the circle down to y=20) carries no terminal of its own.
+    terminals: [
+      { id: 't_left', x: -40, y: 0, orientation: 'w' },
+      { id: 't_right', x: 40, y: 0, orientation: 'e' },
+      { id: 't_tap', x: 0, y: 20, orientation: 's' },
+    ],
+    params: [
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true },
+      { name: 'Itap', label: '插接口电流', type: 'number', unit: 'A', showOnCanvas: true },
+    ],
+    label: { x: 0, y: -8, anchor: 'middle' },
+  },
   {
     id: 'earth',
     name: '接地',
@@ -74,6 +121,25 @@ const MANIFEST = [
     name: '断路器 (QF)',
     category: 'switching',
     source: { kind: 'elmt', path: '11_singlepole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur1.elmt' },
+    // ANSI drawing: the square. Traced off IEEE Std 315-1975 §9.4.4 at 300 dpi
+    // — the figure measures a true square of 101 px with 67 px of lead above
+    // and below (lead ≈ 0.66 × side), and the lead enters dead centre. Scaled
+    // into this entry's frame (terminals at y = ∓20) that is an 18-unit square
+    // with 11 units of lead, i.e. 0.61 — the same symbol, one raster pixel of
+    // rounding apart. The clause's own note says it may be used on a power
+    // diagram with no further identification, which is exactly this use.
+    ansi: {
+      clause: '9.4.4',
+      title: 'Circuit breaker, other than covered by symbol 9.4.1',
+      svg:
+        '<line x1="0" y1="-20" x2="0" y2="-9" fill="none" stroke="black" stroke-width="1"/>' +
+        '<rect x="-9" y="-9" width="18" height="18" fill="none" stroke="black" stroke-width="1"/>' +
+        '<line x1="0" y1="9" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/>',
+      bbox: { x1: -9, y1: -20, x2: 9, y2: 20 },
+      // The IEC drawing is a thin blade, so its label sits at x=6 — inside the
+      // ANSI square. Push it clear of the box.
+      label: { x: 12, y: -2, anchor: 'start' },
+    },
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
     // No defaults: a value equal to the default is dropped by the property
     // panel and would never reach the canvas, and no rating is right for
@@ -137,6 +203,23 @@ const MANIFEST = [
       { id: 't1', x: 0, y: -30, orientation: 'n' },
       { id: 't2', x: 0, y: 30, orientation: 's' },
     ],
+    // ANSI drawing: the S. Traced off IEEE Std 315-1975 §9.1.1, third
+    // alternate (the rectangle forms above it in that clause are the ones the
+    // standard marks IEC — they are what this entry already draws). Measured
+    // at 300 dpi the S is 67 px tall and 27 px wide (2.5 : 1), upper half
+    // bowing right and lower half left, with 43 px and 37 px of lead. Scaled
+    // into this entry's frame (terminals at y = ∓30): a 28-unit S, 12 wide
+    // (2.3 : 1), 16 units of lead each end.
+    ansi: {
+      clause: '9.1.1',
+      title: 'Fuse (one-time thermal current-overload device), general',
+      svg:
+        '<line x1="0" y1="-30" x2="0" y2="-14" fill="none" stroke="black" stroke-width="1"/>' +
+        '<path d="M 0 -14 A 6 7 0 0 1 0 0 A 6 7 0 0 0 0 14" fill="none" stroke="black" stroke-width="1"/>' +
+        '<line x1="0" y1="14" x2="0" y2="30" fill="none" stroke="black" stroke-width="1"/>',
+      bbox: { x1: -6, y1: -30, x2: 6, y2: 30 },
+      label: { x: 9, y: -2, anchor: 'start' },
+    },
     state: [{ name: 'blown', type: 'boolean', default: false, label: '熔断' }],
     params: [
       { name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true },
@@ -1677,7 +1760,55 @@ function finalize(entry, { svgBody, terminalLabelsSvg, bbox, terminals, sourceMe
   if (entry.state) out.state = entry.state;
   if (entry.params) out.params = entry.params;
   if (entry.label) out.label = entry.label;
+  if (entry.ansi) out.variants = { ansi: buildVariant(entry, entry.ansi, terminals) };
   out.source = sourceMeta;
+  return out;
+}
+
+/** The standard every `ansi` drawing in the manifest is traced from. */
+const ANSI_STANDARD = 'IEEE Std 315-1975 (ANSI Y32.2-1975)';
+
+/**
+ * Build one alternate drawing of a symbol.
+ *
+ * A variant is artwork and frame ONLY — it never carries terminals. That is
+ * the property that makes flipping a document's standard a pure rendering
+ * change: the pins stay exactly where the wiring already attached to them. The
+ * assertion below is the enforcement, not a comment: a drawing whose frame
+ * does not reach the base entry's terminals would leave wires ending in empty
+ * space the moment the standard was switched.
+ */
+function buildVariant(entry, v, terminals) {
+  let bbox = v.bbox;
+  for (const t of terminals) {
+    bbox = unionBBox(bbox, { x1: t.x, y1: t.y, x2: t.x, y2: t.y });
+  }
+  const pad = 2;
+  const vb = {
+    x: Math.floor(bbox.x1 - pad),
+    y: Math.floor(bbox.y1 - pad),
+    w: Math.ceil(bbox.x2 + pad) - Math.floor(bbox.x1 - pad),
+    h: Math.ceil(bbox.y2 + pad) - Math.floor(bbox.y1 - pad),
+  };
+  for (const t of terminals) {
+    const inside =
+      t.x >= vb.x && t.x <= vb.x + vb.w && t.y >= vb.y && t.y <= vb.y + vb.h;
+    if (!inside) {
+      throw new Error(
+        `${entry.id}: ansi variant frame ${JSON.stringify(vb)} does not contain terminal ${t.id} (${t.x},${t.y})`,
+      );
+    }
+  }
+  const out = {
+    viewBox: `${vb.x} ${vb.y} ${vb.w} ${vb.h}`,
+    width: vb.w,
+    height: vb.h,
+    svg: v.svg,
+  };
+  if (v.terminalLabelsSvg) out.terminalLabelsSvg = v.terminalLabelsSvg;
+  if (v.label) out.label = v.label;
+  out.source = { standard: ANSI_STANDARD, clause: v.clause };
+  if (v.title) out.source.title = v.title;
   return out;
 }
 

@@ -45,10 +45,26 @@ export function labelLineHeight(fontSize: number = LABEL_FONT_SIZE): number {
   return (fontSize * LABEL_LINE_HEIGHT) / LABEL_FONT_SIZE;
 }
 
+/**
+ * Split an element's name into label lines. The name is free text the user
+ * types into the in-place editor, and pressing Enter there inserts a line
+ * break — an equipment tag is routinely two or three rows ("QF1" over
+ * "630A/25kA"), and before this the newline survived into `Element.name` but
+ * SVG collapsed it, so the label silently ran together on one line.
+ *
+ * Blank lines are dropped rather than rendered as gaps: a trailing Enter is
+ * an accident, not a request for whitespace.
+ */
+export function nameLines(name: string | undefined, fallbackId: string): string[] {
+  const lines = (name ?? '')
+    .split(/\r\n|\r|\n/)
+    .map((l) => l.trim())
+    .filter((l) => l !== '');
+  return lines.length > 0 ? lines : fallbackId ? [fallbackId] : [];
+}
+
 export function labelLines(re: ResolvedElement, mode: LabelMode): string[] {
-  const lines: string[] = [];
-  const head = re.element.name?.trim() || re.element.id;
-  if (head) lines.push(head);
+  const lines: string[] = nameLines(re.element.name, re.element.id);
   if (mode !== 'all' || !re.libraryDef?.params) return lines;
   const params = re.element.params ?? {};
   for (const p of re.libraryDef.params) {
@@ -132,6 +148,12 @@ export interface PlacedLabel {
  *   +y → 'middle', first baseline dropped below the anchor
  *   −y → 'middle', lines stacked upward so the block ends at the anchor
  * At rot 0 / no mirror this reproduces the declared anchor exactly.
+ *
+ * `offset` is the user's own nudge (`Element.labelOffset`), applied last and
+ * in WORLD space: the user dragged the block to a spot on the canvas, so it
+ * belongs where they dropped it — rotating the symbol afterwards must not
+ * fling the label somewhere else. It shifts position only; the alignment
+ * stays whatever the placement computed.
  */
 export function placeLabel(
   anchor: LibraryLabelAnchor,
@@ -139,8 +161,13 @@ export function placeLabel(
   place: ResolvedPlacement,
   lineCount: number,
   fontSize: number = LABEL_FONT_SIZE,
+  offset?: [number, number],
 ): PlacedLabel {
   const world = anchorWorld(anchor, place);
+  if (offset) {
+    world[0] += offset[0];
+    world[1] += offset[1];
+  }
   const declared = anchor.anchor ?? 'start';
 
   // Outward vector: viewBox centre → anchor, in library space, then through
@@ -185,6 +212,21 @@ export function placeLabel(
     textAnchor: 'middle',
     dy: -(lineCount - 1) * labelLineHeight(fontSize),
   };
+}
+
+/**
+ * Width of a rendered label block, in canvas units. A guess (~0.55em per
+ * character, the same constant `FreeAnnotationLayer` uses) rather than a
+ * measurement, because the exporters have no DOM to measure in and the
+ * canvas hit target must agree with the exported bbox.
+ */
+export function labelBlockWidth(lines: string[], fontSize: number): number {
+  let max = 0;
+  for (const l of lines) {
+    const w = l.length * fontSize * 0.55;
+    if (w > max) max = w;
+  }
+  return Math.max(20, max);
 }
 
 function parseViewBox(

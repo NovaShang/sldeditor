@@ -1,3 +1,5 @@
+import type { SymbolStandard } from './types';
+
 /**
  * Schema for the element library: one JSON file per symbol under
  * `src/element-library/`, e.g. `breaker.json`. Frontends auto-discover via
@@ -80,6 +82,45 @@ export interface LibraryLabelAnchor {
 }
 
 /**
+ * An alternate DRAWING of a symbol under another graphical standard — same
+ * device, same pins, different picture.
+ *
+ * It carries artwork and frame only. Terminals, params, state and category
+ * are deliberately absent and always come from the base entry: a variant that
+ * could move a pin would mean flipping the document's standard re-routes the
+ * wiring, which is not a rendering change any more. The build script enforces
+ * that every variant's frame still contains the base entry's terminals.
+ */
+export interface LibraryVariant {
+  /** SVG viewBox for this drawing. May differ from the base entry's. */
+  viewBox: string;
+  width: number;
+  height: number;
+  /** Inner SVG fragment, no `<svg>` wrapper. */
+  svg: string;
+  /** Pin digits, split out exactly as on the base entry. */
+  terminalLabelsSvg?: string;
+  /**
+   * Label anchor for this drawing. Falls back to the base entry's when
+   * omitted — present because a variant with a wider body needs the label
+   * pushed clear of it.
+   */
+  label?: LibraryLabelAnchor;
+  /** Where the drawing comes from. Kept so a symbol is always traceable. */
+  source: LibraryVariantSource;
+}
+
+/** Provenance of a variant drawing — the standard and the clause within it. */
+export interface LibraryVariantSource {
+  /** e.g. "IEEE Std 315-1975 (ANSI Y32.2-1975)". */
+  standard: string;
+  /** Clause number within that standard, e.g. "9.4.4". */
+  clause: string;
+  /** The clause's own caption, verbatim. */
+  title?: string;
+}
+
+/**
  * One symbol entry in the element library — the contents of a single
  * `src/element-library/<id>.json` file.
  */
@@ -122,5 +163,13 @@ export interface LibraryEntry {
   /** Anchor for the structural label block (ID + showOnCanvas params). When
    *  omitted, `AnnotationLayer` falls back to the right edge of the viewBox. */
   label?: LibraryLabelAnchor;
+  /**
+   * Alternate drawings of this same device under other graphical standards,
+   * keyed by `SymbolStandard`. The entry's own artwork is the `iec` drawing,
+   * so only non-IEC keys ever appear here. Absent = the symbol is drawn the
+   * same way under every standard, which is the case for most of the library
+   * (IEEE 315 marks a large share of its symbols as IEC-harmonised).
+   */
+  variants?: Partial<Record<Exclude<SymbolStandard, 'iec'>, LibraryVariant>>;
   source: LibrarySource;
 }

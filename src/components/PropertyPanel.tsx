@@ -36,6 +36,7 @@ import {
   TABLE_DEFAULT_CELL_W,
 } from '../lib/annotation-geom';
 import { COLOR_ORDER, inkClass } from '../lib/colors';
+import { nameLines } from '../lib/element-labels';
 import { cn } from '../lib/utils';
 
 export function PropertyPanel() {
@@ -89,11 +90,17 @@ export function PropertyPanel() {
         label={t('props.name')}
         value={element.name ?? ''}
         placeholder={element.id}
-        onCommit={(v) =>
+        // A device tag is routinely stacked ("QF1" over "630A/25kA"). This is
+        // the same field as the canvas in-place editor and must behave the
+        // same way, or a name typed on the canvas comes back here as one run-
+        // on line the moment anything else is edited.
+        multiline
+        onCommit={(v) => {
+          const next = nameLines(v, '').join('\n');
           useEditorStore
             .getState()
-            .updateElement(id, { name: v.trim() === '' ? undefined : v.trim() })
-        }
+            .updateElement(id, { name: next === '' ? undefined : next });
+        }}
       />
       <TextAreaRow
         key={id}
@@ -978,46 +985,84 @@ function Field({
   );
 }
 
+/** Rows a `multiline` TextRow will grow to before it starts scrolling. */
+const TEXT_ROW_MAX_ROWS = 6;
+
 function TextRow({
   label,
   value,
   placeholder,
   unit,
+  multiline,
   onCommit,
 }: {
   label: string;
   value: string;
   placeholder?: string;
   unit?: string;
+  /**
+   * Enter inserts a line break instead of committing, and the box grows with
+   * the content. Escape (revert) and blur (commit) are unchanged, and
+   * ⌘/Ctrl+Enter commits for anyone who reaches for a keyboard "done".
+   */
+  multiline?: boolean;
   onCommit: (v: string) => void;
 }) {
   const [local, setLocal] = useState(value);
-  const ref = useRef<HTMLInputElement>(null);
+  const ref = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
   useEffect(() => setLocal(value), [value]);
+  const commonProps = {
+    value: local,
+    placeholder,
+    onChange: (e: { target: { value: string } }) => setLocal(e.target.value),
+    onBlur: () => {
+      if (local !== value) onCommit(local);
+    },
+    className: cn(
+      'w-full rounded-md border border-border/60 bg-background/50 px-2 text-[11px] focus:border-border focus:outline-none focus:ring-1 focus:ring-ring',
+      unit && 'pr-8',
+      multiline ? 'resize-none py-1.5 leading-snug' : 'h-7',
+    ),
+  };
   return (
     <Field label={label}>
       <div className="relative">
-        <input
-          ref={ref}
-          type="text"
-          value={local}
-          placeholder={placeholder}
-          onChange={(e) => setLocal(e.target.value)}
-          onBlur={() => {
-            if (local !== value) onCommit(local);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') ref.current?.blur();
-            if (e.key === 'Escape') {
-              setLocal(value);
-              ref.current?.blur();
-            }
-          }}
-          className={cn(
-            'h-7 w-full rounded-md border border-border/60 bg-background/50 px-2 text-[11px] focus:border-border focus:outline-none focus:ring-1 focus:ring-ring',
-            unit && 'pr-8',
-          )}
-        />
+        {multiline ? (
+          <textarea
+            ref={ref}
+            rows={Math.min(
+              TEXT_ROW_MAX_ROWS,
+              Math.max(1, local.split('\n').length),
+            )}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                ref.current?.blur();
+              }
+              if (e.key === 'Escape') {
+                setLocal(value);
+                ref.current?.blur();
+              }
+              // Everything else, plain Enter included, belongs to the box —
+              // but must not reach the canvas hotkeys behind it.
+              e.stopPropagation();
+            }}
+            {...commonProps}
+          />
+        ) : (
+          <input
+            ref={ref}
+            type="text"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') ref.current?.blur();
+              if (e.key === 'Escape') {
+                setLocal(value);
+                ref.current?.blur();
+              }
+            }}
+            {...commonProps}
+          />
+        )}
         {unit && (
           <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
             {unit}

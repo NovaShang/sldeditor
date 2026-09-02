@@ -280,6 +280,25 @@
   pointer-events: none;
 }
 
+/* An element's structural label block can be dragged off the library's
+   anchor (stored as `Element.labelOffset`) so a long description clears the
+   wiring. `fill: transparent` is hittable where `none` is not — same trick as
+   `.ole-element-hit` — and the faint hover wash is the only hint that the
+   text is grabbable at all. */
+.ole-element-label-hit {
+  fill: transparent;
+}
+/* Only the select tool moves labels — and read-only mode attaches nothing but
+   the pan tool — so both affordances are keyed off `data-tool`. Otherwise a
+   viewer of a shared link gets a move cursor over text they cannot move. */
+.ole-canvas-root[data-tool='select'] .ole-element-label {
+  pointer-events: auto;
+  cursor: move;
+}
+.ole-canvas-root[data-tool='select'] .ole-element-label:hover .ole-element-label-hit {
+  fill: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
 /* Free text annotations — independent notes the user dropped via the text
    tool. Idle annotations are non-interactive on the body itself; the wrapping
    group's hit-rect (transparent) catches clicks for select / drag. */

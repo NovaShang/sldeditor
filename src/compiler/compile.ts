@@ -29,7 +29,7 @@ import type {
 import { normalizePath } from '../model/wire-path';
 import { autoLayout } from './auto-layout';
 import { routeWire, wireEndWorld } from './auto-route';
-import { mergeCustomKinds } from './library-index';
+import { applySymbolStandard, mergeCustomKinds } from './library-index';
 import {
   emptyInternalModel,
   resolvePlacement,
@@ -66,7 +66,10 @@ export function compile(diagram: DiagramFile): InternalModel {
   const m = emptyInternalModel();
   // Resolve kinds against the built-ins AND whatever this document defines.
   // Computed once and published on the model so no consumer has to redo it.
-  const library = mergeCustomKinds(diagram.customKinds);
+  const library = applySymbolStandard(
+    mergeCustomKinds(diagram.customKinds),
+    diagram.meta?.symbolStandard,
+  );
   m.library = library;
 
   // ---- 1. Resolve elements + library ------------------------------------

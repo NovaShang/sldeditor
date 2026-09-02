@@ -5,7 +5,7 @@
  */
 
 import { libraryById } from '../element-library';
-import type { LibraryEntry } from '../model';
+import type { LibraryEntry, SymbolStandard } from '../model';
 
 export const LIBRARY: ReadonlyMap<string, LibraryEntry> = new Map(
   Object.entries(libraryById),
@@ -44,4 +44,46 @@ export function mergeCustomKinds(
     merged.set(entry.id, entry);
   }
   return merged;
+}
+
+/**
+ * Swap in each entry's drawing for `standard`.
+ *
+ * Resolution happens HERE, once, on the map `compile()` publishes — not in the
+ * renderers. Every surface that draws a symbol (canvas, SVG/PNG export, DXF
+ * export, content bbox, label anchoring) reads `ResolvedElement.libraryDef`,
+ * so doing it at this single point is what keeps the four of them from
+ * drifting; a per-renderer lookup is exactly how an export ends up disagreeing
+ * with the canvas.
+ *
+ * Only the drawing changes. `terminals`, `params`, `state`, `category` and
+ * `stretchable` come from the base entry untouched, so switching standards can
+ * never move a pin, re-route a wire, or alter what the compiler sees.
+ *
+ * `iec` (and absent) returns the input map unchanged — same object, so the
+ * common case allocates nothing on a keystroke.
+ */
+export function applySymbolStandard(
+  library: ReadonlyMap<string, LibraryEntry>,
+  standard: SymbolStandard | undefined,
+): ReadonlyMap<string, LibraryEntry> {
+  if (!standard || standard === 'iec') return library;
+  let out: Map<string, LibraryEntry> | null = null;
+  for (const [id, entry] of library) {
+    const variant = entry.variants?.[standard];
+    if (!variant) continue;
+    out ??= new Map(library);
+    out.set(id, {
+      ...entry,
+      viewBox: variant.viewBox,
+      width: variant.width,
+      height: variant.height,
+      svg: variant.svg,
+      // Pin digits sit ON the terminals, which a variant may not move, so the
+      // base entry's stay valid unless the variant draws its own.
+      terminalLabelsSvg: variant.terminalLabelsSvg ?? entry.terminalLabelsSvg,
+      label: variant.label ?? entry.label,
+    });
+  }
+  return out ?? library;
 }

@@ -114,6 +114,10 @@ export const ui: UiTable = {
   'view.labelSize': 'サイズ',
   'view.labelSizeSmaller': 'ラベルを小さく',
   'view.labelSizeLarger': 'ラベルを大きく',
+  'view.standard': 'シンボル規格',
+  'view.standardIec': 'IEC',
+  'view.standardAnsi': 'ANSI',
+  'view.standardHint': 'シンボルの描き方だけが変わります。結線・位置・定格はそのままです。遮断器とヒューズが規格間で異なります。',
   'view.labelSizeReset': '既定のサイズに戻す',
 
   'library.title': 'ライブラリ',
@@ -225,6 +229,7 @@ export const ui: UiTable = {
   'menu.paste': '貼り付け',
   'menu.rotate': '90°回転',
   'menu.mirror': '反転',
+  'menu.resetLabel': 'ラベル位置をリセット',
   'menu.selectAll': 'すべて選択',
   'menu.disconnect': 'この配線を切断',
   'menu.delete': '削除',

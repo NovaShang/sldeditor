@@ -276,6 +276,13 @@ export interface EditorState {
    * existed, which the SVG/DXF exporters depend on.
    */
   setSelectionColor: (color: DiagramColor) => void;
+  /**
+   * Put the structural labels of every selected element back on the anchor
+   * their library entry declares — the undo for a label the user dragged
+   * somewhere they now regret. Dispatches nothing when no selected element
+   * carries an offset, so it never contributes an empty undo step.
+   */
+  resetSelectionLabelOffset: () => void;
   addElement: (
     kind: string,
     at: [number, number],
@@ -1262,6 +1269,22 @@ export const useEditorStore = create<EditorState>()(
     get().dispatch((cur) => ({ ...cur, elements, buses, wires, annotations }));
   },
 
+  resetSelectionLabelOffset: () => {
+    const ids = new Set(get().selection);
+    if (ids.size === 0) return;
+    const d = get().diagram;
+    if (!d.elements.some((e) => ids.has(e.id) && e.labelOffset !== undefined)) {
+      return;
+    }
+    get().dispatch((cur) => ({
+      ...cur,
+      elements: cur.elements.map((e) => {
+        if (!ids.has(e.id) || e.labelOffset === undefined) return e;
+        const { labelOffset: _drop, ...rest } = e;
+        return rest;
+      }),
+    }));
+  },
 
   addElement: (kind, at, extra) => {
     if (kind === 'busbar') {

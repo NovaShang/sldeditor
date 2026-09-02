@@ -114,6 +114,10 @@ export const ui: UiTable = {
   'view.labelSize': 'اندازه',
   'view.labelSizeSmaller': 'کوچک‌کردن برچسب‌ها',
   'view.labelSizeLarger': 'بزرگ‌کردن برچسب‌ها',
+  'view.standard': 'استاندارد نمادها',
+  'view.standardIec': 'IEC',
+  'view.standardAnsi': 'ANSI',
+  'view.standardHint': 'فقط شکل نمادها را تغییر می‌دهد؛ سیم‌کشی، موقعیت‌ها و مقادیر دست‌نخورده می‌مانند. کلید مدار و فیوز در دو استاندارد متفاوت‌اند.',
   'view.labelSizeReset': 'بازنشانی اندازهٔ برچسب‌ها',
 
   'library.title': 'کتابخانه',
@@ -225,6 +229,7 @@ export const ui: UiTable = {
   'menu.paste': 'جای‌گذاری',
   'menu.rotate': 'چرخش 90°',
   'menu.mirror': 'قرینه',
+  'menu.resetLabel': 'بازنشانی جای برچسب',
   'menu.selectAll': 'انتخاب همه',
   'menu.disconnect': 'قطع این سیم',
   'menu.delete': 'حذف',

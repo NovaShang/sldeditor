@@ -25,7 +25,14 @@ import {
 } from '../../model';
 import { tableCellAt } from '../../lib/annotation-geom';
 import { snap } from '../grid';
-import { hitAnnotation, hitElement, hitNode, hitTerminal, hitWire } from '../hit-test';
+import {
+  hitAnnotation,
+  hitElement,
+  hitElementLabel,
+  hitNode,
+  hitTerminal,
+  hitWire,
+} from '../hit-test';
 import { hitsInRect } from '../marquee-hit';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
 import {
@@ -41,6 +48,16 @@ import { publishWireTarget } from '../wire-target-bus';
 import type { Tool, ToolContext } from './types';
 
 const MARQUEE_THRESHOLD = 3;
+
+/**
+ * The inner group of an element's label block — the one that carries the live
+ * drag transform. The outer group holds the anchor translate and must keep it.
+ */
+function labelNode(ctx: ToolContext, id: ElementId): SVGGElement | null {
+  return ctx.hostEl.querySelector<SVGGElement>(
+    `[data-element-label="${cssEscape(id)}"] [data-element-label-body]`,
+  );
+}
 
 interface DragState {
   pointerId: number;
@@ -86,10 +103,26 @@ interface AnnotationDragState {
   wasSelected: boolean;
 }
 
+/**
+ * Dragging an element's structural label block. The label is decoration
+ * derived from the element, not an object in the selection model, so this
+ * gesture never changes what is selected beyond selecting the owning device —
+ * it only records where the user wants the text to sit.
+ */
+interface LabelDragState {
+  pointerId: number;
+  id: ElementId;
+  startSvg: [number, number];
+  /** `Element.labelOffset` at press time; the drag delta is added to it. */
+  origin: [number, number];
+  moved: boolean;
+}
+
 let drag: DragState | null = null;
 let marquee: MarqueeState | null = null;
 let wireDrag: WireDragState | null = null;
 let annDrag: AnnotationDragState | null = null;
+let labelDrag: LabelDragState | null = null;
 
 export const SelectTool: Tool = {
   id: 'select',
@@ -110,6 +143,27 @@ export const SelectTool: Tool = {
     }
 
     const store = useEditorStore.getState();
+
+    // Element label block: checked first because it draws on top of the
+    // canvas and is the only thing that can be under the cursor there. Grab
+    // it and you move the text, not the device — which is the whole point of
+    // the gesture (users park a long description clear of the wiring).
+    const labelId = hitElementLabel(e.target);
+    if (labelId) {
+      e.preventDefault();
+      e.stopPropagation();
+      const el = store.diagram.elements.find((x) => x.id === labelId);
+      if (!el) return;
+      if (!store.selection.includes(labelId)) store.setSelection([labelId]);
+      labelDrag = {
+        pointerId: e.pointerId,
+        id: labelId,
+        startSvg: ctx.viewport.screenToSvg(e.clientX, e.clientY),
+        origin: [el.labelOffset?.[0] ?? 0, el.labelOffset?.[1] ?? 0],
+        moved: false,
+      };
+      return;
+    }
 
     // Free annotation: takes priority over element / terminal because the
     // annotation can overlap them visually. Click selects + arms a drag; a
@@ -293,6 +347,24 @@ export const SelectTool: Tool = {
   },
 
   onPointerMove(e, ctx) {
+    if (labelDrag && e.pointerId === labelDrag.pointerId) {
+      const cur = ctx.viewport.screenToSvg(e.clientX, e.clientY);
+      const dx = snap(cur[0] - labelDrag.startSvg[0]);
+      const dy = snap(cur[1] - labelDrag.startSvg[1]);
+      if (!labelDrag.moved && (dx !== 0 || dy !== 0)) {
+        labelDrag.moved = true;
+        if (!ctx.hostEl.hasPointerCapture(e.pointerId)) {
+          ctx.hostEl.setPointerCapture(e.pointerId);
+        }
+      }
+      // The block already carries a `translate(world)`, so the preview has to
+      // compose with it rather than replace it — hence the second transform
+      // rather than the bare `translate(dx dy)` the annotation drag uses.
+      const node = labelNode(ctx, labelDrag.id);
+      if (node) node.setAttribute('transform', `translate(${dx} ${dy})`);
+      return;
+    }
+
     if (annDrag && e.pointerId === annDrag.pointerId) {
       const cur = ctx.viewport.screenToSvg(e.clientX, e.clientY);
       const dx = snap(cur[0] - annDrag.startSvg[0]);
@@ -390,6 +462,31 @@ export const SelectTool: Tool = {
   },
 
   onPointerUp(e, ctx) {
+    if (labelDrag && e.pointerId === labelDrag.pointerId) {
+      if (ctx.hostEl.hasPointerCapture(e.pointerId)) {
+        ctx.hostEl.releasePointerCapture(e.pointerId);
+      }
+      const cur = ctx.viewport.screenToSvg(e.clientX, e.clientY);
+      const dx = snap(cur[0] - labelDrag.startSvg[0]);
+      const dy = snap(cur[1] - labelDrag.startSvg[1]);
+      const node = labelNode(ctx, labelDrag.id);
+      if (node) node.removeAttribute('transform');
+      if (labelDrag.moved && (dx !== 0 || dy !== 0)) {
+        const next: [number, number] = [
+          labelDrag.origin[0] + dx,
+          labelDrag.origin[1] + dy,
+        ];
+        // Back at the library's own anchor → drop the field rather than
+        // storing a zero, so a diagram nobody has nudged still serialises
+        // exactly the way it did before this field existed.
+        useEditorStore.getState().updateElement(labelDrag.id, {
+          labelOffset: next[0] === 0 && next[1] === 0 ? undefined : next,
+        });
+      }
+      labelDrag = null;
+      return;
+    }
+
     if (annDrag && e.pointerId === annDrag.pointerId) {
       if (ctx.hostEl.hasPointerCapture(e.pointerId)) {
         ctx.hostEl.releasePointerCapture(e.pointerId);
@@ -517,6 +614,18 @@ export const SelectTool: Tool = {
     // Pinch-zoom hijack interrupted the gesture. Cleanly drop any in-flight
     // drag/marquee/wire/annotation state without committing — we don't want
     // to apply a move/marquee at the synthetic cancel coordinates.
+    if (labelDrag && e.pointerId === labelDrag.pointerId) {
+      const node = labelNode(ctx, labelDrag.id);
+      if (node) node.removeAttribute('transform');
+      if (ctx.hostEl.hasPointerCapture?.(e.pointerId)) {
+        try {
+          ctx.hostEl.releasePointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
+        }
+      }
+      labelDrag = null;
+    }
     if (annDrag && e.pointerId === annDrag.pointerId) {
       const node = ctx.hostEl.querySelector<SVGGElement>(
         `[data-annotation-id="${cssEscape(annDrag.id)}"]`,
@@ -606,7 +715,9 @@ export const SelectTool: Tool = {
       enterAnnotationEdit(store, ann, ctx.viewport.screenToSvg(e.clientX, e.clientY));
       return;
     }
-    const id = hitElement(e.target);
+    // Double-clicking the label itself is the same request as
+    // double-clicking the device: rename it.
+    const id = hitElementLabel(e.target) ?? hitElement(e.target);
     if (id) {
       e.preventDefault();
       e.stopPropagation();
@@ -618,6 +729,7 @@ export const SelectTool: Tool = {
     drag = null;
     marquee = null;
     annDrag = null;
+    labelDrag = null;
     if (wireDrag) {
       ctx.hostEl.classList.remove('tool-wire');
       const store = useEditorStore.getState();

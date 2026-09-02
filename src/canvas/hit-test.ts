@@ -57,6 +57,19 @@ export function hitWire(target: EventTarget | null): WireId | null {
   return ancestor(target, 'data-wire-id')?.getAttribute('data-wire-id') ?? null;
 }
 
+/**
+ * The element whose structural label block is under the cursor. The label is
+ * not part of the element's `<g>` (it renders upright in its own layer), so
+ * it needs its own attribute — and `hitElement` deliberately does NOT match
+ * it: dragging the label moves only the label, never the device.
+ */
+export function hitElementLabel(target: EventTarget | null): ElementId | null {
+  return (
+    ancestor(target, 'data-element-label')?.getAttribute('data-element-label') ??
+    null
+  );
+}
+
 export function hitAnnotation(target: EventTarget | null): AnnotationId | null {
   return (
     ancestor(target, 'data-annotation-id')?.getAttribute('data-annotation-id') ??

@@ -1,0 +1,50 @@
+{
+  "id": "busduct",
+  "name": "母线槽",
+  "category": "busbar",
+  "description": "封闭式母线槽直线段（IEC 60617-11-17）",
+  "viewBox": "-22 -7 44 14",
+  "width": 44,
+  "height": 14,
+  "svg": "<line x1=\"20\" y1=\"0\" x2=\"-20\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-5\" x2=\"-20\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"-5\" x2=\"20\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_left",
+      "x": -20,
+      "y": 0,
+      "orientation": "w"
+    },
+    {
+      "id": "t_right",
+      "x": 20,
+      "y": 0,
+      "orientation": "e"
+    }
+  ],
+  "params": [
+    {
+      "name": "In",
+      "label": "额定电流",
+      "type": "number",
+      "unit": "A",
+      "showOnCanvas": true
+    },
+    {
+      "name": "Un",
+      "label": "额定电压",
+      "type": "number",
+      "unit": "V",
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 0,
+    "y": -8,
+    "anchor": "middle"
+  },
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_11/en_60617_11_17/en_60617_11_17_01.elmt",
+    "qetEnglishName": "Straight section, general symbol"
+  }
+}

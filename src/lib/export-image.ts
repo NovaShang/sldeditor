@@ -36,6 +36,7 @@ import {
 import { exportInk } from './colors';
 import {
   fallbackAnchor,
+  labelBlockWidth,
   labelLineHeight,
   labelLines,
   placeLabel,
@@ -166,7 +167,14 @@ export function buildExportSvg(
         world: [ax, ay],
         textAnchor,
         dy,
-      } = placeLabel(anchor, re.libraryDef, place, lines.length, labelFs);
+      } = placeLabel(
+        anchor,
+        re.libraryDef,
+        place,
+        lines.length,
+        labelFs,
+        re.element.labelOffset,
+      );
       for (let i = 0; i < lines.length; i++) {
         out.push(
           `    <text x="${ax}" y="${ay + dy + i * lineHeight}" text-anchor="${textAnchor}">${escapeXml(lines[i])}</text>`,
@@ -446,8 +454,15 @@ function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
         world: [ax, ay],
         textAnchor: align,
         dy,
-      } = placeLabel(anchor, re.libraryDef, place, lines.length, labelFs);
-      const w = textWidthGuess(lines, labelFs);
+      } = placeLabel(
+        anchor,
+        re.libraryDef,
+        place,
+        lines.length,
+        labelFs,
+        re.element.labelOffset,
+      );
+      const w = labelBlockWidth(lines, labelFs);
       const h = lines.length * lineHeight;
       const x0 = align === 'middle' ? ax - w / 2 : align === 'end' ? ax - w : ax;
       update(x0, ay + dy - labelFs);
@@ -461,7 +476,7 @@ function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
       const placed = placeWireLabel(r.path, labelFs);
       if (!placed) continue;
       const [lx, ly] = placed.world;
-      const w = textWidthGuess([label], labelFs);
+      const w = labelBlockWidth([label], labelFs);
       const x0 = placed.textAnchor === 'middle' ? lx - w / 2 : lx;
       update(x0, ly - labelFs);
       update(x0 + w, ly);
@@ -486,17 +501,6 @@ function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
     maxY = 0;
   }
   return { minX, minY, maxX, maxY };
-}
-
-function textWidthGuess(lines: string[], fontSize: number): number {
-  // Match the heuristic in FreeAnnotationLayer (~0.55em per char) so the
-  // bbox tracks the on-screen selection halo.
-  let max = 0;
-  for (const l of lines) {
-    const w = l.length * fontSize * 0.55;
-    if (w > max) max = w;
-  }
-  return Math.max(20, max);
 }
 
 function parseViewBox(

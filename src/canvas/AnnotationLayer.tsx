@@ -26,13 +26,15 @@
  * here too — anchored mid-wire via `placeWireLabel`, hidden at 'off'.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEditorStore } from '../store';
 import type { LabelMode } from '../model';
 import {
   fallbackAnchor,
+  labelBlockWidth,
   labelLineHeight,
   labelLines,
+  nameLines,
   placeLabel,
   resolveLabelFontSize,
 } from '../lib/element-labels';
@@ -69,6 +71,7 @@ export function AnnotationLayer() {
           place,
           Math.max(1, lines.length),
           fontSize,
+          re.element.labelOffset,
         );
         if (editingElement === re.element.id) {
           return (
@@ -84,23 +87,48 @@ export function AnnotationLayer() {
         }
         if (mode === 'off') return null;
         if (lines.length === 0) return null;
+        // The block is a drag target (SelectTool moves it and stores the
+        // delta as `Element.labelOffset`), so it gets a transparent rect
+        // behind the glyphs — hitting bare `<text>` means hitting the letter
+        // strokes themselves, which is far too fiddly to grab. Opting back
+        // into the pointer events this layer turns off wholesale is left to
+        // the stylesheet, which does it ONLY under the select tool: any other
+        // tool (or read-only, which attaches only pan) must keep clicking
+        // straight through the label to the canvas underneath it.
+        const blockW = labelBlockWidth(lines, fontSize);
+        const blockX =
+          textAnchor === 'middle' ? -blockW / 2 : textAnchor === 'end' ? -blockW : 0;
         return (
           <g
             key={re.element.id}
-            className="ole-annotation"
+            className="ole-annotation ole-element-label"
+            data-element-label={re.element.id}
             transform={`translate(${world[0]} ${world[1]})`}
           >
-            {lines.map((line, i) => (
-              <text
-                key={i}
-                x={0}
-                y={dy + i * lineHeight}
-                textAnchor={textAnchor}
-                className="ole-annotation-text"
-              >
-                {line}
-              </text>
-            ))}
+            {/* Inner group exists purely so SelectTool can park a live drag
+                transform on it without clobbering the anchor translate
+                above — a CSS transform would override the presentation
+                attribute rather than compose with it. */}
+            <g data-element-label-body="">
+              <rect
+                className="ole-element-label-hit"
+                x={blockX - 2}
+                y={dy - fontSize}
+                width={blockW + 4}
+                height={lines.length * lineHeight + fontSize * 0.4}
+              />
+              {lines.map((line, i) => (
+                <text
+                  key={i}
+                  x={0}
+                  y={dy + i * lineHeight}
+                  textAnchor={textAnchor}
+                  className="ole-annotation-text"
+                >
+                  {line}
+                </text>
+              ))}
+            </g>
           </g>
         );
       })}
@@ -150,6 +178,13 @@ const EDITOR_FS = 9;
  * The editor is a touch larger than the label it stands in for (easier to hit
  * and read while typing) but never smaller — so a document with enlarged
  * labels edits at the size it renders at.
+ *
+ * ENTER INSERTS A LINE BREAK; it does not commit. A device tag is routinely
+ * stacked ("QF1" over "630A/25kA"), and this box is the only place a name is
+ * typed, so Enter has to mean what it means in every other place you type a
+ * multi-line label. Escape, clicking away, and ⌘/Ctrl+Enter all commit —
+ * Escape kept its existing meaning (commit, not cancel) rather than quietly
+ * changing under users who already rely on it.
  */
 function NameEditor({
   elementId,
@@ -166,6 +201,12 @@ function NameEditor({
 }) {
   const fs = Math.max(EDITOR_FS, fontSize);
   const ref = useRef<HTMLDivElement | null>(null);
+  // The foreignObject clips its content, so it has to grow with the text.
+  // Tracked from the live content rather than sized once, or the second line
+  // a user types would be typed into an invisible box.
+  const [lineCount, setLineCount] = useState(() =>
+    Math.max(1, currentName.split('\n').length),
+  );
 
   useEffect(() => {
     const el = ref.current;
@@ -185,7 +226,11 @@ function NameEditor({
       store.setEditingElement(null);
       return;
     }
-    const text = (ref.current?.innerText ?? '').replace(/\u00a0/g, ' ').trim();
+    // Normalise through the same helper the label renderer uses, so what is
+    // stored is exactly what will be drawn: per-line trim, blank lines
+    // dropped (a stray trailing Enter is an accident, not a gap).
+    const raw = (ref.current?.innerText ?? '').replace(/\u00a0/g, ' ');
+    const text = nameLines(raw, '').join('\n');
     // Empty text clears the override; the structural label falls back to ID.
     const next = text === '' || text === elementId ? undefined : text;
     if (next !== el.name) store.updateElement(elementId, { name: next });
@@ -193,11 +238,13 @@ function NameEditor({
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
-    if (e.key === 'Escape' || (e.key === 'Enter' && !e.shiftKey)) {
+    if (e.key === 'Escape' || (e.key === 'Enter' && (e.metaKey || e.ctrlKey))) {
       e.preventDefault();
       commit();
       return;
     }
+    // Everything else — plain Enter included — is the editor's own; just keep
+    // it away from the canvas hotkeys.
     e.stopPropagation();
   }
 
@@ -213,7 +260,7 @@ function NameEditor({
       x={x}
       y={world[1] - fs}
       width={EDITOR_W}
-      height={fs * 2.2}
+      height={fs * 1.3 * lineCount + fs}
       className="ole-element-name-editor"
     >
       <div
@@ -222,6 +269,11 @@ function NameEditor({
         suppressContentEditableWarning
         onBlur={commit}
         onKeyDown={onKeyDown}
+        onInput={() =>
+          setLineCount(
+            Math.max(1, (ref.current?.innerText ?? '').split('\n').length),
+          )
+        }
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         style={{
@@ -236,7 +288,7 @@ function NameEditor({
           lineHeight: 1.1,
           textAlign:
             anchor === 'middle' ? 'center' : anchor === 'end' ? 'right' : 'left',
-          whiteSpace: 'nowrap',
+          whiteSpace: 'pre-wrap',
           cursor: 'text',
         }}
       >

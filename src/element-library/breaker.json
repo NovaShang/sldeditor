@@ -57,6 +57,24 @@
     "y": -2,
     "anchor": "start"
   },
+  "variants": {
+    "ansi": {
+      "viewBox": "-11 -22 22 44",
+      "width": 22,
+      "height": 44,
+      "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-9\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-9\" y=\"-9\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"9\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "label": {
+        "x": 12,
+        "y": -2,
+        "anchor": "start"
+      },
+      "source": {
+        "standard": "IEEE Std 315-1975 (ANSI Y32.2-1975)",
+        "clause": "9.4.4",
+        "title": "Circuit breaker, other than covered by symbol 9.4.1"
+      }
+    }
+  },
   "source": {
     "kind": "elmt",
     "path": "11_singlepole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur1.elmt",

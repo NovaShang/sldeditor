@@ -28,6 +28,7 @@ export type {
   PinName,
   Placement,
   RectAnnotation,
+  SymbolStandard,
   TableAnnotation,
   TerminalRef,
   TextAnnotation,
@@ -46,6 +47,8 @@ export type {
   LibraryParamField,
   LibraryLabelAnchor,
   LibrarySource,
+  LibraryVariant,
+  LibraryVariantSource,
   Orientation,
 } from './library';
 

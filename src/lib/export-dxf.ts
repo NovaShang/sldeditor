@@ -146,7 +146,14 @@ export function buildExportDxf(
         world: [ax, ay],
         textAnchor,
         dy,
-      } = placeLabel(anchor, re.libraryDef, place, lines.length, labelFs);
+      } = placeLabel(
+        anchor,
+        re.libraryDef,
+        place,
+        lines.length,
+        labelFs,
+        re.element.labelOffset,
+      );
       // Lines stack downward in screen-space → upward separation in DXF Y-up
       // becomes negative spacing on the screen-Y, i.e. positive when flipped.
       for (let i = 0; i < lines.length; i++) {

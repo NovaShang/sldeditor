@@ -114,6 +114,10 @@ export const ui: UiTable = {
   'view.labelSize': 'الحجم',
   'view.labelSizeSmaller': 'تصغير خط التسميات',
   'view.labelSizeLarger': 'تكبير خط التسميات',
+  'view.standard': 'معيار الرموز',
+  'view.standardIec': 'IEC',
+  'view.standardAnsi': 'ANSI',
+  'view.standardHint': 'يغيّر رسم الرموز فقط — التوصيلات والمواضع والقيم تبقى كما هي. القاطع والمنصهر يختلفان بين المعيارين.',
   'view.labelSizeReset': 'إعادة تعيين حجم التسميات',
 
   'library.title': 'المكتبة',
@@ -225,6 +229,7 @@ export const ui: UiTable = {
   'menu.paste': 'لصق',
   'menu.rotate': 'تدوير 90°',
   'menu.mirror': 'عكس',
+  'menu.resetLabel': 'إعادة ضبط موضع التسمية',
   'menu.selectAll': 'تحديد الكل',
   'menu.disconnect': 'فصل هذا السلك',
   'menu.delete': 'حذف',

@@ -114,6 +114,10 @@ export const ui: UiTable = {
   'view.labelSize': 'Taille',
   'view.labelSizeSmaller': 'Réduire la taille des étiquettes',
   'view.labelSizeLarger': 'Agrandir la taille des étiquettes',
+  'view.standard': 'Norme des symboles',
+  'view.standardIec': 'IEC',
+  'view.standardAnsi': 'ANSI',
+  'view.standardHint': "Ne change que le tracé des symboles — câblage, positions et calibres restent intacts. Le disjoncteur et le fusible diffèrent entre les deux.",
   'view.labelSizeReset': 'Réinitialiser la taille des étiquettes',
 
   'library.title': 'Bibliothèque',
@@ -225,6 +229,7 @@ export const ui: UiTable = {
   'menu.paste': 'Coller',
   'menu.rotate': 'Pivoter de 90°',
   'menu.mirror': 'Miroir',
+  'menu.resetLabel': 'Réinitialiser la position du libellé',
   'menu.selectAll': 'Tout sélectionner',
   'menu.disconnect': 'Déconnecter ce fil',
   'menu.delete': 'Supprimer',

@@ -42,6 +42,24 @@
     "y": -2,
     "anchor": "start"
   },
+  "variants": {
+    "ansi": {
+      "viewBox": "-8 -32 16 64",
+      "width": 16,
+      "height": 64,
+      "svg": "<line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-14\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 -14 A 6 7 0 0 1 0 0 A 6 7 0 0 0 0 14\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"14\" x2=\"0\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+      "label": {
+        "x": 9,
+        "y": -2,
+        "anchor": "start"
+      },
+      "source": {
+        "standard": "IEEE Std 315-1975 (ANSI Y32.2-1975)",
+        "clause": "9.1.1",
+        "title": "Fuse (one-time thermal current-overload device), general"
+      }
+    }
+  },
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_07/en_60617_07_21/en_60617_07_21_01.elmt",

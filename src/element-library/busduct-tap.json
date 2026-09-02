@@ -1,0 +1,56 @@
+{
+  "id": "busduct-tap",
+  "name": "母线槽插接段",
+  "category": "busbar",
+  "description": "带固定插接口的母线槽段，插接口向下引出",
+  "viewBox": "-42 -12 84 34",
+  "width": 84,
+  "height": 34,
+  "svg": "<line x1=\"40\" y1=\"0\" x2=\"-40\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"-5\" x2=\"-40\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"40\" y1=\"-5\" x2=\"40\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"0\" rx=\"10\" ry=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"10\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_left",
+      "x": -40,
+      "y": 0,
+      "orientation": "w"
+    },
+    {
+      "id": "t_right",
+      "x": 40,
+      "y": 0,
+      "orientation": "e"
+    },
+    {
+      "id": "t_tap",
+      "x": 0,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "params": [
+    {
+      "name": "In",
+      "label": "额定电流",
+      "type": "number",
+      "unit": "A",
+      "showOnCanvas": true
+    },
+    {
+      "name": "Itap",
+      "label": "插接口电流",
+      "type": "number",
+      "unit": "A",
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 0,
+    "y": -8,
+    "anchor": "middle"
+  },
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_11/en_60617_11_17/en_60617_11_17_24.elmt",
+    "qetEnglishName": "Straight section with fixed tap-off"
+  }
+}

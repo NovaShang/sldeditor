@@ -2,6 +2,7 @@ export { compile } from './compile';
 export {
   LIBRARY,
   getLibraryEntry,
+  applySymbolStandard,
   mergeCustomKinds,
   isCustomKind,
   CUSTOM_KIND_PREFIX,

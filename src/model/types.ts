@@ -19,6 +19,20 @@ export type WireEnd = TerminalRef | BusId | JunctionId;
 export type ParamValue = number | string | boolean;
 export type LabelMode = 'off' | 'id' | 'all';
 
+/**
+ * Which graphical standard a drawing renders its symbols in.
+ *
+ * A drawing is IEC *or* ANSI — never a mix — so this is a document setting,
+ * not a per-element one. Absent = `iec`, which is what every diagram written
+ * before this field existed renders as.
+ *
+ * Switching it changes only how symbols are DRAWN. Terminal coordinates,
+ * connectivity, wiring and layout are identical in both, by construction: a
+ * variant may not declare its own terminals (see `LibraryVariant`). Flipping
+ * the standard on a finished drawing must never move or re-route anything.
+ */
+export type SymbolStandard = 'iec' | 'ansi';
+
 export interface DiagramFile {
   version: DiagramVersion;
   meta?: DiagramMeta;
@@ -76,6 +90,16 @@ export interface DiagramMeta {
    * picker offers) by every renderer.
    */
   labelFontSize?: number;
+  /**
+   * Graphical standard for the symbols. Absent → `iec`.
+   *
+   * Requested as "give selection of symbol variation. in example for Circuit
+   * breaker, we can select either to use IEC symbol or ANSI" — and it is a
+   * per-DRAWING choice because that is how the choice is actually made: a
+   * drawing follows one standard throughout, and a sheet mixing an IEC breaker
+   * with an ANSI one is a mistake, not a feature.
+   */
+  symbolStandard?: SymbolStandard;
 }
 
 export interface Element {
@@ -91,6 +115,17 @@ export interface Element {
    * compiler, connectivity or diagnostics. Absent = theme ink.
    */
   color?: DiagramColor;
+  /**
+   * User nudge for the structural label block, in WORLD units, applied on top
+   * of the anchor the library declares. Absent = the library's own placement,
+   * which is what every diagram written before this field existed renders.
+   *
+   * World space, not library space, because this is set by dragging the label
+   * on the canvas: it must stay exactly where it was dropped, including after
+   * the symbol is rotated or mirrored. It moves the block only — the text
+   * alignment still follows the side of the symbol the anchor sits on.
+   */
+  labelOffset?: [number, number];
 }
 
 export interface Bus {

@@ -26,7 +26,7 @@ import {
 } from '../lib/element-labels';
 import { cn } from '../lib/utils';
 import { useEditorStore } from '../store';
-import type { LabelMode } from '../model';
+import type { LabelMode, SymbolStandard } from '../model';
 
 const ZOOM_STEPS = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 6, 8] as const;
 const MIN_SCALE = 0.1;
@@ -424,6 +424,71 @@ function LabelControls() {
   );
 }
 
+/**
+ * Write the document's symbol standard. `iec` drops the field rather than
+ * storing the word, so a drawing that never touched the setting keeps
+ * serialising exactly as it did before the setting existed.
+ */
+function setSymbolStandard(next: SymbolStandard): void {
+  useEditorStore.getState().dispatch((d) => {
+    const meta = { ...(d.meta ?? {}) };
+    if (next === 'iec') delete meta.symbolStandard;
+    else meta.symbolStandard = next;
+    return { ...d, meta };
+  });
+}
+
+/**
+ * Graphical-standard picker for the whole document.
+ *
+ * Sits with the label controls because it answers the same class of question —
+ * how this drawing is rendered — and is a per-drawing choice for the same
+ * reason a drawing has one title block: a sheet that mixes an IEC breaker with
+ * an ANSI one is a mistake, not a feature.
+ *
+ * The hint is not decoration. Users reach a standard switch expecting it to
+ * redraw their sheet and fear it will disturb the wiring; saying plainly that
+ * only the drawing changes is what makes it safe to try.
+ */
+function StandardControls() {
+  const t = useT();
+  const standard: SymbolStandard = useEditorStore(
+    (s) => s.diagram.meta?.symbolStandard ?? 'iec',
+  );
+  const options: { value: SymbolStandard; label: string }[] = [
+    { value: 'iec', label: t('view.standardIec') },
+    { value: 'ansi', label: t('view.standardAnsi') },
+  ];
+  return (
+    <div className="flex flex-col gap-1.5 px-1.5 py-1">
+      <div className="text-[11px] font-medium text-muted-foreground">
+        {t('view.standard')}
+      </div>
+      <div className="flex overflow-hidden rounded-md border border-border/60">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={standard === o.value}
+            onClick={() => setSymbolStandard(o.value)}
+            className={cn(
+              'h-7 flex-1 whitespace-nowrap px-1.5 text-[11px] transition-colors',
+              standard === o.value
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <div className="max-w-[210px] text-[10px] leading-snug text-muted-foreground">
+        {t('view.standardHint')}
+      </div>
+    </div>
+  );
+}
+
 /** Popover trigger wrapping `LabelControls` for the wide (icon-row) toolbar. */
 function LabelMenuBtn() {
   const t = useT();
@@ -458,6 +523,8 @@ function LabelMenuBtn() {
       }
     >
       <LabelControls />
+      <div aria-hidden className="my-1 h-px bg-border" />
+      <StandardControls />
     </UpwardPopover>
   );
 }
@@ -533,6 +600,8 @@ export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
             trigger row. */}
         <div aria-hidden className="my-1 h-px bg-border" />
         <LabelControls />
+        <div aria-hidden className="my-1 h-px bg-border" />
+        <StandardControls />
       </div>
     </UpwardPopover>
   );
