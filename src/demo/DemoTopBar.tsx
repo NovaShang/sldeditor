@@ -8,7 +8,7 @@
  * toggle.
  */
 
-import { Languages, Moon, Sun } from 'lucide-react';
+import { Activity, Languages, Moon, Sun } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Tooltip } from '../components/ui/tooltip';
 import { ExportMenu } from '../components/ExportMenu';
@@ -33,6 +33,13 @@ export function DemoTopBar() {
         <FileMenu />
         <ExportMenu />
         <div aria-hidden className="mx-1 h-4 w-px bg-border" />
+        <Tooltip content="Runtime viewer demo (read-only, live tags)">
+          <Button variant="ghost" size="icon" aria-label="Viewer demo" asChild>
+            <a href="#viewer">
+              <Activity />
+            </a>
+          </Button>
+        </Tooltip>
         <LocaleToggle />
         <Tooltip
           content={

@@ -4,20 +4,23 @@
  * bbox, then applying the same transform.
  */
 
-import { useEditorStore } from '../store';
+import { useCanvasStore } from '../store';
 import { transformAttr } from './transform-attr';
+import { useRuntime } from '../runtime/runtime-context';
 
 export function SelectionOverlay() {
-  const selection = useEditorStore((s) => s.selection);
-  const elements = useEditorStore((s) => s.internal.elements);
-  const layout = useEditorStore((s) => s.internal.layout);
-  const buses = useEditorStore((s) => s.internal.buses);
+  const selection = useCanvasStore((s) => s.selection);
+  const elements = useCanvasStore((s) => s.internal.elements);
+  const layout = useCanvasStore((s) => s.internal.layout);
+  const buses = useCanvasStore((s) => s.internal.buses);
+  const runtime = useRuntime().props;
 
   if (selection.length === 0) return null;
 
   return (
     <g className="ole-selection-overlay" pointerEvents="none">
       {selection.map((id) => {
+        if (runtime[id]?.visible === false) return null;
         const rb = buses.get(id);
         if (rb) {
           const { axis, at, span } = rb.geometry;

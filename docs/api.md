@@ -23,10 +23,86 @@ import { OneLineEditor, type OneLineEditorProps } from 'sldeditor';
 
 | Prop | Type | Notes |
 |---|---|---|
-| `className` | `string?` | Defaults to `h-full w-full`. The root div always has `ole-root` regardless. |
+| `className` | `string?` | The root div always has `ole-root` and fills its container (`width: 100%; height: 100%` at zero specificity, so your own class or inline style wins). |
 | `diagram` | `DiagramFile?` | Initial state. **Only seeded if the store is empty** — preserves in-progress work across remounts. Use the store directly to force-replace. |
 | `locale` | `'en' \| 'zh'?` | Force UI language. Falls back to localStorage / `navigator.language`. |
 | `theme` | `'light' \| 'dark'?` | Force color mode. Falls back to localStorage / `prefers-color-scheme`. Applied via the `dark` class on `<html>`. |
+
+---
+
+## `<OneLineViewer>` — read-only runtime viewer
+
+The editor's canvas without the editing: same layers, same `compile()`, driven by a **private** store (several viewers may share a page with an editor and none of them touch its persisted document). Pan (drag / middle button / space) and zoom (wheel / pinch) work; tools, shortcuts, toolbars, context menu and the grid are absent.
+
+```tsx
+import { OneLineViewer, createStaticTagSource, type TagSource } from 'sldeditor';
+import 'sldeditor/style.css';
+
+const tags = createStaticTagSource({ 'QF1/health': 'critical', 'QF1/I': 128.4 });
+
+<OneLineViewer
+  diagram={diagram}          // a DiagramFile carrying `bindings`
+  tags={tags}                // any TagSource — omit for a static drawing
+  selectedIds={selected}     // controlled selection (optional)
+  onElementClick={(id) => setSelected([id])}
+  onBackgroundClick={() => setSelected([])}
+  onReady={(api) => (viewer.current = api)}
+/>
+```
+
+### Props (`OneLineViewerProps`)
+
+| Prop | Type | Notes |
+|---|---|---|
+| `diagram` | `DiagramFile` | Required. Re-renders (and refits) when the reference changes. |
+| `tags` | `TagSource?` | Live data. Bindings resolve against `tags.get()`; the viewer subscribes once to every path the bindings mention and re-resolves at most every 100 ms. |
+| `selectedIds` | `string[]?` | Controlled selection. Omit to let `api.select()` drive it. |
+| `hoveredId` | `string \| null?` | Controlled hover highlight. `undefined` = follow the pointer. |
+| `onElementClick` | `(id, ev) => void` | Click on a device, bus, junction or a device's label. |
+| `onElementHover` | `(id \| null) => void` | Pointer entered / left an element. |
+| `onBackgroundClick` | `() => void` | Click on empty canvas. |
+| `theme` | `'light' \| 'dark'?` | Sets `dark` on the viewer's **own** root, never on `<html>`. Omit to follow a `.dark` ancestor. |
+| `className`, `style` | | The root always has `ole-root ole-viewer` and fills its container (`width: 100%; height: 100%` at zero specificity) — give the parent a height, or override with your own class / `style`. |
+| `fit` | `boolean?` | Fit the diagram on mount, on diagram change and on resize. Default `true`. |
+| `onReady` | `(api: OneLineViewerApi) => void` | Called once per mount. |
+
+### `OneLineViewerApi`
+
+`fit()` refits the whole diagram; `focus(id)` centres and zooms to an element / bus / junction; `select(ids)` replaces the selection (no-op while `selectedIds` is controlled).
+
+### What a binding looks like on screen
+
+All colours are CSS custom properties read with a fallback (`var(--ole-alarm-warn, …)`), so a host sets `--ole-alarm-warn` / `--ole-alarm-alarm` / `--ole-alarm-fault` / `--ole-selection` on any ancestor — its wrapper, `:root`, the viewer's own `style` — and the value is honoured. The defaults live on `.ole-root` as `--ole-alarm-*-default` and are never what you override.
+
+| Prop | Rendering |
+|---|---|
+| `alarm` | `none` no change; `warn` → `--ole-alarm-warn` (`#faad14`); `alarm` → `--ole-alarm-alarm` (`#fa8c16`); `fault` → `--ole-alarm-fault` (`#f5222d`) and blinks (not under `prefers-reduced-motion`). Colours the symbol stroke **and** the wires leaving it. |
+| `value` | Small readout at the symbol's bottom-right, with the `unit` of the tag declared in `diagram.tags`. |
+| `badge` | Pill on the symbol's top-right corner; takes the alarm colour when the element is alarmed. |
+| `visible` | `false` hides the symbol and its label (wires stay). |
+| `label.text` | Replaces the structural label block. |
+| quality `bad` / `stale` | Symbol greyed + a `?` marker on its top-left corner. `bad` samples are not applied; `stale` ones are (last known value). |
+| selection / hover | `--ole-selection` (falls back to the theme's `--selection`) dashed box; hover recolours the symbol. |
+
+## Data binding: `TagSource`, `resolveBindings`, `upsertBinding`, …
+
+The library never fetches data. A host implements `TagSource` (two methods) over whatever it has — WebSocket, MQTT, polling REST — and the viewer does the rest.
+
+```ts
+interface TagSource {
+  get(path: string): TagValue | undefined;
+  subscribe(paths: string[], onChange: (changes: Record<string, TagValue>) => void): () => void;
+}
+interface TagValue { v: unknown; q?: 'good' | 'bad' | 'stale'; t?: number }
+```
+
+- `createStaticTagSource(initial?)` — in-memory reference implementation with `set(path, value)` / `setMany(values)`; values may be bare primitives or full `TagValue`s (`toTagValue` normalises).
+- `resolveBindings(diagram, tags)` → `Record<targetId, ResolvedElementProps>` — pure; what the viewer computes on every update. `quality` is the worst of the target's bound tags, or `'unbound'` when none has a value.
+- `bindingsOf(diagram, target)` — the target's bindings.
+- `upsertBinding(diagram, binding)` — add, or replace the one on the same `target` + `prop`. Returns a new file.
+- `removeBindings(diagram, target, prop?)` — drop one prop's binding or all of the target's. Returns a new file (the same object when nothing matched).
+
+The editor keeps `tags` / `bindings` verbatim and removes a binding only when its target element is deleted.
 
 ---
 
@@ -165,6 +241,7 @@ Re-exported from [`src/model`](../src/model) for typed embedders:
 - `Wire`, `WireId`, `WireEnd`
 - `Placement`, `Orientation`, `NodeId`
 - `TerminalRef`, `PinName`, `ParamValue`
+- Runtime: `Tag`, `TagType`, `TagValue`, `TagQuality`, `TagPrimitive`, `Binding`, `BindableProp`, `Mapping`, `AlarmLevel`, `ResolvedElementProps`
 - Library types: `LibraryEntry`, `LibraryLabelAnchor`, `LibraryParamField`, `LibrarySource`, `LibraryStateField`, `LibraryStretchable`, `LibraryTerminal`
 
 See [data-model.md](./data-model.md) for the full schema.

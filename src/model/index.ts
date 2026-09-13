@@ -52,4 +52,16 @@ export type {
   Orientation,
 } from './library';
 
+export type {
+  AlarmLevel,
+  BindableProp,
+  Binding,
+  Mapping,
+  Tag,
+  TagPrimitive,
+  TagQuality,
+  TagType,
+  TagValue,
+} from './binding';
+
 export { normalizePath } from './wire-path';

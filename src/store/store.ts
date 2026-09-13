@@ -14,7 +14,8 @@
  * ref to avoid React re-renders during gesture loops.
  */
 
-import { create } from 'zustand';
+import { create, type StateCreator } from 'zustand';
+import { createStore, type StoreApi } from 'zustand/vanilla';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import {
   compile,
@@ -58,6 +59,7 @@ import {
 import { normalizePath } from '../model/wire-path';
 import { endOwner, translateManualWirePaths } from './group-move';
 import { pruneOrphanedJunctions } from './prune-junctions';
+import { removeBindingsForTargets } from '../runtime/bindings';
 
 const EMPTY_DIAGRAM: DiagramFile = { version: '1', elements: [] };
 const HISTORY_LIMIT = 100;
@@ -332,9 +334,13 @@ export interface EditorState {
   removeCustomKind: (kindId: string) => number;
 }
 
-export const useEditorStore = create<EditorState>()(
-  persist(
-    (set, get) => ({
+/**
+ * The state initialiser, shared by the singleton editor store below and by
+ * `createEditorStore()`. Kept as one function so a private instance (the
+ * read-only viewer) behaves byte-for-byte like the editor's — same compile,
+ * same selection semantics — without a second implementation to drift.
+ */
+const createEditorState: StateCreator<EditorState> = (set, get) => ({
   diagram: EMPTY_DIAGRAM,
   internal: compile(EMPTY_DIAGRAM),
   fileSession: null,
@@ -1066,15 +1072,20 @@ export const useEditorStore = create<EditorState>()(
             Object.entries(d.layout).filter(([k]) => !ids.has(k)),
           )
         : undefined;
-      return {
-        ...d,
-        elements,
-        buses: buses.length ? buses : undefined,
-        junctions: prunedJunctions.length ? prunedJunctions : undefined,
-        wires: wires.length ? wires : undefined,
-        layout: layout && Object.keys(layout).length ? layout : undefined,
-        annotations: annotations?.length ? annotations : undefined,
-      };
+      // A binding whose target is gone is dead weight the viewer would have to
+      // skip forever, so it goes with the element.
+      return removeBindingsForTargets(
+        {
+          ...d,
+          elements,
+          buses: buses.length ? buses : undefined,
+          junctions: prunedJunctions.length ? prunedJunctions : undefined,
+          wires: wires.length ? wires : undefined,
+          layout: layout && Object.keys(layout).length ? layout : undefined,
+          annotations: annotations?.length ? annotations : undefined,
+        },
+        ids,
+      );
     });
     set({
       selection: [],
@@ -1548,7 +1559,11 @@ export const useEditorStore = create<EditorState>()(
       set({ annotationPreview: null });
     }
   },
-    }),
+});
+
+export const useEditorStore = create<EditorState>()(
+  persist(
+    createEditorState,
     {
       name: 'ole-editor',
       version: 2,
@@ -1575,6 +1590,21 @@ export const useEditorStore = create<EditorState>()(
     },
   ),
 );
+
+/**
+ * A private, NON-persisted editor store.
+ *
+ * `useEditorStore` is a module singleton wired to `localStorage`, which is
+ * right for the editor (one document per page, survives reload) and wrong for
+ * a viewer: a monitoring dashboard may mount several diagrams side by side,
+ * next to an editor, and none of them may touch the user's autosaved draft.
+ * Each `<OneLineViewer>` owns one of these and hands it to the canvas layers
+ * through `EditorStoreContext`, so the very same layer components render
+ * either store.
+ */
+export function createEditorStore(): StoreApi<EditorState> {
+  return createStore<EditorState>()(createEditorState);
+}
 
 // ---------------------------------------------------------------------------
 // Helpers

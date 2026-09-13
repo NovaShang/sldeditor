@@ -14,10 +14,11 @@
  * still draw on top because they're added after.
  */
 
-import { useEditorStore } from '../store';
+import { useCanvasStore } from '../store';
 import type { LibraryEntry } from '../model';
 import { transformAttr } from './transform-attr';
 import { inkClass } from '../lib/colors';
+import { alarmAttr, qualityAttr, useRuntime } from '../runtime/runtime-context';
 
 interface BBox {
   x: number;
@@ -47,11 +48,14 @@ function HitRect({ lib }: { lib: LibraryEntry }) {
 }
 
 export function ElementLayer() {
-  const elements = useEditorStore((s) => s.internal.elements);
-  const layout = useEditorStore((s) => s.internal.layout);
-  const selection = useEditorStore((s) => s.selection);
-  const selectedNode = useEditorStore((s) => s.selectedNode);
-  const nodes = useEditorStore((s) => s.internal.nodes);
+  const elements = useCanvasStore((s) => s.internal.elements);
+  const layout = useCanvasStore((s) => s.internal.layout);
+  const selection = useCanvasStore((s) => s.selection);
+  const selectedNode = useCanvasStore((s) => s.selectedNode);
+  const nodes = useCanvasStore((s) => s.internal.nodes);
+  // Live data (viewer only — empty in the editor). Drives `data-alarm` /
+  // `data-quality` for the stylesheet and hides `visible: false` symbols.
+  const runtime = useRuntime().props;
   const selSet = new Set(selection);
 
   // Elements that have at least one terminal in the selected ConnectivityNode
@@ -74,6 +78,8 @@ export function ElementLayer() {
         if (!place) return null;
         const isSelected = selSet.has(re.element.id);
         const isNodeRelated = nodeRelated.has(re.element.id);
+        const rt = runtime[re.element.id];
+        if (rt?.visible === false) return null;
 
         if (!re.libraryDef) {
           // Unknown kind → small red placeholder square.
@@ -116,6 +122,8 @@ export function ElementLayer() {
             data-element-id={re.element.id}
             data-selected={isSelected ? 'true' : undefined}
             data-node-related={isNodeRelated ? 'true' : undefined}
+            data-alarm={alarmAttr(rt)}
+            data-quality={qualityAttr(rt)}
             transform={transformAttr(place)}
             /* The library SVG carries literal black; styles.css rewrites that
                to `currentColor`, so an ink class on this group recolours the

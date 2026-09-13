@@ -48,6 +48,19 @@
     --canvas-grid: #d4d4d4;
     --canvas-grid-strong: #b8b8b8;
     --selection: #0891b2;
+
+    /* Runtime (viewer) alarm colours. The host-facing tokens are
+       `--ole-alarm-warn` / `-alarm` / `-fault`, which are deliberately NOT
+       declared here: a declaration on `.ole-root` would shadow a value the
+       host sets on any ancestor (the documented usage). Instead every use
+       site reads `var(--ole-alarm-warn, var(--ole-alarm-warn-default))`, and
+       only the `-default` fallbacks live on the root — same pattern as
+       `--ole-selection` vs `--selection`. Alarm colours are the same in both
+       themes on purpose: a warning must read as the same warning on a light
+       and a dark dashboard. */
+    --ole-alarm-warn-default: #faad14;
+    --ole-alarm-alarm-default: #fa8c16;
+    --ole-alarm-fault-default: #f5222d;
   }
 
   .dark .ole-root,
@@ -103,6 +116,17 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* The root fills its container. `<OneLineEditor>` / `<OneLineViewer>`
+   default their className to `h-full w-full`, but in the library build every
+   Tailwind utility is scoped as a DESCENDANT of `.ole-root` (`.ole-root
+   .h-full`), so on the root itself those classes match nothing and the
+   component mounted at zero height. `:where()` keeps this at zero
+   specificity: any class or inline style the host puts on the root wins. */
+:where(.ole-root) {
+  width: 100%;
+  height: 100%;
 }
 
 /* iOS: disable pull-to-refresh + over-scroll bounce so canvas pans don't
@@ -837,4 +861,174 @@
 .ole-element[data-node-related='true'] [stroke='#000'],
 .ole-element[data-node-related='true'] [stroke='#000000'] {
   stroke: color-mix(in oklch, var(--selection) 55%, var(--foreground));
+}
+
+/* ---- Runtime data (viewer) ---------------------------------------------
+   `<OneLineViewer>` resolves bindings into `data-alarm` / `data-quality` on
+   the same element / bus / wire nodes the editor renders, and draws value /
+   badge / quality adornments in `.ole-rt-layer`. Everything below keys off
+   those attributes, so a host can restyle any of it from CSS alone.
+
+   Alarm colour goes through `color` for symbols and buses (they paint with
+   `currentColor`) and through `stroke` for wires. These rules sit after the
+   `.ole-ink-*` palette and the hover recolour so that, in the viewer, an
+   alarm always wins over the drawing's own ink. */
+.ole-element[data-alarm='warn'],
+.ole-bus[data-alarm='warn'] {
+  color: var(--ole-alarm-warn, var(--ole-alarm-warn-default));
+}
+.ole-element[data-alarm='alarm'],
+.ole-bus[data-alarm='alarm'] {
+  color: var(--ole-alarm-alarm, var(--ole-alarm-alarm-default));
+}
+.ole-element[data-alarm='fault'],
+.ole-bus[data-alarm='fault'] {
+  color: var(--ole-alarm-fault, var(--ole-alarm-fault-default));
+}
+.ole-wire[data-alarm='warn'] {
+  stroke: var(--ole-alarm-warn, var(--ole-alarm-warn-default));
+}
+.ole-wire[data-alarm='alarm'] {
+  stroke: var(--ole-alarm-alarm, var(--ole-alarm-alarm-default));
+}
+.ole-wire[data-alarm='fault'] {
+  stroke: var(--ole-alarm-fault, var(--ole-alarm-fault-default));
+}
+.ole-wire[data-alarm] {
+  stroke-width: 1.5;
+}
+/* Fault blinks. Opacity, not colour, so the blink reads the same on every
+   ink and never fights the hover / selection recolour. */
+@keyframes ole-alarm-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.25;
+  }
+}
+.ole-element[data-alarm='fault'],
+.ole-bus[data-alarm='fault'],
+.ole-wire[data-alarm='fault'],
+.ole-rt[data-alarm='fault'] .ole-rt-badge {
+  animation: ole-alarm-blink 1s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ole-element[data-alarm='fault'],
+  .ole-bus[data-alarm='fault'],
+  .ole-wire[data-alarm='fault'],
+  .ole-rt[data-alarm='fault'] .ole-rt-badge {
+    animation: none;
+  }
+}
+/* Bad / stale data: the symbol is greyed out; the `?` marker in the overlay
+   says why. Kept on the element only — the wires still carry the topology. */
+.ole-element[data-quality='bad'],
+.ole-element[data-quality='stale'],
+.ole-bus[data-quality='bad'],
+.ole-bus[data-quality='stale'] {
+  color: var(--muted-foreground);
+  opacity: 0.55;
+}
+
+/* Adornments. Sized in canvas units like the structural labels, so they
+   zoom with the drawing; `--ole-rt-font-size` is the host's knob. */
+.ole-rt-layer {
+  --ole-rt-font-size: 6px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color: var(--foreground);
+}
+.ole-rt-value {
+  font-size: var(--ole-rt-font-size);
+  fill: var(--muted-foreground);
+  paint-order: stroke;
+  stroke: var(--canvas-bg);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+.ole-rt-badge-bg {
+  fill: var(--foreground);
+  stroke: var(--canvas-bg);
+  stroke-width: 0.75;
+}
+.ole-rt-badge-text {
+  font-size: var(--ole-rt-font-size);
+  font-weight: 600;
+  fill: var(--canvas-bg);
+  dominant-baseline: central;
+}
+/* A badge on an alarmed element takes the alarm colour: the pill is usually
+   the reason ("过热", "SF6"), and the reason should look like the alarm. */
+.ole-rt[data-alarm='warn'] .ole-rt-badge-bg {
+  fill: var(--ole-alarm-warn, var(--ole-alarm-warn-default));
+}
+.ole-rt[data-alarm='alarm'] .ole-rt-badge-bg {
+  fill: var(--ole-alarm-alarm, var(--ole-alarm-alarm-default));
+}
+.ole-rt[data-alarm='fault'] .ole-rt-badge-bg {
+  fill: var(--ole-alarm-fault, var(--ole-alarm-fault-default));
+}
+.ole-rt[data-alarm] .ole-rt-badge-text {
+  fill: #ffffff;
+}
+.ole-rt-quality-bg {
+  fill: var(--muted-foreground);
+  stroke: var(--canvas-bg);
+  stroke-width: 0.75;
+}
+.ole-rt-quality-text {
+  font-size: var(--ole-rt-font-size);
+  font-weight: 700;
+  fill: var(--canvas-bg);
+  dominant-baseline: central;
+}
+
+/* ---- Viewer chrome ------------------------------------------------------
+   Written with `.ole-root` in the selector on purpose: the library build
+   prefixes every other selector with `.ole-root ` (a descendant), and the
+   viewer's wrapper IS the root, so a plain `.ole-viewer` rule would never
+   match. */
+.ole-root.ole-viewer .ole-canvas-root {
+  cursor: grab;
+}
+.ole-root.ole-viewer .ole-canvas-root.ole-viewer-panning {
+  cursor: grabbing;
+}
+.ole-root.ole-viewer .ole-element,
+.ole-root.ole-viewer .ole-bus-hit,
+.ole-root.ole-viewer .ole-junction-hit {
+  cursor: pointer;
+}
+/* The structural label is part of the device for a viewer: clicking "QF1"
+   selects QF1. (The editor only enables this under the select tool, where
+   it means "drag the label".) */
+.ole-root.ole-viewer .ole-element-label {
+  pointer-events: auto;
+  cursor: pointer;
+}
+/* Nothing is draggable here — annotation grab cursors would lie. */
+.ole-root.ole-viewer .ole-free-annotation-hit,
+.ole-root.ole-viewer .ole-ann-shape-hit,
+.ole-root.ole-viewer .ole-ann-label,
+.ole-root.ole-viewer .ole-ann-table-bg {
+  cursor: inherit;
+}
+/* Pin digits are an editing aid; a selected device in a viewer keeps them
+   hidden. Terminal dots are not rendered at all (no TerminalLayer). */
+.ole-root.ole-viewer .ole-element[data-selected='true'] .ole-terminal-labels {
+  display: none;
+}
+/* Selection stroke: `--ole-selection` is the host-facing token (falls back
+   to the theme's `--selection`). */
+.ole-root.ole-viewer .ole-selection-rect {
+  stroke: var(--ole-selection, var(--selection));
+}
+.ole-root.ole-viewer .ole-element[data-selected='true'] .ole-element-hit {
+  fill: color-mix(in oklch, var(--ole-selection, var(--selection)) 12%, transparent);
+}
+/* Hover on a bus: the element hover recolour above only knows symbols. */
+.ole-root.ole-viewer .ole-bus.ole-hover-element-host line {
+  stroke: var(--selection);
 }

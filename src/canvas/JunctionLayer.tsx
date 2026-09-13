@@ -12,7 +12,7 @@
  * The wider transparent hit circle keeps every junction clickable regardless.
  */
 
-import { useEditorStore } from '../store';
+import { useCanvasStore } from '../store';
 
 const DOT_R = 2.5;
 /** Wider invisible target for comfortable clicking, mirroring the bus hit-rect. */
@@ -26,11 +26,11 @@ const WIRE_HANDLE_R = 4.5;
 const WIRE_HANDLE_HIT_R = 8;
 
 export function JunctionLayer() {
-  const junctions = useEditorStore((s) => s.internal.junctions);
-  const selection = useEditorStore((s) => s.selection);
-  const selectedNode = useEditorStore((s) => s.selectedNode);
-  const nodes = useEditorStore((s) => s.internal.nodes);
-  const terminalToNode = useEditorStore((s) => s.internal.terminalToNode);
+  const junctions = useCanvasStore((s) => s.internal.junctions);
+  const selection = useCanvasStore((s) => s.selection);
+  const selectedNode = useCanvasStore((s) => s.selectedNode);
+  const nodes = useCanvasStore((s) => s.internal.nodes);
+  const terminalToNode = useCanvasStore((s) => s.internal.terminalToNode);
   const selSet = new Set(selection);
 
   const nodeRelated = new Set<string>();

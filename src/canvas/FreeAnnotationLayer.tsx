@@ -20,7 +20,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { useEditorStore } from '../store';
+import { useCanvasStore, useEditorStore } from '../store';
 import {
   annotationKind,
   type Annotation,
@@ -50,11 +50,11 @@ const DEFAULT_FONT_SIZE = ANNOTATION_FONT_SIZE;
 const LINE_HEIGHT = 1.25;
 
 export function FreeAnnotationLayer() {
-  const annotations = useEditorStore((s) => s.diagram.annotations);
-  const selected = useEditorStore((s) => s.selectedAnnotations);
-  const editing = useEditorStore((s) => s.editingAnnotation);
-  const editingCell = useEditorStore((s) => s.editingCell);
-  const preview = useEditorStore((s) => s.annotationPreview);
+  const annotations = useCanvasStore((s) => s.diagram.annotations);
+  const selected = useCanvasStore((s) => s.selectedAnnotations);
+  const editing = useCanvasStore((s) => s.editingAnnotation);
+  const editingCell = useCanvasStore((s) => s.editingCell);
+  const preview = useCanvasStore((s) => s.annotationPreview);
 
   if (!annotations || annotations.length === 0) return null;
 

@@ -4,7 +4,23 @@ export { OneLineEditor } from './OneLineEditor';
 export type { OneLineEditorProps } from './OneLineEditor';
 export type { OneLineEditorProps as SldEditorProps } from './OneLineEditor';
 
+// Read-only runtime viewer + the data-binding layer it evaluates. The
+// binding helpers are pure so a host can author bindings in its own UI (or
+// from an agent) and run them through its own undo history.
+export { OneLineViewer } from './OneLineViewer';
+export type { OneLineViewerProps, OneLineViewerApi } from './OneLineViewer';
+export { createStaticTagSource, toTagValue } from './runtime/tag-source';
+export type { TagSource, StaticTagSource } from './runtime/tag-source';
+export {
+  resolveBindings,
+  bindingsOf,
+  upsertBinding,
+  removeBindings,
+} from './runtime/bindings';
+export type { ResolvedElementProps } from './runtime/bindings';
+
 export type {
+  AlarmLevel,
   Annotation,
   AnnotationFill,
   AnnotationId,
@@ -12,6 +28,8 @@ export type {
   AnnotationPatch,
   AnnotationStroke,
   AnnotationStrokeWidth,
+  BindableProp,
+  Binding,
   BoxAnnotation,
   Bus,
   BusId,
@@ -35,6 +53,7 @@ export type {
   LibraryTerminal,
   LineAnnotation,
   LineArrow,
+  Mapping,
   NodeId,
   Orientation,
   ParamValue,
@@ -42,6 +61,11 @@ export type {
   Placement,
   RectAnnotation,
   TableAnnotation,
+  Tag,
+  TagPrimitive,
+  TagQuality,
+  TagType,
+  TagValue,
   TextAnnotation,
   TerminalRef,
   Wire,
@@ -96,7 +120,7 @@ export type {
   WireRender,
 } from './compiler';
 
-export { useEditorStore, soleSelectedAnnotation } from './store';
+export { useEditorStore, createEditorStore, soleSelectedAnnotation } from './store';
 export type { EditorState } from './store';
 
 // ID allocator — for embedding apps (e.g. AI agents) that build elements

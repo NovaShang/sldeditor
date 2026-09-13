@@ -1,5 +1,6 @@
 export {
   useEditorStore,
+  createEditorStore,
   soleSelectedAnnotation,
   type EditorState,
   type ToolId,
@@ -13,3 +14,4 @@ export {
   newJunctionId,
   wireIdFromEnds,
 } from './id-allocator';
+export { EditorStoreContext, useCanvasStore, useCanvasStoreApi } from './context';

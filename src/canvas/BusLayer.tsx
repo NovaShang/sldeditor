@@ -5,8 +5,9 @@
  * so hit-test can identify clicks on the bus body.
  */
 
-import { useEditorStore } from '../store';
+import { useCanvasStore } from '../store';
 import { inkClass } from '../lib/colors';
+import { alarmAttr, qualityAttr, useRuntime } from '../runtime/runtime-context';
 
 const STROKE_WIDTH = 3;
 /** Invisible click target wider than the visible stroke, mirroring
@@ -14,11 +15,13 @@ const STROKE_WIDTH = 3;
 const HIT_WIDTH = 12;
 
 export function BusLayer() {
-  const buses = useEditorStore((s) => s.internal.buses);
-  const selection = useEditorStore((s) => s.selection);
-  const selectedNode = useEditorStore((s) => s.selectedNode);
-  const nodes = useEditorStore((s) => s.internal.nodes);
-  const terminalToNode = useEditorStore((s) => s.internal.terminalToNode);
+  const buses = useCanvasStore((s) => s.internal.buses);
+  const selection = useCanvasStore((s) => s.selection);
+  const selectedNode = useCanvasStore((s) => s.selectedNode);
+  const nodes = useCanvasStore((s) => s.internal.nodes);
+  const terminalToNode = useCanvasStore((s) => s.internal.terminalToNode);
+  // A bus is a legal binding target too (see `Binding.target`).
+  const runtime = useRuntime().props;
   const selSet = new Set(selection);
 
   // Buses whose ConnectivityNode is selected get a halo. A bare end may be a
@@ -45,6 +48,8 @@ export function BusLayer() {
         const y2 = axis === 'x' ? at[1] : at[1] + half;
         const isSelected = selSet.has(bus.id);
         const isNodeRelated = nodeRelatedBuses.has(bus.id);
+        const rt = runtime[bus.id];
+        if (rt?.visible === false) return null;
         // Use the wire end's node id (if any) for `data-node-id` so a click
         // on the bus body resolves to its electrical node, mirroring the
         // wire layer's tagging convention.
@@ -64,6 +69,8 @@ export function BusLayer() {
             data-node-id={nodeId}
             data-selected={isSelected ? 'true' : undefined}
             data-node-related={isNodeRelated ? 'true' : undefined}
+            data-alarm={alarmAttr(rt)}
+            data-quality={qualityAttr(rt)}
             className={
               inkClass(bus.color) ? `ole-bus ${inkClass(bus.color)}` : 'ole-bus'
             }

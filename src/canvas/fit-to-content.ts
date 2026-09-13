@@ -9,6 +9,7 @@
  */
 
 import { getViewportApi } from './viewport-bus';
+import type { ViewportApi } from './useViewport';
 
 const FIT_PADDING_PX = 60;
 const MIN_SCALE = 0.1;
@@ -32,6 +33,15 @@ export function fitToContent(): boolean {
   const api = getViewportApi();
   const root = getCanvasRoot();
   if (!api || !root) return false;
+  return fitToContentWith(api, root);
+}
+
+/**
+ * The fit itself, against an explicit viewport + canvas root. `fitToContent`
+ * above resolves both from the editor's module-level singletons; the viewer
+ * owns its own pair (several viewers may share a page) and calls this.
+ */
+export function fitToContentWith(api: ViewportApi, root: HTMLElement): boolean {
   const rect = root.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) return false;
   const nodes = root.querySelectorAll('[data-element-id]');

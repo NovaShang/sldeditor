@@ -14,8 +14,11 @@
  * The hit polyline is never gapped, so selection still spans the whole wire.
  */
 
-import { useEditorStore } from '../store';
+import { useCanvasStore } from '../store';
 import { inkClass } from '../lib/colors';
+import { endOwner } from '../store/group-move';
+import { maxAlarm, useRuntime } from '../runtime/runtime-context';
+import type { AlarmLevel } from '../model';
 
 type Pt = [number, number];
 
@@ -71,18 +74,29 @@ function gapPath(path: Pt[], cutsBySeg: Map<number, Pt[]>): Pt[][] {
 }
 
 export function WireLayer() {
-  const wireRenders = useEditorStore((s) => s.internal.wireRenders);
-  const terminalToNode = useEditorStore((s) => s.internal.terminalToNode);
-  const wires = useEditorStore((s) => s.diagram.wires);
-  const selectedWire = useEditorStore((s) => s.selectedWire);
-  const selectedNode = useEditorStore((s) => s.selectedNode);
+  const wireRenders = useCanvasStore((s) => s.internal.wireRenders);
+  const terminalToNode = useCanvasStore((s) => s.internal.terminalToNode);
+  const wires = useCanvasStore((s) => s.diagram.wires);
+  const selectedWire = useCanvasStore((s) => s.selectedWire);
+  const selectedNode = useCanvasStore((s) => s.selectedNode);
+  const runtime = useRuntime().props;
 
   // Build a quick wireId → nodeId lookup so each rendered polyline knows
-  // its containing electrical node.
+  // its containing electrical node. In the same pass, a wire inherits the
+  // alarm of whatever it is attached to: "the symbol AND the wires leaving
+  // it" light up together, and a wire between two alarmed devices takes the
+  // worse of the two. Deliberately per-wire, not per-node — the whole net
+  // turning red would say "de-energised", which is a different feature.
   const wireToNode = new Map<string, string>();
+  const wireAlarm = new Map<string, AlarmLevel>();
   for (const w of wires ?? []) {
     const node = terminalToNode.get(w.ends[0]);
     if (node) wireToNode.set(w.id, node);
+    const level = maxAlarm(
+      runtime[endOwner(w.ends[0])]?.alarm,
+      runtime[endOwner(w.ends[1])]?.alarm,
+    );
+    if (level !== 'none') wireAlarm.set(w.id, level);
   }
 
   // ---- Crossing gaps: for each different-net segment crossing, gap the
@@ -146,6 +160,7 @@ export function WireLayer() {
               data-node-id={nodeId}
               data-manual={r.userEdited ? 'true' : undefined}
               data-selected={selected}
+              data-alarm={wireAlarm.get(r.wireId)}
               className={
                 inkClass(r.color) ? `ole-wire ${inkClass(r.color)}` : 'ole-wire'
               }

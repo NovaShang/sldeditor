@@ -53,7 +53,11 @@
   "routes": { /* Record<NodeId, Route> */ },
 
   // 为 v1+ 多图预留；v0 只用顶层 elements/connections/layout
-  "diagrams": []
+  "diagrams": [],
+
+  // 运行时数据绑定（可选，见 §14）：数据点声明 + 元素属性 ← tag
+  "tags": [ /* Tag[] */ ],
+  "bindings": [ /* Binding[] */ ]
 }
 ```
 
@@ -601,8 +605,62 @@ normalize = 默认值省略 + 字段排序。CI 里跑一组 fixtures 保证。
 ### v2+
 
 - 命名空间 / 子图组合（substation → feeder → bay）
-- 状态层独立（量测、告警绑定）
+- 状态层独立（量测、告警绑定）—— 阶段一已落地为 §14 的 `tags` / `bindings` + `<OneLineViewer>`；`linear` / `threshold` 映射与 slot 待续
 - 协作/版本（CRDT，复用现有 patch 模型）
+
+---
+
+## 14. 运行时绑定：`tags` / `bindings`
+
+把一张设计图变成实时底图的元数据。两者都是**文件数据**：编辑器原样保留（round-trip 保真），只在删除目标元素时同步删掉指向它的 binding；`<OneLineViewer>` 拿它们对着宿主提供的 `TagSource` 求值。完整设计见 `binding-and-viewer-api.md`，本节只写落地的子集。
+
+```ts
+interface Tag {
+  path: string;            // 宿主定义命名空间，如 "device/1024/health"
+  type: 'bool' | 'int' | 'float' | 'string' | 'enum';
+  unit?: string;           // value 读数后面显示的单位
+  enum?: string[];
+  description?: string;
+}
+
+interface Binding {
+  target: ElementId;       // 设备 id 或母线 id
+  prop: 'visible' | 'label.text' | 'alarm' | 'value' | 'badge' | `state.${string}`;
+  tag: string;             // 不要求在 tags 里声明过
+  mapping?: Mapping;       // 缺省 = { type: 'pass' }
+}
+
+type Mapping =
+  | { type: 'pass' }
+  | { type: 'discrete'; cases: { when: string | number | boolean | null; out: unknown }[]; default?: unknown };
+
+interface TagValue { v: unknown; q?: 'good' | 'bad' | 'stale'; t?: number }
+```
+
+约定：
+
+- `tags` 只是索引（给作者面板做下拉、给 `value` 找单位），binding 引用未声明的 path 也合法。
+- 同一 `target + prop` 只保留一条（`upsertBinding` 覆盖）。
+- `discrete` 用严格相等匹配 `when`，没命中取 `default`，没有 `default` 就不设该属性。
+- 未知的 `mapping.type` 跳过并 `console.warn` 一次，文件照常打开——给以后的 `linear` / `threshold` 留演进空间。
+- `q: 'bad'` 的采样**不应用**（元素保持设计态外观，灰显 + `?`）；`stale` 应用最后已知值，同样灰显。
+- 没有任何 tag 有值的目标记为 `unbound`，和没绑定一样画。
+
+```jsonc
+{
+  "tags": [
+    { "path": "QF1/health", "type": "enum", "enum": ["normal", "attention", "abnormal", "critical"] },
+    { "path": "QF1/I", "type": "float", "unit": "A" }
+  ],
+  "bindings": [
+    { "target": "QF1", "prop": "alarm", "tag": "QF1/health",
+      "mapping": { "type": "discrete",
+        "cases": [ { "when": "attention", "out": "warn" }, { "when": "abnormal", "out": "alarm" }, { "when": "critical", "out": "fault" } ],
+        "default": "none" } },
+    { "target": "QF1", "prop": "value", "tag": "QF1/I" }
+  ]
+}
+```
 
 ---
 

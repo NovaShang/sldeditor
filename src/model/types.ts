@@ -1,4 +1,5 @@
 import type { LibraryEntry } from './library';
+import type { Binding, Tag } from './binding';
 
 export type DiagramVersion = '1';
 export type ElementId = string;
@@ -70,6 +71,18 @@ export interface DiagramFile {
    * read as custom at a glance.
    */
   customKinds?: LibraryEntry[];
+  /**
+   * Data points this drawing refers to. Optional, descriptive only — an
+   * index for authoring UIs (dropdowns, units, enum values). A binding may
+   * name a tag that is not declared here.
+   */
+  tags?: Tag[];
+  /**
+   * Element/bus property ← tag bindings, evaluated by `<OneLineViewer>`
+   * against a host `TagSource`. The editor keeps them verbatim (round-trip)
+   * and only drops a binding when its target element is deleted.
+   */
+  bindings?: Binding[];
 }
 
 export interface DiagramMeta {

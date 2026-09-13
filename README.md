@@ -66,6 +66,7 @@ The `style.css` import is **required** in npm mode (in the submodule layout your
 
 The editor reads/writes from a built-in zustand store. For embedding apps that want programmatic control (importers, AI tool-calling, custom renderers), `src/index.ts` exports:
 
+- `OneLineViewer` — read-only runtime viewer: same canvas, private store, live data via a host `TagSource` (see [API reference](./docs/api.md#onelineviewer--read-only-runtime-viewer))
 - `useEditorStore` — full store: diagram, selection, viewport, undo stack
 - `compile(diagram)` — produces an `InternalModel` with resolved geometry + connectivity nodes; use it to build viewers or run topology analysis without re-implementing the model
 - `LIBRARY`, `getLibraryEntry` — the symbol registry
@@ -79,7 +80,7 @@ The editor reads/writes from a built-in zustand store. For embedding apps that w
 
 - Not a format converter — does **not** read/write CIM, IEC 61850 SCL, PSD-BPA, PSS/E, or PowerFactory formats. JSON only.
 - Not a simulator — no power flow, short-circuit, or stability calculations.
-- Not a SCADA viewer — no real-time binding.
+- Not a SCADA platform — `<OneLineViewer>` renders host-supplied live tags through declarative bindings, but there are no protocol drivers, alarm history, trends or command paths; those stay in the host.
 - Not a secondary / control-loop diagram tool.
 
 ## Docs

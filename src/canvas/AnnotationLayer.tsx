@@ -27,7 +27,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useEditorStore } from '../store';
+import { useCanvasStore, useEditorStore } from '../store';
 import type { LabelMode } from '../model';
 import {
   fallbackAnchor,
@@ -40,18 +40,22 @@ import {
 } from '../lib/element-labels';
 import { placeWireLabel } from '../lib/wire-labels';
 import { inkClass } from '../lib/colors';
+import { useRuntime } from '../runtime/runtime-context';
 
 export function AnnotationLayer() {
-  const elements = useEditorStore((s) => s.internal.elements);
-  const layout = useEditorStore((s) => s.internal.layout);
-  const wireRenders = useEditorStore((s) => s.internal.wireRenders);
-  const mode: LabelMode = useEditorStore(
+  const elements = useCanvasStore((s) => s.internal.elements);
+  const layout = useCanvasStore((s) => s.internal.layout);
+  const wireRenders = useCanvasStore((s) => s.internal.wireRenders);
+  const mode: LabelMode = useCanvasStore(
     (s) => s.diagram.meta?.labelMode ?? 'all',
   );
-  const fontSize = useEditorStore((s) =>
+  const fontSize = useCanvasStore((s) =>
     resolveLabelFontSize(s.diagram.meta?.labelFontSize),
   );
-  const editingElement = useEditorStore((s) => s.editingElement);
+  const editingElement = useCanvasStore((s) => s.editingElement);
+  // Live data (viewer only): a `label.text` binding replaces the whole block,
+  // a hidden element takes its label with it.
+  const runtime = useRuntime().props;
   const lineHeight = labelLineHeight(fontSize);
 
   return (
@@ -63,8 +67,13 @@ export function AnnotationLayer() {
       {Array.from(elements.values()).map((re) => {
         const place = layout.get(re.element.id);
         if (!place || !re.libraryDef) return null;
+        const rt = runtime[re.element.id];
+        if (rt?.visible === false) return null;
         const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef, fontSize);
-        const lines = labelLines(re, mode);
+        const lines =
+          rt?.labelText !== undefined
+            ? nameLines(rt.labelText, '')
+            : labelLines(re, mode);
         const { world, textAnchor, dy } = placeLabel(
           anchor,
           re.libraryDef,

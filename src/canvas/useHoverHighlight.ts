@@ -13,7 +13,7 @@
  */
 
 import { useEffect, type RefObject } from 'react';
-import { useEditorStore } from '../store';
+import { useCanvasStoreApi } from '../store';
 import { hitElement, hitNode, hitTerminal } from './hit-test';
 import { publishHoverElement } from './hover-bus';
 
@@ -24,6 +24,7 @@ const C_NODE = 'ole-hover-node-on';
 export function useHoverHighlight(
   hostRef: RefObject<HTMLDivElement | null>,
 ): void {
+  const store = useCanvasStoreApi();
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
@@ -97,8 +98,7 @@ export function useHoverHighlight(
       const terminal = hitTerminal(e.target);
       let nodeId: string | null = null;
       if (terminal) {
-        nodeId =
-          useEditorStore.getState().internal.terminalToNode.get(terminal) ?? null;
+        nodeId = store.getState().internal.terminalToNode.get(terminal) ?? null;
       } else {
         nodeId = hitNode(e.target);
       }
@@ -118,7 +118,7 @@ export function useHoverHighlight(
       updateElementHover(null);
       updateNodeHover(null);
     };
-  }, [hostRef]);
+  }, [hostRef, store]);
 }
 
 function cssEscape(s: string): string {

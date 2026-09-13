@@ -8,7 +8,7 @@
  * pointer events to canvas coordinates without owning their own viewport.
  */
 
-import { useEffect, useRef, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { dispatchSyntheticPointerCancel } from './synthetic-pointer-cancel';
 import { publishScale } from './zoom-bus';
 
@@ -38,11 +38,22 @@ const MAX_SCALE = 8;
 const ZOOM_FACTOR_WHEEL = 1.0015;
 const ZOOM_FACTOR_PINCH = 1.02;
 
+export interface ViewportOptions {
+  /**
+   * Publish the live scale on the module-level `zoom-bus` (what the editor's
+   * zoom-percentage readout listens to). Default true. A viewer instance
+   * passes false so several canvases on one page don't fight over it.
+   */
+  shared?: boolean;
+}
+
 export function useViewport(
   hostRef: RefObject<HTMLDivElement | null>,
   groupRef: RefObject<SVGGElement | null>,
   initial: Viewport = { tx: 0, ty: 0, scale: 1 },
+  options: ViewportOptions = {},
 ): ViewportApi {
+  const shared = options.shared ?? true;
   const vp = useRef<Viewport>({ ...initial });
   const listeners = useRef(new Set<(vp: Viewport) => void>());
 
@@ -60,7 +71,7 @@ export function useViewport(
     if (host) {
       host.style.setProperty('--canvas-scale', String(vp.current.scale));
     }
-    publishScale(vp.current.scale);
+    if (shared) publishScale(vp.current.scale);
     if (listeners.current.size > 0) {
       const snapshot = { ...vp.current };
       for (const fn of listeners.current) fn(snapshot);
@@ -306,7 +317,11 @@ export function useViewport(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return {
+  // One api object per mount. Everything it touches lives on refs, so a
+  // stable identity is safe — and consumers that key effects on it (the
+  // viewer's fit-on-change, the editor's viewport-bus registration) must not
+  // see a fresh object every render.
+  return useMemo<ViewportApi>(() => ({
     screenToSvg(clientX: number, clientY: number) {
       const host = hostRef.current;
       if (!host) return [clientX, clientY];
@@ -331,7 +346,8 @@ export function useViewport(
         listeners.current.delete(listener);
       };
     },
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
 }
 
 function clamp(v: number, lo: number, hi: number): number {
