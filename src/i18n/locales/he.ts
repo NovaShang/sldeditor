@@ -60,6 +60,8 @@ export const ui: UiTable = {
   'props.annLabel': 'תווית',
   'props.annLabelPlaceholder': 'לדוגמה: לוח 1#',
   'props.color': 'צבע',
+  'props.size': 'גודל',
+  'props.sizeReset': 'איפוס ל-100%',
   'props.color.default': 'ברירת מחדל',
   'props.color.red': 'אדום',
   'props.color.amber': 'ענבר',

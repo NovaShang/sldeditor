@@ -102,8 +102,9 @@ export function anchorWorld(
   anchor: LibraryLabelAnchor,
   place: ResolvedPlacement,
 ): [number, number] {
-  let x = anchor.x;
-  let y = anchor.y;
+  const s = place.scale ?? 1;
+  let x = anchor.x * s;
+  let y = anchor.y * s;
   if (place.mirror) x = -x;
   switch (place.rot) {
     case 90:

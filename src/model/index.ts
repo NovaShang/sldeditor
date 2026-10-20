@@ -37,7 +37,13 @@ export type {
   WireId,
 } from './types';
 
-export { annotationKind, isTextAnnotation } from './types';
+export {
+  annotationKind,
+  isTextAnnotation,
+  clampSymbolScale,
+  SYMBOL_SCALE_MIN,
+  SYMBOL_SCALE_MAX,
+} from './types';
 
 export type {
   LibraryEntry,

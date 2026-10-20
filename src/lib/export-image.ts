@@ -5,6 +5,7 @@
  * etc.) out of the file and crops tightly around the actual content.
  */
 
+import { compensateStrokes } from './symbol-scale';
 import { transformAttr } from '../canvas/transform-attr';
 import { transformPoint, type InternalModel } from '../compiler';
 import {
@@ -141,7 +142,9 @@ export function buildExportSvg(
     out.push(
       `  <g id="${escapeXml(re.element.id)}" transform="${transformAttr(place)}">`,
     );
-    out.push(`    ${recolorSymbol(re.libraryDef.svg, re.element.color)}`);
+    out.push(
+      `    ${recolorSymbol(compensateStrokes(re.libraryDef.svg, place.scale), re.element.color)}`,
+    );
     out.push('  </g>');
   }
 

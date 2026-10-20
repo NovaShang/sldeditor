@@ -66,6 +66,8 @@ export const ui: UiTable = {
   'props.annLabel': 'ラベル',
   'props.annLabelPlaceholder': '例：配電盤 1',
   'props.color': '色',
+  'props.size': 'サイズ',
+  'props.sizeReset': '100% に戻す',
   'props.color.default': '既定',
   'props.color.red': '赤',
   'props.color.amber': '橙',

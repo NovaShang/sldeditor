@@ -66,6 +66,8 @@ export const ui: UiTable = {
   'props.annLabel': 'Étiquette',
   'props.annLabelPlaceholder': 'ex. : Tableau n°1',
   'props.color': 'Couleur',
+  'props.size': 'Taille',
+  'props.sizeReset': 'Revenir à 100 %',
   'props.color.default': 'Par défaut',
   'props.color.red': 'Rouge',
   'props.color.amber': 'Ambre',

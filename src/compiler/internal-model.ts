@@ -17,6 +17,7 @@ import type {
   TerminalRef,
   WireEnd,
 } from '../model';
+import { clampSymbolScale } from '../model';
 import { LIBRARY } from './library-index';
 
 /** Element + the resolved library record for its `kind`. */
@@ -31,6 +32,9 @@ export interface ResolvedPlacement {
   at: [number, number];
   rot: 0 | 90 | 180 | 270;
   mirror: boolean;
+  /** Symbol size factor, already clamped. Optional so the many literal
+   *  placements built by auto-layout stay valid; absent = 1. */
+  scale?: number;
 }
 
 /** Bus geometry resolved at compile time. `axis` derived from `rot`. */
@@ -150,6 +154,9 @@ export function resolvePlacement(p?: Placement): ResolvedPlacement {
     at: p?.at ?? [0, 0],
     rot: p?.rot ?? 0,
     mirror: p?.mirror ?? false,
+    ...(p?.scale !== undefined && clampSymbolScale(p.scale) !== 1
+      ? { scale: clampSymbolScale(p.scale) }
+      : {}),
   };
 }
 

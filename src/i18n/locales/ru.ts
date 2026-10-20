@@ -60,6 +60,8 @@ export const ui: UiTable = {
   'props.annLabel': 'Подпись',
   'props.annLabelPlaceholder': 'например, Щит №1',
   'props.color': 'Цвет',
+  'props.size': 'Размер',
+  'props.sizeReset': 'Сбросить до 100 %',
   'props.color.default': 'По умолчанию',
   'props.color.red': 'Красный',
   'props.color.amber': 'Янтарный',

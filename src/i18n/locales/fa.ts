@@ -66,6 +66,8 @@ export const ui: UiTable = {
   'props.annLabel': 'برچسب',
   'props.annLabelPlaceholder': 'مثلاً: تابلو شماره 1',
   'props.color': 'رنگ',
+  'props.size': 'اندازه',
+  'props.sizeReset': 'بازگشت به ۱۰۰٪',
   'props.color.default': 'پیش‌فرض',
   'props.color.red': 'قرمز',
   'props.color.amber': 'کهربایی',

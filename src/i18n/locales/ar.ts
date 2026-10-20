@@ -66,6 +66,8 @@ export const ui: UiTable = {
   'props.annLabel': 'التسمية',
   'props.annLabelPlaceholder': 'مثال: لوحة رقم 1',
   'props.color': 'اللون',
+  'props.size': 'الحجم',
+  'props.sizeReset': 'إعادة إلى 100%',
   'props.color.default': 'افتراضي',
   'props.color.red': 'أحمر',
   'props.color.amber': 'كهرماني',

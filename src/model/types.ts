@@ -190,6 +190,24 @@ export interface Placement {
   at: [number, number];
   rot?: 0 | 90 | 180 | 270;
   mirror?: boolean;
+  /**
+   * Size of the symbol relative to the library drawing. Absent → 1, which is
+   * what every diagram written before this field existed renders at. Scales
+   * the symbol AND its terminal positions (so wires still land on the pins);
+   * line weight and label text size stay the drawing's own. Clamped to
+   * `SYMBOL_SCALE_MIN…MAX` by every reader.
+   */
+  scale?: number;
+}
+
+/** Smallest / largest symbol size a placement may ask for. */
+export const SYMBOL_SCALE_MIN = 0.25;
+export const SYMBOL_SCALE_MAX = 4;
+
+/** Clamp a stored `Placement.scale` to a usable factor (absent/invalid → 1). */
+export function clampSymbolScale(s: unknown): number {
+  if (typeof s !== 'number' || !Number.isFinite(s) || s <= 0) return 1;
+  return Math.min(SYMBOL_SCALE_MAX, Math.max(SYMBOL_SCALE_MIN, s));
 }
 
 export type AnnotationId = string;

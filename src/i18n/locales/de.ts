@@ -66,6 +66,8 @@ export const ui: UiTable = {
   'props.annLabel': 'Bezeichnung',
   'props.annLabelPlaceholder': 'z. B. Verteiler 1',
   'props.color': 'Farbe',
+  'props.size': 'Größe',
+  'props.sizeReset': 'Auf 100 % zurücksetzen',
   'props.color.default': 'Standard',
   'props.color.red': 'Rot',
   'props.color.amber': 'Bernstein',

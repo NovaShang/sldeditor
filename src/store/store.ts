@@ -57,6 +57,7 @@ import {
   wireIdFromEnds,
 } from './id-allocator';
 import { normalizePath } from '../model/wire-path';
+import { clampSymbolScale } from '../model';
 import { endOwner, translateManualWirePaths } from './group-move';
 import { pruneOrphanedJunctions } from './prune-junctions';
 import { removeBindingsForTargets } from '../runtime/bindings';
@@ -1122,10 +1123,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
         if (layout[id]) continue;
         const resolved = internal.layout.get(id);
         if (!resolved) continue;
-        const placement: Placement = { at: resolved.at };
-        if (resolved.rot) placement.rot = resolved.rot;
-        if (resolved.mirror) placement.mirror = resolved.mirror;
-        layout[id] = placement;
+        layout[id] = compactPlacement(resolved);
       }
 
       const junctions = pruneOrphanedJunctions(oldWires, wires, d.junctions ?? []);
@@ -1159,10 +1157,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
         if (layout[id]) continue;
         const resolved = internal.layout.get(id);
         if (!resolved) continue;
-        const placement: Placement = { at: resolved.at };
-        if (resolved.rot) placement.rot = resolved.rot;
-        if (resolved.mirror) placement.mirror = resolved.mirror;
-        layout[id] = placement;
+        layout[id] = compactPlacement(resolved);
       }
 
       const oldWires = d.wires ?? [];
@@ -1467,6 +1462,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
         ...(patch.mirror !== undefined
           ? { mirror: patch.mirror }
           : cur?.mirror ? { mirror: cur.mirror } : {}),
+        ...scaleField(patch.scale !== undefined ? patch.scale : cur?.scale),
       };
       return {
         ...d,
@@ -1651,7 +1647,15 @@ function compactPlacement(rp: ResolvedPlacement): Placement {
     at: [rp.at[0], rp.at[1]],
     ...(rp.rot ? { rot: rp.rot } : {}),
     ...(rp.mirror ? { mirror: rp.mirror } : {}),
+    ...scaleField(rp.scale),
   };
+}
+
+/** `{ scale }` for a non-default size, `{}` for 1/absent — the file omits it. */
+function scaleField(s: number | undefined): { scale?: number } {
+  if (s === undefined) return {};
+  const c = clampSymbolScale(s);
+  return c === 1 ? {} : { scale: c };
 }
 
 function compactBusLayout(g: BusGeometry): BusLayout {

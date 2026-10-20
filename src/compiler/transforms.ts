@@ -1,6 +1,7 @@
 /**
  * Geometric transforms for placing library-local coordinates onto the canvas.
- * Order applied to a local point: mirror (about y-axis) → rotate → translate.
+ * Order applied to a local point: scale → mirror (about y-axis) → rotate →
+ * translate.
  * The same convention drives ElementLayer's SVG `transform` attribute, so
  * SVG output and computed terminal coords stay in sync.
  */
@@ -12,7 +13,9 @@ export function transformPoint(
   local: [number, number],
   p: ResolvedPlacement,
 ): [number, number] {
-  let [x, y] = local;
+  const s = p.scale ?? 1;
+  let x = local[0] * s;
+  let y = local[1] * s;
   if (p.mirror) x = -x;
   switch (p.rot) {
     case 0:

@@ -17,6 +17,7 @@
 import { useCanvasStore } from '../store';
 import type { LibraryEntry } from '../model';
 import { transformAttr } from './transform-attr';
+import { compensateStrokes } from '../lib/symbol-scale';
 import { inkClass } from '../lib/colors';
 import { alarmAttr, qualityAttr, useRuntime } from '../runtime/runtime-context';
 
@@ -135,7 +136,11 @@ export function ElementLayer() {
             }
           >
             <HitRect lib={re.libraryDef} />
-            <g dangerouslySetInnerHTML={{ __html: re.libraryDef.svg }} />
+            <g
+              dangerouslySetInnerHTML={{
+                __html: compensateStrokes(re.libraryDef.svg, place.scale),
+              }}
+            />
             {re.libraryDef.terminalLabelsSvg && (
               /* Pin digits — hidden unless wiring/selected (see styles.css). */
               <g

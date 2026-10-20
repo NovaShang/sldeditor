@@ -60,6 +60,8 @@ export const ui: UiTable = {
   'props.annLabel': 'Rótulo',
   'props.annLabelPlaceholder': 'ex.: Quadro nº 1',
   'props.color': 'Cor',
+  'props.size': 'Tamanho',
+  'props.sizeReset': 'Voltar para 100%',
   'props.color.default': 'Padrão',
   'props.color.red': 'Vermelho',
   'props.color.amber': 'Âmbar',

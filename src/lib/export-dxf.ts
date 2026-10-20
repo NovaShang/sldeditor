@@ -427,7 +427,7 @@ function emitCircle(
   const cy = numAttr(el, 'cy');
   const r = numAttr(el, 'r');
   const center = worldToDxf(localToWorld([cx, cy], place));
-  w.circle(LAYER_ELEMENTS, center, r);
+  w.circle(LAYER_ELEMENTS, center, r * (place.scale ?? 1));
 }
 
 function emitEllipse(
@@ -454,7 +454,7 @@ function emitCircleRaw(
   place: ResolvedPlacement,
 ): void {
   const center = worldToDxf(localToWorld([cx, cy], place));
-  w.circle(LAYER_ELEMENTS, center, r);
+  w.circle(LAYER_ELEMENTS, center, r * (place.scale ?? 1));
 }
 
 function sampleEllipse(
@@ -490,7 +490,7 @@ function emitText(
   const p = worldToDxf(localToWorld([x, y], place));
   // place.rot is CCW in math frame (see transforms.ts); after flipping Y we
   // are in DXF's CCW frame, so the same numeric angle maps directly.
-  w.text(LAYER_ELEMENTS, p, txt, fs, place.rot, place.mirror);
+  w.text(LAYER_ELEMENTS, p, txt, fs * (place.scale ?? 1), place.rot, place.mirror);
 }
 
 // -----------------------------------------------------------------------------

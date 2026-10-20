@@ -107,7 +107,9 @@ function transformLocalCorner(
   pt: [number, number],
   p: ResolvedPlacement,
 ): [number, number] {
-  let [x, y] = pt;
+  const s = p.scale ?? 1;
+  let x = pt[0] * s;
+  let y = pt[1] * s;
   if (p.mirror) x = -x;
   switch (p.rot) {
     case 0:

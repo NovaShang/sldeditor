@@ -121,6 +121,7 @@ export function PropertyPanel() {
             .updateElement(id, { color: c === 'default' ? undefined : c })
         }
       />
+      {lib && <SizeRow id={id} />}
       {lib?.state && lib.state.length > 0 && (
         <div className="mt-1 flex flex-col gap-1.5 border-t border-border/40 pt-2.5">
           {lib.state.map((field) => (
@@ -668,6 +669,59 @@ function StrokeGlyph({ width, dash }: { width: number; dash?: string }) {
         strokeLinecap="round"
       />
     </svg>
+  );
+}
+
+/**
+ * Symbol size, stepped through fixed stops. Asked for as "a one-size-smaller
+ * CT" and "enlarge 20%" — a few clean stops serve that better than a free
+ * slider, and the middle value (100%) is one click away to undo it. A size set
+ * some other way (an imported file, the assistant) shows as-is and steps to
+ * the nearest stop.
+ */
+const SIZE_STOPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4];
+
+function SizeRow({ id }: { id: string }) {
+  const t = useT();
+  const scale = useEditorStore((s) => s.internal.layout.get(id)?.scale ?? 1);
+  const set = (v: number) =>
+    useEditorStore.getState().updatePlacement(id, { scale: v });
+  const down = [...SIZE_STOPS].reverse().find((v) => v < scale - 1e-6);
+  const up = SIZE_STOPS.find((v) => v > scale + 1e-6);
+  const label = t('props.size');
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-label={`${label} −`}
+          disabled={down === undefined}
+          onClick={() => down !== undefined && set(down)}
+          className="h-7 w-7 rounded-md border border-border/60 text-[13px] leading-none text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+        >
+          −
+        </button>
+        <button
+          type="button"
+          title={t('props.sizeReset')}
+          aria-label={t('props.sizeReset')}
+          disabled={scale === 1}
+          onClick={() => set(1)}
+          className="h-7 w-12 rounded-md text-center font-mono text-[11px] tabular-nums hover:bg-accent disabled:pointer-events-none"
+        >
+          {Math.round(scale * 100)}%
+        </button>
+        <button
+          type="button"
+          aria-label={`${label} +`}
+          disabled={up === undefined}
+          onClick={() => up !== undefined && set(up)}
+          className="h-7 w-7 rounded-md border border-border/60 text-[13px] leading-none text-muted-foreground hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+        >
+          +
+        </button>
+      </div>
+    </Field>
   );
 }
 
