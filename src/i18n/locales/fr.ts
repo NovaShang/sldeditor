@@ -100,7 +100,7 @@ export const ui: UiTable = {
   'view.zoomIn': 'Zoom avant',
   'view.zoomInHint': 'Zoom avant par palier ; aussi molette ↑ ou ⌘+',
   'view.fit': 'Ajuster la vue',
-  'view.fitHint': 'Zoom automatique et centrage de tous les éléments',
+  'view.fitHint': 'Zoom automatique et centrage sur tout le schéma',
   'view.gridHide': 'Masquer la grille',
   'view.gridShow': 'Afficher la grille',
   'view.gridHotkey': 'G',

@@ -100,7 +100,7 @@ export const ui: UiTable = {
   'view.zoomIn': 'Vergrößern',
   'view.zoomInHint': 'Stufenweise vergrößern; auch Mausrad ↑ oder ⌘+',
   'view.fit': 'Ansicht einpassen',
-  'view.fitHint': 'Alle Elemente automatisch zoomen und zentrieren',
+  'view.fitHint': 'Die ganze Zeichnung automatisch zoomen und zentrieren',
   'view.gridHide': 'Raster ausblenden',
   'view.gridShow': 'Raster einblenden',
   'view.gridHotkey': 'G',

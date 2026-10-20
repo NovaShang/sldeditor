@@ -93,7 +93,7 @@ export const ui: UiTable = {
   'view.zoomIn': 'Acercar',
   'view.zoomInHint': 'Acerca un nivel; también rueda ↑ o ⌘+',
   'view.fit': 'Ajustar vista',
-  'view.fitHint': 'Ajusta el zoom y centra todos los elementos automáticamente',
+  'view.fitHint': 'Ajusta el zoom y centra todo el dibujo automáticamente',
   'view.gridHide': 'Ocultar cuadrícula',
   'view.gridShow': 'Mostrar cuadrícula',
   'view.gridHotkey': 'G',

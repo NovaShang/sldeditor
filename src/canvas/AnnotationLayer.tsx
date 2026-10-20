@@ -150,6 +150,7 @@ export function AnnotationLayer() {
           return (
             <text
               key={`wire-${r.wireId}`}
+              data-wire-label={r.wireId}
               x={placed.world[0]}
               y={placed.world[1]}
               textAnchor={placed.textAnchor}

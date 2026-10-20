@@ -93,7 +93,7 @@ export const ui: UiTable = {
   'view.zoomIn': 'Aumentar zoom',
   'view.zoomInHint': 'Aumenta o zoom por etapas; também roda ↑ ou ⌘+',
   'view.fit': 'Ajustar à tela',
-  'view.fitHint': 'Aplica zoom automático e centraliza todos os elementos',
+  'view.fitHint': 'Aplica zoom automático e centraliza o desenho inteiro',
   'view.gridHide': 'Ocultar grade',
   'view.gridShow': 'Mostrar grade',
   'view.gridHotkey': 'G',

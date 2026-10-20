@@ -93,7 +93,7 @@ export const ui: UiTable = {
   'view.zoomIn': 'הגדל תצוגה',
   'view.zoomInHint': 'הגדלה מדורגת; ניתן גם עם גלגלת ↑ או ⌘+',
   'view.fit': 'התאם תצוגה',
-  'view.fitHint': 'מתאים אוטומטית ומרכז את כל הרכיבים',
+  'view.fitHint': 'מתאים אוטומטית ומרכז את כל השרטוט',
   'view.gridHide': 'הסתר רשת',
   'view.gridShow': 'הצג רשת',
   'view.gridHotkey': 'G',

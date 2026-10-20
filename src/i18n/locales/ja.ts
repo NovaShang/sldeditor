@@ -100,7 +100,7 @@ export const ui: UiTable = {
   'view.zoomIn': 'ズームイン',
   'view.zoomInHint': '段階的にズームイン。ホイール ↑ や ⌘+ でも可',
   'view.fit': '全体表示',
-  'view.fitHint': 'すべての要素を自動でズームして中央に配置',
+  'view.fitHint': '図面全体を自動でズームして中央に配置',
   'view.gridHide': 'グリッドを非表示',
   'view.gridShow': 'グリッドを表示',
   'view.gridHotkey': 'G',

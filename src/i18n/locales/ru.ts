@@ -93,7 +93,7 @@ export const ui: UiTable = {
   'view.zoomIn': 'Увеличить',
   'view.zoomInHint': 'Увеличение на шаг; также колесо ↑ или ⌘+',
   'view.fit': 'Вписать в экран',
-  'view.fitHint': 'Автоматически масштабировать и центрировать все элементы',
+  'view.fitHint': 'Автоматически масштабировать и центрировать всю схему',
   'view.gridHide': 'Скрыть сетку',
   'view.gridShow': 'Показать сетку',
   'view.gridHotkey': 'G',

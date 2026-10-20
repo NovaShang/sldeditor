@@ -100,7 +100,7 @@ export const ui: UiTable = {
   'view.zoomIn': 'بزرگ‌نمایی',
   'view.zoomInHint': 'بزرگ‌نمایی پله‌ای؛ همچنین چرخ ماوس ↑ یا ⌘+',
   'view.fit': 'تنظیم نما',
-  'view.fitHint': 'بزرگ‌نمایی خودکار و وسط‌چین کردن همه عناصر',
+  'view.fitHint': 'بزرگ‌نمایی خودکار و وسط‌چین کردن کل نقشه',
   'view.gridHide': 'پنهان کردن شبکه',
   'view.gridShow': 'نمایش شبکه',
   'view.gridHotkey': 'G',

@@ -3,9 +3,10 @@
  * ViewToolbar and the automatic reset that fires on first mount / after
  * loading a file.
  *
- * Element bboxes come from the live DOM (`data-element-id` nodes), so the
- * canvas must already have rendered the diagram. `fitToContentSoon` defers
- * via rAF until that's true (typical use: store update → next frame fit).
+ * Bounds come from the live DOM — every node matching `FIT_CONTENT_SELECTOR`
+ * — so the canvas must already have rendered the diagram. `fitToContentSoon`
+ * defers via rAF until that's true (typical use: store update → next frame
+ * fit).
  */
 
 import { getViewportApi } from './viewport-bus';
@@ -16,6 +17,56 @@ const MIN_SCALE = 0.1;
 const MAX_SCALE = 8;
 const READY_RETRY_FRAMES = 8;
 
+/**
+ * Everything that is *drawn*, as opposed to editor chrome (selection halos,
+ * handles, previews, ghosts): devices, buses, junctions and terminals (all
+ * tagged `data-element-id`), wires, element label blocks, wire labels and
+ * free annotations (title blocks, frames, legends, tables).
+ *
+ * The fit used to match `[data-element-id]` alone, so a drawing whose
+ * annotations reach far past its devices was framed at a fraction of its
+ * extent — and the canvas disagreed with the export frame, which has always
+ * counted labels and annotations (`computeContentBbox` in export-image.ts).
+ * A layer that adds a new kind of drawn object must tag it with one of these
+ * attributes (or extend this list) for Fit view to see it.
+ */
+export const FIT_CONTENT_SELECTOR = [
+  '[data-element-id]',
+  '[data-wire-id]',
+  '[data-element-label]',
+  '[data-wire-label]',
+  '[data-annotation-id]',
+].join(', ');
+
+export interface ScreenBounds {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/**
+ * Union of client rects, skipping degenerate (0×0) ones — unmeasured or
+ * empty nodes. A horizontal wire is 0 tall but still counts. Null when
+ * nothing measurable remains.
+ */
+export function unionRects(
+  rects: Iterable<Pick<DOMRect, 'left' | 'top' | 'right' | 'bottom' | 'width' | 'height'>>,
+): ScreenBounds | null {
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  for (const r of rects) {
+    if (r.width === 0 && r.height === 0) continue;
+    if (r.left < left) left = r.left;
+    if (r.top < top) top = r.top;
+    if (r.right > right) right = r.right;
+    if (r.bottom > bottom) bottom = r.bottom;
+  }
+  return left === Infinity ? null : { left, top, right, bottom };
+}
+
 function clamp(v: number, lo: number, hi: number): number {
   return v < lo ? lo : v > hi ? hi : v;
 }
@@ -25,7 +76,7 @@ function getCanvasRoot(): HTMLElement | null {
 }
 
 /**
- * Fit all rendered elements to the viewport with padding. Falls back to a
+ * Fit the whole rendered drawing to the viewport with padding. Falls back to a
  * centered 100% reset when the canvas is empty. Returns false if the
  * viewport / canvas isn't ready yet.
  */
@@ -44,24 +95,16 @@ export function fitToContent(): boolean {
 export function fitToContentWith(api: ViewportApi, root: HTMLElement): boolean {
   const rect = root.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) return false;
-  const nodes = root.querySelectorAll('[data-element-id]');
+  const nodes = root.querySelectorAll(FIT_CONTENT_SELECTOR);
   if (nodes.length === 0) {
     api.setViewport({ tx: rect.width / 2, ty: rect.height / 2, scale: 1 });
     return true;
   }
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const n of nodes) {
-    const r = (n as Element).getBoundingClientRect();
-    if (r.width === 0 && r.height === 0) continue;
-    if (r.left < minX) minX = r.left;
-    if (r.top < minY) minY = r.top;
-    if (r.right > maxX) maxX = r.right;
-    if (r.bottom > maxY) maxY = r.bottom;
-  }
-  if (minX === Infinity) return false;
+  const bounds = unionRects(
+    Array.from(nodes, (n) => n.getBoundingClientRect()),
+  );
+  if (!bounds) return false;
+  const { left: minX, top: minY, right: maxX, bottom: maxY } = bounds;
   const [ax, ay] = api.screenToSvg(minX, minY);
   const [bx, by] = api.screenToSvg(maxX, maxY);
   const contentW = Math.max(bx - ax, 1);

@@ -100,7 +100,7 @@ export const ui: UiTable = {
   'view.zoomIn': 'تكبير',
   'view.zoomInHint': 'تكبير تدريجي؛ أو عجلة الفأرة ↑ أو ⌘+',
   'view.fit': 'احتواء العرض',
-  'view.fitHint': 'تكبير/تصغير تلقائي وتوسيط كل العناصر',
+  'view.fitHint': 'تكبير/تصغير تلقائي وتوسيط المخطط بالكامل',
   'view.gridHide': 'إخفاء الشبكة',
   'view.gridShow': 'إظهار الشبكة',
   'view.gridHotkey': 'G',
