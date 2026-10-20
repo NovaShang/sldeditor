@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.25.0
+
+### Minor Changes
+
+- [`6656579`](https://github.com/NovaShang/sldeditor/commit/66565795c056fc65a7446962dffa90881e125f7e) Thanks [@NovaShang](https://github.com/NovaShang)! - Symbols can be resized. A placement takes an optional `scale` (default 1, clamped 0.25–4); terminals, hit areas, selection boxes and label anchors move with it, while line weight and label text size stay the drawing's own. The properties panel gets a Size stepper (25%–400%, click the value to reset). DXF, SVG and PNG exports honour it. Absent `scale` serialises exactly as before.
+
 ## 0.24.0
 
 ### Minor Changes
