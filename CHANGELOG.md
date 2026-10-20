@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.25.1
+
+### Patch Changes
+
+- [`9d32337`](https://github.com/NovaShang/sldeditor/commit/9d323372f80c89bfe4b085e1df729d6f758630f8) Thanks [@NovaShang](https://github.com/NovaShang)! - Fit view frames the whole drawing — wires, labels and free annotations (text, boxes, tables, lines) — not just devices. A drawing with a title block or legend far from the devices used to open showing only a fraction of itself; an annotation-only drawing was not fitted at all.
+
 ## 0.25.0
 
 ### Minor Changes
