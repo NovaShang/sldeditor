@@ -120,3 +120,37 @@ describe('placement scale — store', () => {
     expect(store().diagram.layout?.QF1.scale).toBe(2);
   });
 });
+
+describe('placement scale — drag gesture (corner grips)', () => {
+  const store = () => useEditorStore.getState();
+  beforeEach(() => store().setDiagram(structuredClone(at0())));
+
+  it('a whole drag is ONE undo entry, with terminals following live', () => {
+    const before = store().past.length;
+    store().previewPlacement('QF1', { scale: 1.2 });
+    store().previewPlacement('QF1', { scale: 1.7 });
+    expect(store().internal.terminals.get('QF1.t1')!.world).toEqual([100, 66]);
+    expect(store().past.length).toBe(before); // nothing committed mid-drag
+    store().endGesture(true);
+    expect(store().past.length).toBe(before + 1);
+    expect(store().diagram.layout?.QF1.scale).toBe(1.7);
+    store().undo();
+    expect(store().diagram.layout?.QF1.scale).toBeUndefined();
+  });
+
+  it('a cancelled drag restores the size it had and records nothing', () => {
+    store().updatePlacement('QF1', { scale: 2 });
+    const before = store().past.length;
+    store().previewPlacement('QF1', { scale: 3 });
+    store().endGesture(false);
+    expect(store().diagram.layout?.QF1.scale).toBe(2);
+    expect(store().past.length).toBe(before);
+    expect(store().gestureBase).toBeNull();
+  });
+
+  it('a drag that ends where it started records nothing', () => {
+    const before = store().past.length;
+    store().endGesture(true);
+    expect(store().past.length).toBe(before);
+  });
+});

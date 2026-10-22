@@ -38,6 +38,7 @@ import { ElementLayer } from './ElementLayer';
 import { MarqueeOverlay } from './MarqueeOverlay';
 import { PlaceGhost } from './PlaceGhost';
 import { SelectionOverlay } from './SelectionOverlay';
+import { ElementScaleHandles } from './ElementScaleHandles';
 import { TerminalLayer } from './TerminalLayer';
 import { WireLayer } from './WireLayer';
 import { WirePreview } from './WirePreview';
@@ -360,6 +361,7 @@ export function CanvasSvg() {
           <BusHandles />
           <WireHandles />
           <AnnotationHandles />
+          <ElementScaleHandles />
           <TerminalLayer />
           <WirePreview />
           <BusbarPreview />

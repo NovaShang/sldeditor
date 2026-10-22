@@ -318,6 +318,17 @@ export interface EditorState {
   updateWire: (id: WireId, patch: Partial<Pick<Wire, 'label' | 'color'>>) => void;
   updateElement: (id: ElementId, patch: Partial<Element>) => void;
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
+  /**
+   * Live placement change during a drag (the symbol-size grips): the canvas,
+   * wires and labels follow every move, but nothing reaches the undo stack
+   * until `endGesture(true)` — so one drag is one undo entry. The document as
+   * it was when the first preview landed is kept and restored on cancel.
+   */
+  previewPlacement: (id: ElementId, patch: Partial<Placement>) => void;
+  /** Close a preview gesture: commit as ONE undo entry, or roll it back. */
+  endGesture: (commit: boolean) => void;
+  /** Document before the in-flight preview gesture, or null when idle. */
+  gestureBase: DiagramFile | null;
   updateBus: (id: BusId, patch: Partial<BusLayout>) => void;
   addAnnotation: (at: [number, number], text?: string) => AnnotationId;
   /** Append a fully-specified annotation (rect / line / table / text). */
@@ -364,6 +375,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
   annotationPreview: null,
   editingElement: null,
   readOnly: false,
+  gestureBase: null,
 
   past: [],
   future: [],
@@ -385,6 +397,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
       editingCell: null,
       annotationDraft: null,
       annotationPreview: null,
+      gestureBase: null,
       editingElement: null,
       wireFromTerminal: null,
       wireDragFrom: null,
@@ -410,6 +423,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
       editingCell: null,
       annotationDraft: null,
       annotationPreview: null,
+      gestureBase: null,
       editingElement: null,
       wireFromTerminal: null,
       wireDragFrom: null,
@@ -1454,21 +1468,29 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
   },
 
   updatePlacement: (id, patch) => {
-    get().dispatch((d) => {
-      const cur = d.layout?.[id] ?? get().internal.layout.get(id);
-      const nextPlacement: Placement = {
-        at: patch.at ?? cur?.at ?? [0, 0],
-        ...(patch.rot !== undefined ? { rot: patch.rot } : cur?.rot ? { rot: cur.rot } : {}),
-        ...(patch.mirror !== undefined
-          ? { mirror: patch.mirror }
-          : cur?.mirror ? { mirror: cur.mirror } : {}),
-        ...scaleField(patch.scale !== undefined ? patch.scale : cur?.scale),
-      };
-      return {
-        ...d,
-        layout: { ...(d.layout ?? {}), [id]: nextPlacement },
-      };
+    get().dispatch(placementMutator(id, patch, () => get().internal));
+  },
+
+  previewPlacement: (id, patch) => {
+    const { diagram, gestureBase } = get();
+    const next = placementMutator(id, patch, () => get().internal)(diagram);
+    if (next === diagram) return;
+    set({
+      diagram: next,
+      internal: compile(next),
+      gestureBase: gestureBase ?? diagram,
     });
+  },
+
+  endGesture: (commit) => {
+    const { diagram, gestureBase, past } = get();
+    if (!gestureBase) return;
+    if (!commit || diagram === gestureBase) {
+      set({ diagram: gestureBase, internal: compile(gestureBase), gestureBase: null });
+      return;
+    }
+    const trimmed = past.length >= HISTORY_LIMIT ? past.slice(1) : past;
+    set({ past: [...trimmed, gestureBase], future: [], gestureBase: null });
   },
 
   updateBus: (id, patch) => {
@@ -1648,6 +1670,32 @@ function compactPlacement(rp: ResolvedPlacement): Placement {
     ...(rp.rot ? { rot: rp.rot } : {}),
     ...(rp.mirror ? { mirror: rp.mirror } : {}),
     ...scaleField(rp.scale),
+  };
+}
+
+/** The one way a placement patch is applied — shared by the committed edit
+ *  and the live drag preview so the two can never disagree. A device that
+ *  auto-layout placed has no layout entry; it is materialised from where it
+ *  renders, so resizing it doesn't also make it jump. */
+function placementMutator(
+  id: ElementId,
+  patch: Partial<Placement>,
+  internal: () => InternalModel,
+): (d: DiagramFile) => DiagramFile {
+  return (d) => {
+    const cur = d.layout?.[id] ?? internal().layout.get(id);
+    const nextPlacement: Placement = {
+      at: patch.at ?? cur?.at ?? [0, 0],
+      ...(patch.rot !== undefined ? { rot: patch.rot } : cur?.rot ? { rot: cur.rot } : {}),
+      ...(patch.mirror !== undefined
+        ? { mirror: patch.mirror }
+        : cur?.mirror ? { mirror: cur.mirror } : {}),
+      ...scaleField(patch.scale !== undefined ? patch.scale : cur?.scale),
+    };
+    return {
+      ...d,
+      layout: { ...(d.layout ?? {}), [id]: nextPlacement },
+    };
   };
 }
 

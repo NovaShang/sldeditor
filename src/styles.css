@@ -496,6 +496,16 @@
 .ole-annotation-handle:hover {
   fill: var(--selection);
 }
+/* Live percentage while dragging a symbol-size grip. */
+.ole-element-scale-readout {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 9px;
+  fill: var(--selection);
+  paint-order: stroke;
+  stroke: var(--canvas-bg);
+  stroke-width: 3px;
+  pointer-events: none;
+}
 .ole-annotation-handle-strip {
   fill: transparent;
   stroke: none;
