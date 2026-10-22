@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.26.0
+
+### Minor Changes
+
+- [`f9ffde5`](https://github.com/NovaShang/sldeditor/commit/f9ffde5011d36820f91fe77b64c63de584331714) Thanks [@NovaShang](https://github.com/NovaShang)! - Resize a symbol by dragging any corner of its selection box, continuously from 25% to 400%, with wires, terminals and the label following live; one drag is one undo step, and the size catches on 100% on the way past. The properties panel's Size is now a typed percentage. New store API: `previewPlacement` / `endGesture` for transient, single-undo drags.
+
 ## 0.25.1
 
 ### Patch Changes
