@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.27.0
+
+### Minor Changes
+
+- [`5debe9d`](https://github.com/NovaShang/sldeditor/commit/5debe9d08c1b611ac771bcab0a54b649840e0ca2) Thanks [@NovaShang](https://github.com/NovaShang)! - Hide one element's label. `Element.labelHidden: true` drops that element's whole label block (name/ID and params) on the canvas and in the SVG/PNG/PDF and DXF exports, independent of the document-wide `meta.labelMode`. The property panel gains a Label row (Shown / Hidden). Previously the only per-element lever was clearing the name, which brings the ID back.
+
 ## 0.26.0
 
 ### Minor Changes
