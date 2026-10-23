@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.27.1
+
+### Patch Changes
+
+- [`842a6fb`](https://github.com/NovaShang/sldeditor/commit/842a6fb7ad23fdeb980ed55076bd226914e93ba5) Thanks [@NovaShang](https://github.com/NovaShang)! - French: the property panel's Label toggle now agrees with « Repère » (« Masqué »).
+
 ## 0.27.0
 
 ### Minor Changes
