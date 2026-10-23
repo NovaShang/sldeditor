@@ -153,3 +153,38 @@ describe('labelOffset', () => {
     expect(after).toBe(before);
   });
 });
+
+// One user wanted the tag gone from a single cable marker while every breaker
+// kept its name; clearing `name` just brought the ID back, and labelMode is
+// document-wide.
+describe('labelHidden', () => {
+  const two = (extra: Partial<Element>): DiagramFile => ({
+    version: '1',
+    elements: [
+      { id: 'QF1', kind: 'breaker', name: 'Main', ...extra },
+      { id: 'QF2', kind: 'breaker', name: 'Feeder' },
+    ],
+    layout: { QF1: { at: [0, 0] }, QF2: { at: [100, 0] } },
+  });
+
+  it('drops the whole block, name and params alike, in every mode', () => {
+    const re = compile(two({ labelHidden: true, params: { In: 630 } })).elements.get('QF1')!;
+    expect(labelLines(re, 'id')).toEqual([]);
+    expect(labelLines(re, 'all')).toEqual([]);
+  });
+
+  it('does not fall back to the id', () => {
+    const re = compile(two({ name: undefined, labelHidden: true })).elements.get('QF1')!;
+    expect(labelLines(re, 'id')).toEqual([]);
+  });
+
+  it('hides only that element in the SVG and DXF exports', () => {
+    const d = compile(two({ labelHidden: true }));
+    const svg = buildExportSvg(d);
+    expect(svg).not.toMatch(/>Main</);
+    expect(svg).toMatch(/>Feeder</);
+    const dxf = buildExportDxf(d);
+    expect(dxf).not.toMatch(/\n1\nMain\n/);
+    expect(dxf).toMatch(/\n1\nFeeder\n/);
+  });
+});

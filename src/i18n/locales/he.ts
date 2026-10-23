@@ -62,6 +62,8 @@ export const ui: UiTable = {
   'props.color': 'צבע',
   'props.size': 'גודל',
   'props.sizeReset': 'איפוס ל-100%',
+  'props.labelShown': 'מוצגת',
+  'props.labelHidden': 'מוסתרת',
   'props.color.default': 'ברירת מחדל',
   'props.color.red': 'אדום',
   'props.color.amber': 'ענבר',

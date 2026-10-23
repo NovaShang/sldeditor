@@ -139,6 +139,17 @@ export interface Element {
    * alignment still follows the side of the symbol the anchor sits on.
    */
   labelOffset?: [number, number];
+  /**
+   * Hide this element's label block (name/ID and params) everywhere — canvas,
+   * SVG/PNG/PDF and DXF. Absent = shown, governed by `meta.labelMode` like
+   * every other element.
+   *
+   * Per element because the document-wide `labelMode` cannot express the ask
+   * it came from: a user wanted the tag gone from one cable marker while
+   * every breaker kept its name. Clearing `name` does not do it — an empty
+   * name falls back to the ID, which is the right default for everything else.
+   */
+  labelHidden?: boolean;
 }
 
 export interface Bus {

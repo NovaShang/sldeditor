@@ -104,6 +104,18 @@ export function PropertyPanel() {
             .updateElement(id, { name: next === '' ? undefined : next });
         }}
       />
+      <Field label={t('props.label')}>
+        <ToggleButton
+          active={!element.labelHidden}
+          onClick={() =>
+            useEditorStore
+              .getState()
+              .updateElement(id, { labelHidden: element.labelHidden ? undefined : true })
+          }
+        >
+          {element.labelHidden ? t('props.labelHidden') : t('props.labelShown')}
+        </ToggleButton>
+      </Field>
       <TextAreaRow
         key={id}
         label={t('props.note')}

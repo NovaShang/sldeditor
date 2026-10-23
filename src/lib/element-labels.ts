@@ -64,6 +64,7 @@ export function nameLines(name: string | undefined, fallbackId: string): string[
 }
 
 export function labelLines(re: ResolvedElement, mode: LabelMode): string[] {
+  if (re.element.labelHidden) return [];
   const lines: string[] = nameLines(re.element.name, re.element.id);
   if (mode !== 'all' || !re.libraryDef?.params) return lines;
   const params = re.element.params ?? {};

@@ -62,6 +62,8 @@ export const ui: UiTable = {
   'props.color': 'Цвет',
   'props.size': 'Размер',
   'props.sizeReset': 'Сбросить до 100 %',
+  'props.labelShown': 'Показана',
+  'props.labelHidden': 'Скрыта',
   'props.color.default': 'По умолчанию',
   'props.color.red': 'Красный',
   'props.color.amber': 'Янтарный',

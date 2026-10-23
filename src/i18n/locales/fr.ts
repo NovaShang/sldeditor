@@ -68,6 +68,8 @@ export const ui: UiTable = {
   'props.color': 'Couleur',
   'props.size': 'Taille',
   'props.sizeReset': 'Revenir à 100 %',
+  'props.labelShown': 'Visible',
+  'props.labelHidden': 'Masquée',
   'props.color.default': 'Par défaut',
   'props.color.red': 'Rouge',
   'props.color.amber': 'Ambre',
