@@ -31,6 +31,13 @@ function persist(dismissed: boolean): void {
 interface OnboardingState {
   dismissed: boolean;
   dismiss: () => void;
+  /**
+   * Hide the card for this page load only, without remembering it: for a
+   * host that opens the editor with a purpose of its own (a ready-made
+   * example from a landing page), where "place a component" is beside the
+   * point — but a later blank visit should still get the card.
+   */
+  hide: () => void;
   reset: () => void;
 }
 
@@ -40,6 +47,7 @@ export const useOnboarding = create<OnboardingState>((set) => ({
     persist(true);
     set({ dismissed: true });
   },
+  hide: () => set({ dismissed: true }),
   reset: () => {
     persist(false);
     set({ dismissed: false });

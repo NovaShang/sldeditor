@@ -59,6 +59,16 @@ describe('wiring', () => {
     expect(codes(d, 'warning')).toContain('unwired:QF9');
   });
 
+  it('says which bus an unwired device is sitting on', () => {
+    const d = radial();
+    d.elements.push({ id: 'QF9', kind: 'breaker' });
+    d.layout = { ...d.layout, QF9: { at: [300, 100] } };
+    const pin = compile(d).terminals.get('QF9.t1')!.world;
+    d.buses!.push({ id: 'B9', layout: { at: [pin[0], pin[1]], span: 80 } });
+    const issue = run(d).issues.find((i) => i.id === 'unwired:QF9')!;
+    expect(issue.data?.touching).toBe('B9');
+  });
+
   it('does not flag relays, meters, CTs or earth placed without a wire', () => {
     const d = radial();
     d.elements.push(
@@ -84,6 +94,8 @@ describe('wiring', () => {
     d.junctions = [{ id: 'J1', layout: { at: [0, 180] } }];
     d.wires = [...d.wires!.filter((w) => w.id !== 'w4'), { id: 'w5', ends: ['J1', 'L1.t_top'] }];
     expect(codes(d, 'warning')).toContain('looks-joined:J1');
+    // …and names the pin it sits on, for the panel's one-click Connect.
+    expect(run(d).issues.find((i) => i.id === 'looks-joined:J1')!.data?.joins).toBe('QF2.t2');
   });
 
   it('only notes a wire end in open space (an incoming or outgoing line)', () => {
@@ -231,6 +243,21 @@ describe('load roll-up', () => {
     expect(codes(withTx(1, [1.08]), 'warning')).toEqual([]); // 1200 kVA = 120%
     expect(codes(withTx(1, [1.08]), 'info')).toContain('overload:T1');
     expect(codes(withTx(1, [1.35]), 'warning')).toEqual(['overload:T1']); // 150%
+  });
+
+  it('shares a board between parallel transformers by rating', () => {
+    const d = withTx(1, [0.27, 0.27, 0.36]); // 900 kW → 1000 kVA
+    d.elements.push({ id: 'T2', kind: 'transformer-2w', params: { S: 0.5 } });
+    d.wires!.push({ id: 'a2', ends: ['G.t_bottom', 'T2.t1'] }, { id: 'b2', ends: ['T2.t2', 'LV'] });
+    const r = run(d);
+    const t1 = r.loads.find((l) => l.targetId === 'T1')!;
+    const t2 = r.loads.find((l) => l.targetId === 'T2')!;
+    // 1000 kVA over 1500 kVA of transformers: both at 67%, not 100% and 200%.
+    expect(t1.loadingPct).toBeCloseTo(66.67, 1);
+    expect(t2.loadingPct).toBeCloseTo(66.67, 1);
+    expect(t1.knownKVA + t2.knownKVA).toBeCloseTo(1000);
+    expect(t1.parallelWith).toEqual(['T2']);
+    expect(r.issues.filter((i) => i.code === 'overload')).toEqual([]);
   });
 
   it('reads the new kW rating on motors, and legacy MW values on them too', () => {

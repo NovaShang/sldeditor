@@ -4,24 +4,30 @@
  * open problems) or by clicking a marker on the canvas.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { Stethoscope } from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Stethoscope, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tooltip } from './ui/tooltip';
 import { UpwardPopover } from './ui/upward-popover';
 import { useEditorStore } from '../store';
 import { usePanels } from '../hooks/use-panels';
+import { useOnboarding } from '../hooks/use-onboarding';
 import { useHostActions } from '../hooks/use-host-actions';
 import { useT, type LocaleKey } from '../i18n';
 import { cn } from '../lib/utils';
 import { openProblems, useHealth } from '../health/use-health';
 import { centerPoint, issueText, targetName } from '../health/present';
 import { centerOnWorld } from '../canvas/fit-to-content';
-import type { HealthIssue } from '../health';
+import type { HealthIssue, LoadSummary } from '../health';
+import type { InternalModel } from '../compiler/internal-model';
 
-/** Set once the first-run explanation has been shown; it never shows again. */
+/** Set once the user has acknowledged the first-run explanation (Got it /
+ *  Show / opening the panel): until then it may come back on a later visit. */
 const INTRO_KEY = 'ole-health-intro-seen';
-const INTRO_AUTO_HIDE_MS = 15000;
+/** How long the drawing must sit unchanged before the explanation appears:
+ *  the 10-25 walkthrough saw it pop up mid-wire, about a breaker that was
+ *  unwired only because the user had not finished drawing yet. */
+const INTRO_IDLE_MS = 4000;
 
 function introSeen(): boolean {
   try {
@@ -41,77 +47,126 @@ function markIntroSeen(): void {
 export function HealthMenuBtn() {
   const t = useT();
   const report = useHealth();
+  const internal = useEditorStore((s) => s.internal);
   const open = usePanels((s) => s.healthOpen);
   const setOpen = usePanels((s) => s.setHealthOpen);
+  const onboarding = !useOnboarding((s) => s.dismissed);
   const count = openProblems(report).length;
   const anchorRef = useRef<HTMLDivElement>(null);
   const [intro, setIntro] = useState(false);
+  // Something worth checking: a wire, or a handful of symbols. A lone symbol
+  // just dropped on the canvas is "unwired" only because drawing has begun.
+  const drawn = internal.wireRenders.size > 0 || internal.elements.size >= 4;
 
-  // The first time a drawing shows problems, say once — quietly — what the
-  // dots are. Only when the button is actually on screen (a host may hide it,
-  // e.g. inside a marketing demo), so "seen" is never spent invisibly.
+  // The first time a drawing shows problems, explain once what the dots
+  // are — after the user pauses, never while the quick-start card is up, and
+  // only when the button is actually on screen (a host may hide it, e.g. in
+  // a marketing demo). Every edit restarts the wait.
   useEffect(() => {
-    if (count === 0 || intro || introSeen()) return;
-    const btn = anchorRef.current?.querySelector<HTMLElement>('.ole-health-btn');
-    if (!btn || btn.offsetParent === null) return;
-    markIntroSeen();
-    setIntro(true);
-  }, [count, intro]);
-  useEffect(() => {
-    if (!intro) return;
-    const timer = setTimeout(() => setIntro(false), INTRO_AUTO_HIDE_MS);
+    if (intro || open || onboarding || count === 0 || !drawn || introSeen()) return;
+    const timer = setTimeout(() => {
+      const btn = anchorRef.current?.querySelector<HTMLElement>('.ole-health-btn');
+      if (btn && btn.offsetParent !== null) setIntro(true);
+    }, INTRO_IDLE_MS);
     return () => clearTimeout(timer);
-  }, [intro]);
+  }, [internal, count, drawn, intro, open, onboarding]);
+  // Problems all fixed before the user read it: nothing left to explain.
+  useEffect(() => {
+    if (intro && count === 0) setIntro(false);
+  }, [intro, count]);
+
+  const ack = (show: boolean) => {
+    markIntroSeen();
+    setIntro(false);
+    if (show) setOpen(true);
+  };
 
   return (
     <div ref={anchorRef} className="relative">
       {intro && !open && (
         <div
           role="status"
-          className="ole-glass ole-health-intro absolute bottom-full end-0 mb-2 w-64 rounded-xl border border-border p-3 text-xs shadow-md"
+          className="ole-glass ole-health-intro ole-health-panel absolute bottom-full end-0 mb-2 w-64 rounded-xl border border-border p-3 text-xs shadow-md"
         >
-          <div className="text-[12px] font-medium">{t('health.introTitle')}</div>
+          <div className="text-[12px] font-medium">{t('health.title')}</div>
           <p className="mt-1 leading-snug text-muted-foreground">{t('health.intro', { n: count })}</p>
           <div className="mt-2 flex justify-end gap-1.5">
             <button
               type="button"
               className="rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
-              onClick={() => setIntro(false)}
+              onClick={() => ack(false)}
             >
               {t('health.introOk')}
             </button>
             <button
               type="button"
               className="rounded-md bg-primary px-2 py-1 text-[11px] text-primary-foreground hover:opacity-90"
-              onClick={() => {
-                setIntro(false);
-                setOpen(true);
-              }}
+              onClick={() => ack(true)}
             >
               {t('health.introShow')}
             </button>
           </div>
         </div>
       )}
-      <HealthMenuPopover open={open} setOpen={setOpen} count={count} />
+      <HealthMenuPopover
+        anchorRef={anchorRef}
+        open={open}
+        setOpen={(v) => {
+          if (v && intro) ack(false);
+          setOpen(v);
+        }}
+        count={count}
+      />
     </div>
   );
 }
 
+/** Width of the checks panel (w-80) plus the gap kept from the properties. */
+const PANEL_W = 320;
+const GAP = 8;
+
 function HealthMenuPopover({
+  anchorRef,
   open,
   setOpen,
   count,
 }: {
+  anchorRef: React.RefObject<HTMLDivElement | null>;
   open: boolean;
   setOpen: (v: boolean) => void;
   count: number;
 }) {
   const t = useT();
+  // The panel stays open while the user edits, and the properties panel
+  // (selection) sits right above it on the same edge: slide left of it rather
+  // than cover the fields the user is about to type in. Where there is no
+  // room (narrow windows) it stays put.
+  const selection = useEditorStore((s) => s.selection);
+  const selectedAnnotations = useEditorStore((s) => s.selectedAnnotations);
+  const selectedWire = useEditorStore((s) => s.selectedWire);
+  const [shift, setShift] = useState(0);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const anchor = anchorRef.current?.getBoundingClientRect();
+      const props = document.querySelector('.ole-right-panel')?.getBoundingClientRect();
+      if (!anchor || !props || props.width === 0) return setShift(0);
+      const need = anchor.right - (props.left - GAP);
+      setShift(need > 0 && props.left - GAP - PANEL_W > GAP ? need : 0);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [open, anchorRef, selection, selectedAnnotations, selectedWire]);
   return (
     <UpwardPopover
       open={open}
       onOpenChange={(v) => setOpen(v)}
+      // Stays open while the user fixes what it lists: clicking the canvas or
+      // a property field used to close it (10-25 walkthrough).
+      persistent
+      className="ole-health-panel"
+      style={shift ? { right: shift } : undefined}
       trigger={
         <Tooltip
           content={
@@ -139,12 +194,27 @@ function HealthMenuPopover({
         </Tooltip>
       }
     >
-      <HealthControls />
+      <HealthControls onClose={() => setOpen(false)} />
     </UpwardPopover>
   );
 }
 
-export function HealthControls() {
+/** "380 kW · 422 kVA · 609 A": current only where the voltage is known. */
+function loadFigures(internal: InternalModel, l: LoadSummary): string {
+  const parts = [`${Math.round(l.knownKW)} kW`, `${Math.round(l.knownKVA)} kVA`];
+  const un = busVoltage(internal, l.targetId);
+  if (un) parts.push(`${Math.round(l.knownKVA / (Math.sqrt(3) * un))} A`);
+  return parts.join(' · ');
+}
+
+/** Line voltage (kV) at a bus or busbar element, when it says. */
+function busVoltage(internal: InternalModel, id: string): number | undefined {
+  const params = internal.buses.get(id)?.bus.params ?? internal.elements.get(id)?.element.params;
+  const un = params?.Un;
+  return typeof un === 'number' && un > 0 ? un : undefined;
+}
+
+export function HealthControls({ onClose }: { onClose?: () => void } = {}) {
   const t = useT();
   const report = useHealth();
   const internal = useEditorStore((s) => s.internal);
@@ -168,10 +238,24 @@ export function HealthControls() {
     const target = issue.targets[0];
     if (!target) return;
     const st = useEditorStore.getState();
-    if (st.internal.elements.has(target) || st.internal.buses.has(target)) st.setSelection([target]);
+    if (st.internal.elements.has(target) || st.internal.buses.has(target) || st.internal.junctions.has(target)) {
+      st.setSelection([target]);
+    }
+    usePanels.getState().setHealthOpen(true, issue.id);
     const at = centerPoint(st.internal, target);
     if (at) centerOnWorld(at);
     useHostActions.getState().onHealthEvent?.({ type: 'open', issueId: issue.id, code: issue.code });
+  };
+  const locate = (id: string) => {
+    const st = useEditorStore.getState();
+    if (st.internal.elements.has(id) || st.internal.buses.has(id)) st.setSelection([id]);
+    const at = centerPoint(st.internal, id);
+    if (at) centerOnWorld(at);
+  };
+  /** Join a wire end to the point it visibly sits on: one undo step. */
+  const connect = (issue: HealthIssue, target: string) => {
+    useEditorStore.getState().mergeJunctionInto(issue.targets[0], target);
+    useHostActions.getState().onHealthEvent?.({ type: 'fix', issueId: issue.id, code: issue.code });
   };
   const setDismissed = (issue: HealthIssue, d: boolean) => {
     useEditorStore.getState().setHealthDismissed(issue.id, d);
@@ -201,6 +285,15 @@ export function HealthControls() {
       >
         {issueText(t, internal, issue)}
       </button>
+      {action === 'dismiss' && issue.code === 'looks-joined' && typeof issue.data?.joins === 'string' && (
+        <button
+          type="button"
+          onClick={() => connect(issue, issue.data!.joins as string)}
+          className="shrink-0 rounded bg-primary px-1.5 py-0.5 text-[10px] text-primary-foreground hover:opacity-90"
+        >
+          {t('health.connect')}
+        </button>
+      )}
       {action && (
         <button
           type="button"
@@ -247,13 +340,25 @@ export function HealthControls() {
   };
 
   return (
-    <div className="flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-1 text-xs">
-      <div className="flex items-center justify-between gap-2 px-2 pb-1">
+    <div data-ole-occludes="" className="flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-1 text-xs">
+      <div className="flex items-center justify-between gap-2 ps-2 pb-1">
         <span className="text-[12px] font-medium">{t('health.title')}</span>
-        <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-          <input type="checkbox" checked={markers} onChange={(e) => setMarkers(e.target.checked)} />
-          {t('health.markers')}
-        </label>
+        <span className="flex items-center gap-1">
+          <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
+            <input type="checkbox" checked={markers} onChange={(e) => setMarkers(e.target.checked)} />
+            {t('health.markers')}
+          </label>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('common.close')}
+              className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </span>
       </div>
       <div ref={listRef} className="flex max-h-[55vh] flex-col gap-1 overflow-y-auto">
         {problems.length === 0 ? (
@@ -272,22 +377,35 @@ export function HealthControls() {
               {t('health.sectionLoads')}
             </div>
             {report.loads.map((l) => (
-              <div key={l.targetId} className="flex items-baseline justify-between gap-2 px-2 py-0.5 text-[11px]">
-                <span className="min-w-0 truncate">{targetName(internal, l.targetId)}</span>
-                <span className="shrink-0 text-right text-muted-foreground">
-                  {l.known === l.total
-                    ? t('health.loadAll', { kw: Math.round(l.knownKW), t: l.total })
-                    : t('health.loadKnown', { kw: Math.round(l.knownKW), k: l.known, t: l.total })}
-                  {l.loadingPct !== undefined && (
-                    <>
-                      {' · '}
-                      <span className={cn((l.loadingPct ?? 0) > 100 && 'text-amber-600')}>
-                        {t('health.loading', { pct: Math.round(l.loadingPct), rating: Math.round(l.ratingKVA ?? 0) })}
-                      </span>
-                    </>
+              <button
+                type="button"
+                key={l.targetId}
+                onClick={() => locate(l.targetId)}
+                className="flex flex-col gap-0.5 rounded-md px-2 py-1 text-left text-[11px] hover:bg-accent"
+              >
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="min-w-0 truncate font-medium">{targetName(internal, l.targetId, t)}</span>
+                  {l.known > 0 && l.loadingPct !== undefined && (
+                    <span className={cn('shrink-0 tabular-nums', l.loadingPct > 100 ? 'text-amber-600' : 'text-muted-foreground')}>
+                      {t('health.loading', { pct: Math.round(l.loadingPct), rating: Math.round(l.ratingKVA ?? 0) })}
+                    </span>
                   )}
                 </span>
-              </div>
+                <span className="tabular-nums text-muted-foreground">
+                  {l.known === 0
+                    ? t('health.loadNone', { t: l.total })
+                    : `${loadFigures(internal, l)} · ${
+                        l.known === l.total
+                          ? t('health.loadAll', { t: l.total })
+                          : t('health.loadKnown', { k: l.known, t: l.total })
+                      }`}
+                </span>
+                {l.parallelWith && l.parallelWith.length > 0 && (
+                  <span className="text-muted-foreground">
+                    {t('health.parallel', { names: l.parallelWith.map((id) => targetName(internal, id, t)).join(', ') })}
+                  </span>
+                )}
+              </button>
             ))}
           </>
         )}

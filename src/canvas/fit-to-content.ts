@@ -76,6 +76,29 @@ function getCanvasRoot(): HTMLElement | null {
 }
 
 /**
+ * The horizontal span of the canvas that is not covered by a docked panel
+ * (anything tagged `data-ole-occludes`, e.g. the open checks panel), in
+ * canvas-local px. A panel counts against the side it sits on, so fitting or
+ * jumping to an element never parks it underneath the list the user is
+ * reading.
+ */
+function visibleSpan(rect: DOMRect): { x0: number; x1: number } {
+  let left = rect.left;
+  let right = rect.right;
+  const mid = rect.left + rect.width / 2;
+  for (const el of document.querySelectorAll('[data-ole-occludes]')) {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.bottom < rect.top || r.top > rect.bottom) continue;
+    if (r.left > mid) right = Math.min(right, r.left);
+    else if (r.right < mid) left = Math.max(left, r.right);
+  }
+  // A panel wider than half the canvas (small windows): ignore it rather
+  // than squeeze the drawing into a sliver.
+  if (right - left < rect.width / 2) return { x0: 0, x1: rect.width };
+  return { x0: left - rect.left, x1: right - rect.left };
+}
+
+/**
  * Fit the whole rendered drawing to the viewport with padding. Falls back to a
  * centered 100% reset when the canvas is empty. Returns false if the
  * viewport / canvas isn't ready yet.
@@ -109,9 +132,10 @@ export function fitToContentWith(api: ViewportApi, root: HTMLElement): boolean {
   const [bx, by] = api.screenToSvg(maxX, maxY);
   const contentW = Math.max(bx - ax, 1);
   const contentH = Math.max(by - ay, 1);
+  const { x0, x1 } = visibleSpan(rect);
   const targetScale = clamp(
     Math.min(
-      (rect.width - FIT_PADDING_PX * 2) / contentW,
+      (x1 - x0 - FIT_PADDING_PX * 2) / contentW,
       (rect.height - FIT_PADDING_PX * 2) / contentH,
     ),
     MIN_SCALE,
@@ -120,7 +144,7 @@ export function fitToContentWith(api: ViewportApi, root: HTMLElement): boolean {
   const cx = (ax + bx) / 2;
   const cy = (ay + by) / 2;
   api.setViewport({
-    tx: rect.width / 2 - targetScale * cx,
+    tx: (x0 + x1) / 2 - targetScale * cx,
     ty: rect.height / 2 - targetScale * cy,
     scale: targetScale,
   });
@@ -139,8 +163,9 @@ export function centerOnWorld(world: readonly [number, number]): boolean {
   const rect = root.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) return false;
   const { scale } = api.getViewport();
+  const { x0, x1 } = visibleSpan(rect);
   api.setViewport({
-    tx: rect.width / 2 - scale * world[0],
+    tx: (x0 + x1) / 2 - scale * world[0],
     ty: rect.height / 2 - scale * world[1],
   });
   return true;

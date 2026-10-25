@@ -301,6 +301,15 @@ export interface EditorState {
   /** Drop a free-standing junction (point connection node) at `at`. */
   addJunction: (at: [number, number]) => JunctionId;
   updateJunction: (id: JunctionId, patch: Partial<Junction>) => void;
+  /**
+   * Fold a junction into another connection point: every wire that ended at
+   * the junction now ends at `target` (re-routed), and the junction goes. A
+   * wire that would join `target` to itself, or duplicate an existing wire,
+   * is dropped. One undo entry. This is what dropping a free wire end onto
+   * a pin, a bus or another joint means — before it, the end only moved and
+   * sat on the pin looking connected while it was not.
+   */
+  mergeJunctionInto: (id: JunctionId, target: WireEnd) => void;
   /** Append a wire between two endpoints (idempotent — duplicate is a no-op). */
   addWire: (a: WireEnd, b: WireEnd) => void;
   /**
@@ -1370,6 +1379,36 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
         j.id === id ? { ...j, ...patch } : j,
       ),
     }));
+  },
+
+  mergeJunctionInto: (id, target) => {
+    if (id === target) return;
+    get().dispatch((d) => {
+      const all = d.wires ?? [];
+      const ids = new Set(all.filter((w) => !w.ends.includes(id)).map((w) => w.id));
+      const wires: Wire[] = [];
+      for (const w of all) {
+        if (!w.ends.includes(id)) {
+          wires.push(w);
+          continue;
+        }
+        const ends = w.ends.map((e) => (e === id ? target : e)) as [WireEnd, WireEnd];
+        if (ends[0] === ends[1]) continue;
+        const nid = wireIdFromEnds(ends[0], ends[1]);
+        if (ids.has(nid)) continue;
+        ids.add(nid);
+        // The old route ran to where the junction was; let the router redo it.
+        const { path: _path, ...rest } = w;
+        wires.push({ ...rest, id: nid, ends });
+      }
+      return {
+        ...d,
+        wires,
+        junctions: (d.junctions ?? []).filter((j) => j.id !== id),
+      };
+    });
+    const st = get();
+    if (st.selection.includes(id)) st.setSelection(st.selection.filter((s) => s !== id));
   },
 
   addWire: (a, b) => {

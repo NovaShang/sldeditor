@@ -41,6 +41,7 @@ import {
   sameLanding,
   worldTolAt,
   elementUnder,
+  junctionLanding,
   type DragTarget,
 } from '../wire-drag';
 import { transformAttr } from '../transform-attr';
@@ -549,7 +550,28 @@ export const SelectTool: Tool = {
         const cur = ctx.viewport.screenToSvg(e.clientX, e.clientY);
         const dx = snap(cur[0] - drag.startSvg[0]);
         const dy = snap(cur[1] - drag.startSvg[1]);
-        if (dx !== 0 || dy !== 0) {
+        // A lone junction (a free wire end) dropped on a pin, bus or another
+        // joint connects there instead of just parking on top of it.
+        const soloJunction =
+          drag.junctionOriginals.size === 1 &&
+          drag.originals.size === 0 &&
+          drag.busOriginals.size === 0 &&
+          drag.annotationOriginals.size === 0
+            ? [...drag.junctionOriginals][0]
+            : null;
+        const landing = soloJunction
+          ? junctionLanding(
+              soloJunction[0],
+              [
+                soloJunction[1][0] + cur[0] - drag.startSvg[0],
+                soloJunction[1][1] + cur[1] - drag.startSvg[1],
+              ],
+              worldTolAt(ctx, e.clientX, e.clientY),
+            )
+          : null;
+        if (soloJunction && landing) {
+          useEditorStore.getState().mergeJunctionInto(soloJunction[0], landing);
+        } else if (dx !== 0 || dy !== 0) {
           const deltas = new Map<ElementId, [number, number]>();
           for (const id of drag.originals.keys()) deltas.set(id, [dx, dy]);
           for (const id of drag.busOriginals.keys()) deltas.set(id, [dx, dy]);

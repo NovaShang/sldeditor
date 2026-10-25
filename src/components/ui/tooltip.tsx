@@ -146,20 +146,22 @@ export function Tooltip({
       {open &&
         typeof document !== 'undefined' &&
         createPortal(
-          <div
-            ref={tooltipRef}
-            id={id}
-            role="tooltip"
-            data-side={anchor?.side ?? 'top'}
-            className="ole-root ole-glass pointer-events-none fixed z-[100] max-w-[280px] rounded-md border border-border px-2 py-1 text-[11px] leading-snug text-foreground shadow-md"
-            style={{
-              top: anchor?.top ?? -9999,
-              left: anchor?.left ?? -9999,
-              opacity: anchor ? 1 : 0,
-              transition: 'opacity 80ms ease-out',
-            }}
-          >
-            {content}
+          <div className="ole-root ole-portal">
+            <div
+              ref={tooltipRef}
+              id={id}
+              role="tooltip"
+              data-side={anchor?.side ?? 'top'}
+              className="ole-glass pointer-events-none fixed z-[100] max-w-[280px] rounded-md border border-border px-2 py-1 text-[11px] leading-snug text-foreground shadow-md"
+              style={{
+                top: anchor?.top ?? -9999,
+                left: anchor?.left ?? -9999,
+                opacity: anchor ? 1 : 0,
+                transition: 'opacity 80ms ease-out',
+              }}
+            >
+              {content}
+            </div>
           </div>,
           document.body,
         )}

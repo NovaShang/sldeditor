@@ -80,6 +80,7 @@ export { annotationKind, isTextAnnotation } from './model';
 // of hard-coding hex values that would drift from the editor's.
 export { COLOR_ORDER, NAMED_COLORS, dxfColor, exportInk, inkClass } from './lib/colors';
 export { useHostActions } from './hooks/use-host-actions';
+export { useOnboarding } from './hooks/use-onboarding';
 export type { HostActions } from './hooks/use-host-actions';
 export type { ColorSpec } from './lib/colors';
 // Gates on a document-defined symbol. Exported because the app that hosts the

@@ -106,6 +106,15 @@ const zh: Table = {
 
   // State labels
   'breaker.state.open': '断开',
+  'make-contact.state.closed': '闭合',
+  'break-contact.state.open': '断开',
+  'on-delay-make-contact.state.closed': '闭合',
+  'off-delay-make-contact.state.closed': '闭合',
+  'on-delay-break-contact.state.open': '断开',
+  'off-delay-break-contact.state.open': '断开',
+  'fuse-switch-disconnector.state.open': '断开',
+  'selector-switch.state.open': '断开',
+  'limit-switch.state.closed': '闭合',
   'disconnector.state.open': '断开',
   'earthing-switch.state.open': '断开',
   'fuse.state.blown': '熔断',
@@ -419,7 +428,17 @@ const tables: Record<Locale, Table> = {
 };
 
 function lookup(locale: Locale, key: string): string | undefined {
+  // Chinese is the library JSON's own language, so a key the zh table lacks
+  // falls through to the caller's JSON fallback, never to English (the 10-25
+  // walkthrough found "Selector switch (SA)" and friends in the zh library).
+  if (locale === 'zh') return tables.zh[key];
   return tables[locale][key] ?? tables.en[key];
+}
+
+/** One-off lookup in the current locale (no re-render subscription): for
+ *  code that composes text outside a component, e.g. health messages. */
+export function libText(key: string, fallback?: string): string {
+  return lookup(useLocale.getState().locale, key) ?? fallback ?? key;
 }
 
 /** Returns a translator that re-renders on locale change. */

@@ -194,6 +194,13 @@ function ParamsSection({
 }
 
 /**
+ * What the checks assume when a number is left empty. Shown as the
+ * placeholder, so an unset power factor reads "default 0.9" rather than a 0
+ * that looks like a value (10-25 walkthrough).
+ */
+const IMPLIED_DEFAULTS: Record<string, number> = { cosphi: 0.9 };
+
+/**
  * Schema-driven param row: uses the library entry's declared label / unit /
  * type / default.
  */
@@ -237,11 +244,20 @@ function SchemaParamField({
     );
   }
   if (field.type === 'number') {
+    const implied = IMPLIED_DEFAULTS[field.name];
     return (
       <NumberRow
         label={label}
-        value={typeof cur === 'number' ? cur : 0}
+        value={typeof cur === 'number' ? cur : undefined}
         unit={field.unit}
+        placeholder={implied !== undefined ? t('props.defaultHint', { v: implied }) : undefined}
+        // The generic load's P is in MW while motors, sockets and lights are
+        // in kW (10-25 walkthrough): spell the MW value out in kW.
+        hint={
+          field.unit === 'MW' && typeof cur === 'number' && cur > 0
+            ? `= ${(cur * 1000).toLocaleString(undefined, { maximumFractionDigits: 3 })} kW`
+            : undefined
+        }
         onCommit={onCommit}
       />
     );
@@ -1144,7 +1160,8 @@ function Field({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <label className="w-16 shrink-0 truncate text-[11px] text-muted-foreground">
+      {/* Wraps rather than truncates: "Active po…" told the user nothing. */}
+      <label title={label} className="w-16 shrink-0 break-words text-[11px] leading-tight text-muted-foreground">
         {label}
       </label>
       <div className="min-w-0 flex-1">{children}</div>
@@ -1330,17 +1347,25 @@ function NumberRow({
   value,
   min,
   unit,
+  placeholder,
+  hint,
   onCommit,
 }: {
   label: string;
-  value: number;
+  /** Undefined = not set: the field shows empty (with `placeholder`), not 0. */
+  value: number | undefined;
   min?: number;
   unit?: string;
-  onCommit: (v: number) => void;
+  placeholder?: string;
+  /** A quiet line under the input, e.g. the value converted to kW. */
+  hint?: string;
+  /** Called with undefined when the user clears a field that had a value. */
+  onCommit: (v: number | undefined) => void;
 }) {
-  const [local, setLocal] = useState(String(value));
+  const shown = value === undefined ? '' : String(value);
+  const [local, setLocal] = useState(shown);
   const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => setLocal(String(value)), [value]);
+  useEffect(() => setLocal(shown), [shown]);
   return (
     <Field label={label}>
       <div className="relative">
@@ -1348,22 +1373,27 @@ function NumberRow({
           ref={ref}
           type="number"
           value={local}
+          placeholder={placeholder}
           onChange={(e) => setLocal(e.target.value)}
           onBlur={() => {
+            if (local.trim() === '') {
+              if (value !== undefined) onCommit(undefined);
+              return;
+            }
             const n = Number(local);
             if (Number.isFinite(n) && n !== value) onCommit(n);
-            else setLocal(String(value));
+            else setLocal(shown);
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') ref.current?.blur();
             if (e.key === 'Escape') {
-              setLocal(String(value));
+              setLocal(shown);
               ref.current?.blur();
             }
           }}
           min={min}
           className={cn(
-            'h-7 w-full rounded-md border border-border/60 bg-background/50 px-2 font-mono text-[11px] tabular-nums focus:border-border focus:outline-none focus:ring-1 focus:ring-ring',
+            'h-7 w-full rounded-md border border-border/60 bg-background/50 px-2 font-mono text-[11px] tabular-nums placeholder:font-sans placeholder:text-muted-foreground/70 focus:border-border focus:outline-none focus:ring-1 focus:ring-ring',
             unit && 'pr-8',
           )}
         />
@@ -1373,6 +1403,7 @@ function NumberRow({
           </span>
         )}
       </div>
+      {hint && <div className="mt-0.5 text-[10px] text-muted-foreground">{hint}</div>}
     </Field>
   );
 }

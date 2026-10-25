@@ -129,6 +129,22 @@
   height: 100%;
 }
 
+/* Portaled overlays (tooltips, the hover label) mount on <body>, outside the
+   editor, so they need their own `.ole-root` for the scoped utilities and
+   tokens to reach them. But utilities only match DESCENDANTS of `.ole-root`,
+   and the rule above would stretch the wrapper over the whole page: so the
+   wrapper is an empty zero-size box and the styled overlay is its child. */
+.ole-root.ole-portal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  /* `fixed` makes the wrapper a stacking context: lift it, not just the child. */
+  z-index: 100;
+}
+
 /* iOS: disable pull-to-refresh + over-scroll bounce so canvas pans don't
    flash the browser chrome. Also kill the iOS tap-highlight rectangle and
    the system text-selection callout that fires on long-press. Scoped to the
@@ -519,17 +535,58 @@
 .ole-health-marker:hover circle {
   stroke: var(--selection);
 }
-/* Load roll-up figure beside a bus / transformer. */
+/* Notes (open wire ends and the like): a quiet hollow dot, drawn only while
+   the checks panel is open, so a drawing is not peppered with them. */
+.ole-health-note circle {
+  fill: var(--canvas-bg);
+  stroke: #94a3b8;
+  stroke-width: 1.5;
+}
+/* The issue picked in the panel: a ring that pulses twice, then stays. */
+.ole-health-focus {
+  fill: none;
+  stroke: var(--selection);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  animation: ole-health-pulse 0.7s ease-out 2;
+}
+@keyframes ole-health-pulse {
+  from {
+    stroke-opacity: 0.2;
+    stroke-width: 6;
+  }
+  to {
+    stroke-opacity: 1;
+    stroke-width: 2;
+  }
+}
+/* Load roll-up figure beside a bus / transformer. Sized like element labels
+   (10-25 walkthrough: the 7px version was hard to read at fit zoom). */
 .ole-health-figure {
   font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 7px;
+  font-size: 9px;
+  font-weight: 600;
   fill: #0e7490;
   paint-order: stroke;
   stroke: var(--canvas-bg);
-  stroke-width: 2.5px;
+  stroke-width: 3px;
+}
+.dark .ole-health-figure {
+  fill: #67e8f9;
 }
 .ole-health-figure[data-over='true'] {
   fill: #b45309;
+}
+.dark .ole-health-figure[data-over='true'] {
+  fill: #fbbf24;
+}
+/* The checks panel is read while working on the drawing behind it, and
+   the glass blur made its small text swim over busy diagrams: opaque. */
+.ole-health-panel {
+  background-color: var(--card);
+}
+.ole-health-panel input[type='checkbox'] {
+  accent-color: var(--primary);
 }
 /* Live percentage while dragging a symbol-size grip. */
 .ole-element-scale-readout {

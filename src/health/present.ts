@@ -7,17 +7,53 @@
 import type { InternalModel } from '../compiler/internal-model';
 import { transformPoint } from '../compiler';
 import type { LocaleKey } from '../i18n';
+import { libText } from '../i18n/library';
 import type { HealthIssue } from './check';
 
 type T = (key: LocaleKey, params?: Record<string, string | number>) => string;
 
-/** Display name: the device's own name (first line), else its id. */
-export function targetName(internal: InternalModel, id: string): string {
+/** The kind's display name in the current locale, without the trailing
+ *  designation some carry ("断路器 (QF)" → "断路器"). */
+function kindName(internal: InternalModel, id: string): string | null {
+  const re = internal.elements.get(id);
+  if (!re) return null;
+  const k = re.element.kind;
+  return libText(`${k}.name`, re.libraryDef?.name ?? k).replace(/\s*[(（][^()（）]*[)）]\s*$/, '');
+}
+
+function ownName(internal: InternalModel, id: string): string | null {
   const el = internal.elements.get(id)?.element;
-  if (el) return (el.name ?? '').split(/\r\n|\r|\n/)[0].trim() || el.id;
+  if (el) return (el.name ?? '').split(/\r\n|\r|\n/)[0].trim() || null;
   const bus = internal.buses.get(id)?.bus;
-  if (bus) return bus.name?.trim() || bus.id;
-  return id;
+  if (bus) return bus.name?.trim() || null;
+  return null;
+}
+
+/**
+ * Short display name: the device's own name (first line), else what it is
+ * ("Circuit breaker"), else its id. Ids like "e12" mean nothing to the user
+ * (10-25 walkthrough), and a click on the issue selects the device anyway.
+ */
+export function targetName(internal: InternalModel, id: string, t?: T): string {
+  const own = ownName(internal, id);
+  if (own) return own;
+  if (internal.buses.has(id)) return t ? t('health.bus') : id;
+  return kindName(internal, id) ?? id;
+}
+
+/** Name plus what it is, for messages: "QF3 (Circuit breaker)". */
+export function targetLabel(internal: InternalModel, id: string, t?: T): string {
+  const own = ownName(internal, id);
+  const kind = kindName(internal, id);
+  if (own && kind) return `${own} (${kind})`;
+  return targetName(internal, id, t);
+}
+
+/** Up to three names, then "…": enough to recognise the group. */
+function nameList(internal: InternalModel, ids: string[], t: T): string {
+  const devices = ids.filter((id) => internal.elements.has(id));
+  const names = [...new Set(devices.map((id) => targetName(internal, id, t)))];
+  return names.slice(0, 3).join(', ') + (names.length > 3 ? ', …' : '');
 }
 
 const fmt = (v: string | number | undefined) =>
@@ -26,7 +62,9 @@ const fmt = (v: string | number | undefined) =>
 export function issueText(t: T, internal: InternalModel, issue: HealthIssue): string {
   const d = issue.data ?? {};
   const params: Record<string, string | number> = {
-    name: issue.targets[0] ? targetName(internal, issue.targets[0]) : '',
+    name: issue.targets[0] ? targetLabel(internal, issue.targets[0], t) : '',
+    names: nameList(internal, issue.targets, t),
+    other: typeof d.touching === 'string' ? targetName(internal, d.touching, t) : '',
     count: fmt(d.count),
     total: fmt(d.total),
     a: fmt(d.a),
@@ -37,7 +75,8 @@ export function issueText(t: T, internal: InternalModel, issue: HealthIssue): st
     load: fmt(d.load),
     rating: fmt(d.rating),
   };
-  const main = t(`health.code.${issue.code}` as LocaleKey, params);
+  const key = issue.code === 'unwired' && d.touching ? 'health.code.unwired-touching' : `health.code.${issue.code}`;
+  const main = t(key as LocaleKey, params);
   return d.units ? `${main} ${t('health.overloadUnits')}` : main;
 }
 

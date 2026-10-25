@@ -140,3 +140,44 @@ export function sameLanding(a: DragTarget, b: DragTarget): boolean {
   if (!a.ref && !b.ref) return a.world[0] === b.world[0] && a.world[1] === b.world[1];
   return false;
 }
+
+/**
+ * The connection point a dragged junction was dropped on, by geometry (the
+ * junction itself is under the cursor, so a DOM hit would only find it): the
+ * nearest device pin within `worldTol`, else another junction, else a bus
+ * whose axis passes within `worldTol`. Points already on the junction's own
+ * node are skipped — dropping a wire's end back onto the pin it comes from
+ * is a move, not a join. Null when nothing is close enough.
+ */
+export function junctionLanding(
+  jid: string,
+  at: [number, number],
+  worldTol: number,
+): WireEnd | null {
+  const m = useEditorStore.getState().internal;
+  const own = m.terminalToNode.get(jid);
+  const sameNode = (end: WireEnd) => own !== undefined && m.terminalToNode.get(end) === own;
+  let best: WireEnd | null = null;
+  let bestD = worldTol;
+  const consider = (end: WireEnd, p: readonly [number, number]) => {
+    const d = Math.hypot(p[0] - at[0], p[1] - at[1]);
+    if (d <= bestD && !sameNode(end)) {
+      bestD = d;
+      best = end;
+    }
+  };
+  for (const t of m.terminals.values()) consider(t.ref, t.world);
+  if (best) return best;
+  for (const [id, rj] of m.junctions) if (id !== jid) consider(id, rj.world);
+  if (best) return best;
+  for (const [id, rb] of m.buses) {
+    const { axis, at: c, span } = rb.geometry;
+    const half = span / 2;
+    const p: [number, number] =
+      axis === 'x'
+        ? [Math.max(c[0] - half, Math.min(c[0] + half, at[0])), c[1]]
+        : [c[0], Math.max(c[1] - half, Math.min(c[1] + half, at[1]))];
+    consider(id, p);
+  }
+  return best;
+}

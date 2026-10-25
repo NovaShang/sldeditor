@@ -108,25 +108,27 @@ export function ElementHoverLabel() {
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div
-      ref={labelRef}
-      role="tooltip"
-      className="ole-root ole-glass pointer-events-none fixed z-[100] flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] leading-snug shadow-md"
-      style={{
-        top: anchor?.top ?? -9999,
-        left: anchor?.left ?? -9999,
-        opacity: anchor ? 1 : 0,
-        transition: 'opacity 80ms ease-out',
-      }}
-    >
-      <span className="font-medium text-foreground">{display}</span>
-      {showId && (
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {elementName.id}
-        </span>
-      )}
-      <span className="text-muted-foreground/80">·</span>
-      <span className="text-muted-foreground">{subtitle}</span>
+    <div className="ole-root ole-portal">
+      <div
+        ref={labelRef}
+        role="tooltip"
+        className="ole-glass pointer-events-none fixed z-[100] flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] leading-snug shadow-md"
+        style={{
+          top: anchor?.top ?? -9999,
+          left: anchor?.left ?? -9999,
+          opacity: anchor ? 1 : 0,
+          transition: 'opacity 80ms ease-out',
+        }}
+      >
+        <span className="font-medium text-foreground">{display}</span>
+        {showId && (
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {elementName.id}
+          </span>
+        )}
+        <span className="text-muted-foreground/80">·</span>
+        <span className="text-muted-foreground">{subtitle}</span>
+      </div>
     </div>,
     document.body,
   );

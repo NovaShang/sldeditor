@@ -89,6 +89,12 @@ export interface LoadSummary {
   ratingKVA?: number;
   /** knownKVA / ratingKVA × 100, a lower bound when known < total. */
   loadingPct?: number;
+  /**
+   * Other units (transformers / UPSs) feeding the same loads. The figures
+   * above are then this unit's share — by rating, or equal when a rating is
+   * missing — and `known` / `total` count the whole shared group.
+   */
+  parallelWith?: string[];
 }
 
 export interface HealthReport {
@@ -279,6 +285,38 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
     }
   }
 
+  // 6 canvas units ≈ a few screen pixels at normal zoom: close enough that
+  // the drawing reads as joined. Measured on real drawings: of wire ends that
+  // stop near another connection point, nearly all are within 1 unit and the
+  // rest within 6; past that there is a visible gap.
+  const NEAR = 6;
+  const near = (a: readonly [number, number], b: readonly [number, number]) =>
+    Math.hypot(a[0] - b[0], a[1] - b[1]) <= NEAR;
+  const busUnder = (p: readonly [number, number]): string | null => {
+    for (const [id, rb] of m.buses) {
+      const { at, span, axis } = rb.geometry;
+      const half = span / 2;
+      if (axis === 'x' && Math.abs(p[1] - at[1]) <= NEAR && p[0] >= at[0] - half - NEAR && p[0] <= at[0] + half + NEAR) return id;
+      if (axis === 'y' && Math.abs(p[0] - at[0]) <= NEAR && p[1] >= at[1] - half - NEAR && p[1] <= at[1] + half + NEAR) return id;
+    }
+    return null;
+  };
+  /** What an unwired device visibly sits on: a bus or another device's pin
+   *  under one of its own pins. The commonest unwired case in the 10-25
+   *  walkthrough was a breaker pushed onto a bus, which reads as connected. */
+  const touching = (id: string): string | undefined => {
+    for (const ref of m.elementToTerminals.get(id) ?? []) {
+      const p = m.terminals.get(ref)?.world;
+      if (!p) continue;
+      const bus = busUnder(p);
+      if (bus) return bus;
+      for (const t of m.terminals.values()) {
+        const owner = t.ref.slice(0, t.ref.indexOf('.'));
+        if (owner !== id && near(t.world, p)) return owner;
+      }
+    }
+    return undefined;
+  };
   // 2. Wiring: unwired devices, open sides, feeder ends.
   const unwired = new Set<string>();
   const wiredPv = [...m.elements.keys()].some(
@@ -294,11 +332,13 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
         // array" drawn for illustration (10-24 evaluation): a note, not a
         // warning.
         const illustrative = re.element.kind === 'pv' && wiredPv;
+        const on = touching(id);
         issues.push({
           id: `unwired:${id}`,
           code: 'unwired',
           severity: illustrative ? 'info' : 'warning',
           targets: [id],
+          ...(on ? { data: { touching: on } } : {}),
         });
       }
       continue;
@@ -340,36 +380,20 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
   // connection point sits on the same spot, the drawing shows a joint that
   // the model does not have; otherwise the wire simply stops in mid-air.
   // A junction with no wire at all is invisible and ignored.
-  // 6 canvas units ≈ a few screen pixels at normal zoom: close enough that
-  // the drawing reads as joined. Measured on real drawings: of wire ends that
-  // stop near another connection point, nearly all are within 1 unit and the
-  // rest within 6; past that there is a visible gap.
-  const NEAR = 6;
-  const near = (a: readonly [number, number], b: readonly [number, number]) =>
-    Math.hypot(a[0] - b[0], a[1] - b[1]) <= NEAR;
-  const onBus = (p: readonly [number, number]) => {
-    for (const [, rb] of m.buses) {
-      const { at, span, axis } = rb.geometry;
-      const half = span / 2;
-      if (axis === 'x' && Math.abs(p[1] - at[1]) <= NEAR && p[0] >= at[0] - half - NEAR && p[0] <= at[0] + half + NEAR) return true;
-      if (axis === 'y' && Math.abs(p[0] - at[0]) <= NEAR && p[1] >= at[1] - half - NEAR && p[1] <= at[1] + half + NEAR) return true;
-    }
-    return false;
-  };
   for (const [id, rj] of m.junctions) {
     if (rj.degree !== 1) continue;
     const myNode = m.terminalToNode.get(id);
-    const overlaps =
-      [...m.junctions].some(
-        ([j2, r2]) => j2 !== id && near(r2.world, rj.world) && m.terminalToNode.get(j2) !== myNode,
-      ) ||
-      [...m.terminals.values()].some(
-        (t) => near(t.world, rj.world) && m.terminalToNode.get(t.ref) !== myNode,
-      ) ||
-      onBus(rj.world);
+    // What the end sits on, so the panel can offer to join them in one click
+    // (the end cannot be grabbed by hand there: the press lands on the pin's
+    // device). Pins first, then joints, then buses, as the drop gesture does.
+    const joins =
+      [...m.terminals.values()].find((t) => near(t.world, rj.world) && m.terminalToNode.get(t.ref) !== myNode)?.ref ??
+      [...m.junctions].find(([j2, r2]) => j2 !== id && near(r2.world, rj.world) && m.terminalToNode.get(j2) !== myNode)?.[0] ??
+      busUnder(rj.world) ??
+      undefined;
     issues.push(
-      overlaps
-        ? { id: `looks-joined:${id}`, code: 'looks-joined', severity: 'warning', targets: [id] }
+      joins
+        ? { id: `looks-joined:${id}`, code: 'looks-joined', severity: 'warning', targets: [id], data: { joins } }
         // A free wire end in open space is usually deliberate: an incoming
         // line from the utility, an outgoing feeder drawn to the page edge.
         // Worth a note, not a warning (10-24 evaluation: most free ends were
@@ -625,6 +649,7 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
     }
     // Transformers / UPS: the output side, unless only the input side is
     // supply-free (a drawing fed from below).
+    const units: { id: string; down: Set<string>; ratingKVA?: number }[] = [];
     for (const [id, re] of m.elements) {
       const rated = RATED_KINDS[re.element.kind];
       const pair = SERIES_PINS[re.element.kind];
@@ -637,13 +662,42 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
         const up = behind([inN], id, null);
         if (!hasOriginIn(up)) down = up;
       }
-      const s = sum(down);
-      if (s.t === 0) continue;
+      const loadsBehind = new Set([...down].filter((d) => LOAD_KINDS.has(kindOf(d))));
+      if (loadsBehind.size === 0) continue;
       const rating = num(re.element.params?.[rated.param]);
-      const ratingKVA = rating && rating > 0 ? rating * rated.toKVA : undefined;
+      units.push({ id, down: loadsBehind, ...(rating && rating > 0 ? { ratingKVA: rating * rated.toKVA } : {}) });
+    }
+    // Units that feed the same loads run in parallel (two transformers onto
+    // one bus, or onto two halves joined by a closed tie): the load is shared,
+    // not carried by each in full. The 10-25 walkthrough found both of a pair
+    // showing the whole board at 80% each. Share by rating, which is how
+    // equal-impedance units divide it; equally when a rating is missing.
+    const group = new Map<string, string[]>();
+    for (const u of units) {
+      const mates = units.filter((v) => [...u.down].some((d) => v.down.has(d))).map((v) => v.id);
+      group.set(u.id, mates);
+    }
+    for (const u of units) {
+      // Close the group transitively (A shares with B, B with C).
+      const ids = new Set<string>([u.id]);
+      const stack = [u.id];
+      while (stack.length) for (const v of group.get(stack.pop()!) ?? []) if (!ids.has(v)) { ids.add(v); stack.push(v); }
+      const mates = units.filter((v) => ids.has(v.id));
+      const shared = new Set<string>();
+      for (const v of mates) for (const d of v.down) shared.add(d);
+      const s = sum(shared);
+      const allRated = mates.every((v) => v.ratingKVA);
+      const share = mates.length === 1
+        ? 1
+        : allRated
+          ? u.ratingKVA! / mates.reduce((acc, v) => acc + v.ratingKVA!, 0)
+          : 1 / mates.length;
+      const kva = s.kva * share;
+      const ratingKVA = u.ratingKVA;
       const summary: LoadSummary = {
-        targetId: id, targetType: 'element', knownKW: s.kw, knownKVA: s.kva, known: s.k, total: s.t,
-        ...(ratingKVA ? { ratingKVA, loadingPct: (s.kva / ratingKVA) * 100 } : {}),
+        targetId: u.id, targetType: 'element', knownKW: s.kw * share, knownKVA: kva, known: s.k, total: s.t,
+        ...(ratingKVA ? { ratingKVA, loadingPct: (kva / ratingKVA) * 100 } : {}),
+        ...(mates.length > 1 ? { parallelWith: mates.filter((v) => v.id !== u.id).map((v) => v.id) } : {}),
       };
       loads.push(summary);
       // Unknown loads can only add to the total, so a known sum over the
@@ -652,15 +706,15 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
       // together: up to 125% is a note, beyond that a warning. Far beyond
       // (10×) is almost always a unit slip in the loads (P is in MW on the
       // generic load), and the message says so.
-      if (ratingKVA && s.kva > ratingKVA) {
-        const ratioLoad = s.kva / ratingKVA;
+      if (ratingKVA && kva > ratingKVA) {
+        const ratioLoad = kva / ratingKVA;
         issues.push({
-          id: `overload:${id}`,
+          id: `overload:${u.id}`,
           code: 'overload',
           severity: ratioLoad > 1.25 ? 'warning' : 'info',
-          targets: [id],
+          targets: [u.id],
           data: {
-            load: Math.round(s.kva),
+            load: Math.round(kva),
             rating: Math.round(ratingKVA),
             ...(ratioLoad > 10 ? { units: 1 } : {}),
           },

@@ -68,7 +68,7 @@ export function RightPanel() {
   return (
     <aside
       className={cn(
-        'ole-glass absolute z-10 flex flex-col overflow-hidden rounded-2xl border border-border shadow-sm',
+        'ole-glass ole-right-panel absolute z-10 flex flex-col overflow-hidden rounded-2xl border border-border shadow-sm',
         compactWidth ? 'w-48' : 'w-56',
       )}
       style={{

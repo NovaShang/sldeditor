@@ -23,15 +23,16 @@ export interface HostActions {
    */
   onCreateComponent: (() => void) | null;
   /**
-   * Told when the user opens a health-check issue or marks one intentional /
-   * restores it, so a host can measure whether flagged problems get looked
-   * at and fixed. Absent = nobody listening.
+   * Told when the user opens a health-check issue, ignores or restores one,
+   * or applies its one-click fix (`fix`: Connect on a wire end that only looks
+   * joined), so a host can measure whether flagged problems get looked at and
+   * fixed. Absent = nobody listening.
    */
   onHealthEvent: ((e: HealthEvent) => void) | null;
 }
 
 export interface HealthEvent {
-  type: 'open' | 'dismiss' | 'restore';
+  type: 'open' | 'dismiss' | 'restore' | 'fix';
   issueId: string;
   code: string;
 }
