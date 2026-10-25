@@ -1,0 +1,36 @@
+{
+  "id": "continuation-in",
+  "name": "跨页连接（来向）",
+  "category": "busbar",
+  "description": "从别处转来的连线在此接续；同名的跨页连接视为同一根线。",
+  "viewBox": "-3 -6 18 12",
+  "width": 18,
+  "height": 12,
+  "svg": "<polygon points=\"-1,-4 -1,4 9,0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"9\" y1=\"0\" x2=\"12\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 13,
+      "y": 0,
+      "orientation": "e"
+    }
+  ],
+  "params": [
+    {
+      "name": "target",
+      "label": "来源",
+      "type": "string",
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 4,
+    "y": -7,
+    "anchor": "middle"
+  },
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/100_folio_referencing/01coming_arrow.elmt",
+    "qetEnglishName": "Coming arrow"
+  }
+}

@@ -40,6 +40,7 @@ import {
 } from './internal-model';
 import { transformOrientation, transformPoint } from './transforms';
 import { UnionFind } from './union-find';
+import { continuationKey, isContinuation } from '../lib/kind-families';
 
 /**
  * Stable, content-derived node id. Same set of endpoints always maps to the
@@ -355,6 +356,25 @@ export function compile(diagram: DiagramFile): InternalModel {
     uf.add(w.ends[0]);
     uf.add(w.ends[1]);
     uf.union(w.ends[0], w.ends[1]);
+  }
+  // Continuation (off-page) connectors with the same name are one conductor.
+  // Only wired ones join: two named connectors with nothing attached are
+  // still two dangling symbols, and W001 should keep saying so.
+  const wiredEnds = new Set<string>(validWires.flatMap((w) => w.ends));
+  const continuationByKey = new Map<string, WireEnd[]>();
+  for (const re of m.elements.values()) {
+    if (!isContinuation(re.element.kind)) continue;
+    const key = continuationKey(re.element.name);
+    if (!key) continue;
+    for (const ref of m.elementToTerminals.get(re.element.id) ?? []) {
+      if (!wiredEnds.has(ref)) continue;
+      const list = continuationByKey.get(key) ?? [];
+      list.push(ref as WireEnd);
+      continuationByKey.set(key, list);
+    }
+  }
+  for (const refs of continuationByKey.values()) {
+    for (let i = 1; i < refs.length; i++) uf.union(refs[0], refs[i]);
   }
   for (const [, members] of uf.groups()) {
     const id = deterministicNodeId(members);

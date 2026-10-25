@@ -9,6 +9,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { libraryById } from '../element-library';
+import { useLibT } from '../i18n/library';
 import { useEditorStore } from '../store';
 import type { ElementId } from '../model';
 import { getHoverElement, subscribeHoverElement } from './hover-bus';
@@ -29,6 +30,7 @@ function isCoarsePointer(): boolean {
 }
 
 export function ElementHoverLabel() {
+  const libT = useLibT();
   const [hoverId, setHoverId] = useState<ElementId | null>(getHoverElement());
   const [shown, setShown] = useState(false);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
@@ -99,7 +101,9 @@ export function ElementHoverLabel() {
   if (!shown || !hoverId || !elementName) return null;
   const lib = libraryById[elementName.kind];
   const display = elementName.name ?? elementName.id;
-  const subtitle = lib?.name ?? elementName.kind;
+  // Localised: `lib.name` is the Chinese source string, which every locale
+  // used to see here.
+  const subtitle = lib ? libT(`${lib.id}.name`, lib.name) : elementName.kind;
   const showId = elementName.name && elementName.name !== elementName.id;
 
   if (typeof document === 'undefined') return null;

@@ -39,6 +39,8 @@ import {
 } from '../lib/annotation-geom';
 import { COLOR_ORDER, inkClass } from '../lib/colors';
 import { nameLines } from '../lib/element-labels';
+import { continuationKey, familyOf, isContinuation } from '../lib/kind-families';
+import { centerOnWorld } from '../canvas/fit-to-content';
 import { cn } from '../lib/utils';
 
 export function PropertyPanel() {
@@ -88,6 +90,7 @@ export function PropertyPanel() {
 
   return (
     <div className="flex flex-col gap-2.5 overflow-y-auto px-3 py-3 text-xs">
+      <KindFamilyRow id={id} kind={element.kind} />
       <TextRow
         label={t('props.name')}
         value={element.name ?? ''}
@@ -136,6 +139,7 @@ export function PropertyPanel() {
         }
       />
       {lib && <SizeRow id={id} />}
+      {isContinuation(element.kind) && <PartnerRow id={id} name={element.name} />}
       {lib?.state && lib.state.length > 0 && (
         <div className="mt-1 flex flex-col gap-1.5 border-t border-border/40 pt-2.5">
           {lib.state.map((field) => (
@@ -692,6 +696,96 @@ function StrokeGlyph({ width, dash }: { width: number; dash?: string }) {
  * the main way to resize; this is for an exact number). ↺ returns to 100%.
  * Commits on Enter or blur, one undo entry per commit.
  */
+/**
+ * Switch a contact between NO / NC / the four time-delay forms, or an
+ * off-page connector between outgoing and incoming — in place, wires kept
+ * (see `lib/kind-families.ts`). Renders nothing for kinds outside a family.
+ */
+function KindFamilyRow({ id, kind }: { id: string; kind: string }) {
+  const t = useT();
+  const libT = useLibT();
+  const family = familyOf(kind);
+  if (!family) return null;
+  const change = (next: string) => useEditorStore.getState().changeKind(id, next);
+  if (family.id === 'continuation') {
+    return (
+      <SegRow
+        label={t('props.direction')}
+        value={kind}
+        options={[
+          { value: 'continuation-out', label: t('props.directionOut') },
+          { value: 'continuation-in', label: t('props.directionIn') },
+        ]}
+        onChange={change}
+      />
+    );
+  }
+  const label = t('props.contactType');
+  return (
+    <Field label={label}>
+      <select
+        aria-label={label}
+        value={kind}
+        onChange={(e) => change(e.target.value)}
+        className="h-7 w-full min-w-0 rounded-md border border-border/60 bg-transparent px-1.5 text-[11px]"
+      >
+        {family.kinds.map((k) => (
+          <option key={k} value={k}>
+            {libT(`${k}.name`, libraryById[k]?.name ?? k)}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+}
+
+/**
+ * Where an off-page connector's other end is. Same name = same conductor
+ * (the compiler merges them), so this lists the other connectors sharing the
+ * name and jumps to one on click. No partner is not an error — it may be on
+ * another drawing — so the empty state is a plain note.
+ */
+function PartnerRow({ id, name }: { id: string; name: string | undefined }) {
+  const t = useT();
+  const key = continuationKey(name);
+  // Select the array itself and derive below: a selector that builds a new
+  // array every call never settles under zustand 5.
+  const elements = useEditorStore((s) => s.diagram.elements);
+  const partners = key
+    ? elements
+        .filter((e) => e.id !== id && isContinuation(e.kind) && continuationKey(e.name) === key)
+        .map((e) => e.id)
+    : [];
+  const jump = (pid: string) => {
+    const st = useEditorStore.getState();
+    st.setSelection([pid]);
+    const at = st.internal.layout.get(pid)?.at;
+    if (at) centerOnWorld(at);
+  };
+  return (
+    <Field label={t('props.partner')}>
+      {!key ? (
+        <span className="text-[11px] text-muted-foreground">{t('props.partnerUnnamed')}</span>
+      ) : partners.length === 0 ? (
+        <span className="text-[11px] text-muted-foreground">{t('props.partnerNone')}</span>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          {partners.map((pid) => (
+            <button
+              key={pid}
+              type="button"
+              onClick={() => jump(pid)}
+              className="h-7 rounded-md border border-border/60 px-2 text-[11px] hover:bg-accent"
+            >
+              {t('props.partnerJump', { id: pid })}
+            </button>
+          ))}
+        </div>
+      )}
+    </Field>
+  );
+}
+
 function SizeRow({ id }: { id: string }) {
   const t = useT();
   const scale = useEditorStore((s) => s.internal.layout.get(id)?.scale ?? 1);

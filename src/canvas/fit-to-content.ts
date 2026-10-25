@@ -128,6 +128,25 @@ export function fitToContentWith(api: ViewportApi, root: HTMLElement): boolean {
 }
 
 /**
+ * Pan so a world point sits in the middle of the viewport, keeping the zoom.
+ * Used to jump to an off-page connector's partner. Returns false when the
+ * viewport isn't mounted.
+ */
+export function centerOnWorld(world: readonly [number, number]): boolean {
+  const api = getViewportApi();
+  const root = getCanvasRoot();
+  if (!api || !root) return false;
+  const rect = root.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return false;
+  const { scale } = api.getViewport();
+  api.setViewport({
+    tx: rect.width / 2 - scale * world[0],
+    ty: rect.height / 2 - scale * world[1],
+  });
+  return true;
+}
+
+/**
  * Run `fitToContent` after the next paint, retrying for a few frames in case
  * the canvas hasn't mounted yet (initial mount race) or the diagram has
  * just been swapped and the new DOM nodes aren't yet attached.

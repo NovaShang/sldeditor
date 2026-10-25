@@ -1012,6 +1012,62 @@ const MANIFEST = [
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_02/en_60617_07_02_03.elmt' },
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
   },
+  // Time-delay contacts (IEC 60617-07-05-01…04). Same t1/t2 positions as
+  // make-contact / break-contact, so the property panel's contact-type switch
+  // can swap between all six without touching a wire. QET lists the bottom
+  // terminal first; force t1 = top.
+  {
+    id: 'on-delay-make-contact',
+    name: '通电延时闭合常开触点 (KT)',
+    category: 'control',
+    description: '常开触点，线圈通电后延时闭合 (IEC 60617-07-05-01)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_05/en_60617_07_05_01.elmt' },
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n' },
+      { id: 't2', x: 0, y: 20, orientation: 's' },
+    ],
+    params: [{ name: 'delay', label: '延时', type: 'number', unit: 's', showOnCanvas: true }],
+    state: [{ name: 'closed', type: 'boolean', default: false, label: '闭合' }],
+  },
+  {
+    id: 'off-delay-make-contact',
+    name: '断电延时断开常开触点 (KT)',
+    category: 'control',
+    description: '常开触点，线圈断电后延时断开 (IEC 60617-07-05-02)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_05/en_60617_07_05_02.elmt' },
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n' },
+      { id: 't2', x: 0, y: 20, orientation: 's' },
+    ],
+    params: [{ name: 'delay', label: '延时', type: 'number', unit: 's', showOnCanvas: true }],
+    state: [{ name: 'closed', type: 'boolean', default: false, label: '闭合' }],
+  },
+  {
+    id: 'on-delay-break-contact',
+    name: '通电延时断开常闭触点 (KT)',
+    category: 'control',
+    description: '常闭触点，线圈通电后延时断开 (IEC 60617-07-05-03)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_05/en_60617_07_05_03.elmt' },
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n' },
+      { id: 't2', x: 0, y: 20, orientation: 's' },
+    ],
+    params: [{ name: 'delay', label: '延时', type: 'number', unit: 's', showOnCanvas: true }],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+  },
+  {
+    id: 'off-delay-break-contact',
+    name: '断电延时闭合常闭触点 (KT)',
+    category: 'control',
+    description: '常闭触点，线圈断电后延时闭合 (IEC 60617-07-05-04)。',
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_05/en_60617_07_05_04.elmt' },
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n' },
+      { id: 't2', x: 0, y: 20, orientation: 's' },
+    ],
+    params: [{ name: 'delay', label: '延时', type: 'number', unit: 's', showOnCanvas: true }],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+  },
   {
     id: 'bell',
     name: '电铃 (HA)',
@@ -1021,6 +1077,36 @@ const MANIFEST = [
   },
 
   // ---- 接线 ----
+  // Continuation (off-page / interruption point). IEC 60617 has no symbol for
+  // it — IEC 61082-1 only requires the break to carry a reference to where
+  // the conductor continues — so these are QElectroTech's own folio-reference
+  // arrows. Two connectors with the same name are one conductor: the
+  // compiler merges their nodes (see compile.ts).
+  {
+    id: 'continuation-out',
+    name: '跨页连接（去向）',
+    category: 'busbar',
+    description: '连线在此断开，转到别处继续；同名的跨页连接视为同一根线。',
+    source: { kind: 'elmt', path: '10_allpole/100_folio_referencing/02going_arrow.elmt' },
+    terminals: [{ id: 't1', x: -13, y: 0, orientation: 'w' }],
+    params: [{ name: 'target', label: '去向', type: 'string', showOnCanvas: true }],
+    label: { x: -3, y: -7, anchor: 'middle' },
+  },
+  {
+    id: 'continuation-in',
+    name: '跨页连接（来向）',
+    category: 'busbar',
+    description: '从别处转来的连线在此接续；同名的跨页连接视为同一根线。',
+    source: { kind: 'elmt', path: '10_allpole/100_folio_referencing/01coming_arrow.elmt' },
+    // QET's own orientation, terminal on the right: an incoming feed sits at
+    // the left edge of a sheet with its wire running right, unrotated. The
+    // outgoing arrow is the mirror image (terminal left), so the panel's
+    // direction switch toggles `mirror` to keep the wire put — see
+    // `mirrorOnSwap` in lib/kind-families.ts.
+    terminals: [{ id: 't1', x: 13, y: 0, orientation: 'e' }],
+    params: [{ name: 'target', label: '来源', type: 'string', showOnCanvas: true }],
+    label: { x: 4, y: -7, anchor: 'middle' },
+  },
   {
     id: 'terminal',
     name: '接线端子 / 节点 (X)',

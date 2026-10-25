@@ -1,0 +1,46 @@
+{
+  "id": "off-delay-break-contact",
+  "name": "断电延时闭合常闭触点 (KT)",
+  "category": "control",
+  "description": "常闭触点，线圈断电后延时闭合 (IEC 60617-07-05-04)。",
+  "viewBox": "-47 -42 59 64",
+  "width": 59,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"8\" y2=\"-23\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"10\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -35 0 A 10 10 0 0 0 -35 -20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-25\" y1=\"-11\" x2=\"3\" y2=\"-11\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-25\" y1=\"-9\" x2=\"3\" y2=\"-9\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -40,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "params": [
+    {
+      "name": "delay",
+      "label": "延时",
+      "type": "number",
+      "unit": "s",
+      "showOnCanvas": true
+    }
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_05/en_60617_07_05_04.elmt",
+    "qetEnglishName": "Break contact, delayed closing"
+  }
+}

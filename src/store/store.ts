@@ -58,6 +58,8 @@ import {
 } from './id-allocator';
 import { normalizePath } from '../model/wire-path';
 import { clampSymbolScale } from '../model';
+import { libraryById } from '../element-library';
+import { familyOf } from '../lib/kind-families';
 import { endOwner, translateManualWirePaths } from './group-move';
 import { pruneOrphanedJunctions } from './prune-junctions';
 import { removeBindingsForTargets } from '../runtime/bindings';
@@ -317,6 +319,13 @@ export interface EditorState {
    */
   updateWire: (id: WireId, patch: Partial<Pick<Wire, 'label' | 'color'>>) => void;
   updateElement: (id: ElementId, patch: Partial<Element>) => void;
+  /**
+   * Swap an element to another kind of the same family (see
+   * `lib/kind-families.ts`) in place: id, name, colour, placement and wires
+   * stay. State is dropped (its fields belong to the old kind) and params the
+   * new kind does not declare are dropped with it. One undo entry.
+   */
+  changeKind: (id: ElementId, kind: string) => void;
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
   /**
    * Live placement change during a drag (the symbol-size grips): the canvas,
@@ -1457,6 +1466,33 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
         ...d,
         wires: wires.map((w) => (w.id === id ? { ...w, ...patch } : w)),
       };
+    });
+  },
+
+  changeKind: (id, kind) => {
+    const def = libraryById[kind];
+    if (!def) return;
+    const keep = new Set((def.params ?? []).map((p) => p.name));
+    const from = get().diagram.elements.find((e) => e.id === id)?.kind;
+    if (!from || from === kind) return;
+    const fam = familyOf(kind);
+    const flip = !!fam?.mirrorOnSwap && fam.kinds.includes(from);
+    get().dispatch((d) => {
+      const elements = d.elements.map((e) => {
+        if (e.id !== id) return e;
+        const { state: _state, params, ...rest } = e;
+        const kept = Object.entries(params ?? {}).filter(([k]) => keep.has(k));
+        return kept.length > 0
+          ? { ...rest, kind, params: Object.fromEntries(kept) }
+          : { ...rest, kind };
+      });
+      const place = d.layout?.[id];
+      if (!flip || !place) return { ...d, elements };
+      // Mirror images: flipping `mirror` puts the new kind's terminal exactly
+      // where the old one's was (mirror is applied before rotation).
+      const { mirror, ...rest } = place;
+      const next = mirror ? rest : { ...rest, mirror: true };
+      return { ...d, elements, layout: { ...d.layout, [id]: next } };
     });
   },
 
