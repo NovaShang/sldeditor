@@ -113,6 +113,13 @@ export interface DiagramMeta {
    * with an ANSI one is a mistake, not a feature.
    */
   symbolStandard?: SymbolStandard;
+  /**
+   * Health-check issues the user marked as intentional ("这是有意的"), by
+   * stable issue id (see `health/check.ts`). Kept in the document so the
+   * marker stays gone for everyone who opens it, and so dismissals travel
+   * with the file. Absent = nothing dismissed.
+   */
+  healthDismissed?: string[];
 }
 
 export interface Element {

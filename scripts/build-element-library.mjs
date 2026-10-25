@@ -337,6 +337,9 @@ const MANIFEST = [
     category: 'load',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_07/en_60617_06_07_02.elmt' },
     textFontSize: 14,
+    // Rated power, kW. Feeds the health check's load roll-up; before this
+    // the most common loads on a drawing carried no rating at all.
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
   },
   {
     id: 'async-motor',
@@ -344,6 +347,9 @@ const MANIFEST = [
     category: 'load',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_08/en_60617_06_08_01.elmt' },
     textFontSize: 14,
+    // Rated power, kW. Feeds the health check's load roll-up; before this
+    // the most common loads on a drawing carried no rating at all.
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
   },
   {
     id: 'luminaire',
@@ -383,6 +389,9 @@ const MANIFEST = [
     // tube line rather than above it — otherwise the incoming wire would stop
     // in empty space.
     extraTerminals: [{ id: 't_top', x: 0, y: 0, orientation: 'n' }],
+    // Rated power, kW. Feeds the health check's load roll-up; before this
+    // the most common loads on a drawing carried no rating at all.
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
   },
   {
     id: 'load',
@@ -916,6 +925,9 @@ const MANIFEST = [
       bbox: { x1: -15, y1: -25, x2: 15, y2: 20 },
     },
     terminals: [{ id: 't_top', x: 0, y: -25, orientation: 'n' }],
+    // Rated power, kW. Feeds the health check's load roll-up; before this
+    // the most common loads on a drawing carried no rating at all.
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
   },
 
   // ---- 无源元件 / 电力电子 ----
@@ -1139,6 +1151,9 @@ const MANIFEST = [
     category: 'load',
     description: '电源插座 / 多极连接器。',
     source: { kind: 'elmt', path: '11_singlepole/140_connectors_plugs/prise_multipolaire_2.elmt' },
+    // Rated power, kW. Feeds the health check's load roll-up; before this
+    // the most common loads on a drawing carried no rating at all.
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
   },
 
   // ======================================================================
@@ -1176,6 +1191,9 @@ const MANIFEST = [
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_05/en_60617_06_05_01.elmt' },
     // QET draws both leads at the top of the machine circle.
     textFontSize: 14,
+    // Rated power, kW. Feeds the health check's load roll-up; before this
+    // the most common loads on a drawing carried no rating at all.
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
   },
   {
     id: 'heater',

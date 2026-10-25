@@ -163,3 +163,10 @@ export { fitToContent, fitToContentSoon } from './canvas/fit-to-content';
 export { buildExportSvg, downloadSvg, downloadPng } from './lib/export-image';
 export { buildExportDxf, downloadDxf } from './lib/export-dxf';
 export type { DxfExportOptions } from './lib/export-dxf';
+
+// Drawing health check — the same report the canvas markers and checks panel
+// show, for hosts that want it elsewhere (an AI agent reading the drawing,
+// analytics). Pure: pass the document and its compiled model.
+export { checkHealth, parseRatio, sameVoltageLevel } from './health';
+export type { HealthCode, HealthIssue, HealthReport, HealthSeverity, LoadSummary } from './health';
+export type { HealthEvent } from './hooks/use-host-actions';

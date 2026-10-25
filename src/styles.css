@@ -496,6 +496,41 @@
 .ole-annotation-handle:hover {
   fill: var(--selection);
 }
+/* Health-check markers (canvas only, never exported). */
+.ole-health-marker {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.ole-health-marker circle {
+  fill: #f59e0b;
+  stroke: var(--canvas-bg);
+  stroke-width: 1.5;
+}
+.ole-health-marker[data-severity='error'] circle {
+  fill: #dc2626;
+}
+.ole-health-marker text {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 7.5px;
+  font-weight: 700;
+  fill: #fff;
+  pointer-events: none;
+}
+.ole-health-marker:hover circle {
+  stroke: var(--selection);
+}
+/* Load roll-up figure beside a bus / transformer. */
+.ole-health-figure {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 7px;
+  fill: #0e7490;
+  paint-order: stroke;
+  stroke: var(--canvas-bg);
+  stroke-width: 2.5px;
+}
+.ole-health-figure[data-over='true'] {
+  fill: #b45309;
+}
 /* Live percentage while dragging a symbol-size grip. */
 .ole-element-scale-readout {
   font-family: ui-sans-serif, system-ui, sans-serif;

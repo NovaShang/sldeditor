@@ -10,6 +10,7 @@ import {
 import { Button } from './ui/button';
 import { Tooltip } from './ui/tooltip';
 import { UpwardPopover } from './ui/upward-popover';
+import { HealthControls, HealthMenuBtn } from './HealthPanel';
 import {
   fitToContent,
   getViewportApi,
@@ -602,6 +603,8 @@ export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
         <LabelControls />
         <div aria-hidden className="my-1 h-px bg-border" />
         <StandardControls />
+        <div aria-hidden className="my-1 h-px bg-border" />
+        <HealthControls />
       </div>
     </UpwardPopover>
   );
@@ -655,6 +658,7 @@ function ViewToolbarExpanded({ tier }: { tier: Tier }) {
         <GridBtn grid={grid} setGrid={setGrid} />
         {/* Label settings mutate the document — omit them in view-only mode. */}
         {!readOnly && <LabelMenuBtn />}
+        {!readOnly && <HealthMenuBtn />}
       </div>
     </div>
   );

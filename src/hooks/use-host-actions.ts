@@ -22,6 +22,18 @@ export interface HostActions {
    * and the palette simply does not offer the button.
    */
   onCreateComponent: (() => void) | null;
+  /**
+   * Told when the user opens a health-check issue or marks one intentional /
+   * restores it, so a host can measure whether flagged problems get looked
+   * at and fixed. Absent = nobody listening.
+   */
+  onHealthEvent: ((e: HealthEvent) => void) | null;
+}
+
+export interface HealthEvent {
+  type: 'open' | 'dismiss' | 'restore';
+  issueId: string;
+  code: string;
 }
 
 interface HostActionsState extends HostActions {
@@ -30,5 +42,6 @@ interface HostActionsState extends HostActions {
 
 export const useHostActions = create<HostActionsState>((set) => ({
   onCreateComponent: null,
+  onHealthEvent: null,
   setHostActions: (actions) => set(actions),
 }));

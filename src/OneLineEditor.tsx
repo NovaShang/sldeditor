@@ -5,7 +5,7 @@ import type { DiagramFile } from './model';
 import { useEditorStore } from './store';
 import { useLocale, type Locale } from './i18n';
 import { applyTheme, type Theme } from './hooks/use-theme';
-import { useHostActions } from './hooks/use-host-actions';
+import { useHostActions, type HealthEvent } from './hooks/use-host-actions';
 
 export interface OneLineEditorProps {
   className?: string;
@@ -39,6 +39,9 @@ export interface OneLineEditorProps {
    * the behaviour. Omit it and the button is not offered.
    */
   onCreateComponent?: () => void;
+  /** Health-check interactions (opened an issue, marked one intentional,
+   *  restored one), for host analytics. */
+  onHealthEvent?: (e: HealthEvent) => void;
 }
 
 export function OneLineEditor({
@@ -48,12 +51,14 @@ export function OneLineEditor({
   locale,
   theme,
   onCreateComponent,
+  onHealthEvent,
 }: OneLineEditorProps) {
   useEffect(() => {
     useHostActions.getState().setHostActions({
       onCreateComponent: readOnly ? null : (onCreateComponent ?? null),
+      onHealthEvent: readOnly ? null : (onHealthEvent ?? null),
     });
-  }, [onCreateComponent, readOnly]);
+  }, [onCreateComponent, onHealthEvent, readOnly]);
 
   // Keep the store's view-only flag in sync with the prop. Declared before the
   // seed effect so it runs first (effect order = declaration order) — by the

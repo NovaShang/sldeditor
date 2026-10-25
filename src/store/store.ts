@@ -326,6 +326,11 @@ export interface EditorState {
    * new kind does not declare are dropped with it. One undo entry.
    */
   changeKind: (id: ElementId, kind: string) => void;
+  /**
+   * Mark a health-check issue intentional (or undo that). Stored in
+   * `meta.healthDismissed` so it travels with the document; one undo entry.
+   */
+  setHealthDismissed: (issueId: string, dismissed: boolean) => void;
   updatePlacement: (id: ElementId, patch: Partial<Placement>) => void;
   /**
    * Live placement change during a drag (the symbol-size grips): the canvas,
@@ -1466,6 +1471,18 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
         ...d,
         wires: wires.map((w) => (w.id === id ? { ...w, ...patch } : w)),
       };
+    });
+  },
+
+  setHealthDismissed: (issueId, dismissed) => {
+    get().dispatch((d) => {
+      const list = new Set(d.meta?.healthDismissed ?? []);
+      if (dismissed === list.has(issueId)) return d;
+      if (dismissed) list.add(issueId);
+      else list.delete(issueId);
+      const { healthDismissed: _old, ...rest } = d.meta ?? {};
+      const meta = list.size ? { ...rest, healthDismissed: [...list].sort() } : rest;
+      return { ...d, meta: Object.keys(meta).length ? meta : undefined };
     });
   },
 

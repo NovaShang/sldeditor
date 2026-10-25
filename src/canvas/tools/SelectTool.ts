@@ -137,7 +137,7 @@ export const SelectTool: Tool = {
     // SelectTool from clearing the very selection that owns those handles.
     if (
       e.target instanceof Element &&
-      e.target.closest('.ole-bus-handle, .ole-wire-handle, .ole-annotation-handle')
+      e.target.closest('.ole-bus-handle, .ole-wire-handle, .ole-annotation-handle, .ole-health-marker')
     ) {
       return;
     }

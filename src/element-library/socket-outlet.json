@@ -21,6 +21,15 @@
       "orientation": "s"
     }
   ],
+  "params": [
+    {
+      "name": "P",
+      "label": "功率",
+      "type": "number",
+      "unit": "kW",
+      "showOnCanvas": true
+    }
+  ],
   "source": {
     "kind": "elmt",
     "path": "11_singlepole/140_connectors_plugs/prise_multipolaire_2.elmt",

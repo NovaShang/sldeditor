@@ -26,6 +26,15 @@
       "orientation": "n"
     }
   ],
+  "params": [
+    {
+      "name": "P",
+      "label": "功率",
+      "type": "number",
+      "unit": "kW",
+      "showOnCanvas": true
+    }
+  ],
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_06/en_60617_06_08/en_60617_06_08_01.elmt",
