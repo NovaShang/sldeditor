@@ -4,7 +4,7 @@
  * open problems) or by clicking a marker on the canvas.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Stethoscope } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tooltip } from './ui/tooltip';
@@ -12,12 +12,31 @@ import { UpwardPopover } from './ui/upward-popover';
 import { useEditorStore } from '../store';
 import { usePanels } from '../hooks/use-panels';
 import { useHostActions } from '../hooks/use-host-actions';
-import { useT } from '../i18n';
+import { useT, type LocaleKey } from '../i18n';
 import { cn } from '../lib/utils';
 import { openProblems, useHealth } from '../health/use-health';
 import { centerPoint, issueText, targetName } from '../health/present';
 import { centerOnWorld } from '../canvas/fit-to-content';
 import type { HealthIssue } from '../health';
+
+/** Set once the first-run explanation has been shown; it never shows again. */
+const INTRO_KEY = 'ole-health-intro-seen';
+const INTRO_AUTO_HIDE_MS = 15000;
+
+function introSeen(): boolean {
+  try {
+    return window.localStorage.getItem(INTRO_KEY) === '1';
+  } catch {
+    return true; // no storage: never nag
+  }
+}
+function markIntroSeen(): void {
+  try {
+    window.localStorage.setItem(INTRO_KEY, '1');
+  } catch {
+    // ignore
+  }
+}
 
 export function HealthMenuBtn() {
   const t = useT();
@@ -25,6 +44,70 @@ export function HealthMenuBtn() {
   const open = usePanels((s) => s.healthOpen);
   const setOpen = usePanels((s) => s.setHealthOpen);
   const count = openProblems(report).length;
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const [intro, setIntro] = useState(false);
+
+  // The first time a drawing shows problems, say once — quietly — what the
+  // dots are. Only when the button is actually on screen (a host may hide it,
+  // e.g. inside a marketing demo), so "seen" is never spent invisibly.
+  useEffect(() => {
+    if (count === 0 || intro || introSeen()) return;
+    const btn = anchorRef.current?.querySelector<HTMLElement>('.ole-health-btn');
+    if (!btn || btn.offsetParent === null) return;
+    markIntroSeen();
+    setIntro(true);
+  }, [count, intro]);
+  useEffect(() => {
+    if (!intro) return;
+    const timer = setTimeout(() => setIntro(false), INTRO_AUTO_HIDE_MS);
+    return () => clearTimeout(timer);
+  }, [intro]);
+
+  return (
+    <div ref={anchorRef} className="relative">
+      {intro && !open && (
+        <div
+          role="status"
+          className="ole-glass ole-health-intro absolute bottom-full end-0 mb-2 w-64 rounded-xl border border-border p-3 text-xs shadow-md"
+        >
+          <div className="text-[12px] font-medium">{t('health.introTitle')}</div>
+          <p className="mt-1 leading-snug text-muted-foreground">{t('health.intro', { n: count })}</p>
+          <div className="mt-2 flex justify-end gap-1.5">
+            <button
+              type="button"
+              className="rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
+              onClick={() => setIntro(false)}
+            >
+              {t('health.introOk')}
+            </button>
+            <button
+              type="button"
+              className="rounded-md bg-primary px-2 py-1 text-[11px] text-primary-foreground hover:opacity-90"
+              onClick={() => {
+                setIntro(false);
+                setOpen(true);
+              }}
+            >
+              {t('health.introShow')}
+            </button>
+          </div>
+        </div>
+      )}
+      <HealthMenuPopover open={open} setOpen={setOpen} count={count} />
+    </div>
+  );
+}
+
+function HealthMenuPopover({
+  open,
+  setOpen,
+  count,
+}: {
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  count: number;
+}) {
+  const t = useT();
   return (
     <UpwardPopover
       open={open}
@@ -130,6 +213,39 @@ export function HealthControls() {
     </div>
   );
 
+  /**
+   * One row per issue, but issues of the same kind fold under one header
+   * ("Not connected ×20") once there are two or more: a drawing whose wires
+   * all stop short of their terminals would otherwise bury everything else.
+   * The group holding the focused issue (a marker click) opens itself.
+   */
+  const grouped = (list: HealthIssue[], action: 'dismiss' | 'restore') => {
+    const byCode = new Map<string, HealthIssue[]>();
+    for (const i of list) byCode.set(i.code, [...(byCode.get(i.code) ?? []), i]);
+    return [...byCode].map(([code, items]) =>
+      items.length === 1 ? (
+        row(items[0], action)
+      ) : (
+        <details key={code} open={items.some((i) => i.id === focus) || undefined}>
+          <summary className="flex cursor-pointer list-none items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent">
+            <span
+              aria-hidden
+              className={cn(
+                'size-2 shrink-0 rounded-full',
+                items[0].severity === 'error' ? 'bg-red-600' : items[0].severity === 'warning' ? 'bg-amber-500' : 'bg-muted-foreground/50',
+              )}
+            />
+            <span className="min-w-0 flex-1 text-[11px] font-medium text-foreground">
+              {t(`health.label.${code}` as LocaleKey)}
+            </span>
+            <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">×{items.length}</span>
+          </summary>
+          <div className="ms-3 border-s border-border/60 ps-1">{items.map((i) => row(i, action))}</div>
+        </details>
+      ),
+    );
+  };
+
   return (
     <div className="flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-1 text-xs">
       <div className="flex items-center justify-between gap-2 px-2 pb-1">
@@ -147,7 +263,7 @@ export function HealthControls() {
             <div className="px-2 pt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               {t('health.sectionProblems')} · {problems.length}
             </div>
-            {problems.map((i) => row(i, 'dismiss'))}
+            {grouped(problems, 'dismiss')}
           </>
         )}
         {report.loads.length > 0 && (
@@ -180,7 +296,7 @@ export function HealthControls() {
             <summary className="cursor-pointer px-2 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               {t('health.sectionNotes')} · {notes.length}
             </summary>
-            {notes.map((i) => row(i, 'dismiss'))}
+            {grouped(notes, 'dismiss')}
           </details>
         )}
         {dismissed.length > 0 && (
@@ -188,7 +304,7 @@ export function HealthControls() {
             <summary className="cursor-pointer px-2 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               {t('health.sectionDismissed')} · {dismissed.length}
             </summary>
-            {dismissed.map((i) => row(i, 'restore'))}
+            {grouped(dismissed, 'restore')}
           </details>
         )}
       </div>
