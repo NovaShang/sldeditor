@@ -3,6 +3,12 @@
  * the SVG offline from `InternalModel` rather than scraping the live canvas
  * — this keeps UI chrome (selection halos, terminal hit rects, marquee,
  * etc.) out of the file and crops tightly around the actual content.
+ *
+ * Drawing sheets (`opts.sheets`) are drawn first, beneath everything, from
+ * the same `sheetPrimitives` the canvas frame uses. A host exporting one
+ * sheet as a page also passes `region` (the page) and `minStrokeWidth` (the
+ * print floor) — see `export-sheets.ts`. Without those three options the
+ * output is byte-for-byte what it was before sheets existed.
  */
 
 import { compensateStrokes } from './symbol-scale';
@@ -35,7 +41,10 @@ import {
   TINT_OPACITY,
 } from './annotation-geom';
 import { exportInk } from './colors';
+import { sheetRect, type Sheet, type TitleBlockShared } from '../model/sheet';
+import { exportSheetPrimitives, type ExportRegion } from './export-sheets';
 import {
+  continuationSheetRefs,
   fallbackAnchor,
   labelBlockWidth,
   labelLineHeight,
@@ -72,18 +81,44 @@ export interface ExportOptions {
   /** Free annotations from `DiagramFile.annotations` — `InternalModel`
    *  doesn't carry them, so the caller passes them through. */
   annotations?: Annotation[];
+  /** Drawing sheets (`DiagramFile.sheets`), drawn beneath everything and
+   *  included in the content bounds. Array order numbers them "n of N". */
+  sheets?: Sheet[];
+  /** Shared title-block fields (`DiagramFile.meta.titleBlock`). */
+  titleBlock?: TitleBlockShared;
+  /**
+   * Crop to exactly this world rect: it becomes the viewBox, with no
+   * padding, and width/height match it. Content outside is still emitted and
+   * simply clipped by the viewBox. Used to export one sheet as a page.
+   */
+  region?: ExportRegion;
+  /**
+   * Floor, in world units, for every ink stroke in the file — wires, buses,
+   * symbol outlines, annotations, the sheet frame. For a sheet enlarged by
+   * `s` the host passes `PRINT_STROKE_MIN_MM * s / MM_PER_UNIT` (see
+   * `sheetMinStroke`) so lines don't print fainter than 0.25 mm once the
+   * page is shrunk back onto paper. Label haloes are background-coloured
+   * knock-outs, not ink, and are left alone.
+   */
+  minStrokeWidth?: number;
 }
 
 export function buildExportSvg(
   model: InternalModel,
   opts: ExportOptions = {},
 ): string {
-  const bbox = computeContentBbox(model, opts);
-  const x = Math.floor(bbox.minX - PADDING);
-  const y = Math.floor(bbox.minY - PADDING);
-  const w = Math.ceil(bbox.maxX + PADDING) - x;
-  const h = Math.ceil(bbox.maxY + PADDING) - y;
+  let x: number, y: number, w: number, h: number;
+  if (opts.region) {
+    ({ x, y, w, h } = opts.region);
+  } else {
+    const bbox = computeContentBbox(model, opts);
+    x = Math.floor(bbox.minX - PADDING);
+    y = Math.floor(bbox.minY - PADDING);
+    w = Math.ceil(bbox.maxX + PADDING) - x;
+    h = Math.ceil(bbox.maxY + PADDING) - y;
+  }
   const bg = opts.background ?? '#FFFFFF';
+  const sw = strokeFloor(opts.minStrokeWidth);
 
   const out: string[] = [];
   out.push('<?xml version="1.0" encoding="UTF-8"?>');
@@ -97,10 +132,13 @@ export function buildExportSvg(
     );
   }
 
+  // Sheets — paper frames and title blocks, beneath the drawing.
+  if (opts.sheets?.length) exportSheets(out, opts.sheets, opts.titleBlock, sw);
+
   // Wires first (rendered behind elements). The group keeps the default ink;
   // a coloured wire overrides `stroke` on its own polyline, so an uncoloured
   // diagram emits exactly the markup it did before colours existed.
-  out.push('  <g fill="none" stroke="black" stroke-width="1">');
+  out.push(`  <g fill="none" stroke="black" stroke-width="${sw(1)}">`);
   for (const r of model.wireRenders.values()) {
     if (r.path.length < 2) continue;
     const pts = r.path.map(([px, py]) => `${px},${py}`).join(' ');
@@ -118,7 +156,7 @@ export function buildExportSvg(
     const x2 = axis === 'x' ? at[0] + half : at[0];
     const y2 = axis === 'x' ? at[1] : at[1] + half;
     out.push(
-      `  <line id="${escapeXml(bus.id)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${exportInk(bus.color)}" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+      `  <line id="${escapeXml(bus.id)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${exportInk(bus.color)}" stroke-width="${sw(3)}" stroke-linecap="round" fill="none"/>`,
     );
   }
 
@@ -139,11 +177,20 @@ export function buildExportSvg(
     if (!re.libraryDef) continue;
     const place = model.layout.get(re.element.id);
     if (!place) continue;
+    // Floor the symbol's authored widths BEFORE compensating for its scale:
+    // authored widths are world widths, which is what the floor is measured in.
+    // A stroke with no width of its own defaults to 1 local unit = `scale`
+    // world units, so the group carries the floor down to those too.
+    const s = place.scale ?? 1;
+    const inherit =
+      opts.minStrokeWidth !== undefined && opts.minStrokeWidth > s
+        ? ` stroke-width="${roundUp(opts.minStrokeWidth / s)}"`
+        : '';
     out.push(
-      `  <g id="${escapeXml(re.element.id)}" transform="${transformAttr(place)}">`,
+      `  <g id="${escapeXml(re.element.id)}" transform="${transformAttr(place)}"${inherit}>`,
     );
     out.push(
-      `    ${recolorSymbol(compensateStrokes(re.libraryDef.svg, place.scale), re.element.color)}`,
+      `    ${recolorSymbol(compensateStrokes(floorSymbolStrokes(re.libraryDef.svg, sw), place.scale), re.element.color)}`,
     );
     out.push('  </g>');
   }
@@ -156,6 +203,8 @@ export function buildExportSvg(
   const labelFs = resolveLabelFontSize(opts.labelFontSize);
   const lineHeight = labelLineHeight(labelFs);
   if (labelMode !== 'off') {
+    // Off-page connectors' "→ n/N" — the same derived line the canvas shows.
+    const sheetRefs = continuationSheetRefs(model.elements.values(), model.layout, opts.sheets);
     const halo = bg === 'transparent' ? '#FFFFFF' : bg;
     out.push(
       `  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${labelFs}" paint-order="stroke" stroke="${halo}" stroke-width="2" stroke-linejoin="round">`,
@@ -163,7 +212,7 @@ export function buildExportSvg(
     for (const re of model.elements.values()) {
       const place = model.layout.get(re.element.id);
       if (!place || !re.libraryDef) continue;
-      const lines = labelLines(re, labelMode);
+      const lines = labelLines(re, labelMode, sheetRefs.get(re.element.id));
       if (lines.length === 0) continue;
       const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef, labelFs);
       const {
@@ -217,16 +266,16 @@ export function buildExportSvg(
     for (const ann of anns) {
       switch (annotationKind(ann)) {
         case 'rect':
-          exportRect(out, ann as RectAnnotation, fontAttrs);
+          exportRect(out, ann as RectAnnotation, fontAttrs, sw);
           break;
         case 'ellipse':
-          exportEllipse(out, ann as EllipseAnnotation, fontAttrs);
+          exportEllipse(out, ann as EllipseAnnotation, fontAttrs, sw);
           break;
         case 'line':
-          exportLine(out, ann as LineAnnotation);
+          exportLine(out, ann as LineAnnotation, sw);
           break;
         case 'table':
-          exportTable(out, ann as TableAnnotation, cellBg);
+          exportTable(out, ann as TableAnnotation, cellBg, sw);
           break;
         default:
           exportText(out, ann as TextAnnotation, fontAttrs);
@@ -262,6 +311,83 @@ function recolorSymbol(svg: string, color: Annotation['color']): string {
   );
 }
 
+// ---- Stroke floor ----------------------------------------------------------
+
+/** Maps an emitted stroke width to the width written to the file. */
+type StrokeFloor = (w: number) => number;
+
+/**
+ * Identity without a floor — which is what keeps a floor-less export's bytes
+ * unchanged — otherwise `max(w, floor)`, rounded UP so the written value
+ * never lands a hair under the floor.
+ */
+function strokeFloor(min: number | undefined): StrokeFloor {
+  if (min === undefined || !(min > 0)) return (w) => w;
+  const floor = roundUp(min);
+  return (w) => (w < floor ? floor : w);
+}
+
+function roundUp(n: number): number {
+  return Math.ceil(n * 10000 - 1e-6) / 10000;
+}
+
+/** Library symbols carry plain numeric `stroke-width` attributes (see
+ *  `compensateStrokes`), so the same exact string rewrite applies. */
+function floorSymbolStrokes(svg: string, sw: StrokeFloor): string {
+  return svg.replace(
+    /stroke-width="([0-9.]+)"/g,
+    (m, v: string) => {
+      const w = Number(v);
+      const f = sw(w);
+      return f === w ? m : `stroke-width="${f}"`;
+    },
+  );
+}
+
+// ---- Sheets (mirror SheetLayer, via sheetPrimitives) ------------------------
+
+/**
+ * Border, inner border, title-block grid and text, all in black: a printed
+ * frame is ink like the rest of the export, whatever the canvas theme. The
+ * text gets no halo — nothing runs under a title block.
+ */
+function exportSheets(
+  out: string[],
+  sheets: Sheet[],
+  shared: TitleBlockShared | undefined,
+  sw: StrokeFloor,
+): void {
+  for (const p of exportSheetPrimitives(sheets, shared)) {
+    out.push('  <g fill="none" stroke="black">');
+    for (const r of p.rects) {
+      out.push(
+        `    <rect x="${num(r.x)}" y="${num(r.y)}" width="${num(r.w)}" height="${num(r.h)}" stroke-width="${roundUp(sw(r.stroke))}"/>`,
+      );
+    }
+    for (const l of p.lines) {
+      out.push(
+        `    <line x1="${num(l.x1)}" y1="${num(l.y1)}" x2="${num(l.x2)}" y2="${num(l.y2)}" stroke-width="${roundUp(sw(l.stroke))}"/>`,
+      );
+    }
+    out.push('  </g>');
+    if (p.texts.length > 0) {
+      out.push('  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif">');
+      for (const t of p.texts) {
+        out.push(
+          `    <text x="${num(t.x)}" y="${num(t.y)}" font-size="${num(t.size)}">${escapeXml(t.text)}</text>`,
+        );
+      }
+      out.push('  </g>');
+    }
+  }
+}
+
+/** Sheet geometry is mm × 96/25.4 — long decimals that buy nothing.
+ *  (Stroke widths round UP instead, so they never dip under the floor.) */
+function num(n: number): number {
+  return Math.round(n * 1000) / 1000;
+}
+
 // ---- Annotation emitters (mirror FreeAnnotationLayer) ---------------------
 
 function exportText(out: string[], ann: TextAnnotation, fontAttrs: string): void {
@@ -278,7 +404,12 @@ function exportText(out: string[], ann: TextAnnotation, fontAttrs: string): void
   out.push('  </g>');
 }
 
-function exportRect(out: string[], ann: RectAnnotation, fontAttrs: string): void {
+function exportRect(
+  out: string[],
+  ann: RectAnnotation,
+  fontAttrs: string,
+  sw: StrokeFloor,
+): void {
   const [x, y] = ann.at;
   const [w, h] = ann.size;
   const ink = exportInk(ann.color);
@@ -288,7 +419,7 @@ function exportRect(out: string[], ann: RectAnnotation, fontAttrs: string): void
     );
   }
   out.push(
-    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${ink}" stroke-width="${strokeW(ann.strokeWidth)}"${dashAttr(ann.stroke ?? 'dashed')}/>`,
+    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${ink}" stroke-width="${sw(strokeW(ann.strokeWidth))}"${dashAttr(ann.stroke ?? 'dashed')}/>`,
   );
   exportBoxLabel(out, ann, fontAttrs);
 }
@@ -297,6 +428,7 @@ function exportEllipse(
   out: string[],
   ann: EllipseAnnotation,
   fontAttrs: string,
+  sw: StrokeFloor,
 ): void {
   const { cx, cy, rx, ry } = ellipseGeom(ann);
   const ink = exportInk(ann.color);
@@ -306,7 +438,7 @@ function exportEllipse(
     );
   }
   out.push(
-    `  <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${ink}" stroke-width="${strokeW(ann.strokeWidth)}"${dashAttr(ann.stroke)}/>`,
+    `  <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${ink}" stroke-width="${sw(strokeW(ann.strokeWidth))}"${dashAttr(ann.stroke)}/>`,
   );
   exportBoxLabel(out, ann, fontAttrs);
 }
@@ -331,13 +463,13 @@ function dashAttr(style: Parameters<typeof strokeDash>[0]): string {
   return d ? ` stroke-dasharray="${d}"` : '';
 }
 
-function exportLine(out: string[], ann: LineAnnotation): void {
+function exportLine(out: string[], ann: LineAnnotation, sw: StrokeFloor): void {
   const pts = lineAbsPoints(ann);
   if (pts.length < 2) return;
   const ink = exportInk(ann.color);
   const ptsAttr = pts.map(([px, py]) => `${px},${py}`).join(' ');
   out.push(
-    `  <polyline points="${ptsAttr}" fill="none" stroke="${ink}" stroke-width="${strokeW(ann.strokeWidth)}"${dashAttr(ann.stroke)}/>`,
+    `  <polyline points="${ptsAttr}" fill="none" stroke="${ink}" stroke-width="${sw(strokeW(ann.strokeWidth))}"${dashAttr(ann.stroke)}/>`,
   );
   for (const tri of lineArrowHeads(pts, ann.arrow)) {
     out.push(
@@ -346,7 +478,12 @@ function exportLine(out: string[], ann: LineAnnotation): void {
   }
 }
 
-function exportTable(out: string[], ann: TableAnnotation, cellBg: string): void {
+function exportTable(
+  out: string[],
+  ann: TableAnnotation,
+  cellBg: string,
+  sw: StrokeFloor,
+): void {
   const [x, y] = ann.at;
   const ink = exportInk(ann.color);
   const [w, h] = tableSize(ann);
@@ -366,10 +503,10 @@ function exportTable(out: string[], ann: TableAnnotation, cellBg: string): void 
     grid += `M${x} ${y + rowE[r]}H${x + w}`;
   }
   if (grid) {
-    out.push(`  <path d="${grid}" fill="none" stroke="${ink}" stroke-width="0.5"/>`);
+    out.push(`  <path d="${grid}" fill="none" stroke="${ink}" stroke-width="${sw(0.5)}"/>`);
   }
   out.push(
-    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${ink}" stroke-width="1"/>`,
+    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${ink}" stroke-width="${sw(1)}"/>`,
   );
   const texts: string[] = [];
   for (let r = 0; r < ann.rowHeights.length; r++) {
@@ -447,10 +584,11 @@ export function computeContentBbox(model: InternalModel, opts: ExportOptions): B
   const labelFs = resolveLabelFontSize(opts.labelFontSize);
   const lineHeight = labelLineHeight(labelFs);
   if (labelMode !== 'off') {
+    const sheetRefs = continuationSheetRefs(model.elements.values(), model.layout, opts.sheets);
     for (const re of model.elements.values()) {
       const place = model.layout.get(re.element.id);
       if (!place || !re.libraryDef) continue;
-      const lines = labelLines(re, labelMode);
+      const lines = labelLines(re, labelMode, sheetRefs.get(re.element.id));
       if (lines.length === 0) continue;
       const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef, labelFs);
       const {
@@ -495,6 +633,14 @@ export function computeContentBbox(model: InternalModel, opts: ExportOptions): B
     const b = annotationBBox(ann);
     update(b.minX, b.minY);
     update(b.maxX, b.maxY);
+  }
+
+  // Sheets — a frame is content: the whole-canvas export must show every
+  // page border, not crop through one.
+  for (const s of opts.sheets ?? []) {
+    const r = sheetRect(s);
+    update(r.x, r.y);
+    update(r.x + r.w, r.y + r.h);
   }
 
   if (minX === Infinity) {

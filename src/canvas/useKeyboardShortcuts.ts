@@ -62,6 +62,7 @@ export function exitDrawingState(): void {
   if (
     store.selectedNode ||
     store.selectedWire ||
+    store.selectedSheet ||
     store.selection.length > 0 ||
     store.selectedAnnotations.length > 0
   ) {
@@ -202,6 +203,10 @@ export function useKeyboardShortcuts(): void {
           } else if (store.selectedNode) {
             e.preventDefault();
             store.deleteSelectedNode();
+          } else if (store.selectedSheet) {
+            // Removes the frame only; what is drawn on it stays put.
+            e.preventDefault();
+            store.removeSheet(store.selectedSheet);
           }
           return;
         case 'Escape':

@@ -6,6 +6,7 @@ import { cn } from '../lib/utils';
 import { annotationKind } from '../model';
 import { soleSelectedAnnotation, useEditorStore } from '../store';
 import { PropertyPanel } from './PropertyPanel';
+import { SheetInspector } from './SheetInspector';
 
 export function RightPanel() {
   const t = useT();
@@ -18,10 +19,18 @@ export function RightPanel() {
   const annotations = useEditorStore((s) => s.diagram.annotations);
   const elements = useEditorStore((s) => s.diagram.elements);
   const buses = useEditorStore((s) => s.diagram.buses);
+  const selectedSheet = useEditorStore((s) => s.selectedSheet);
+  const sheets = useEditorStore((s) => s.diagram.sheets);
   const tier = useEditorTier();
   const compactWidth = atLeast(tier, 'dense');
 
+  // Selecting a sheet clears every other selection (setSelectedSheet), so it
+  // is an exclusive mode. An id with no sheet behind it (the sheet was just
+  // undone away) falls through to the normal empty-selection rule.
+  const sheetIndex = selectedSheet ? (sheets ?? []).findIndex((sh) => sh.id === selectedSheet) : -1;
+
   if (
+    sheetIndex < 0 &&
     selection.length === 0 &&
     selectedAnnotations.length === 0 &&
     !selectedNode &&
@@ -31,7 +40,9 @@ export function RightPanel() {
 
   let title = t('props.title');
   let count: number | null = null;
-  if (selectedWire) {
+  if (sheetIndex >= 0) {
+    title = t('sheet.nameN', { n: sheetIndex + 1 });
+  } else if (selectedWire) {
     title = t('props.wire');
   } else if (selectedNode) {
     title = t('props.node');
@@ -71,10 +82,13 @@ export function RightPanel() {
         'ole-glass ole-right-panel absolute z-10 flex flex-col overflow-hidden rounded-2xl border border-border shadow-sm',
         compactWidth ? 'w-48' : 'w-56',
       )}
+      // `--ole-right-panel-reserve`: room kept free below the panel for the
+      // view toolbar (default) — a host stacking its own floating buttons in
+      // that corner raises it so they never cover the panel's last rows.
       style={{
         top: `calc(${compactWidth ? '4.5rem' : '0.75rem'} + var(--ole-top-inset, 0px) + var(--ole-safe-top, 0px))`,
         right: 'calc(0.75rem + var(--ole-right-inset, 0px) + var(--ole-safe-right, 0px))',
-        maxHeight: `calc(100% - ${compactWidth ? '5.25rem' : '1.5rem'} - var(--ole-top-inset, 0px) - var(--ole-safe-top, 0px) - var(--ole-bottom-inset, 0px) - var(--ole-safe-bottom, 0px) - 4.5rem)`,
+        maxHeight: `calc(100% - ${compactWidth ? '5.25rem' : '1.5rem'} - var(--ole-top-inset, 0px) - var(--ole-safe-top, 0px) - var(--ole-bottom-inset, 0px) - var(--ole-safe-bottom, 0px) - var(--ole-right-panel-reserve, 4.5rem))`,
       }}
     >
       <div className="flex items-center gap-1.5 border-b border-border/40 px-3 py-2">
@@ -87,7 +101,13 @@ export function RightPanel() {
           </span>
         )}
       </div>
-      <PropertyPanel />
+      {selectedSheet && sheetIndex >= 0 ? (
+        // Keyed so a half-typed title-block field can never commit into the
+        // next sheet the user clicks.
+        <SheetInspector key={selectedSheet} sheetId={selectedSheet} />
+      ) : (
+        <PropertyPanel />
+      )}
     </aside>
   );
 }

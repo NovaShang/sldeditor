@@ -17,8 +17,17 @@
  *   element label   → TEXT (one per line, ID + showOnCanvas params)
  *   wire label      → TEXT (mid-wire, phase designation etc.)
  *
+ *   drawing sheet   → POLYLINE borders + LINE grid + TEXT (layer SHEETS)
+ *
  * Y is flipped to CAD convention (Y up). 4 layers: WIRES, ELEMENTS, LABELS,
- * ANNOTATIONS.
+ * ANNOTATIONS — plus SHEETS, declared only when the drawing has sheets, so a
+ * sheet-less file is byte-for-byte what it was before sheets existed.
+ *
+ * `region` exports one sheet: whole objects (a wire, a symbol with its
+ * labels, an annotation, a frame) are kept when their bounds touch the region
+ * and omitted otherwise. DXF has no clipping, so a wire that runs off the
+ * sheet is kept whole rather than cut — losing a conductor from the CAD file
+ * would be worse than an overhang past the border.
  */
 
 import {
@@ -38,6 +47,7 @@ import {
 } from '../model';
 import {
   ANNOTATION_FONT_SIZE as ANN_FONT_SIZE,
+  annotationBBox,
   ellipsePolygon,
   lineAbsPoints,
   lineArrowHeads,
@@ -48,7 +58,10 @@ import {
   tableSize,
 } from './annotation-geom';
 import { dxfColor } from './colors';
+import { sheetRect, type Sheet, type TitleBlockShared } from '../model/sheet';
+import { exportSheetPrimitives, regionHits, type ExportRegion } from './export-sheets';
 import {
+  continuationSheetRefs,
   fallbackAnchor,
   labelLineHeight,
   labelLines,
@@ -73,12 +86,20 @@ export interface DxfExportOptions {
   /** Free annotations from `DiagramFile.annotations` — `InternalModel`
    *  doesn't carry them, so the caller passes them through. */
   annotations?: Annotation[];
+  /** Drawing sheets (`DiagramFile.sheets`) — frame + title block per sheet. */
+  sheets?: Sheet[];
+  /** Shared title-block fields (`DiagramFile.meta.titleBlock`). */
+  titleBlock?: TitleBlockShared;
+  /** Keep only what lies within this world rect (one sheet). See the file
+   *  header for what "within" means. */
+  region?: ExportRegion;
 }
 
 const LAYER_WIRES = 'WIRES';
 const LAYER_ELEMENTS = 'ELEMENTS';
 const LAYER_LABELS = 'LABELS';
 const LAYER_ANNOTATIONS = 'ANNOTATIONS';
+const LAYER_SHEETS = 'SHEETS';
 
 const ARC_SAMPLES = 32;
 const ELLIPSE_SAMPLES = 64;
@@ -91,6 +112,10 @@ export function buildExportDxf(
   opts: DxfExportOptions = {},
 ): string {
   const w = new DxfWriter(opts.precision ?? 6);
+  const region = opts.region;
+  const keep = (b: { minX: number; minY: number; maxX: number; maxY: number }) =>
+    !region || regionHits(region, b);
+  const sheets = opts.sheets ?? [];
 
   w.header(opts.title);
   w.tables([
@@ -98,12 +123,50 @@ export function buildExportDxf(
     { name: LAYER_ELEMENTS, color: 7 },
     { name: LAYER_LABELS, color: 8 },
     { name: LAYER_ANNOTATIONS, color: 3 },
+    ...(sheets.length > 0 ? [{ name: LAYER_SHEETS, color: 7 }] : []),
   ]);
   w.beginEntities();
 
+  // Sheets first — they sit beneath the drawing on the canvas. Numbering
+  // ("n of N") counts every sheet even when only one is exported.
+  const prims = exportSheetPrimitives(sheets, opts.titleBlock);
+  sheets.forEach((sheet, i) => {
+    const r = sheetRect(sheet);
+    if (!keep({ minX: r.x, minY: r.y, maxX: r.x + r.w, maxY: r.y + r.h })) return;
+    const p = prims[i];
+    for (const b of p.rects) {
+      const corners: [number, number][] = [
+        [b.x, b.y],
+        [b.x + b.w, b.y],
+        [b.x + b.w, b.y + b.h],
+        [b.x, b.y + b.h],
+      ];
+      w.polyline(LAYER_SHEETS, corners.map(worldToDxf), true);
+    }
+    for (const l of p.lines) {
+      w.line(LAYER_SHEETS, worldToDxf([l.x1, l.y1]), worldToDxf([l.x2, l.y2]));
+    }
+    for (const t of p.texts) {
+      w.text(LAYER_SHEETS, worldToDxf([t.x, t.y]), t.text, t.size, 0, false);
+    }
+  });
+
+  // Region filter decisions, made once so a wire's label follows its wire
+  // and an element's label follows its symbol.
+  const keptWires = new Set<string>();
+  for (const [id, r] of model.wireRenders) {
+    if (keep(pointsBox(r.path))) keptWires.add(id);
+  }
+  const keptElements = new Set<string>();
+  for (const re of model.elements.values()) {
+    const place = model.layout.get(re.element.id);
+    if (!place || !re.libraryDef) continue;
+    if (keep(symbolBox(re.libraryDef.viewBox, place))) keptElements.add(re.element.id);
+  }
+
   // Wires (already in world coordinates).
-  for (const r of model.wireRenders.values()) {
-    if (r.path.length < 2) continue;
+  for (const [id, r] of model.wireRenders) {
+    if (r.path.length < 2 || !keptWires.has(id)) continue;
     w.setColor(dxfColor(r.color));
     w.polyline(LAYER_WIRES, r.path.map(worldToDxf), false);
   }
@@ -115,6 +178,7 @@ export function buildExportDxf(
     const half = span / 2;
     const a: [number, number] = axis === 'x' ? [at[0] - half, at[1]] : [at[0], at[1] - half];
     const b: [number, number] = axis === 'x' ? [at[0] + half, at[1]] : [at[0], at[1] + half];
+    if (!keep(pointsBox([a, b]))) continue;
     w.setColor(dxfColor(bus.color));
     w.polyline(LAYER_WIRES, [a, b].map(worldToDxf), false);
   }
@@ -125,7 +189,7 @@ export function buildExportDxf(
   for (const re of model.elements.values()) {
     const place = model.layout.get(re.element.id);
     const lib = re.libraryDef;
-    if (!place || !lib) continue;
+    if (!place || !lib || !keptElements.has(re.element.id)) continue;
     w.setColor(dxfColor(re.element.color));
     emitLibrarySvg(w, lib.svg, place);
   }
@@ -136,10 +200,12 @@ export function buildExportDxf(
   const labelFs = resolveLabelFontSize(opts.labelFontSize);
   const lineHeight = labelLineHeight(labelFs);
   if (mode !== 'off') {
+    // Off-page connectors' "→ n/N", as on the canvas.
+    const sheetRefs = continuationSheetRefs(model.elements.values(), model.layout, sheets);
     for (const re of model.elements.values()) {
       const place = model.layout.get(re.element.id);
-      if (!place || !re.libraryDef) continue;
-      const lines = labelLines(re, mode);
+      if (!place || !re.libraryDef || !keptElements.has(re.element.id)) continue;
+      const lines = labelLines(re, mode, sheetRefs.get(re.element.id));
       if (lines.length === 0) continue;
       const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef, labelFs);
       const {
@@ -165,9 +231,9 @@ export function buildExportDxf(
     // the canvas / SVG-export placement, and taking the wire's ink the way
     // they do there. Element structural labels above deliberately stay
     // neutral; see AnnotationLayer for why the two differ.
-    for (const r of model.wireRenders.values()) {
+    for (const [id, r] of model.wireRenders) {
       const label = r.label?.trim();
-      if (!label) continue;
+      if (!label || !keptWires.has(id)) continue;
       const placed = placeWireLabel(r.path, labelFs);
       if (!placed) continue;
       const p = worldToDxf(placed.world);
@@ -181,6 +247,7 @@ export function buildExportDxf(
   // continuous lines — R12 linetype tables aren't worth the compatibility
   // risk, and the geometry carries the meaning in CAD.
   for (const ann of opts.annotations ?? []) {
+    if (region && !keep(annotationBBox(ann))) continue;
     w.setColor(dxfColor(ann.color));
     switch (annotationKind(ann)) {
       case 'ellipse': {
@@ -654,6 +721,33 @@ function localToWorld(
   place: ResolvedPlacement,
 ): [number, number] {
   return transformPoint(local, place);
+}
+
+type Box = { minX: number; minY: number; maxX: number; maxY: number };
+
+function pointsBox(pts: readonly (readonly [number, number])[]): Box {
+  const b: Box = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  for (const [x, y] of pts) {
+    if (x < b.minX) b.minX = x;
+    if (x > b.maxX) b.maxX = x;
+    if (y < b.minY) b.minY = y;
+    if (y > b.maxY) b.maxY = y;
+  }
+  return b;
+}
+
+/** World bounds of a placed symbol: its viewBox corners through the
+ *  placement (the same measure `computeContentBbox` uses), or just its
+ *  anchor when the viewBox is unreadable. */
+function symbolBox(viewBox: string, place: ResolvedPlacement): Box {
+  const n = viewBox.trim().split(/\s+/).map(Number);
+  if (n.length !== 4 || n.some((v) => !Number.isFinite(v))) return pointsBox([place.at]);
+  const [x, y, vw, vh] = n;
+  return pointsBox(
+    ([[x, y], [x + vw, y], [x, y + vh], [x + vw, y + vh]] as [number, number][]).map((c) =>
+      transformPoint(c, place),
+    ),
+  );
 }
 
 function worldToDxf(p: [number, number]): [number, number] {

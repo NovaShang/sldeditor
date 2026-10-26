@@ -29,6 +29,13 @@ export interface HostActions {
    * fixed. Absent = nobody listening.
    */
   onHealthEvent: ((e: HealthEvent) => void) | null;
+  /**
+   * Export one drawing sheet (the sheet inspector's "Export this sheet").
+   * Exporting is the host's job — file formats, download, analytics — so the
+   * editor only says which sheet. Absent = no export, and the button is not
+   * offered.
+   */
+  onExportSheet: ((sheetId: string) => void) | null;
 }
 
 export interface HealthEvent {
@@ -44,5 +51,6 @@ interface HostActionsState extends HostActions {
 export const useHostActions = create<HostActionsState>((set) => ({
   onCreateComponent: null,
   onHealthEvent: null,
+  onExportSheet: null,
   setHostActions: (actions) => set(actions),
 }));

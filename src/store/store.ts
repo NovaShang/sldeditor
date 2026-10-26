@@ -24,7 +24,7 @@ import {
   type BusGeometry,
 } from '../compiler';
 import type { FileSession } from '../lib/file-io';
-import type { AnnotationDraft } from '../lib/annotation-geom';
+import { annotationBBox, type AnnotationDraft } from '../lib/annotation-geom';
 import type {
   Annotation,
   AnnotationId,
@@ -76,6 +76,7 @@ import {
 } from '../model/sheet';
 import { computeContentBbox } from '../lib/export-image';
 import { targetBox } from '../health/present';
+import { sheetContentIds } from '../canvas/sheet-hit';
 import { libraryById } from '../element-library';
 import { familyOf } from '../lib/kind-families';
 import { endOwner, translateManualWirePaths } from './group-move';
@@ -508,28 +509,6 @@ function drawingBox(
   return Number.isFinite(b.minX) && b.maxX > b.minX ? b : null;
 }
 
-/**
- * Ids drawn on a sheet: devices, buses and junctions whose box centre lies
- * inside its border, and annotations whose anchor does. Moving a sheet moves
- * exactly these.
- */
-function sheetContents(
-  d: DiagramFile,
-  internal: InternalModel,
-  sheet: Sheet,
-): { elements: string[]; annotations: string[] } {
-  const r = sheetRect(sheet);
-  const inside = (p: readonly [number, number]) =>
-    p[0] >= r.x && p[0] <= r.x + r.w && p[1] >= r.y && p[1] <= r.y + r.h;
-  const elements: string[] = [];
-  for (const id of [...internal.elements.keys(), ...internal.buses.keys(), ...internal.junctions.keys()]) {
-    const b = targetBox(internal, id);
-    if (b && inside([(b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2])) elements.push(id);
-  }
-  const annotations = (d.annotations ?? []).filter((a) => inside(a.at)).map((a) => a.id);
-  return { elements, annotations };
-}
-
 /** Bounds of what a sheet holds (inside or overlapping it), for fitting. */
 function sheetContentBox(
   d: DiagramFile,
@@ -549,9 +528,11 @@ function sheetContentBox(
     const b = targetBox(internal, id);
     if (b && overlaps(b)) add(b);
   }
+  // Full annotation extent (a line's points, a table's cells, text width),
+  // the same measure the inspector's overflow warning uses — otherwise Fit
+  // could leave that warning showing.
   for (const a of d.annotations ?? []) {
-    const size = (a as { size?: [number, number] }).size;
-    const b = { minX: a.at[0], minY: a.at[1], maxX: a.at[0] + (size?.[0] ?? 0), maxY: a.at[1] + (size?.[1] ?? 0) };
+    const b = annotationBBox(a);
     if (overlaps(b)) add(b);
   }
   return box;
@@ -740,6 +721,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
       selection: sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id],
       selectedWire: null,
       selectedNode: null,
+      selectedSheet: null,
       // Shift-click *extends* — it must not silently drop annotations the
       // user picked up with the marquee.
     });
@@ -1638,7 +1620,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     const { diagram, internal } = get();
     const sheet = diagram.sheets?.find((sh) => sh.id === id);
     if (!sheet) return;
-    const { elements, annotations } = sheetContents(diagram, internal, sheet);
+    const { elements, annotations } = sheetContentIds(diagram, internal, sheet);
     const deltas = new Map<ElementId, [number, number]>(elements.map((e) => [e, [dx, dy]]));
     const annDeltas = new Map<AnnotationId, [number, number]>(annotations.map((a) => [a, [dx, dy]]));
     get().dispatch((d) => {

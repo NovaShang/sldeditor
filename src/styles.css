@@ -1134,3 +1134,71 @@
 .ole-root.ole-viewer .ole-bus.ole-hover-element-host line {
   stroke: var(--selection);
 }
+
+/* ---- Drawing sheets (图纸页) ---------------------------------------------
+   SheetLayer draws each sheet's border, title block and its text from
+   `sheetPrimitives`, which already carries print-true stroke widths and font
+   sizes as presentation attributes — so nothing here sets `stroke-width` or
+   `font-size`: a CSS declaration always beats an attribute and would pin
+   every sheet to one size (the same trap noted on `.ole-ann-rect-border`).
+   Ink is theme ink via `currentColor`, so the frame reads on the dark canvas
+   as well as the light one. */
+.ole-sheet-layer {
+  color: var(--foreground);
+}
+.ole-sheet-border,
+.ole-sheet-line {
+  fill: none;
+  stroke: currentColor;
+  pointer-events: none;
+}
+.ole-sheet-label,
+.ole-sheet-value {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  user-select: none;
+  pointer-events: none;
+}
+/* Field names recede, what the user typed reads as drawing ink. */
+.ole-sheet-label {
+  fill: var(--muted-foreground);
+}
+.ole-sheet-value {
+  fill: currentColor;
+}
+/* Hit targets. Inert by default: the paper must be click-through for every
+   tool, and a shared-link viewer (pan only) must not get a move cursor over a
+   frame it cannot move. Only the select tool can pick a sheet up — by its
+   border band (a screen-px stroke, `pointer-events: stroke` so the interior
+   stays transparent) or anywhere on its title block. */
+.ole-sheet-hit {
+  fill: none;
+  stroke: transparent;
+  pointer-events: none;
+}
+.ole-sheet-title-hit {
+  fill: transparent;
+  pointer-events: none;
+}
+.ole-canvas-root[data-tool='select'] .ole-sheet-hit {
+  pointer-events: stroke;
+  cursor: move;
+}
+.ole-canvas-root[data-tool='select'] .ole-sheet-title-hit {
+  pointer-events: fill;
+  cursor: move;
+}
+/* Hovering a grab area previews the selection colour — the same "this is what
+   you'd pick" cue devices give — since a hairline border gives no other hint
+   that it is grabbable. */
+.ole-canvas-root[data-tool='select'] .ole-sheet:hover .ole-sheet-border,
+.ole-canvas-root[data-tool='select'] .ole-sheet:hover .ole-sheet-line,
+.ole-sheet[data-selected='true'] .ole-sheet-border,
+.ole-sheet[data-selected='true'] .ole-sheet-line {
+  stroke: var(--ole-selection, var(--selection));
+}
+.ole-sheet-halo {
+  fill: none;
+  stroke: var(--ole-selection, var(--selection));
+  stroke-width: 1.5;
+  pointer-events: none;
+}

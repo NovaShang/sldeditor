@@ -24,12 +24,17 @@
  *
  * Wire labels (`Wire.label`, e.g. phase designations L1/L2/L3/N/PE) render
  * here too — anchored mid-wire via `placeWireLabel`, hidden at 'off'.
+ *
+ * Off-page connectors on a multi-sheet drawing get one derived line, "→ n/N"
+ * (the partner's page), when the user typed no target — see
+ * `continuationSheetRefs`.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCanvasStore, useEditorStore } from '../store';
 import type { LabelMode } from '../model';
 import {
+  continuationSheetRefs,
   fallbackAnchor,
   labelBlockWidth,
   labelLineHeight,
@@ -53,6 +58,11 @@ export function AnnotationLayer() {
     resolveLabelFontSize(s.diagram.meta?.labelFontSize),
   );
   const editingElement = useCanvasStore((s) => s.editingElement);
+  const sheets = useCanvasStore((s) => s.diagram.sheets);
+  const sheetRefs = useMemo(
+    () => continuationSheetRefs(elements.values(), layout, sheets),
+    [elements, layout, sheets],
+  );
   // Live data (viewer only): a `label.text` binding replaces the whole block,
   // a hidden element takes its label with it.
   const runtime = useRuntime().props;
@@ -73,7 +83,7 @@ export function AnnotationLayer() {
         const lines =
           rt?.labelText !== undefined
             ? nameLines(rt.labelText, '')
-            : labelLines(re, mode);
+            : labelLines(re, mode, sheetRefs.get(re.element.id));
         const { world, textAnchor, dy } = placeLabel(
           anchor,
           re.libraryDef,

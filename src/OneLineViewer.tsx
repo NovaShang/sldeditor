@@ -32,6 +32,7 @@ import {
 } from 'react';
 import { AnnotationLayer } from './canvas/AnnotationLayer';
 import { BusLayer } from './canvas/BusLayer';
+import { SheetLayer } from './canvas/SheetLayer';
 import { ElementLayer } from './canvas/ElementLayer';
 import { FreeAnnotationLayer } from './canvas/FreeAnnotationLayer';
 import { JunctionLayer } from './canvas/JunctionLayer';
@@ -335,6 +336,7 @@ function ViewerCanvas({
     >
       <svg className="ole-canvas-svg block h-full w-full" xmlns="http://www.w3.org/2000/svg">
         <g ref={groupRef} className="ole-viewport">
+          <SheetLayer />
           <BusLayer />
           <WireLayer />
           <JunctionLayer />

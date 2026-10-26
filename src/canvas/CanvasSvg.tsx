@@ -4,8 +4,9 @@
  * selection, terminals, previews) are children of the viewport so they
  * pan/zoom together.
  *
- * Z-order (back to front): grid → wires → elements → selection → terminals
- * → wire preview → place ghost.
+ * Z-order (back to front): grid → drawing sheets → buses → wires →
+ * elements → selection → terminals → wire preview → place ghost. Sheets are
+ * the bottom-most drawn layer: a frame sits under the drawing, never over it.
  */
 
 import { useCallback, useEffect, useRef } from 'react';
@@ -38,6 +39,8 @@ import { ElementLayer } from './ElementLayer';
 import { MarqueeOverlay } from './MarqueeOverlay';
 import { PlaceGhost } from './PlaceGhost';
 import { SelectionOverlay } from './SelectionOverlay';
+import { SheetLayer } from './SheetLayer';
+import { hitSheet } from './sheet-hit';
 import { ElementScaleHandles } from './ElementScaleHandles';
 import { HealthLayer } from './HealthLayer';
 import { TerminalLayer } from './TerminalLayer';
@@ -131,6 +134,11 @@ export function CanvasSvg() {
         const nodeId = hitNode(target);
         if (nodeId && store.selectedNode !== nodeId) {
           store.setSelectedNode(nodeId);
+        } else if (!nodeId) {
+          // Right-click on a sheet's border / title block: select the sheet
+          // so the menu's Delete removes it, same as the Delete key.
+          const sheetId = hitSheet(target);
+          if (sheetId && store.selectedSheet !== sheetId) store.setSelectedSheet(sheetId);
         }
       }
 
@@ -140,6 +148,7 @@ export function CanvasSvg() {
       // Cut/copy/delete cover both channels; rotate/mirror are element-only.
       const hasSelection = hasElementSelection || hasAnnotationSelection;
       const hasNodeSelection = s.selectedNode != null;
+      const sheetSelected = s.selectedSheet;
       const hasClipboard = !!s.clipboard;
       const hasAnyElement = s.diagram.elements.length > 0;
       const selectionIds = new Set(s.selection);
@@ -224,11 +233,14 @@ export function CanvasSvg() {
           onSelect: () => {
             const st = useEditorStore.getState();
             // `deleteSelection` covers the mixed set (elements + annotations)
-            // in one undo entry.
-            if (hasNodeSelection && !hasSelection) st.deleteSelectedNode();
+            // in one undo entry. A selected sheet is its own channel
+            // (selecting it cleared the others); removing it keeps its
+            // contents on the canvas.
+            if (sheetSelected) st.removeSheet(sheetSelected);
+            else if (hasNodeSelection && !hasSelection) st.deleteSelectedNode();
             else st.deleteSelection();
           },
-          disabled: !hasSelection && !hasNodeSelection,
+          disabled: !hasSelection && !hasNodeSelection && !sheetSelected,
         },
       ];
       contextMenu.open(clientX, clientY, items);
@@ -352,6 +364,7 @@ export function CanvasSvg() {
         </defs>
         <rect width="100%" height="100%" fill="url(#ole-grid-dots)" />
         <g ref={groupRef} className="ole-viewport">
+          <SheetLayer />
           <BusLayer />
           <WireLayer />
           <JunctionLayer />

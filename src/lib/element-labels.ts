@@ -6,7 +6,9 @@
  */
 
 import type { ResolvedElement, ResolvedPlacement } from '../compiler';
-import type { LabelMode, LibraryEntry, LibraryLabelAnchor } from '../model';
+import type { ElementId, LabelMode, LibraryEntry, LibraryLabelAnchor } from '../model';
+import { sheetIndexAt, type Sheet } from '../model/sheet';
+import { continuationKey, isContinuation } from './kind-families';
 
 /** Vertical step between stacked label lines at `LABEL_FONT_SIZE`, in canvas units. */
 export const LABEL_LINE_HEIGHT = 9;
@@ -63,18 +65,80 @@ export function nameLines(name: string | undefined, fallbackId: string): string[
   return lines.length > 0 ? lines : fallbackId ? [fallbackId] : [];
 }
 
-export function labelLines(re: ResolvedElement, mode: LabelMode): string[] {
+/**
+ * @param sheetRef  a derived "→ n/N" line for an off-page connector (see
+ *   `continuationSheetRefs`). Shown where its `target` param would be — only
+ *   at 'all', like the param it stands in for.
+ */
+export function labelLines(re: ResolvedElement, mode: LabelMode, sheetRef?: string): string[] {
   if (re.element.labelHidden) return [];
   const lines: string[] = nameLines(re.element.name, re.element.id);
-  if (mode !== 'all' || !re.libraryDef?.params) return lines;
+  if (mode !== 'all') return lines;
   const params = re.element.params ?? {};
-  for (const p of re.libraryDef.params) {
+  for (const p of re.libraryDef?.params ?? []) {
     if (!p.showOnCanvas) continue;
     const v = params[p.name];
     if (v === undefined || v === null || v === '') continue;
     lines.push(`${v}${p.unit ?? ''}`);
   }
+  if (sheetRef) lines.push(sheetRef);
   return lines;
+}
+
+/**
+ * Where each off-page connector's partner is, as a label line: "→ 2/3" =
+ * "continues on sheet 2 of 3". Keyed by element id; display-only, never
+ * written to `params`.
+ *
+ * Why derived: the drawing-sheets design (2026-10) puts a project's pages
+ * side by side on one canvas, and a user who split one drawing over four
+ * pages had to type every connector's destination by hand — and retype it
+ * whenever a page was reordered. Two connectors with the same name are
+ * already one conductor (the compiler merges them), so the page of the other
+ * end is known; writing it out is the cross-reference a drawing office would
+ * add.
+ *
+ * Only when it adds information: the drawing has sheets, the connector has
+ * no typed `target` (the user's own text always wins), and the partner sits
+ * on a DIFFERENT sheet — a partner on the same page, or off every page, says
+ * nothing a page number could. Several partners on several pages list each
+ * page once, in page order ("→ 2/4, 3/4").
+ */
+export function continuationSheetRefs(
+  elements: Iterable<ResolvedElement>,
+  layout: ReadonlyMap<ElementId, ResolvedPlacement>,
+  sheets: readonly Sheet[] | undefined,
+): Map<ElementId, string> {
+  const out = new Map<ElementId, string>();
+  if (!sheets?.length) return out;
+  const total = sheets.length;
+  const byKey = new Map<string, { re: ResolvedElement; sheet: number }[]>();
+  for (const re of elements) {
+    if (!isContinuation(re.element.kind)) continue;
+    const key = continuationKey(re.element.name);
+    const at = layout.get(re.element.id)?.at;
+    if (!key || !at) continue;
+    const list = byKey.get(key) ?? [];
+    list.push({ re, sheet: sheetIndexAt(sheets, at) });
+    byKey.set(key, list);
+  }
+  for (const group of byKey.values()) {
+    if (group.length < 2) continue;
+    for (const { re, sheet } of group) {
+      const typed = re.element.params?.target;
+      if (typed !== undefined && typed !== null && String(typed).trim() !== '') continue;
+      const pages = [
+        ...new Set(
+          group
+            .filter((o) => o.re !== re && o.sheet >= 0 && o.sheet !== sheet)
+            .map((o) => o.sheet),
+        ),
+      ].sort((a, b) => a - b);
+      if (pages.length === 0) continue;
+      out.set(re.element.id, `→ ${pages.map((i) => `${i + 1}/${total}`).join(', ')}`);
+    }
+  }
+  return out;
 }
 
 export function fallbackAnchor(

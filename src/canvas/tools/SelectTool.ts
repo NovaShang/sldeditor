@@ -5,6 +5,10 @@
  * device, bus, junction and annotation whose bbox intersects the box
  * (replace, or toggle with shift).
  *
+ * Drawing sheets are picked by their border or title block (never by the
+ * marquee, never by the blank paper) and drag as a whole page: the frame and
+ * everything drawn on it, committed as one `moveSheet`.
+ *
  * Movement uses DOM-direct mutation (`setAttribute('transform')`) during
  * the drag and dispatches a single `moveElements` action on pointer-up.
  * This keeps the drag at 60fps even for diagrams that would otherwise
@@ -34,6 +38,7 @@ import {
   hitWire,
 } from '../hit-test';
 import { hitsInRect } from '../marquee-hit';
+import { hitSheet, sheetContentIds } from '../sheet-hit';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
 import {
   resolveDragTarget,
@@ -74,6 +79,9 @@ interface DragState {
   /** Original anchor of every dragged annotation (separate id namespace;
    *  preview translates the `[data-annotation-id]` wrapper `<g>`). */
   annotationOriginals: Map<AnnotationId, [number, number]>;
+  /** Set when the drag is a whole sheet: the maps above then hold what is
+   *  drawn on it (preview only) and the release commits `moveSheet`. */
+  sheetId?: string;
   moved: boolean;
 }
 
@@ -271,6 +279,22 @@ export const SelectTool: Tool = {
       }
     }
 
+    // Sheet border / title block. Sheets are the bottom-most layer, so this
+    // is only the target when nothing drawn is on top of that spot. Sheet
+    // selection is single: shift does not extend it (a sheet is a page, not
+    // an object to group with devices).
+    const sheetId = hitSheet(e.target);
+    if (sheetId) {
+      e.preventDefault();
+      e.stopPropagation();
+      const sheet = store.diagram.sheets?.find((sh) => sh.id === sheetId);
+      if (!sheet) return;
+      store.setSelectedSheet(sheetId);
+      const contents = sheetContentIds(store.diagram, store.internal, sheet);
+      beginGroupDrag(e, ctx, contents.elements, contents.annotations, sheetId);
+      return;
+    }
+
     let id = hitElement(e.target);
 
     // Wire hit polylines are ~12px wide for comfortable clicking and live
@@ -452,6 +476,10 @@ export const SelectTool: Tool = {
         if (!node) continue;
         node.setAttribute('transform', `translate(${dx} ${dy})`);
       }
+      // The frame itself: its geometry is baked into child coords, so the
+      // wrapper translate previews it like a bus.
+      const sheetNode = sheetGroup(ctx, drag.sheetId);
+      if (sheetNode) sheetNode.setAttribute('transform', `translate(${dx} ${dy})`);
       return;
     }
 
@@ -553,6 +581,7 @@ export const SelectTool: Tool = {
         // A lone junction (a free wire end) dropped on a pin, bus or another
         // joint connects there instead of just parking on top of it.
         const soloJunction =
+          !drag.sheetId &&
           drag.junctionOriginals.size === 1 &&
           drag.originals.size === 0 &&
           drag.busOriginals.size === 0 &&
@@ -571,6 +600,22 @@ export const SelectTool: Tool = {
           : null;
         if (soloJunction && landing) {
           useEditorStore.getState().mergeJunctionInto(soloJunction[0], landing);
+        } else if (drag.sheetId) {
+          // The store re-derives the sheet's contents itself; the preview
+          // above only showed them.
+          if (dx !== 0 || dy !== 0) useEditorStore.getState().moveSheet(drag.sheetId, dx, dy);
+          // Re-sync every previewed device from the committed layout rather
+          // than trusting React to: an element the store did NOT move keeps
+          // an unchanged `transform` prop, so React would never overwrite the
+          // preview and it would sit at a position the model doesn't have.
+          const layout = useEditorStore.getState().internal.layout;
+          for (const id of drag.originals.keys()) {
+            const node = ctx.hostEl.querySelector<SVGGElement>(
+              `[data-element-id="${cssEscape(id)}"]`,
+            );
+            const p = layout.get(id);
+            if (node && p) node.setAttribute('transform', transformAttr(p));
+          }
         } else if (dx !== 0 || dy !== 0) {
           const deltas = new Map<ElementId, [number, number]>();
           for (const id of drag.originals.keys()) deltas.set(id, [dx, dy]);
@@ -601,6 +646,7 @@ export const SelectTool: Tool = {
           );
           if (node) node.removeAttribute('transform');
         }
+        sheetGroup(ctx, drag.sheetId)?.removeAttribute('transform');
       }
       drag = null;
       return;
@@ -690,6 +736,7 @@ export const SelectTool: Tool = {
         );
         if (node) node.removeAttribute('transform');
       }
+      sheetGroup(ctx, drag.sheetId)?.removeAttribute('transform');
       if (ctx.hostEl.hasPointerCapture?.(e.pointerId)) {
         try {
           ctx.hostEl.releasePointerCapture(e.pointerId);
@@ -769,6 +816,8 @@ export const SelectTool: Tool = {
  * Arm a group move over the given selection. Snapshots every dragged object's
  * original geometry so pointermove can preview with DOM transforms and
  * pointerup can commit one `moveElements` dispatch (= one undo entry).
+ * With `sheetId` the drag is a whole sheet — targets are what is drawn on it,
+ * the commit is `moveSheet`, and an empty sheet still drags.
  * Returns false when there was nothing draggable to arm.
  */
 function beginGroupDrag(
@@ -776,6 +825,7 @@ function beginGroupDrag(
   ctx: ToolContext,
   targets: ElementId[],
   annotationTargets: AnnotationId[],
+  sheetId?: string,
 ): boolean {
   const store = useEditorStore.getState();
   const internal = store.internal;
@@ -803,6 +853,7 @@ function beginGroupDrag(
     if (ann) annotationOriginals.set(aid, [ann.at[0], ann.at[1]]);
   }
   if (
+    !sheetId &&
     originals.size === 0 &&
     busOriginals.size === 0 &&
     junctionOriginals.size === 0 &&
@@ -818,6 +869,7 @@ function beginGroupDrag(
     busOriginals,
     junctionOriginals,
     annotationOriginals,
+    ...(sheetId ? { sheetId } : {}),
     moved: false,
   };
   return true;
@@ -862,6 +914,12 @@ function toggleAll<T>(base: readonly T[], hits: readonly T[]): T[] {
     else set.add(id);
   }
   return [...set];
+}
+
+/** A sheet's wrapper group (SheetLayer), for the drag preview. */
+function sheetGroup(ctx: ToolContext, sheetId: string | undefined): SVGGElement | null {
+  if (!sheetId) return null;
+  return ctx.hostEl.querySelector<SVGGElement>(`[data-sheet-id="${cssEscape(sheetId)}"]`);
 }
 
 function cssEscape(s: string): string {

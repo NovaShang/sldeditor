@@ -643,7 +643,7 @@ function StrokeRows({
   );
 }
 
-function SegRow<T extends string>({
+export function SegRow<T extends string>({
   label,
   value,
   options,
@@ -1151,7 +1151,7 @@ function NodePanel({ nodeId }: { nodeId: string }) {
 // Form bits
 // ---------------------------------------------------------------------------
 
-function Field({
+export function Field({
   label,
   children,
 }: {
@@ -1172,7 +1172,7 @@ function Field({
 /** Rows a `multiline` TextRow will grow to before it starts scrolling. */
 const TEXT_ROW_MAX_ROWS = 6;
 
-function TextRow({
+export function TextRow({
   label,
   value,
   placeholder,

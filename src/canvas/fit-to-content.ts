@@ -29,6 +29,12 @@ const READY_RETRY_FRAMES = 8;
  * counted labels and annotations (`computeContentBbox` in export-image.ts).
  * A layer that adds a new kind of drawn object must tag it with one of these
  * attributes (or extend this list) for Fit view to see it.
+ *
+ * Drawing sheets count too: a fit that crops the frame shows a page with its
+ * title block cut off. Their `[data-sheet-id]` group holds the paper-sized
+ * border plus hit shapes of the same geometry (the border grab band is a
+ * few screen px of stroke at most, even in a browser whose client rects
+ * count strokes), so it measures the paper, not a padded hit box.
  */
 export const FIT_CONTENT_SELECTOR = [
   '[data-element-id]',
@@ -36,6 +42,7 @@ export const FIT_CONTENT_SELECTOR = [
   '[data-element-label]',
   '[data-wire-label]',
   '[data-annotation-id]',
+  '[data-sheet-id]',
 ].join(', ');
 
 export interface ScreenBounds {

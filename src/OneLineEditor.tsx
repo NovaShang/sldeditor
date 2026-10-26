@@ -42,6 +42,9 @@ export interface OneLineEditorProps {
   /** Health-check interactions (opened an issue, marked one intentional,
    *  restored one), for host analytics. */
   onHealthEvent?: (e: HealthEvent) => void;
+  /** Export one drawing sheet, offered as "Export this sheet" in the sheet
+   *  inspector. Omit it and the button is not offered. */
+  onExportSheet?: (sheetId: string) => void;
 }
 
 export function OneLineEditor({
@@ -52,13 +55,15 @@ export function OneLineEditor({
   theme,
   onCreateComponent,
   onHealthEvent,
+  onExportSheet,
 }: OneLineEditorProps) {
   useEffect(() => {
     useHostActions.getState().setHostActions({
       onCreateComponent: readOnly ? null : (onCreateComponent ?? null),
       onHealthEvent: readOnly ? null : (onHealthEvent ?? null),
+      onExportSheet: readOnly ? null : (onExportSheet ?? null),
     });
-  }, [onCreateComponent, onHealthEvent, readOnly]);
+  }, [onCreateComponent, onHealthEvent, onExportSheet, readOnly]);
 
   // Keep the store's view-only flag in sync with the prop. Declared before the
   // seed effect so it runs first (effect order = declaration order) — by the
