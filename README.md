@@ -113,6 +113,17 @@ git commit -am "feat: ..."
 
 When the PR lands on `master`, the **Release** GitHub Action opens a "Version Packages" PR; merging that PR publishes to npm and creates a GitHub release. Repo needs an `NPM_TOKEN` secret with automation-token scope.
 
+## Sponsors
+
+<a href="https://www.gridpilotai.co">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/sponsors/gridpilot-logo-light.png">
+    <img src="docs/sponsors/gridpilot-logo-dark.png" alt="GridPilot AI" height="36">
+  </picture>
+</a>
+
+Sponsored by [GridPilot](https://www.gridpilotai.co).
+
 ## License
 
 MIT. Third-party attributions in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
