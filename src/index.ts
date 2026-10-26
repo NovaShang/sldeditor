@@ -75,6 +75,44 @@ export type {
 
 export { annotationKind, isTextAnnotation } from './model';
 
+// Drawing sheets (paper frames + title block). Geometry and the shared
+// title-block layout, so a host can lay out pages (PDF) exactly as drawn.
+export type {
+  Sheet,
+  PaperId,
+  SheetOrientation,
+  TitleBlockShared,
+  SheetOwnField,
+  SheetSharedField,
+  SheetPrimitives,
+  SheetFieldLabels,
+} from './model';
+export {
+  PAPER_MM,
+  PAPER_ORDER,
+  PAPER_LABEL,
+  UNITS_PER_MM,
+  MM_PER_UNIT,
+  NICE_SCALES,
+  SHEET_OWN_FIELDS,
+  SHEET_SHARED_FIELDS,
+  PRINT_TEXT_MIN_MM,
+  PRINT_TEXT_TARGET_MM,
+  PRINT_STROKE_MIN_MM,
+  clampSheetScale,
+  paperMm,
+  sheetRect,
+  sheetContentArea,
+  formatSheetScale,
+  printedMm,
+  labelFontForPrint,
+  fitScale,
+  sheetAroundBox,
+  sheetIndexAt,
+  migrateLegacyFrame,
+  sheetPrimitives,
+} from './model';
+
 // Named ink palette — exposed so an embedding app can offer the same six
 // colours in its own UI (and resolve them for its own export paths) instead
 // of hard-coding hex values that would drift from the editor's.
@@ -156,7 +194,8 @@ export { ExportMenu } from './components/ExportMenu';
 // Viewport helpers — embedders that perform programmatic edits (AI tool
 // calls, importing from another format, etc.) can call `fitToContentSoon`
 // to reset the canvas to fit the new diagram once the DOM updates settle.
-export { fitToContent, fitToContentSoon } from './canvas/fit-to-content';
+export { fitToContent, fitToContentSoon, fitToWorldRect } from './canvas/fit-to-content';
+export { sheetFieldLabels, sheetOfText } from './i18n/sheet-labels';
 
 // Image export primitives — exposed so consumers (e.g. cloud apps with their
 // own naming/persistence) can build their own export UI on top of the same

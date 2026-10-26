@@ -49,7 +49,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const PADDING = 24;
 const ANNOTATION_LINE_HEIGHT = 1.25;
 
-interface Bbox {
+export interface Bbox {
   minX: number;
   minY: number;
   maxX: number;
@@ -392,7 +392,7 @@ function exportTable(out: string[], ann: TableAnnotation, cellBg: string): void 
   }
 }
 
-function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
+export function computeContentBbox(model: InternalModel, opts: ExportOptions): Bbox {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;

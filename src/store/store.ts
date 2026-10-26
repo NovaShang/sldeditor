@@ -34,6 +34,7 @@ import type {
   BusLayout,
   DiagramColor,
   DiagramFile,
+  DiagramMeta,
   Element,
   ElementId,
   EllipseAnnotation,
@@ -58,6 +59,23 @@ import {
 } from './id-allocator';
 import { normalizePath } from '../model/wire-path';
 import { clampSymbolScale } from '../model';
+import {
+  SHEET_GAP_MM,
+  UNITS_PER_MM,
+  clampSheetScale,
+  fitScale,
+  labelFontForPrint,
+  migrateLegacyFrame,
+  nextSheetId,
+  sheetAroundBox,
+  sheetRect,
+  type PaperId,
+  type Sheet,
+  type SheetOrientation,
+  type TitleBlockShared,
+} from '../model/sheet';
+import { computeContentBbox } from '../lib/export-image';
+import { targetBox } from '../health/present';
 import { libraryById } from '../element-library';
 import { familyOf } from '../lib/kind-families';
 import { endOwner, translateManualWirePaths } from './group-move';
@@ -170,6 +188,9 @@ export interface EditorState {
    * `soleSelectedAnnotation` rather than this list.
    */
   selectedAnnotations: AnnotationId[];
+  /** The selected drawing sheet (its own channel: selecting a sheet clears
+   *  the others and vice versa). */
+  selectedSheet: string | null;
   editingAnnotation: AnnotationId | null;
   /** Table cell being edited (`[row, col]`), only with `editingAnnotation`. */
   editingCell: [number, number] | null;
@@ -310,6 +331,27 @@ export interface EditorState {
    * sat on the pin looking connected while it was not.
    */
   mergeJunctionInto: (id: JunctionId, target: WireEnd) => void;
+  setSelectedSheet: (id: string | null) => void;
+  /**
+   * Add a sheet. The first one frames the existing drawing (enlarging the
+   * frame when the drawing is bigger than the paper); later ones go to the
+   * right of the last sheet, at its scale. Returns the new id and selects it.
+   */
+  addSheet: (paper: PaperId, orientation: SheetOrientation) => string;
+  updateSheet: (id: string, patch: Partial<Omit<Sheet, 'id'>>) => void;
+  /** Delete a sheet. Its contents stay on the canvas. */
+  removeSheet: (id: string) => void;
+  /** Move a sheet one place earlier (-1) or later (+1) in page order. */
+  reorderSheet: (id: string, dir: -1 | 1) => void;
+  /** Move a sheet and everything drawn inside it, one undo entry. */
+  moveSheet: (id: string, dx: number, dy: number) => void;
+  /** Enlarge the frame (nice scale steps) so everything inside or overlapping
+   *  it fits the drawing area; keeps the content where it is. */
+  fitSheet: (id: string) => void;
+  /** Set the document label size so labels print at the target size on
+   *  this sheet. */
+  enlargeLabelsForPrint: (id: string) => void;
+  updateTitleBlock: (patch: Partial<TitleBlockShared>) => void;
   /** Append a wire between two endpoints (idempotent — duplicate is a no-op). */
   addWire: (a: WireEnd, b: WireEnd) => void;
   /**
@@ -375,6 +417,146 @@ export interface EditorState {
  * read-only viewer) behaves byte-for-byte like the editor's — same compile,
  * same selection semantics — without a second implementation to drift.
  */
+
+/**
+ * Translate devices, buses, junctions and annotations by per-id deltas (the
+ * body of `moveElements`, shared with `moveSheet` so a sheet and its contents
+ * move in one undo entry).
+ */
+function applyMoves(
+  d: DiagramFile,
+  internal: InternalModel,
+  deltas: Map<ElementId, [number, number]>,
+  annotationDeltas?: Map<AnnotationId, [number, number]>,
+): DiagramFile {
+  const layout = { ...(d.layout ?? {}) };
+  const busPatches = new Map<BusId, [number, number]>();
+  const junctionPatches = new Map<JunctionId, [number, number]>();
+  for (const [id, delta] of deltas) {
+    if (internal.buses.has(id)) {
+      busPatches.set(id, delta);
+      continue;
+    }
+    if (internal.junctions.has(id)) {
+      junctionPatches.set(id, delta);
+      continue;
+    }
+    const resolved = internal.layout.get(id);
+    const base: Placement =
+      layout[id] ?? (resolved ? compactPlacement(resolved) : { at: [0, 0] });
+    layout[id] = {
+      ...base,
+      at: [base.at[0] + delta[0], base.at[1] + delta[1]],
+    };
+  }
+  let buses = d.buses;
+  if (busPatches.size > 0) {
+    buses = (d.buses ?? []).map((b) => {
+      const delta = busPatches.get(b.id);
+      if (!delta) return b;
+      const cur =
+        b.layout ?? compactBusLayout(internal.buses.get(b.id)!.geometry);
+      return {
+        ...b,
+        layout: {
+          ...cur,
+          at: [cur.at[0] + delta[0], cur.at[1] + delta[1]],
+        },
+      };
+    });
+  }
+  let junctions = d.junctions;
+  if (junctionPatches.size > 0) {
+    junctions = (d.junctions ?? []).map((j) => {
+      const delta = junctionPatches.get(j.id);
+      if (!delta) return j;
+      const at = j.layout?.at ?? internal.junctions.get(j.id)?.world ?? [0, 0];
+      return { ...j, layout: { at: [at[0] + delta[0], at[1] + delta[1]] } };
+    });
+  }
+  let annotations = d.annotations;
+  if (annotationDeltas?.size && annotations) {
+    annotations = annotations.map((a) => {
+      const delta = annotationDeltas.get(a.id);
+      if (!delta) return a;
+      return {
+        ...a,
+        at: [a.at[0] + delta[0], a.at[1] + delta[1]] as [number, number],
+      };
+    });
+  }
+  // Manual wire routes follow the move only when the whole conductor is
+  // inside it — see `translateManualWirePaths` for why this can't live in
+  // the compiler.
+  const wires = translateManualWirePaths(d.wires, deltas);
+  return { ...d, layout, buses, junctions, wires, annotations };
+}
+
+
+/** World bounds of everything drawn (devices, labels, wires, annotations),
+ *  sheets excluded; null for an empty drawing. */
+function drawingBox(
+  d: DiagramFile,
+  internal: InternalModel,
+): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  if (internal.elements.size === 0 && internal.buses.size === 0 && !(d.annotations?.length)) return null;
+  const b = computeContentBbox(internal, {
+    annotations: d.annotations,
+    labelMode: d.meta?.labelMode,
+    labelFontSize: d.meta?.labelFontSize,
+  });
+  return Number.isFinite(b.minX) && b.maxX > b.minX ? b : null;
+}
+
+/**
+ * Ids drawn on a sheet: devices, buses and junctions whose box centre lies
+ * inside its border, and annotations whose anchor does. Moving a sheet moves
+ * exactly these.
+ */
+function sheetContents(
+  d: DiagramFile,
+  internal: InternalModel,
+  sheet: Sheet,
+): { elements: string[]; annotations: string[] } {
+  const r = sheetRect(sheet);
+  const inside = (p: readonly [number, number]) =>
+    p[0] >= r.x && p[0] <= r.x + r.w && p[1] >= r.y && p[1] <= r.y + r.h;
+  const elements: string[] = [];
+  for (const id of [...internal.elements.keys(), ...internal.buses.keys(), ...internal.junctions.keys()]) {
+    const b = targetBox(internal, id);
+    if (b && inside([(b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2])) elements.push(id);
+  }
+  const annotations = (d.annotations ?? []).filter((a) => inside(a.at)).map((a) => a.id);
+  return { elements, annotations };
+}
+
+/** Bounds of what a sheet holds (inside or overlapping it), for fitting. */
+function sheetContentBox(
+  d: DiagramFile,
+  internal: InternalModel,
+  sheet: Sheet,
+): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  const r = sheetRect(sheet);
+  const overlaps = (b: { minX: number; minY: number; maxX: number; maxY: number }) =>
+    b.maxX >= r.x && b.minX <= r.x + r.w && b.maxY >= r.y && b.minY <= r.y + r.h;
+  let box: { minX: number; minY: number; maxX: number; maxY: number } | null = null;
+  const add = (b: { minX: number; minY: number; maxX: number; maxY: number }) => {
+    box = box
+      ? { minX: Math.min(box.minX, b.minX), minY: Math.min(box.minY, b.minY), maxX: Math.max(box.maxX, b.maxX), maxY: Math.max(box.maxY, b.maxY) }
+      : { ...b };
+  };
+  for (const id of [...internal.elements.keys(), ...internal.buses.keys(), ...internal.junctions.keys()]) {
+    const b = targetBox(internal, id);
+    if (b && overlaps(b)) add(b);
+  }
+  for (const a of d.annotations ?? []) {
+    const size = (a as { size?: [number, number] }).size;
+    const b = { minX: a.at[0], minY: a.at[1], maxX: a.at[0] + (size?.[0] ?? 0), maxY: a.at[1] + (size?.[1] ?? 0) };
+    if (overlaps(b)) add(b);
+  }
+  return box;
+}
+
 const createEditorState: StateCreator<EditorState> = (set, get) => ({
   diagram: EMPTY_DIAGRAM,
   internal: compile(EMPTY_DIAGRAM),
@@ -389,6 +571,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
   busbarDrawStart: null,
   cursorSvg: null,
   selection: [],
+  selectedSheet: null,
   selectedWire: null,
   selectedNode: null,
   selectedAnnotations: [],
@@ -406,10 +589,13 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
   clipboard: null,
   clipboardPasteIndex: 0,
 
-  setDiagram: (diagram) =>
+  setDiagram: (input) => {
+    // The old annotation frame becomes sheet 1 the first time it is opened.
+    const diagram = migrateLegacyFrame(input);
     set({
       diagram,
       internal: compile(diagram),
+      selectedSheet: null,
       past: [],
       future: [],
       selection: [],
@@ -425,16 +611,19 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
       wireFromTerminal: null,
       wireDragFrom: null,
       placeFromTerminal: null,
-    }),
+    });
+  },
 
   setFileSession: (fileSession) => set({ fileSession }),
 
   setReadOnly: (readOnly) => set({ readOnly }),
 
-  loadDiagramFromFile: (diagram, fileSession) =>
+  loadDiagramFromFile: (input, fileSession) => {
+    const diagram = migrateLegacyFrame(input);
     set({
       diagram,
       internal: compile(diagram),
+      selectedSheet: null,
       fileSession,
       past: [],
       future: [],
@@ -451,7 +640,8 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
       wireFromTerminal: null,
       wireDragFrom: null,
       placeFromTerminal: null,
-    }),
+    });
+  },
 
   dispatch: (mutator) => {
     const { diagram, past } = get();
@@ -534,6 +724,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
 
   setSelection: (ids, annIds) =>
     set({
+      selectedSheet: null,
       selection: dedupe(ids),
       selectedWire: null,
       selectedNode: null,
@@ -555,6 +746,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
   },
   clearSelection: () =>
     set({
+      selectedSheet: null,
       selection: [],
       selectedWire: null,
       selectedNode: null,
@@ -565,6 +757,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     }),
   setSelectedWire: (id) =>
     set({
+      selectedSheet: null,
       selectedWire: id,
       selection: id ? [] : get().selection,
       selectedNode: null,
@@ -572,6 +765,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     }),
   setSelectedNode: (nodeId) =>
     set({
+      selectedSheet: null,
       selectedNode: nodeId,
       selection: nodeId ? [] : get().selection,
       selectedWire: null,
@@ -579,6 +773,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     }),
   setSelectedAnnotation: (id) =>
     set({
+      selectedSheet: null,
       selectedAnnotations: id ? [id] : [],
       selection: id ? [] : get().selection,
       selectedWire: id ? null : get().selectedWire,
@@ -589,6 +784,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
   toggleAnnotationInSelection: (id) => {
     const sel = get().selectedAnnotations;
     set({
+      selectedSheet: null,
       selectedAnnotations: sel.includes(id)
         ? sel.filter((x) => x !== id)
         : [...sel, id],
@@ -1021,69 +1217,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
   moveElements: (deltas, annotationDeltas) => {
     if (deltas.size === 0 && !annotationDeltas?.size) return;
     const internal = get().internal;
-    get().dispatch((d) => {
-      const layout = { ...(d.layout ?? {}) };
-      const busPatches = new Map<BusId, [number, number]>();
-      const junctionPatches = new Map<JunctionId, [number, number]>();
-      for (const [id, delta] of deltas) {
-        if (internal.buses.has(id)) {
-          busPatches.set(id, delta);
-          continue;
-        }
-        if (internal.junctions.has(id)) {
-          junctionPatches.set(id, delta);
-          continue;
-        }
-        const resolved = internal.layout.get(id);
-        const base: Placement =
-          layout[id] ?? (resolved ? compactPlacement(resolved) : { at: [0, 0] });
-        layout[id] = {
-          ...base,
-          at: [base.at[0] + delta[0], base.at[1] + delta[1]],
-        };
-      }
-      let buses = d.buses;
-      if (busPatches.size > 0) {
-        buses = (d.buses ?? []).map((b) => {
-          const delta = busPatches.get(b.id);
-          if (!delta) return b;
-          const cur =
-            b.layout ?? compactBusLayout(internal.buses.get(b.id)!.geometry);
-          return {
-            ...b,
-            layout: {
-              ...cur,
-              at: [cur.at[0] + delta[0], cur.at[1] + delta[1]],
-            },
-          };
-        });
-      }
-      let junctions = d.junctions;
-      if (junctionPatches.size > 0) {
-        junctions = (d.junctions ?? []).map((j) => {
-          const delta = junctionPatches.get(j.id);
-          if (!delta) return j;
-          const at = j.layout?.at ?? internal.junctions.get(j.id)?.world ?? [0, 0];
-          return { ...j, layout: { at: [at[0] + delta[0], at[1] + delta[1]] } };
-        });
-      }
-      let annotations = d.annotations;
-      if (annotationDeltas?.size && annotations) {
-        annotations = annotations.map((a) => {
-          const delta = annotationDeltas.get(a.id);
-          if (!delta) return a;
-          return {
-            ...a,
-            at: [a.at[0] + delta[0], a.at[1] + delta[1]] as [number, number],
-          };
-        });
-      }
-      // Manual wire routes follow the move only when the whole conductor is
-      // inside it — see `translateManualWirePaths` for why this can't live in
-      // the compiler.
-      const wires = translateManualWirePaths(d.wires, deltas);
-      return { ...d, layout, buses, junctions, wires, annotations };
-    });
+    get().dispatch((d) => applyMoves(d, internal, deltas, annotationDeltas));
   },
 
   deleteSelection: () => {
@@ -1411,6 +1545,143 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     if (st.selection.includes(id)) st.setSelection(st.selection.filter((s) => s !== id));
   },
 
+  setSelectedSheet: (id) =>
+    set({
+      selectedSheet: id,
+      ...(id
+        ? {
+            selection: [],
+            selectedWire: null,
+            selectedNode: null,
+            selectedAnnotations: [],
+            editingAnnotation: null,
+            editingCell: null,
+            editingElement: null,
+          }
+        : {}),
+    }),
+
+  addSheet: (paper, orientation) => {
+    const { diagram, internal } = get();
+    const sheets = diagram.sheets ?? [];
+    const id = nextSheetId(sheets);
+    let sheet: Sheet;
+    const last = sheets[sheets.length - 1];
+    if (last) {
+      // Next page: to the right of the last one, top-aligned, same scale.
+      const r = sheetRect(last);
+      const scale = clampSheetScale(last.scale);
+      sheet = {
+        id,
+        paper,
+        orientation,
+        at: [Math.round(r.x + r.w + SHEET_GAP_MM * UNITS_PER_MM * scale), Math.round(r.y)],
+        ...(scale !== 1 ? { scale } : {}),
+      };
+    } else {
+      // First page: frame what is already drawn, enlarging the frame (never
+      // the drawing) when the drawing is bigger than the paper.
+      const box = drawingBox(diagram, internal);
+      const scale = box ? fitScale(box.maxX - box.minX, box.maxY - box.minY, paper, orientation) : 1;
+      const at = sheetAroundBox(box ?? { minX: 0, minY: 0, maxX: 0, maxY: 0 }, paper, orientation, scale);
+      sheet = { id, paper, orientation, at, ...(scale !== 1 ? { scale } : {}) };
+    }
+    get().dispatch((d) => ({ ...d, sheets: [...(d.sheets ?? []), sheet] }));
+    get().setSelectedSheet(id);
+    return id;
+  },
+
+  updateSheet: (id, patch) => {
+    get().dispatch((d) => ({
+      ...d,
+      sheets: (d.sheets ?? []).map((sh) => {
+        if (sh.id !== id) return sh;
+        const next: Sheet = { ...sh, ...patch, id };
+        // Empty text clears the field rather than storing "".
+        for (const k of ['title', 'number', 'date', 'scaleText'] as const) {
+          if (next[k] === '' || next[k] === undefined) delete next[k];
+        }
+        if (next.scale !== undefined) {
+          const sc = clampSheetScale(next.scale);
+          if (sc === 1) delete next.scale;
+          else next.scale = sc;
+        }
+        return next;
+      }),
+    }));
+  },
+
+  removeSheet: (id) => {
+    get().dispatch((d) => {
+      const sheets = (d.sheets ?? []).filter((sh) => sh.id !== id);
+      const next = { ...d, sheets };
+      if (sheets.length === 0) delete (next as { sheets?: Sheet[] }).sheets;
+      return next;
+    });
+    if (get().selectedSheet === id) set({ selectedSheet: null });
+  },
+
+  reorderSheet: (id, dir) => {
+    const sheets = get().diagram.sheets ?? [];
+    const i = sheets.findIndex((sh) => sh.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= sheets.length) return;
+    get().dispatch((d) => {
+      const list = [...(d.sheets ?? [])];
+      [list[i], list[j]] = [list[j], list[i]];
+      return { ...d, sheets: list };
+    });
+  },
+
+  moveSheet: (id, dx, dy) => {
+    if (dx === 0 && dy === 0) return;
+    const { diagram, internal } = get();
+    const sheet = diagram.sheets?.find((sh) => sh.id === id);
+    if (!sheet) return;
+    const { elements, annotations } = sheetContents(diagram, internal, sheet);
+    const deltas = new Map<ElementId, [number, number]>(elements.map((e) => [e, [dx, dy]]));
+    const annDeltas = new Map<AnnotationId, [number, number]>(annotations.map((a) => [a, [dx, dy]]));
+    get().dispatch((d) => {
+      const moved = applyMoves(d, internal, deltas, annDeltas);
+      return {
+        ...moved,
+        sheets: (moved.sheets ?? []).map((sh) =>
+          sh.id === id ? { ...sh, at: [sh.at[0] + dx, sh.at[1] + dy] as [number, number] } : sh,
+        ),
+      };
+    });
+  },
+
+  fitSheet: (id) => {
+    const { diagram, internal } = get();
+    const sheet = diagram.sheets?.find((sh) => sh.id === id);
+    if (!sheet) return;
+    const box = sheetContentBox(diagram, internal, sheet);
+    if (!box) return;
+    const scale = fitScale(box.maxX - box.minX, box.maxY - box.minY, sheet.paper, sheet.orientation);
+    const at = sheetAroundBox(box, sheet.paper, sheet.orientation, scale);
+    get().updateSheet(id, { scale, at });
+  },
+
+  enlargeLabelsForPrint: (id) => {
+    const sheet = get().diagram.sheets?.find((sh) => sh.id === id);
+    if (!sheet) return;
+    const size = Math.min(32, Math.max(5, labelFontForPrint(sheet.scale)));
+    get().dispatch((d) => ({ ...d, meta: { ...d.meta, labelFontSize: size } }));
+  },
+
+  updateTitleBlock: (patch) => {
+    get().dispatch((d) => {
+      const tb: TitleBlockShared = { ...d.meta?.titleBlock, ...patch };
+      for (const k of Object.keys(tb) as (keyof TitleBlockShared)[]) {
+        if (!tb[k]) delete tb[k];
+      }
+      const meta: DiagramMeta = { ...d.meta, titleBlock: tb };
+      if (Object.keys(tb).length === 0) delete meta.titleBlock;
+      return { ...d, meta };
+    });
+  },
+
   addWire: (a, b) => {
     if (a === b) return;
     const id = wireIdFromEnds(a, b);
@@ -1695,7 +1966,10 @@ export const useEditorStore = create<EditorState>()(
         lastPlaceKind: s.lastPlaceKind,
       }),
       onRehydrateStorage: () => (state) => {
-        if (state?.diagram) state.internal = compile(state.diagram);
+        if (state?.diagram) {
+          state.diagram = migrateLegacyFrame(state.diagram);
+          state.internal = compile(state.diagram);
+        }
       },
     },
   ),

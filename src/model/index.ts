@@ -71,3 +71,51 @@ export type {
 } from './binding';
 
 export { normalizePath } from './wire-path';
+
+export type {
+  Sheet,
+  PaperId,
+  SheetOrientation,
+  TitleBlockShared,
+  SheetOwnField,
+  SheetSharedField,
+} from './sheet';
+export {
+  PAPER_MM,
+  PAPER_ORDER,
+  PAPER_LABEL,
+  UNITS_PER_MM,
+  MM_PER_UNIT,
+  SHEET_MARGIN_MM,
+  SHEET_GAP_MM,
+  SHEET_SCALE_MIN,
+  SHEET_SCALE_MAX,
+  NICE_SCALES,
+  SHEET_OWN_FIELDS,
+  SHEET_SHARED_FIELDS,
+  DEFAULT_LABEL_FONT,
+  PRINT_TEXT_MIN_MM,
+  PRINT_TEXT_TARGET_MM,
+  PRINT_STROKE_MIN_MM,
+  clampSheetScale,
+  paperMm,
+  sheetRect,
+  sheetContentArea,
+  formatSheetScale,
+  printedMm,
+  labelFontForPrint,
+  fitScale,
+  sheetAroundBox,
+  nextSheetId,
+  sheetIndexAt,
+  migrateLegacyFrame,
+  LEGACY_FRAME_IDS,
+} from './sheet';
+export { sheetPrimitives } from './sheet-render';
+export type {
+  SheetPrimitives,
+  SheetRectPrim,
+  SheetLinePrim,
+  SheetTextPrim,
+  SheetFieldLabels,
+} from './sheet-render';

@@ -184,3 +184,28 @@ export function fitToContentSoon(): void {
   };
   requestAnimationFrame(tick);
 }
+
+/**
+ * Fit a world rectangle (e.g. one drawing sheet) into the visible part of the
+ * canvas with padding, leaving room for docked panels like `fitToContent`.
+ * Returns false when the viewport isn't mounted.
+ */
+export function fitToWorldRect(rect: { x: number; y: number; w: number; h: number }): boolean {
+  const api = getViewportApi();
+  const root = getCanvasRoot();
+  if (!api || !root) return false;
+  const box = root.getBoundingClientRect();
+  if (box.width === 0 || box.height === 0 || rect.w <= 0 || rect.h <= 0) return false;
+  const { x0, x1 } = visibleSpan(box);
+  const scale = clamp(
+    Math.min((x1 - x0 - FIT_PADDING_PX * 2) / rect.w, (box.height - FIT_PADDING_PX * 2) / rect.h),
+    MIN_SCALE,
+    MAX_SCALE,
+  );
+  api.setViewport({
+    tx: (x0 + x1) / 2 - scale * (rect.x + rect.w / 2),
+    ty: box.height / 2 - scale * (rect.y + rect.h / 2),
+    scale,
+  });
+  return true;
+}

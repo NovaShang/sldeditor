@@ -1,5 +1,6 @@
 import type { LibraryEntry } from './library';
 import type { Binding, Tag } from './binding';
+import type { Sheet, TitleBlockShared } from './sheet';
 
 export type DiagramVersion = '1';
 export type ElementId = string;
@@ -83,6 +84,12 @@ export interface DiagramFile {
    * and only drops a binding when its target element is deleted.
    */
   bindings?: Binding[];
+  /**
+   * Drawing sheets (paper frames with a title block), in page order: array
+   * index + 1 is the "sheet n of N" number. Presentation only — the compiler
+   * ignores them. Absent = a frameless drawing, exported as before.
+   */
+  sheets?: Sheet[];
 }
 
 export interface DiagramMeta {
@@ -120,6 +127,12 @@ export interface DiagramMeta {
    * with the file. Absent = nothing dismissed.
    */
   healthDismissed?: string[];
+  /**
+   * Title-block fields every sheet shares (project, client, designer,
+   * checker): typed once, printed on every page. Per-sheet fields (title,
+   * number, date) live on each `Sheet`.
+   */
+  titleBlock?: TitleBlockShared;
 }
 
 export interface Element {
