@@ -162,3 +162,32 @@ describe('DXF says where the drawing is', () => {
     expect(dxf).not.toMatch(/\bInfinity\b/);
   });
 });
+
+describe('DXF text survives a non-English drawing', () => {
+  // The file used to carry raw UTF-8 under an R12 header; AutoCAD reads R12 text
+  // in the system code page, so Cyrillic, accents and the "IΔ" of an RCD came
+  // out as mojibake or "I?" (prod chat audit 2026-10-23→30).
+  const labels: Annotation[] = [
+    { id: 'a1', type: 'text', at: [0, 0], text: 'Щит ВРУ-1' },
+    { id: 'a2', type: 'text', at: [0, 40], text: 'Protección diferencial IΔn 30 mA' },
+  ];
+
+  it('writes a pure-ASCII file under a declared code page', () => {
+    const dxf = dxfFor(twoBreakers, labels);
+    expect(/^[\x09\x0a\x0d\x20-\x7e]*$/.test(dxf)).toBe(true);
+    expect(headerVar(dxf, '$DWGCODEPAGE')).toEqual([[3, 'ANSI_1252']]);
+  });
+
+  it('spells every non-ASCII character as an AutoCAD \\U+ escape', () => {
+    const texts = pairs(dxfFor(twoBreakers, labels)).filter(([c]) => c === 1).map(([, v]) => v);
+    expect(texts).toContain('\\U+0429\\U+0438\\U+0442 \\U+0412\\U+0420\\U+0423-1');
+    expect(texts).toContain('Protecci\\U+00F3n diferencial I\\U+0394n 30 mA');
+  });
+
+  it('keeps plain ASCII labels exactly as typed', () => {
+    const texts = pairs(dxfFor(twoBreakers, [{ id: 'a', type: 'text', at: [0, 0], text: 'QF1 63A' }]))
+      .filter(([c]) => c === 1)
+      .map(([, v]) => v);
+    expect(texts).toContain('QF1 63A');
+  });
+});

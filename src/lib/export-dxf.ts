@@ -828,6 +828,11 @@ class DxfWriter {
     this.g(2, 'HEADER');
     this.g(9, '$ACADVER');
     this.g(1, 'AC1009');
+    // R12 text is read in the file's code page, not UTF-8. Declaring one and
+    // writing everything else as \U+XXXX escapes (see `sanitizeText`) keeps
+    // the file pure ASCII, so no reader has a code page to guess wrong.
+    this.g(9, '$DWGCODEPAGE');
+    this.g(3, 'ANSI_1252');
     this.g(9, '$INSUNITS');
     this.g(70, 0);
     // Reserve a slot for $EXTMIN/$EXTMAX, filled in `toString()` once every
@@ -996,6 +1001,24 @@ class DxfWriter {
 function sanitizeText(s: string): string {
   // DXF group code 1 fields are line-delimited; strip newlines so a multi-line
   // annotation can't smuggle its own DXF directives. Also clamp length to
-  // 250 chars (DXF R12 line limit) to be safe.
-  return s.replace(/[\r\n]+/g, ' ').slice(0, 250);
+  // 250 chars (DXF R12 line limit) to be safe — before escaping, so a label is
+  // never cut in the middle of an escape.
+  //
+  // Everything outside printable ASCII becomes AutoCAD's \U+XXXX escape. The
+  // file used to carry raw UTF-8 under an R12 header, which AutoCAD reads in
+  // the system code page: Cyrillic, Spanish accents and the "IΔ" of every RCD
+  // came out as mojibake or "I?" (prod chat audit 2026-10-23→30). Characters
+  // beyond the Basic Multilingual Plane have no \U+ form and become "?".
+  const flat = s.replace(/[\r\n]+/g, ' ');
+  let out = '';
+  let n = 0;
+  for (const ch of flat) {
+    if (n++ >= 250) break;
+    const cp = ch.codePointAt(0)!;
+    if (cp >= 0x20 && cp < 0x7f) out += ch;
+    else if (cp > 0xffff) out += '?';
+    else if (cp >= 0xa0) out += `\\U+${cp.toString(16).toUpperCase().padStart(4, '0')}`;
+    else out += ' ';
+  }
+  return out;
 }

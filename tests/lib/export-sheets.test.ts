@@ -163,7 +163,8 @@ describe('off-page connector references in exports', () => {
     expect(svg).toContain('→ 2/2');
     expect(svg).toContain('→ 1/2');
     const dxf = buildExportDxf(compile(d), { sheets });
-    expect(dxf).toContain('→ 2/2');
+    // DXF is pure ASCII: the arrow is written as AutoCAD's \U+ escape.
+    expect(dxf).toContain('\\U+2192 2/2');
   });
 
   it('is absent without sheets', () => {
