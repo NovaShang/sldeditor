@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.31.1
+
+### Patch Changes
+
+- [`7db5869`](https://github.com/NovaShang/sldeditor/commit/7db5869b8bd5835d4ecf439bf8ab85cbd1fcf03e) Thanks [@NovaShang](https://github.com/NovaShang)! - DXF export: labels in any language now open correctly in AutoCAD. Non-ASCII characters (Cyrillic, accented letters, Δ, Chinese) are written as `\U+XXXX` escapes under a declared code page instead of raw UTF-8, which R12 readers decoded as mojibake.
+
 ## 0.31.0
 
 ### Minor Changes
