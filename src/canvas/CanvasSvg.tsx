@@ -35,7 +35,7 @@ import { WireHandles } from './WireHandles';
 import { BusLayer } from './BusLayer';
 import { BusbarPreview } from './BusbarPreview';
 import { JunctionLayer } from './JunctionLayer';
-import { PinLabelLayer, SolderDotLayer } from './CircuitMarksLayer';
+import { BusNameLayer, PinLabelLayer, SolderDotLayer } from './CircuitMarksLayer';
 import { ElementLayer } from './ElementLayer';
 import { MarqueeOverlay } from './MarqueeOverlay';
 import { PlaceGhost } from './PlaceGhost';
@@ -373,6 +373,7 @@ export function CanvasSvg() {
           <ElementLayer />
           <AnnotationLayer />
           <PinLabelLayer />
+          <BusNameLayer />
           <FreeAnnotationLayer />
           <SelectionOverlay />
           <BusHandles />

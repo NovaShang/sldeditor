@@ -19,6 +19,7 @@
  *
  * Circuit diagrams only (`diagramType: 'circuit'`):
  *   pin designation → TEXT (layer LABELS, beside each terminal)
+ *   rail (bus) name → TEXT (layer LABELS, at the start of the rail)
  *   solder dot      → filled donut POLYLINE (layer WIRES)
  *
  *   PE (green-yellow) wire → green POLYLINE + yellow (ACI 2) dash LINEs
@@ -67,6 +68,7 @@ import { dxfColor } from './colors';
 import {
   circuitSolderDots,
   pinLabelFontSize,
+  placeBusNames,
   placePinLabels,
   stripeSegments,
 } from './circuit-marks';
@@ -282,6 +284,22 @@ export function buildExportDxf(
       if (!keptElements.has(pin.ref.slice(0, pin.ref.indexOf('.')))) continue;
       w.text(LAYER_LABELS, worldToDxf([pin.x, pin.y]), pin.text, pinFs, 0, false, pin.anchor);
     }
+    // Rail names (circuit diagrams only), in the bus's ink.
+    for (const n of placeBusNames(model, labelFs)) {
+      // Follows its rail: kept whenever the bus is.
+      const g = model.buses.get(n.busId)?.geometry;
+      if (g) {
+        const half = g.span / 2;
+        const ends: [number, number][] =
+          g.axis === 'x'
+            ? [[g.at[0] - half, g.at[1]], [g.at[0] + half, g.at[1]]]
+            : [[g.at[0], g.at[1] - half], [g.at[0], g.at[1] + half]];
+        if (!keep(pointsBox(ends))) continue;
+      }
+      w.setColor(dxfColor(n.color));
+      w.text(LAYER_LABELS, worldToDxf([n.x, n.y]), n.text, labelFs, 0, false, n.anchor);
+    }
+    w.setColor(undefined);
   }
 
   // Free annotations (text / rect / line / table). Dashed strokes flatten to

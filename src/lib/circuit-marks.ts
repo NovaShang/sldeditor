@@ -5,7 +5,8 @@
  *
  *   - pin designations (A1/A2, 13/14, 1/2…) beside each terminal;
  *   - solder dots at device pins and bus taps where 3+ conductors meet;
- *   - the dash pattern of the yellow stripes on a green-yellow (PE) wire.
+ *   - the dash pattern of the yellow stripes on a green-yellow (PE) wire;
+ *   - the names of the supply rails (named buses: L, N, +24V, 0V…).
  *
  * Every function returns nothing for a single-line document, which is what
  * keeps single-line drawings rendering and exporting exactly as before.
@@ -13,7 +14,7 @@
 
 import type { InternalModel } from '../compiler/internal-model';
 import { pinLabelOf } from '../model/diagram-type';
-import type { Orientation, TerminalRef } from '../model';
+import type { DiagramColor, Orientation, TerminalRef } from '../model';
 
 type Pt = [number, number];
 
@@ -99,6 +100,64 @@ export function placePinLabels(
       if (!term) continue;
       out.push({ ref, text, ...placePinLabel(term.world, term.orientation, fs) });
     }
+  }
+  return out;
+}
+
+// ---- Rail names ----------------------------------------------------------------
+
+/** Clearance between a rail's start and its name (past the round cap). */
+const BUS_NAME_GAP = 5;
+/** Baseline offset that centres capitals/digits on the rail's axis. */
+const BUS_NAME_CENTRE = 0.36;
+
+export interface PlacedBusName {
+  busId: string;
+  text: string;
+  x: number;
+  y: number;
+  anchor: 'middle' | 'end';
+  color?: DiagramColor;
+}
+
+/**
+ * The name of every named bus on a circuit diagram, just outside the start
+ * of the rail: left of a horizontal rail (vertically centred on it), above a
+ * vertical one. On a circuit diagram the buses ARE the supply rails, and an
+ * unnamed-looking rail tells the electrician nothing — whereas a single-line
+ * bus carries its name in the device labels around it, which is why
+ * single-line documents get none of this. Same type size as element labels;
+ * the bus's own ink, as a wire label takes its wire's (both name a
+ * potential). Multi-line names use their first line.
+ */
+export function placeBusNames(model: InternalModel, labelFontSize: number): PlacedBusName[] {
+  if (model.diagramType !== 'circuit') return [];
+  const out: PlacedBusName[] = [];
+  for (const { bus, geometry } of model.buses.values()) {
+    const text = bus.name?.split('\n')[0]?.trim();
+    if (!text) continue;
+    const { axis, at, span } = geometry;
+    const half = span / 2;
+    const color = bus.color && bus.color !== 'default' ? bus.color : undefined;
+    out.push(
+      axis === 'x'
+        ? {
+            busId: bus.id,
+            text,
+            x: round(at[0] - half - BUS_NAME_GAP),
+            y: round(at[1] + BUS_NAME_CENTRE * labelFontSize),
+            anchor: 'end',
+            ...(color ? { color } : {}),
+          }
+        : {
+            busId: bus.id,
+            text,
+            x: round(at[0]),
+            y: round(at[1] - half - BUS_NAME_GAP),
+            anchor: 'middle',
+            ...(color ? { color } : {}),
+          },
+    );
   }
   return out;
 }

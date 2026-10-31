@@ -5,7 +5,8 @@
 
 import { describe, expect, it } from 'vitest';
 import { compile } from '../../src/compiler';
-import { numberWiresByPotential } from '../../src/model/wire-numbers';
+import { isMainCircuitEntry, numberWiresByPotential } from '../../src/model/wire-numbers';
+import { LIBRARY } from '../../src/compiler/library-index';
 import type { DiagramFile } from '../../src/model';
 
 const run = (d: DiagramFile) => numberWiresByPotential(d, compile(d));
@@ -150,5 +151,92 @@ describe('numberWiresByPotential', () => {
     const r = run(d);
     expect(r.count).toBe(0);
     expect(r.diagram).toBe(d);
+  });
+});
+
+/**
+ * Direct-on-line starter. Power circuit: supply → Q1 → KM1 main poles → F1
+ * overload → M1, three phases. Control circuit between rails L and N:
+ * L → F1 (95-96) → S0 stop → S1 start ∥ KM1 13-14 seal-in → KM1 coil → N.
+ */
+const dol = (): DiagramFile => {
+  const phases: [string, string, string][] = [
+    ['X.t_l1', 'Q1.t1', 'L1'], ['X.t_l2', 'Q1.t3', 'L2'], ['X.t_l3', 'Q1.t5', 'L3'],
+  ];
+  return {
+    version: '1',
+    meta: { diagramType: 'circuit' },
+    elements: [
+      { id: 'X', kind: 'supply-3ph', name: '-X0' },
+      { id: 'Q1', kind: 'breaker-3p', name: '-Q1' },
+      { id: 'KM1', kind: 'contactor-3p', name: '-KM1' },
+      { id: 'F1', kind: 'overload-relay-3p', name: '-F1' },
+      { id: 'M1', kind: 'motor-3ph', name: '-M1' },
+      { id: 'F1c', kind: 'overload-contact-break', name: '-F1' },
+      { id: 'S0', kind: 'push-button-break', name: '-S0' },
+      { id: 'S1', kind: 'push-button', name: '-S1' },
+      { id: 'KA', kind: 'make-contact', name: '-KM1' },
+      { id: 'K', kind: 'relay-coil', name: '-KM1' },
+    ],
+    buses: [
+      { id: 'L', name: 'L', layout: { at: [400, 20], span: 200 } },
+      { id: 'N', name: 'N', layout: { at: [400, 500], span: 200 } },
+    ],
+    wires: [
+      // Phase labels on the top segment only; the rest of the power circuit
+      // is unlabelled, one wire carries a stale number.
+      ...phases.map(([a, b, label], i) => ({ id: `p${i}`, ends: [a, b] as [string, string], label })),
+      { id: 'q1', ends: ['Q1.t2', 'KM1.t1'], label: '9' },
+      { id: 'q2', ends: ['Q1.t4', 'KM1.t3'] },
+      { id: 'q3', ends: ['Q1.t6', 'KM1.t5'] },
+      { id: 'k1', ends: ['KM1.t2', 'F1.t1'] },
+      { id: 'k2', ends: ['KM1.t4', 'F1.t3'] },
+      { id: 'k3', ends: ['KM1.t6', 'F1.t5'] },
+      { id: 'f1', ends: ['F1.t2', 'M1.t_u'] },
+      { id: 'f2', ends: ['F1.t4', 'M1.t_v'] },
+      { id: 'f3', ends: ['F1.t6', 'M1.t_w'] },
+      { id: 'c1', ends: ['L', 'F1c.t1'] },
+      { id: 'c2', ends: ['F1c.t2', 'S0.t1'] },
+      { id: 'c3', ends: ['S0.t2', 'S1.t1'] },
+      { id: 'c4', ends: ['S0.t2', 'KA.t1'] },
+      { id: 'c5', ends: ['S1.t2', 'K.t1'] },
+      { id: 'c6', ends: ['KA.t2', 'K.t1'] },
+      { id: 'c7', ends: ['K.t2', 'N'] },
+    ],
+    layout: {
+      X: { at: [0, 0] },
+      Q1: { at: [0, 80] },
+      KM1: { at: [0, 160] },
+      F1: { at: [0, 240] },
+      M1: { at: [0, 320] },
+      F1c: { at: [360, 80] },
+      S0: { at: [360, 160] },
+      S1: { at: [360, 280] },
+      KA: { at: [440, 280] },
+      K: { at: [360, 420] },
+    },
+  };
+};
+
+describe('main circuit vs control circuit', () => {
+  it('reads the power symbols from the library: circuit-only, three pins or more', () => {
+    for (const id of ['supply-3ph', 'breaker-3p', 'contactor-3p', 'overload-relay-3p', 'motor-3ph', 'rcd-4p', 'mcb-1pn']) {
+      expect(isMainCircuitEntry(LIBRARY.get(id)), id).toBe(true);
+    }
+    for (const id of ['relay-coil', 'make-contact', 'overload-contact-break', 'terminal-block', 'breaker', 'busduct-tap', 'transformer-3w']) {
+      expect(isMainCircuitEntry(LIBRARY.get(id)), id).toBe(false);
+    }
+  });
+
+  it('numbers only the control circuit; phase labels stay, stale numbers go', () => {
+    const r = run(dol());
+    const l = labels(r.diagram);
+    expect([l.p0, l.p1, l.p2]).toEqual(['L1', 'L2', 'L3']);
+    for (const id of ['q1', 'q2', 'q3', 'k1', 'k2', 'k3', 'f1', 'f2', 'f3']) expect(l[id], id).toBeUndefined();
+    expect(r.count).toBe(3);
+    expect(l.c2).toBe('1'); // F1 95-96 → stop
+    expect([l.c3, l.c4]).toEqual(['2', '2']); // stop → start ∥ seal-in
+    expect([l.c5, l.c6]).toEqual(['3', '3']); // → coil
+    expect([l.c1, l.c7]).toEqual([undefined, undefined]); // rails
   });
 });

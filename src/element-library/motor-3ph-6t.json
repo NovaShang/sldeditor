@@ -1,0 +1,83 @@
+{
+  "id": "motor-3ph-6t",
+  "name": "三相电动机 6 端子（星三角）",
+  "category": "load",
+  "description": "六出线端三相异步电动机，用于星三角启动：U1/V1/W1 在上，U2/V2/W2 在下，另有 PE。",
+  "viewBox": "-44 -102 96 124",
+  "width": 96,
+  "height": 124,
+  "svg": "<text x=\"-7\" y=\"-53\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"14\" fill=\"#000000\">M</text><text x=\"-9\" y=\"-40\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">3</text><path d=\"M 4.993 -44.174 A 3 2.5 0 0 0 -1 -44\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 5 -44 A 3 2.5 0 0 0 11 -44\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"-40\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-100\" x2=\"0\" y2=\"-80\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-100\" x2=\"-20\" y2=\"-75\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"-100\" x2=\"20\" y2=\"-75\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"20\" x2=\"0\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"20\" x2=\"-20\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"20\" x2=\"20\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 29.698 -10.302 A 42 42 0 0 0 36.373 -19\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"38\" y1=\"-10\" x2=\"34\" y2=\"-14\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-12\" y1=\"-20\" x2=\"-7\" y2=\"-15\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-7\" y1=\"-15\" x2=\"-2\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-7\" y1=\"-15\" x2=\"-7\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"3\" y1=\"-22\" x2=\"-4\" y2=\"-6\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"6\" y1=\"-20\" x2=\"1\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"1\" y1=\"-10\" x2=\"11\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"6\" y1=\"-20\" x2=\"11\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"38\" y1=\"-10\" x2=\"50\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_u1",
+      "x": -20,
+      "y": -100,
+      "orientation": "n",
+      "label": "U1"
+    },
+    {
+      "id": "t_v1",
+      "x": 0,
+      "y": -100,
+      "orientation": "n",
+      "label": "V1"
+    },
+    {
+      "id": "t_w1",
+      "x": 20,
+      "y": -100,
+      "orientation": "n",
+      "label": "W1"
+    },
+    {
+      "id": "t_u2",
+      "x": -20,
+      "y": 20,
+      "orientation": "s",
+      "label": "U2"
+    },
+    {
+      "id": "t_v2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "V2"
+    },
+    {
+      "id": "t_w2",
+      "x": 20,
+      "y": 20,
+      "orientation": "s",
+      "label": "W2"
+    },
+    {
+      "id": "t_pe",
+      "x": 50,
+      "y": -10,
+      "orientation": "e",
+      "label": "PE"
+    }
+  ],
+  "params": [
+    {
+      "name": "P",
+      "label": "功率",
+      "type": "number",
+      "unit": "kW",
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 44,
+    "y": -44,
+    "anchor": "start"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/391_consumers_actuators/10_engines/induction_motor_6_terminals.elmt",
+    "qetEnglishName": "Induction motor, three-phase 6 terminals"
+  }
+}

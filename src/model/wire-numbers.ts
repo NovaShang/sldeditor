@@ -12,11 +12,15 @@
  *     order never depends on array order.
  *   - A node on a NAMED bus is a supply rail (L, N, +24V, 0V): its potential
  *     already has a name, so it gets no number.
+ *   - A node touching a pin of a multi-pole POWER symbol (3-phase supply,
+ *     3-pole breaker / contactor / overload relay, motor, 4-pole RCD, 1P+N
+ *     MCB…) belongs to the main circuit, whose conductors are identified by
+ *     their phase labels (L1/L2/L3/N/PE), not by numbers: no number.
  *   - A node where the user wrote a non-numeric label on any wire (L1, PE,
  *     24V…) is named by hand: the label is kept and the node gets no number.
  *   - Numeric labels are owned by this function: they are replaced on
- *     numbered nodes and removed on the two kinds of named node above, so a
- *     stale number never survives a re-run.
+ *     numbered nodes and removed on every unnumbered node above, so a stale
+ *     number never survives a re-run.
  *
  * Re-running on an unchanged drawing gives the same result (labels do not
  * affect geometry or connectivity). Pure: the caller passes the compiled
@@ -24,6 +28,7 @@
  */
 
 import type { InternalModel } from '../compiler/internal-model';
+import type { LibraryEntry } from './library';
 import type { DiagramFile, NodeId, Wire } from './types';
 
 export interface WireNumbering {
@@ -38,6 +43,17 @@ const NUMERIC = /^\s*\d+\s*$/;
 /** A label this function wrote (or could have): digits only. */
 export function isWireNumber(label: string | undefined): boolean {
   return label !== undefined && NUMERIC.test(label);
+}
+
+/**
+ * A main-circuit power symbol: circuit-only (`diagramTypes` has `circuit` and
+ * not `sld`) with three or more terminals. Read from the library rather than
+ * listed, so a new multi-pole power symbol is covered the day it is added;
+ * control symbols (coils, contacts, buttons, lamps) have two terminals.
+ */
+export function isMainCircuitEntry(entry: Pick<LibraryEntry, 'diagramTypes' | 'terminals'> | undefined): boolean {
+  const types = entry?.diagramTypes ?? [];
+  return types.includes('circuit') && !types.includes('sld') && (entry?.terminals.length ?? 0) >= 3;
 }
 
 export function numberWiresByPotential(diagram: DiagramFile, m: InternalModel): WireNumbering {
@@ -55,6 +71,11 @@ export function numberWiresByPotential(diagram: DiagramFile, m: InternalModel): 
 
   const namedRail = (node: NodeId) =>
     (m.nodes.get(node)?.terminals ?? []).some((end) => !!m.buses.get(end)?.bus.name?.trim());
+  const mainCircuit = (node: NodeId) =>
+    (m.nodes.get(node)?.terminals ?? []).some((end) => {
+      const dot = end.indexOf('.');
+      return dot > 0 && isMainCircuitEntry(m.elements.get(end.slice(0, dot))?.libraryDef);
+    });
   const namedByHand = (ws: Wire[]) => ws.some((w) => !!w.label?.trim() && !isWireNumber(w.label));
 
   /** Topmost, then leftmost point of the node's drawn wires. */
@@ -71,7 +92,7 @@ export function numberWiresByPotential(diagram: DiagramFile, m: InternalModel): 
   const numbered: { node: NodeId; at: [number, number] }[] = [];
   const named = new Set<NodeId>();
   for (const [node, ws] of byNode) {
-    if (namedRail(node) || namedByHand(ws)) named.add(node);
+    if (namedRail(node) || mainCircuit(node) || namedByHand(ws)) named.add(node);
     else numbered.push({ node, at: anchor(ws) });
   }
   numbered.sort(
@@ -90,7 +111,7 @@ export function numberWiresByPotential(diagram: DiagramFile, m: InternalModel): 
       changed = true;
       return { ...w, label: want };
     }
-    // A named node: drop only a stale number, never a hand-written name.
+    // An unnumbered node: drop only a stale number, never a hand-written name.
     if (named.has(node) && isWireNumber(w.label)) {
       changed = true;
       const { label: _label, ...rest } = w;

@@ -1783,6 +1783,45 @@ const MANIFEST = [
     diagramTypes: ['circuit'],
   },
   {
+    id: 'motor-3ph-6t',
+    name: '三相电动机 6 端子（星三角）',
+    category: 'load',
+    description: '六出线端三相异步电动机，用于星三角启动：U1/V1/W1 在上，U2/V2/W2 在下，另有 PE。',
+    // QET's six-terminal induction motor (M 3~ with the Y/Δ mark): U1/V1/W1
+    // on top at x = −20 / 0 / 20 like every 3-pole symbol, the winding ends
+    // U2/V2/W2 straight below on the same x.
+    source: { kind: 'elmt', path: '10_allpole/391_consumers_actuators/10_engines/induction_motor_6_terminals.elmt' },
+    // QET's "U1"…"W2" pin names; the terminal labels print them instead.
+    dropPrimitive: textMatching(/^[UVW][12]$/),
+    textBaseline: true,
+    // QET puts PE at (42, −11) with no lead: its earth mark ends at (38, −11)
+    // and the terminal floats beyond it, off the 10-unit grid. Bring the
+    // mark's end onto y = −10 and run a lead from it out to x = 50 — the same
+    // long PE lead `motor-3ph` has, so the "PE" designation clears the motor.
+    transformPrimitive: (p) =>
+      p.tag === 'line' && p.attrs.x1 === '38' && p.attrs.y1 === '-11'
+        ? { ...p, attrs: { ...p.attrs, y1: '-10' } }
+        : p,
+    extraPrimitives: [
+      {
+        tag: 'line',
+        attrs: { x1: '38', y1: '-10', x2: '50', y2: '-10', style: 'line-style:normal;line-weight:normal;filling:none;color:black' },
+      },
+    ],
+    terminals: [
+      { id: 't_u1', x: -20, y: -100, orientation: 'n', label: 'U1' },
+      { id: 't_v1', x: 0, y: -100, orientation: 'n', label: 'V1' },
+      { id: 't_w1', x: 20, y: -100, orientation: 'n', label: 'W1' },
+      { id: 't_u2', x: -20, y: 20, orientation: 's', label: 'U2' },
+      { id: 't_v2', x: 0, y: 20, orientation: 's', label: 'V2' },
+      { id: 't_w2', x: 20, y: 20, orientation: 's', label: 'W2' },
+      { id: 't_pe', x: 50, y: -10, orientation: 'e', label: 'PE' },
+    ],
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
+    label: { x: 44, y: -44, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
     id: 'rcd-4p',
     name: '剩余电流断路器 4P (RCCB)',
     category: 'protection',
@@ -2184,9 +2223,13 @@ function buildElement(entry) {
 
   const dropPredicate = entry.dropPrimitive || (() => false);
   const transform = entry.transformPrimitive || ((p) => p);
+  // `extraPrimitives` (QET primitive syntax) are appended after the source's
+  // own: reserved for a lead the .elmt leaves implicit between its artwork and
+  // its terminal point — never for symbol artwork.
   const visualPrims = parsed.primitives
     .filter((p) => p.tag !== 'terminal' && !dropPredicate(p))
-    .map(transform);
+    .map(transform)
+    .concat(entry.extraPrimitives || []);
   const terminalPrims = parsed.primitives.filter((p) => p.tag === 'terminal');
 
   let bbox = null;

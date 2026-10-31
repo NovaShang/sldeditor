@@ -367,10 +367,12 @@ export interface EditorState {
    * Wire numbering for circuit diagrams, by POTENTIAL: every wire on one
    * electrical node gets the same number; nodes are numbered in reading order
    * (top→bottom, then left→right). Nodes on a named supply rail (bus) take
-   * the rail's name and are not numbered. Numeric labels are replaced; a
-   * hand-written non-numeric label (L1, PE, 24V…) is kept, and its node is
-   * then named by hand and not numbered either (stale numbers on rails and
-   * hand-named nodes are removed). One undo step; none when nothing changes.
+   * the rail's name and are not numbered; main-circuit nodes (touching a
+   * multi-pole power symbol) go by their phase labels and are not numbered.
+   * Numeric labels are replaced; a hand-written non-numeric label (L1, PE,
+   * 24V…) is kept, and its node is then named by hand and not numbered
+   * either (stale numbers on every unnumbered node are removed). One undo
+   * step; none when nothing changes.
    * Returns how many nodes were numbered. See `model/wire-numbers.ts`.
    */
   numberWires: () => number;

@@ -85,6 +85,9 @@ describe('pin designations', () => {
   it('new circuit symbols carry their designations', () => {
     expect(labelsOf('supply-3ph')).toEqual({ t_l1: 'L1', t_l2: 'L2', t_l3: 'L3', t_n: 'N', t_pe: 'PE' });
     expect(labelsOf('motor-3ph')).toEqual({ t_u: 'U', t_v: 'V', t_w: 'W', t_pe: 'PE' });
+    expect(labelsOf('motor-3ph-6t')).toEqual({
+      t_u1: 'U1', t_v1: 'V1', t_w1: 'W1', t_u2: 'U2', t_v2: 'V2', t_w2: 'W2', t_pe: 'PE',
+    });
     expect(labelsOf('rcd-4p')).toMatchObject({ t_n1: 'N', t_n2: 'N' });
     expect(labelsOf('mcb-1pn')).toEqual({ t1: '1', t2: '2', t_n1: 'N', t_n2: 'N' });
     expect(labelsOf('push-button-break')).toEqual({ t1: '11', t2: '12' });
@@ -124,6 +127,13 @@ describe('multi-pole power symbols', () => {
     expect(xs('supply-3ph')).toEqual([['L1', -20], ['L2', 0], ['L3', 20], ['N', 40], ['PE', 60]]);
     expect(xs('rcd-4p').filter(([l]) => l === 'N').map(([, x]) => x)).toEqual([40, 40]);
     expect(xs('motor-3ph').slice(0, 3)).toEqual([['U', -20], ['V', 0], ['W', 20]]);
+    // Star-delta motor: winding starts on top, ends straight below them.
+    const m6 = Object.fromEntries(LIBRARY.get('motor-3ph-6t')!.terminals.map((t) => [t.label, t]));
+    for (const [i, ph] of ['U', 'V', 'W'].entries()) {
+      expect([m6[`${ph}1`].x, m6[`${ph}1`].orientation]).toEqual([-20 + 20 * i, 'n']);
+      expect([m6[`${ph}2`].x, m6[`${ph}2`].orientation]).toEqual([-20 + 20 * i, 's']);
+    }
+    expect(m6.PE.orientation).toBe('e');
   });
 
   // Labelled symbols too: the designation is printed beside the lead, so a

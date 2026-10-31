@@ -65,6 +65,7 @@ describe('circuit marks on the canvas', () => {
     expect(container.querySelectorAll('.ole-pe-stripe').length).toBe(1);
     // No duplicate digits from the library glyph layer.
     expect(container.querySelector('.ole-terminal-labels')).toBeNull();
+    expect(container.querySelector('[data-bus-name="L"]')?.textContent).toBe('L');
   });
 
   it('draws none of it on a single-line diagram', async () => {
@@ -72,6 +73,7 @@ describe('circuit marks on the canvas', () => {
     expect(container.querySelector('[data-pin-label]')).toBeNull();
     expect(container.querySelector('.ole-solder-dot')).toBeNull();
     expect(container.querySelector('.ole-pe-stripe')).toBeNull();
+    expect(container.querySelector('[data-bus-name]')).toBeNull();
     expect(container.querySelector('.ole-terminal-labels')).not.toBeNull();
   });
 });

@@ -17,6 +17,7 @@ import { buildExportSvg } from '../../src/lib/export-image';
 import { buildExportDxf } from '../../src/lib/export-dxf';
 import {
   circuitSolderDots,
+  placeBusNames,
   placePinLabel,
   placePinLabels,
   stripeSegments,
@@ -127,6 +128,31 @@ describe('pin designation placement', () => {
 
   it('is empty for a single-line document', () => {
     expect(placePinLabels(compile(doc()), 7)).toEqual([]);
+  });
+});
+
+describe('rail names', () => {
+  it('sit just left of a horizontal rail, centred on it, in the label type', () => {
+    const d = doc('circuit');
+    d.buses![1] = { ...d.buses![1], color: 'blue' };
+    d.buses!.push({ id: 'V', name: '+24V', layout: { at: [400, 150], span: 100, rot: 90 } });
+    d.buses!.push({ id: 'U', layout: { at: [400, 400], span: 100 } }); // unnamed: nothing
+    const names = placeBusNames(compile(d), 7);
+    expect(names).toEqual([
+      { busId: 'L', text: 'L', x: -5, y: 2.52, anchor: 'end' },
+      { busId: 'N', text: 'N', x: -5, y: 302.52, anchor: 'end', color: 'blue' },
+      // Vertical rail: above its top end.
+      { busId: 'V', text: '+24V', x: 400, y: 95, anchor: 'middle' },
+    ]);
+  });
+
+  it('are drawn only on circuit diagrams', () => {
+    expect(placeBusNames(compile(doc()), 7)).toEqual([]);
+    const svg = buildExportSvg(compile(doc('circuit')));
+    expect(svg).toContain('<text x="-5" y="2.52" text-anchor="end">L</text>');
+    expect(buildExportSvg(compile(doc()))).not.toContain('text-anchor="end">L</text>');
+    const dxf = buildExportDxf(compile(doc('circuit')));
+    expect(dxf).toMatch(/TEXT\n8\nLABELS\n10\n-5\n20\n-2\.52\d*\n30\n0\n40\n7\n1\nL\n/);
   });
 });
 

@@ -44,6 +44,7 @@ import { exportInk, PE_STRIPE } from './colors';
 import {
   circuitSolderDots,
   pinLabelFontSize,
+  placeBusNames,
   placePinLabels,
   PE_STRIPE_DASHARRAY,
 } from './circuit-marks';
@@ -281,6 +282,20 @@ export function buildExportSvg(
       for (const p of pins) {
         out.push(
           `    <text x="${p.x}" y="${p.y}" text-anchor="${p.anchor}">${escapeXml(p.text)}</text>`,
+        );
+      }
+      out.push('  </g>');
+    }
+    // Supply-rail names (circuit diagrams only), in the element-label type.
+    const rails = placeBusNames(model, labelFs);
+    if (rails.length > 0) {
+      out.push(
+        `  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${labelFs}" paint-order="stroke" stroke="${halo}" stroke-width="2" stroke-linejoin="round">`,
+      );
+      for (const n of rails) {
+        const ink = n.color ? ` fill="${exportInk(n.color)}"` : '';
+        out.push(
+          `    <text x="${n.x}" y="${n.y}" text-anchor="${n.anchor}"${ink}>${escapeXml(n.text)}</text>`,
         );
       }
       out.push('  </g>');
@@ -661,6 +676,13 @@ export function computeContentBbox(model: InternalModel, opts: ExportOptions): B
       const x0 = p.anchor === 'end' ? p.x - w : p.x;
       update(x0, p.y - pinFs);
       update(x0 + w, p.y);
+    }
+    // Rail names (circuit diagrams only).
+    for (const n of placeBusNames(model, labelFs)) {
+      const w = labelBlockWidth([n.text], labelFs);
+      const x0 = n.anchor === 'end' ? n.x - w : n.x - w / 2;
+      update(x0, n.y - labelFs);
+      update(x0 + w, n.y);
     }
   }
 
