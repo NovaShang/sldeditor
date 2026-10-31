@@ -1,0 +1,84 @@
+{
+  "id": "motor-breaker-3p",
+  "name": "电动机保护断路器",
+  "category": "motor-control",
+  "description": "三极电动机保护断路器（热磁脱扣：过载 + 短路），端子 1-2、3-4、5-6。",
+  "viewBox": "-27 -32 54 54",
+  "width": 54,
+  "height": 54,
+  "svg": "<line x1=\"-20\" y1=\"15.5\" x2=\"-20\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"15.5\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -20 15.5 A 4 2.5 0 0 0 -20 10.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 15.5 A 4 2.5 0 0 0 0 10.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-20,10.5 -20,8 -15,8 -15,3 -20,3 -20,0 -25,-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"0,10.5 0,8 5,8 5,3 0,3 0,0 -5,-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"15.5\" x2=\"20\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 20 15.5 A 4 2.5 0 0 0 20 10.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-30\" x2=\"-20\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-18\" y1=\"-26\" x2=\"-22\" y2=\"-22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-22\" y1=\"-26\" x2=\"-18\" y2=\"-22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"-30\" x2=\"20\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"22\" y1=\"-26\" x2=\"18\" y2=\"-22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"18\" y1=\"-26\" x2=\"22\" y2=\"-22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-30\" x2=\"0\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"2\" y1=\"-26\" x2=\"-2\" y2=\"-22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-2\" y1=\"-26\" x2=\"2\" y2=\"-22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-22.5\" y1=\"-10\" x2=\"17.5\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\" stroke-dasharray=\"4 2\"/><polyline points=\"20,10.5 20,8 25,8 25,3 20,3 20,0 15,-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-22\" y1=\"-20\" x2=\"-18\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-2\" y1=\"-20\" x2=\"2\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"18\" y1=\"-20\" x2=\"22\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": -30,
+      "orientation": "n",
+      "label": "1"
+    },
+    {
+      "id": "t2",
+      "x": -20,
+      "y": 20,
+      "orientation": "s",
+      "label": "2"
+    },
+    {
+      "id": "t3",
+      "x": 0,
+      "y": -30,
+      "orientation": "n",
+      "label": "3"
+    },
+    {
+      "id": "t4",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "4"
+    },
+    {
+      "id": "t5",
+      "x": 20,
+      "y": -30,
+      "orientation": "n",
+      "label": "5"
+    },
+    {
+      "id": "t6",
+      "x": 20,
+      "y": 20,
+      "orientation": "s",
+      "label": "6"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "params": [
+    {
+      "name": "Ir",
+      "label": "整定电流",
+      "type": "string",
+      "unit": "A",
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 26,
+    "y": -6,
+    "anchor": "start"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/200_fuses_protective_gears/11_circuit_breakers/disjonct-m_3f.elmt",
+    "qetEnglishName": "Circuit-breaker 3p"
+  }
+}

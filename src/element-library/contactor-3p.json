@@ -1,0 +1,75 @@
+{
+  "id": "contactor-3p",
+  "name": "接触器主触点（三极）",
+  "category": "motor-control",
+  "description": "接触器三极主触点，端子 1-2、3-4、5-6。线圈用\"继电器线圈\"并取相同代号。",
+  "viewBox": "-27 -22 52 44",
+  "width": 52,
+  "height": 44,
+  "svg": "<polyline points=\"15,-10 20,10 20,20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-25,-10 -20,10 -20,20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-5,-10 0,10 0,20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-20\" x2=\"-20\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -20 -14.5 A 2.5 2.5 0 0 0 -20 -9.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 -14.5 A 2.5 2.5 0 0 0 0 -9.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"-20\" x2=\"20\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 20 -14.5 A 2.5 2.5 0 0 0 20 -9.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-23\" y1=\"0\" x2=\"17\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\" stroke-dasharray=\"4 2\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": -20,
+      "orientation": "n",
+      "label": "1"
+    },
+    {
+      "id": "t2",
+      "x": -20,
+      "y": 20,
+      "orientation": "s",
+      "label": "2"
+    },
+    {
+      "id": "t3",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "3"
+    },
+    {
+      "id": "t4",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "4"
+    },
+    {
+      "id": "t5",
+      "x": 20,
+      "y": -20,
+      "orientation": "n",
+      "label": "5"
+    },
+    {
+      "id": "t6",
+      "x": 20,
+      "y": 20,
+      "orientation": "s",
+      "label": "6"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": true,
+      "label": "断开"
+    }
+  ],
+  "label": {
+    "x": 26,
+    "y": -2,
+    "anchor": "start"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/310_relays_contactors_contacts/02_contacts_cross_referencing/02_power_contacts/com_puiss4.elmt",
+    "qetEnglishName": "Contact power contactor"
+  }
+}

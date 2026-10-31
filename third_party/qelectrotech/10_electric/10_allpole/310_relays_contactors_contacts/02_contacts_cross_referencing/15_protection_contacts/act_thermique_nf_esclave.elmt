@@ -1,0 +1,63 @@
+<definition version="0.100.0" type="element" link_type="slave" width="30" height="60" hotspot_x="20" hotspot_y="31">
+    <uuid uuid="{d2660925-c9ed-1071-1025-95909f94e27e}"/>
+    <names>
+        <name lang="ar">مرحل حراري NC</name>
+        <name lang="ca">Relé tèrmic NC</name>
+        <name lang="cs">Tepelné relé (NC)</name>
+        <name lang="da">Termisk relæ NC</name>
+        <name lang="de">Öffner thermisch betätigt</name>
+        <name lang="el">Θερμικό, κλειστό</name>
+        <name lang="en">Thermal relay NC</name>
+        <name lang="lv">Termorelejs NC</name>
+        <name lang="es">Relé termico NC</name>
+        <name lang="fi">Lämpörele NC</name>
+        <name lang="fr">Actionné par un dispositif thermique NF</name>
+        <name lang="hr">Termički relej NC</name>
+        <name lang="hu">Hőrelé NC</name>
+        <name lang="it">Azionato da relè termico (NC)</name>
+        <name lang="ja">熱動継電器 NC</name>
+        <name lang="ko">열 릴레이 NC</name>
+        <name lang="mn">Дулааны реле NC</name>
+        <name lang="nb">Termisk relé NC</name>
+        <name lang="nl">Thermisch bediend contact (NC)</name>
+        <name lang="nl_BE">Thermisch relais NC</name>
+        <name lang="pl">Zestyk rozwierny przekaźnika cieplnego</name>
+        <name lang="pt">Relé térmico NC</name>
+        <name lang="pt_BR">Relé térmico NF</name>
+        <name lang="ro">Releu termic NC</name>
+        <name lang="ru">Тепловое реле НЗ</name>
+        <name lang="sk">Tepelné relé NC</name>
+        <name lang="sl">Termični rele NC</name>
+        <name lang="sr">Термички релеј NC</name>
+        <name lang="sv">Termiskt relä NC</name>
+        <name lang="tr">Termik röle NC</name>
+        <name lang="uk">Теплове реле NC</name>
+        <name lang="zh">热动常闭从属触点</name>
+    </names>
+    <kindInformations>
+        <kindInformation name="type">simple</kindInformation>
+        <kindInformation name="state">NC</kindInformation>
+        <kindInformation name="number">1</kindInformation>
+    </kindInformations>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="-13" y1="0" x2="3" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:thin;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="-13" y="8" z="2" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="UserText" uuid="{0fe74b64-4314-44a3-84d3-3b5f65b2d3dd}" font="Liberation Sans,4,-1,5,25,0,0,0,0,0,Regular">
+            <text>12</text>
+        </dynamic_text>
+        <polygon x1="-18" y1="7" x2="-18" y2="3" x3="-13" y3="3" x4="-13" y4="-3" x5="-18" y5="-3" x6="-18" y6="-7" closed="false" antialias="false" style="line-style:normal;line-weight:thin;filling:none;color:black"/>
+        <dynamic_text x="-13" y="-24" z="4" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="UserText" uuid="{12ddc826-081c-4b28-978d-40746ea92eb1}" font="Liberation Sans,4,-1,5,25,0,0,0,0,0,Regular">
+            <text>11</text>
+        </dynamic_text>
+        <polygon x1="0" y1="20" x2="0" y2="10" x3="6" y3="-10" closed="false" antialias="true" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="0" y1="-9" x2="7" y2="-9" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-20" x2="0" y2="-9" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="8" y="-12" z="8" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{e0b940b0-6b9b-4c4b-9c1f-c1221e34d40c}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <terminal uuid="{5e2afc18-90c2-4127-87b5-376aa90b8d68}" name="" x="0" y="-20" orientation="n" type="Generic"/>
+        <terminal uuid="{eb9774be-9678-4cf0-9a72-c4092437890a}" name="" x="0" y="20" orientation="s" type="Generic"/>
+    </description>
+</definition>

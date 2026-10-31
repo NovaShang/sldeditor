@@ -24,6 +24,9 @@
       "showOnCanvas": true
     }
   ],
+  "diagramTypes": [
+    "sld"
+  ],
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_11/en_60617_11_12/en_60617_11_12_07.elmt",

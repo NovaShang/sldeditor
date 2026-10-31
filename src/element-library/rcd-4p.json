@@ -1,0 +1,106 @@
+{
+  "id": "rcd-4p",
+  "name": "剩余电流断路器 4P (RCCB)",
+  "category": "protection",
+  "description": "四极剩余电流动作断路器（不带过流保护），端子 1-2、3-4、5-6、N-N。",
+  "viewBox": "-30 -22 77 54",
+  "width": 77,
+  "height": 54,
+  "svg": "<line x1=\"-20\" y1=\"-20\" x2=\"-20\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"-20\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-25\" y1=\"-10\" x2=\"-20\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"10\" x2=\"0\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-5\" y1=\"-10\" x2=\"0\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"-20\" x2=\"20\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"20\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"15\" y1=\"-10\" x2=\"20\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"40\" y1=\"-20\" x2=\"40\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"40\" y1=\"10\" x2=\"40\" y2=\"30\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"35\" y1=\"-10\" x2=\"40\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"10\" cy=\"15\" rx=\"35\" ry=\"2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-28\" y1=\"0\" x2=\"37\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\" stroke-dasharray=\"4 2\"/><line x1=\"-26\" y1=\"15\" x2=\"-28\" y2=\"15\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\" stroke-dasharray=\"4 2\"/><line x1=\"-28\" y1=\"0\" x2=\"-28\" y2=\"15\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\" stroke-dasharray=\"4 2\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": -20,
+      "orientation": "n",
+      "label": "1"
+    },
+    {
+      "id": "t2",
+      "x": -20,
+      "y": 30,
+      "orientation": "s",
+      "label": "2"
+    },
+    {
+      "id": "t3",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "3"
+    },
+    {
+      "id": "t4",
+      "x": 0,
+      "y": 30,
+      "orientation": "s",
+      "label": "4"
+    },
+    {
+      "id": "t5",
+      "x": 20,
+      "y": -20,
+      "orientation": "n",
+      "label": "5"
+    },
+    {
+      "id": "t6",
+      "x": 20,
+      "y": 30,
+      "orientation": "s",
+      "label": "6"
+    },
+    {
+      "id": "t_n1",
+      "x": 40,
+      "y": -20,
+      "orientation": "n",
+      "label": "N"
+    },
+    {
+      "id": "t_n2",
+      "x": 40,
+      "y": 30,
+      "orientation": "s",
+      "label": "N"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "params": [
+    {
+      "name": "In",
+      "label": "额定电流",
+      "type": "number",
+      "unit": "A",
+      "showOnCanvas": true
+    },
+    {
+      "name": "IDn",
+      "label": "剩余动作电流",
+      "type": "number",
+      "unit": "mA",
+      "default": 30,
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 50,
+    "y": -2,
+    "anchor": "start"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/200_fuses_protective_gears/50_residual_current_circuit_breaker/int_diff4.elmt",
+    "qetEnglishName": "Differential switch"
+  }
+}

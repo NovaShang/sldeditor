@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { OneLineEditor } from '../OneLineEditor';
 import { DemoTopBar } from './DemoTopBar';
 import { SAMPLE_DIAGRAM } from './sample-diagram';
+import { CIRCUIT_DIAGRAM } from './circuit-diagram';
 import { ViewerDemo } from './ViewerDemo';
 
-/** `/#viewer` shows the read-only runtime viewer instead of the editor. */
+/** `/#viewer` shows the read-only runtime viewer instead of the editor;
+ *  `/#circuit` seeds a circuit diagram (on a first visit / cleared storage). */
 function useHashRoute(): string {
   const [hash, setHash] = useState(() => window.location.hash);
   useEffect(() => {
@@ -20,7 +22,7 @@ export function App() {
   if (hash === '#viewer') return <ViewerDemo />;
   return (
     <div className="relative h-full w-full">
-      <OneLineEditor diagram={SAMPLE_DIAGRAM} />
+      <OneLineEditor diagram={hash === '#circuit' ? CIRCUIT_DIAGRAM : SAMPLE_DIAGRAM} />
       <DemoTopBar />
     </div>
   );

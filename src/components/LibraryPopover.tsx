@@ -18,6 +18,8 @@ import { useEditorStore } from '../store';
 import { isCustomKind } from '../compiler';
 import { useHostActions } from '../hooks/use-host-actions';
 import type { LibraryEntry } from '../model/library';
+import { entryFitsDiagramType } from '../model/diagram-type';
+import type { DiagramType } from '../model';
 
 const PALETTE_COLLAPSE_STORAGE_KEY = 'ole-palette-collapsed';
 
@@ -48,13 +50,20 @@ const CUSTOM_CATEGORY = '__custom__';
  * result is memoised on the map identity — `mergeCustomKinds` returns the
  * shipped map unchanged when a document defines nothing, which is the usual
  * case, so this recomputes approximately never.
+ *
+ * With `type`, only the symbols that belong in that drawing type are listed
+ * (`entryFitsDiagramType`): a 3-pole contactor has no place in a single-line
+ * palette, a busduct none in a circuit diagram's. Search passes no type — it
+ * always covers the whole library, so nothing is ever unreachable.
  */
 function groupByCategory(
   library: ReadonlyMap<string, LibraryEntry>,
+  type?: DiagramType,
 ): Record<string, LibraryEntry[]> {
   const out: Record<string, LibraryEntry[]> = {};
   for (const entry of library.values()) {
     if (PALETTE_HIDDEN_IDS.has(entry.id)) continue;
+    if (type && !entryFitsDiagramType(entry, type)) continue;
     const cat = isCustomKind(entry.id) ? CUSTOM_CATEGORY : entry.category;
     (out[cat] ??= []).push(entry);
   }
@@ -179,8 +188,16 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
     readPaletteCollapsed(),
   );
   const library = useEditorStore((s) => s.internal.library);
+  const diagramType = useEditorStore((s) => s.internal.diagramType);
   const onCreateComponent = useHostActions((s) => s.onCreateComponent);
-  const paletteByCat = useMemo(() => groupByCategory(library), [library]);
+  const isSearching = query.trim().length > 0;
+  // Browsing lists the document type's symbols; search covers everything.
+  const allByCat = useMemo(() => groupByCategory(library), [library]);
+  const typeByCat = useMemo(
+    () => groupByCategory(library, diagramType),
+    [library, diagramType],
+  );
+  const paletteByCat = isSearching ? allByCat : typeByCat;
   const categories = useMemo(() => categoryIds(paletteByCat), [paletteByCat]);
 
   const filteredByCat = useMemo(() => {
@@ -202,7 +219,6 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
     return out;
   }, [query, libT, paletteByCat]);
 
-  const isSearching = query.trim().length > 0;
   const noMatch =
     isSearching && Object.values(filteredByCat).every((e) => !e?.length);
 

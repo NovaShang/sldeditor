@@ -29,6 +29,9 @@
       "label": "断开"
     }
   ],
+  "diagramTypes": [
+    "sld"
+  ],
   "source": {
     "kind": "inline"
   }

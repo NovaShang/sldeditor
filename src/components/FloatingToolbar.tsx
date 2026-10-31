@@ -6,6 +6,7 @@ import {
   Clipboard,
   Copy,
   Hand,
+  Hash,
   LayoutGrid,
   ListTree,
   Minus,
@@ -26,9 +27,10 @@ import { Tooltip } from './ui/tooltip';
 import { UpwardPopover } from './ui/upward-popover';
 import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { usePanels } from '../hooks/use-panels';
+import { useNotice } from '../hooks/use-notice';
 import { useT, type LocaleKey } from '../i18n';
 import { cn } from '../lib/utils';
-import { annotationKind } from '../model';
+import { annotationKind, isCircuitDiagram } from '../model';
 import { soleSelectedAnnotation, useEditorStore, type ToolId } from '../store';
 import { ViewMenuButton } from './ViewToolbar';
 
@@ -288,6 +290,8 @@ export function FloatingToolbar() {
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
   const tier = useEditorTier();
+  const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
+  const notice = useNotice((s) => s.text);
   // Drop labels from `tight` (≥720 < 900) so the centered main toolbar stops
   // colliding with the right-anchored ViewToolbar. The outline tab on the
   // left still has room for its label until `compact`.
@@ -320,15 +324,25 @@ export function FloatingToolbar() {
       className="absolute left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5"
       style={{ bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))' }}
     >
-      {showHint && (
+      {notice ? (
+        // A result notice wins over the tool hint, at every width.
         <div
-          className={cn(
-            'transition-opacity duration-150',
-            barHover && 'pointer-events-none opacity-0',
-          )}
+          role="status"
+          className="ole-glass pointer-events-none flex items-center rounded-full border border-border px-3 py-1 text-xs text-foreground shadow-sm"
         >
-          <ToolHint />
+          {notice}
         </div>
+      ) : (
+        showHint && (
+          <div
+            className={cn(
+              'transition-opacity duration-150',
+              barHover && 'pointer-events-none opacity-0',
+            )}
+          >
+            <ToolHint />
+          </div>
+        )
       )}
       <div
         onPointerEnter={() => setBarHover(true)}
@@ -396,7 +410,13 @@ export function FloatingToolbar() {
               onClick={redo}
             />
             <div aria-hidden className="mx-1 h-5 w-px bg-border" />
-            <LayoutMenuButton iconOnly={forceIconOnly} />
+            {/* Circuit diagrams have no auto-layout; their one drawing-wide
+                action is numbering the wires. */}
+            {circuit ? (
+              <NumberWiresButton iconOnly={forceIconOnly} />
+            ) : (
+              <LayoutMenuButton iconOnly={forceIconOnly} />
+            )}
           </>
         )}
         {unifiedBar && <ViewMenuButton stacked />}
@@ -560,6 +580,36 @@ function useLayoutActions() {
   };
 }
 
+/** Number every potential (store `numberWires`) and say how many. */
+function useNumberWires(): { run: () => void; disabled: boolean } {
+  const t = useT();
+  const hasWires = useEditorStore((s) => (s.diagram.wires?.length ?? 0) > 0);
+  return {
+    disabled: !hasWires,
+    run: () => {
+      const n = useEditorStore.getState().numberWires();
+      useNotice
+        .getState()
+        .show(n > 0 ? t('circuit.numbered', { n }) : t('circuit.numberedNone'));
+    },
+  };
+}
+
+function NumberWiresButton({ iconOnly }: { iconOnly?: boolean }) {
+  const t = useT();
+  const { run, disabled } = useNumberWires();
+  return (
+    <ToolbarButton
+      icon={Hash}
+      label={t('circuit.numberWires')}
+      description={t('circuit.numberWiresHint')}
+      iconOnly={iconOnly}
+      disabled={disabled}
+      onClick={run}
+    />
+  );
+}
+
 function LayoutMenuButton({ iconOnly }: { iconOnly?: boolean }) {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -720,6 +770,8 @@ function OverflowMenuButton({ stacked }: { stacked?: boolean }) {
   const hasSelection = useEditorStore((s) => s.selection.length > 0);
   const hasClipboard = useEditorStore((s) => s.clipboard != null);
   const a = useLayoutActions();
+  const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
+  const numberWires = useNumberWires();
   const run = (action: () => void) => () => {
     setOpen(false);
     action();
@@ -777,34 +829,46 @@ function OverflowMenuButton({ stacked }: { stacked?: boolean }) {
         {t('menu.paste')}
       </PopoverItem>
       <div aria-hidden className="my-1 h-px bg-border" />
-      <PopoverItem
-        onClick={run(() => useEditorStore.getState().autoArrangeAll())}
-        icon={<Wand2 />}
-        disabled={!a.hasAnyElement || !a.hasArrangedAny}
-      >
-        {t('layout.allAuto')}
-      </PopoverItem>
-      <PopoverItem
-        onClick={run(() => useEditorStore.getState().autoArrangeSelection())}
-        icon={<Wand2 />}
-        disabled={!a.hasSelection || !a.selectionHasArranged}
-      >
-        {t('layout.selAuto')}
-      </PopoverItem>
-      <PopoverItem
-        onClick={run(() => useEditorStore.getState().fillUnplacedAll())}
-        icon={<LayoutGrid />}
-        disabled={!a.hasGapsAll}
-      >
-        {t('layout.allFill')}
-      </PopoverItem>
-      <PopoverItem
-        onClick={run(() => useEditorStore.getState().fillUnplacedSelection())}
-        icon={<LayoutGrid />}
-        disabled={!a.hasSelection || !a.selectionHasGaps}
-      >
-        {t('layout.selFill')}
-      </PopoverItem>
+      {circuit ? (
+        <PopoverItem
+          onClick={run(numberWires.run)}
+          icon={<Hash />}
+          disabled={numberWires.disabled}
+        >
+          {t('circuit.numberWires')}
+        </PopoverItem>
+      ) : (
+        <>
+          <PopoverItem
+            onClick={run(() => useEditorStore.getState().autoArrangeAll())}
+            icon={<Wand2 />}
+            disabled={!a.hasAnyElement || !a.hasArrangedAny}
+          >
+            {t('layout.allAuto')}
+          </PopoverItem>
+          <PopoverItem
+            onClick={run(() => useEditorStore.getState().autoArrangeSelection())}
+            icon={<Wand2 />}
+            disabled={!a.hasSelection || !a.selectionHasArranged}
+          >
+            {t('layout.selAuto')}
+          </PopoverItem>
+          <PopoverItem
+            onClick={run(() => useEditorStore.getState().fillUnplacedAll())}
+            icon={<LayoutGrid />}
+            disabled={!a.hasGapsAll}
+          >
+            {t('layout.allFill')}
+          </PopoverItem>
+          <PopoverItem
+            onClick={run(() => useEditorStore.getState().fillUnplacedSelection())}
+            icon={<LayoutGrid />}
+            disabled={!a.hasSelection || !a.selectionHasGaps}
+          >
+            {t('layout.selFill')}
+          </PopoverItem>
+        </>
+      )}
     </UpwardPopover>
   );
 }

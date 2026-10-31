@@ -6,6 +6,7 @@
 import type {
   Bus,
   BusId,
+  DiagramType,
   Element,
   ElementId,
   Junction,
@@ -131,6 +132,15 @@ export interface InternalModel {
    * source of truth instead of each consumer doing its own merge and drifting.
    */
   library: ReadonlyMap<string, LibraryEntry>;
+  /**
+   * The document's drawing type (`diagramTypeOf(diagram)`), carried here for
+   * the same reason as `library`: the renderers and exporters only receive
+   * the compiled model, and circuit diagrams draw differently (pin
+   * designations, solder dots at device pins and bus taps, PE stripes). A
+   * host calling `buildExportSvg(internal)` gets the right drawing without
+   * having to pass the type along.
+   */
+  diagramType: DiagramType;
 }
 
 export function emptyInternalModel(): InternalModel {
@@ -146,6 +156,7 @@ export function emptyInternalModel(): InternalModel {
     elementToTerminals: new Map(),
     diagnostics: [],
     library: LIBRARY,
+    diagramType: 'sld',
   };
 }
 

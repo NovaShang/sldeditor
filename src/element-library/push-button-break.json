@@ -1,0 +1,42 @@
+{
+  "id": "push-button-break",
+  "name": "停止按钮（常闭）",
+  "category": "control",
+  "description": "手动按钮，自动复位，常闭（break），端子 11-12。",
+  "viewBox": "-12 -22 20 44",
+  "width": 20,
+  "height": 44,
+  "svg": "<polyline points=\"5,-10 0,10 0,20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-9\" x2=\"6\" y2=\"-9\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-9\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"0\" x2=\"3\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\" stroke-dasharray=\"4 2\"/><polyline points=\"-7,-5 -10,-5 -10,5 -7,5\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "11"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "12"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/380_signaling_operating/20_push_buttons/poussoir_nf.elmt",
+    "qetEnglishName": "Push-button (NC)"
+  }
+}

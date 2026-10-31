@@ -499,6 +499,45 @@
 .ole-root.dark .ole-ink-gray {
   color: #9ca3af;
 }
+/* Phase colours (IEC 60445) — conductor presets for circuit diagrams. A
+   green-yellow object is green; a green-yellow WIRE also gets yellow stripes
+   (`.ole-pe-stripe`, values from PE_STRIPE in lib/colors.ts). */
+.ole-ink-brown {
+  color: #8b4513;
+}
+.ole-ink-green-yellow {
+  color: #197d3f;
+}
+.dark .ole-ink-brown,
+.ole-root.dark .ole-ink-brown {
+  color: #c9814b;
+}
+.dark .ole-ink-green-yellow,
+.ole-root.dark .ole-ink-green-yellow {
+  color: #4ade80;
+}
+.ole-pe-stripe {
+  fill: none;
+  stroke: #e6b800;
+  pointer-events: none;
+}
+.dark .ole-pe-stripe,
+.ole-root.dark .ole-pe-stripe {
+  stroke: #fde047;
+}
+/* PE chip swatch in the wire inspector: green and yellow halves. */
+.ole-pe-swatch {
+  background: linear-gradient(90deg, #197d3f 50%, #e6b800 50%);
+}
+.dark .ole-pe-swatch,
+.ole-root.dark .ole-pe-swatch {
+  background: linear-gradient(90deg, #4ade80 50%, #fde047 50%);
+}
+/* A selected / hovered PE wire shows the selection colour, not stripes. */
+.ole-pe-stripe[data-selected='true'],
+.ole-wire-hit:hover + .ole-wire + .ole-pe-stripe {
+  display: none;
+}
 
 /* Resize / vertex grips for the selected annotation. Strips (table column /
    row borders) are invisible but grab the cursor. */
@@ -821,6 +860,25 @@
 .ole-canvas-root[data-tool='junction'] .ole-junction-dot,
 .ole-canvas-root[data-tool='busbar'] .ole-junction-dot {
   opacity: 1;
+}
+/* Circuit diagrams: solder dots at a T on a device pin or a bus tap, and pin
+   designations beside the terminals (CircuitMarksLayer). Ink, not handles. */
+.ole-solder-dot-layer,
+.ole-pin-label-layer {
+  color: var(--foreground);
+}
+.ole-solder-dot {
+  fill: currentColor;
+  stroke: none;
+}
+.ole-pin-label {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  fill: currentColor;
+  paint-order: stroke;
+  stroke: var(--canvas-bg);
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
+  user-select: none;
 }
 .ole-junction-hit {
   pointer-events: auto;

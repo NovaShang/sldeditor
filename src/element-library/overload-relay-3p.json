@@ -1,0 +1,84 @@
+{
+  "id": "overload-relay-3p",
+  "name": "热继电器（三极主回路）",
+  "category": "motor-control",
+  "description": "热过载继电器的三极发热元件，端子 1-2、3-4、5-6；95-96 / 97-98 触点另放并取相同代号。",
+  "viewBox": "-22 -22 49 44",
+  "width": 49,
+  "height": 44,
+  "svg": "<line x1=\"-20\" y1=\"-20\" x2=\"-20\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"5\" x2=\"-20\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-15\" y1=\"-5\" x2=\"-15\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-5\" x2=\"-15\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"5\" x2=\"-15\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"-20\" x2=\"20\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"5\" x2=\"20\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"25\" y1=\"-5\" x2=\"25\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"-5\" x2=\"25\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"5\" x2=\"25\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"5\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"5\" y1=\"-5\" x2=\"5\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-5\" x2=\"5\" y2=\"-5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"5\" x2=\"5\" y2=\"5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": -20,
+      "orientation": "n",
+      "label": "1"
+    },
+    {
+      "id": "t2",
+      "x": -20,
+      "y": 20,
+      "orientation": "s",
+      "label": "2"
+    },
+    {
+      "id": "t3",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "3"
+    },
+    {
+      "id": "t4",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "4"
+    },
+    {
+      "id": "t5",
+      "x": 20,
+      "y": -20,
+      "orientation": "n",
+      "label": "5"
+    },
+    {
+      "id": "t6",
+      "x": 20,
+      "y": 20,
+      "orientation": "s",
+      "label": "6"
+    }
+  ],
+  "state": [
+    {
+      "name": "tripped",
+      "type": "boolean",
+      "default": false,
+      "label": "动作"
+    }
+  ],
+  "params": [
+    {
+      "name": "Ir",
+      "label": "整定电流",
+      "type": "string",
+      "unit": "A",
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 30,
+    "y": -2,
+    "anchor": "start"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/200_fuses_protective_gears/30_thermal_relays/relais_therm4_wide.elmt",
+    "qetEnglishName": "Thermal relay wide"
+  }
+}

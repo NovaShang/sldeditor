@@ -117,6 +117,8 @@ export {
   isCircuitDiagram,
   entryFitsDiagramType,
   pinLabelOf,
+  numberWiresByPotential,
+  isWireNumber,
 } from './model';
 
 // Named ink palette — exposed so an embedding app can offer the same six
@@ -127,6 +129,16 @@ export { useHostActions } from './hooks/use-host-actions';
 export { useOnboarding } from './hooks/use-onboarding';
 export type { HostActions } from './hooks/use-host-actions';
 export type { ColorSpec } from './lib/colors';
+// Circuit diagrams: the IEC 60445 conductor presets (colour + designation)
+// the wire inspector offers, so a host's agent writes exactly the same pairs.
+export {
+  CONDUCTOR_PRESETS,
+  applyConductor,
+  longestWire,
+  nodeHasConductor,
+  wireHasConductor,
+} from './lib/conductors';
+export type { ConductorPreset } from './lib/conductors';
 // Gates on a document-defined symbol. Exported because the app that hosts the
 // agent is the one that has to run them before a generated kind reaches a file.
 export {

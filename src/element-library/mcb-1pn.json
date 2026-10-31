@@ -1,0 +1,70 @@
+{
+  "id": "mcb-1pn",
+  "name": "微型断路器 1P+N",
+  "category": "protection",
+  "description": "单极 + 中性极微型断路器（相极热磁脱扣），端子 1-2、N-N。",
+  "viewBox": "-17 -32 34 54",
+  "width": 34,
+  "height": 54,
+  "svg": "<line x1=\"10\" y1=\"15.5\" x2=\"10\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"8\" y1=\"-20\" x2=\"12\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-12\" y1=\"-10\" x2=\"7\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\" stroke-dasharray=\"4 2\"/><path d=\"M 10 15.5 A 4 2.5 0 0 0 10 10.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-10,20 -10,0 -15,-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"10,10.5 10,8 15,8 15,3 10,3 10,0 5,-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"10\" y1=\"-30\" x2=\"10\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"12\" y1=\"-26\" x2=\"8\" y2=\"-22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"8\" y1=\"-26\" x2=\"12\" y2=\"-22\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-30\" x2=\"-10\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-12\" y1=\"-20\" x2=\"-8\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 10,
+      "y": -30,
+      "orientation": "n",
+      "label": "1"
+    },
+    {
+      "id": "t2",
+      "x": 10,
+      "y": 20,
+      "orientation": "s",
+      "label": "2"
+    },
+    {
+      "id": "t_n1",
+      "x": -10,
+      "y": -30,
+      "orientation": "n",
+      "label": "N"
+    },
+    {
+      "id": "t_n2",
+      "x": -10,
+      "y": 20,
+      "orientation": "s",
+      "label": "N"
+    }
+  ],
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": false,
+      "label": "断开"
+    }
+  ],
+  "params": [
+    {
+      "name": "In",
+      "label": "额定电流",
+      "type": "number",
+      "unit": "A",
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 16,
+    "y": -6,
+    "anchor": "start"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/200_fuses_protective_gears/11_circuit_breakers/disjonct-m_1fn.elmt",
+    "qetEnglishName": "Circuit-breaker"
+  }
+}

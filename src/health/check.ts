@@ -13,15 +13,24 @@
  * data to judge is missing. A false alarm costs more trust than a missed one,
  * so each rule below names the legitimate drawing it must not flag.
  *
+ * Circuit diagrams (`meta.diagramType: 'circuit'`) get a different set: the
+ * single-line rules about supplies, voltage levels and load totals mean
+ * nothing on a drawing where one line is one conductor and the control
+ * circuit has no "source" symbol, so they are skipped; the generic wiring
+ * rules stay, and the device-tag rules (a contact needs its coil) join.
+ *
  * Pure: (DiagramFile, InternalModel) → HealthReport. No store, no DOM.
  */
 
 import type { DiagramFile, ParamValue } from '../model';
+import { isCircuitDiagram } from '../model/diagram-type';
 import type { InternalModel } from '../compiler/internal-model';
 import {
   LOAD_KINDS,
   OFF_SUPPLY_CATEGORIES,
   OFF_SUPPLY_KINDS,
+  OPERATED_KINDS,
+  OPERATOR_KINDS,
   ORIGIN_KINDS,
   RATED_KINDS,
   SERIES_PINS,
@@ -60,7 +69,36 @@ export type HealthCode =
   /** A number in the device's name disagrees with its parameter. */
   | 'label-mismatch'
   /** Known downstream load already exceeds the rating. */
-  | 'overload';
+  | 'overload'
+  /** Circuit diagram: a contact whose tag no coil (or overload relay)
+   *  carries — nothing on the drawing operates it. */
+  | 'contact-without-operator'
+  /** Circuit diagram: a coil whose tag no contact carries. */
+  | 'operator-without-contacts'
+  /** Circuit diagram: two coils with the same tag. */
+  | 'duplicate-operator';
+
+/** Rules that only make sense on a single-line diagram (supply paths,
+ *  voltage levels, ratings); a circuit diagram skips them. */
+const SINGLE_LINE_ONLY: ReadonlySet<HealthCode> = new Set<HealthCode>([
+  'no-origin',
+  'unsupplied',
+  'supply-disconnected',
+  'feeder-end',
+  'overload',
+  'voltage-mix',
+  'ratio-mismatch',
+]);
+
+/**
+ * A device tag as written on a circuit diagram, reduced to what identifies
+ * the device: first line, trimmed, leading dash dropped (IEC 81346 writes
+ * "-KM1"; "KM1" is the same device), case-insensitive. Empty → no tag.
+ */
+export function normalizeTag(name: string | undefined): string {
+  const first = (name ?? '').split(/\r\n|\r|\n/)[0];
+  return first.trim().replace(/^[-\u2212\u2013]+/, '').trim().toLowerCase();
+}
 
 export interface HealthIssue {
   /** Stable across edits: code + the first target. Dismissals key on it. */
@@ -234,6 +272,7 @@ function buildGraph(m: InternalModel): Graph {
 
 export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthReport {
   const issues: HealthIssue[] = [];
+  const circuit = isCircuitDiagram(diagram);
   const hasModel = m.elements.size > 0 || m.buses.size > 0;
   const g = buildGraph(m);
   const kindOf = (id: string) => m.elements.get(id)?.element.kind ?? '';
@@ -355,11 +394,13 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
     // island, which step 3 reports once for the whole group. Without any
     // supply on the drawing, fall back to the pin convention (second pin =
     // downstream).
-    if (hasOrigin && !reachedDev.has(id)) continue;
+    // A circuit diagram has no supply walk: judge by the pin convention.
+    const bySupply = hasOrigin && !circuit;
+    if (bySupply && !reachedDev.has(id)) continue;
     // Without a supply on the drawing, an open upstream side is just as often
     // the panel's incoming end drawn to here (10-24 evaluation: a main
     // breaker with nothing above it), so both directions are a note.
-    const downstreamOpen = hasOrigin ? true : openPin === pair[1];
+    const downstreamOpen = bySupply ? true : openPin === pair[1];
     issues.push(
       downstreamOpen
         ? { id: `feeder-end:${id}`, code: 'feeder-end', severity: 'info', targets: [id] }
@@ -403,7 +444,7 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
   }
 
   // 3. Unsupplied islands (only meaningful when a supply exists).
-  if (hasOrigin) {
+  if (hasOrigin && !circuit) {
     const eligible = [...m.elements.keys()].filter(
       (id) => !offSupply(id) && !unwired.has(id) && !ORIGIN_KINDS.has(kindOf(id)),
     );
@@ -420,7 +461,9 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
       });
     }
   }
-  if (hasOrigin && !issues.some((i) => i.code === 'supply-disconnected')) {
+  if (circuit) {
+    // Supply rules are single-line only (see SINGLE_LINE_ONLY).
+  } else if (hasOrigin && !issues.some((i) => i.code === 'supply-disconnected')) {
     const seen = new Set<string>();
     for (const [id] of m.elements) {
       if (seen.has(id) || reachedDev.has(id) || unwired.has(id) || offSupply(id)) continue;
@@ -576,7 +619,7 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
 
   // 7. Load roll-up behind buses, transformers and UPSs.
   const loads: LoadSummary[] = [];
-  if (hasOrigin) {
+  if (hasOrigin && !circuit) {
     const loadRating = (id: string): { kw: number; kva: number } | null => {
       const re = m.elements.get(id)!;
       const k = re.element.kind;
@@ -723,7 +766,80 @@ export function checkHealth(diagram: DiagramFile, m: InternalModel): HealthRepor
     }
   }
 
+  // 8. Circuit diagrams: contacts and coils meet by device tag.
+  if (circuit) issues.push(...tagIssues(m));
+
+  const kept = circuit ? issues.filter((i) => !SINGLE_LINE_ONLY.has(i.code)) : issues;
   const dismissed = new Set(diagram.meta?.healthDismissed ?? []);
-  for (const i of issues) if (dismissed.has(i.id)) i.dismissed = true;
-  return { issues, loads, hasOrigin, hasModel };
+  for (const i of kept) if (dismissed.has(i.id)) i.dismissed = true;
+  return { issues: kept, loads, hasOrigin, hasModel };
+}
+
+/**
+ * Contacts without their coil, coils without contacts, and one tag on two
+ * coils. Untagged devices are left alone (nothing to judge by), and so is
+ * every kind not listed in `OPERATOR_KINDS` / `OPERATED_KINDS`: a push-button
+ * or a limit switch is operated by hand or by the machine, not by a tag.
+ *
+ * Only coils are judged for having no contacts or a duplicate: a protection
+ * device without auxiliary contacts is normal, and a 3-pole overload relay
+ * drawn as three single-pole symbols legitimately repeats its tag.
+ */
+function tagIssues(m: InternalModel): HealthIssue[] {
+  const out: HealthIssue[] = [];
+  const coils = new Map<string, string[]>();
+  const protection = new Set<string>();
+  const coilOperated = new Set<string>();
+  const contacts: { id: string; tag: string }[] = [];
+  for (const [id, re] of m.elements) {
+    const tag = normalizeTag(re.element.name);
+    if (!tag) continue;
+    const kind = re.element.kind;
+    const family = OPERATOR_KINDS[kind];
+    if (family === 'coil') coils.set(tag, [...(coils.get(tag) ?? []), id]);
+    else if (family === 'protection') protection.add(tag);
+    const owners = OPERATED_KINDS[kind];
+    if (owners) {
+      contacts.push({ id, tag });
+      if (owners.includes('coil')) coilOperated.add(tag);
+    }
+  }
+  const display = (id: string) => (m.elements.get(id)?.element.name ?? '').split(/\r\n|\r|\n/)[0].trim();
+  for (const { id, tag } of contacts) {
+    const owners = OPERATED_KINDS[m.elements.get(id)!.element.kind];
+    const owned = (owners.includes('coil') && coils.has(tag)) || (owners.includes('protection') && protection.has(tag));
+    if (!owned) {
+      out.push({
+        id: `contact-without-operator:${id}`,
+        code: 'contact-without-operator',
+        severity: 'warning',
+        targets: [id],
+        data: { tag: display(id) },
+      });
+    }
+  }
+  for (const [tag, ids] of coils) {
+    const sorted = ids.slice().sort();
+    if (sorted.length > 1) {
+      out.push({
+        id: `duplicate-operator:${sorted[0]}`,
+        code: 'duplicate-operator',
+        severity: 'warning',
+        targets: sorted,
+        data: { tag: display(sorted[0]), count: sorted.length },
+      });
+    }
+    if (!coilOperated.has(tag)) {
+      for (const id of sorted) {
+        out.push({
+          id: `operator-without-contacts:${id}`,
+          code: 'operator-without-contacts',
+          severity: 'info',
+          targets: [id],
+          data: { tag: display(id) },
+        });
+      }
+    }
+  }
+  return out;
 }

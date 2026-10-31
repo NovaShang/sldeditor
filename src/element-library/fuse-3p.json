@@ -1,0 +1,85 @@
+{
+  "id": "fuse-3p",
+  "name": "三极熔断器",
+  "category": "switching",
+  "description": "三极熔断器（多线表示），端子 1-2、3-4、5-6。",
+  "viewBox": "-25 -22 51 48",
+  "width": 51,
+  "height": 48,
+  "svg": "<rect x=\"17\" y=\"-10\" width=\"6\" height=\"20\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-22.69\" y=\"-10\" width=\"6\" height=\"20\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-20\" x2=\"-20\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-3\" y=\"-10\" width=\"6\" height=\"20\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"-20\" x2=\"20\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminalLabelsSvg": "<text x=\"0.81\" y=\"-10\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">3</text><text x=\"21\" y=\"-10\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">5</text><text x=\"1\" y=\"23\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">4</text><text x=\"21\" y=\"23\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">6</text><text x=\"-19\" y=\"23\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">2</text><text x=\"-19\" y=\"-10\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">1</text>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": -20,
+      "orientation": "n",
+      "label": "1"
+    },
+    {
+      "id": "t2",
+      "x": -20,
+      "y": 20,
+      "orientation": "s",
+      "label": "2"
+    },
+    {
+      "id": "t3",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "3"
+    },
+    {
+      "id": "t4",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "4"
+    },
+    {
+      "id": "t5",
+      "x": 20,
+      "y": -20,
+      "orientation": "n",
+      "label": "5"
+    },
+    {
+      "id": "t6",
+      "x": 20,
+      "y": 20,
+      "orientation": "s",
+      "label": "6"
+    }
+  ],
+  "state": [
+    {
+      "name": "blown",
+      "type": "boolean",
+      "default": false,
+      "label": "熔断"
+    }
+  ],
+  "params": [
+    {
+      "name": "In",
+      "label": "额定电流",
+      "type": "number",
+      "unit": "A",
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 26,
+    "y": -2,
+    "anchor": "start"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/200_fuses_protective_gears/10_fuses/pojistka3p.elmt",
+    "qetEnglishName": "Fuse 3p"
+  }
+}

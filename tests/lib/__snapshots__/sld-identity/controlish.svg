@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-28 -24 252 248" width="252" height="248">
+  <title>controlish</title>
+  <rect x="-28" y="-24" width="252" height="248" fill="#FFFFFF"/>
+  <g fill="none" stroke="black" stroke-width="1">
+    <polyline points="60,20 60,0" stroke="#8B4513"/>
+    <polyline points="140,20 140,0"/>
+    <polyline points="60,80 60,120 100,120"/>
+    <polyline points="140,80 140,120 100,120"/>
+    <polyline points="100,120 100,140"/>
+    <polyline points="100,180 100,200" stroke="#1F6FEB"/>
+    <polyline points="0,60 0,20 60,20"/>
+    <polyline points="0,60 0,20 140,20" stroke="#197D3F"/>
+  </g>
+  <line id="L" x1="0" y1="0" x2="200" y2="0" stroke="black" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <line id="N" x1="0" y1="200" x2="200" y2="200" stroke="black" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <circle id="J1" cx="100" cy="120" r="3.5" fill="black"/>
+  <g id="K1" transform="translate(100 160)">
+    <rect x="-20" y="-10" width="40" height="20" rx="0" ry="0" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="10" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="S1" transform="translate(60 60)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="S2" transform="translate(140 60)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF1" transform="translate(20 60) rotate(90)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" font-size="7" paint-order="stroke" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round">
+    <text x="124" y="162.33333333333334" text-anchor="start">-K1</text>
+    <text x="64" y="52.333333333333336" text-anchor="start">-S1</text>
+    <text x="144" y="52.333333333333336" text-anchor="start">-S2</text>
+    <text x="22" y="73" text-anchor="middle">-QF1</text>
+    <text x="68" y="12.333333333333334" text-anchor="start" fill="#8B4513">L1</text>
+    <text x="108" y="192.33333333333334" text-anchor="start" fill="#1F6FEB">N</text>
+    <text x="70" y="12" text-anchor="middle" fill="#197D3F">PE</text>
+  </g>
+</svg>

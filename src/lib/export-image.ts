@@ -40,7 +40,13 @@ import {
   tableSize,
   TINT_OPACITY,
 } from './annotation-geom';
-import { exportInk } from './colors';
+import { exportInk, PE_STRIPE } from './colors';
+import {
+  circuitSolderDots,
+  pinLabelFontSize,
+  placePinLabels,
+  PE_STRIPE_DASHARRAY,
+} from './circuit-marks';
 import { sheetRect, type Sheet, type TitleBlockShared } from '../model/sheet';
 import { exportSheetPrimitives, type ExportRegion } from './export-sheets';
 import {
@@ -144,6 +150,13 @@ export function buildExportSvg(
     const pts = r.path.map(([px, py]) => `${px},${py}`).join(' ');
     const ink = r.color ? ` stroke="${exportInk(r.color)}"` : '';
     out.push(`    <polyline points="${pts}"${ink}/>`);
+    // PE (IEC 60445 green-yellow): yellow stripes over the green base, the
+    // way the conductor itself looks.
+    if (r.color === 'green-yellow') {
+      out.push(
+        `    <polyline points="${pts}" stroke="${PE_STRIPE.light}" stroke-dasharray="${PE_STRIPE_DASHARRAY}"/>`,
+      );
+    }
   }
   out.push('  </g>');
 
@@ -170,6 +183,11 @@ export function buildExportSvg(
     out.push(
       `  <circle id="${escapeXml(junction.id)}" cx="${world[0]}" cy="${world[1]}" r="3.5" fill="black"/>`,
     );
+  }
+  // Circuit diagrams also dot a T at a device pin and a tap off a bus (see
+  // `circuitSolderDots`); single-line documents get none of these.
+  for (const [cx, cy] of circuitSolderDots(model)) {
+    out.push(`  <circle cx="${cx}" cy="${cy}" r="3.5" fill="black"/>`);
   }
 
   // Devices.
@@ -253,6 +271,20 @@ export function buildExportSvg(
       );
     }
     out.push('  </g>');
+    // Pin designations (circuit diagrams only — empty otherwise), smaller
+    // than the device tags and with a thinner halo to match.
+    const pins = placePinLabels(model, labelFs);
+    if (pins.length > 0) {
+      out.push(
+        `  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${pinLabelFontSize(labelFs)}" paint-order="stroke" stroke="${halo}" stroke-width="1.5" stroke-linejoin="round">`,
+      );
+      for (const p of pins) {
+        out.push(
+          `    <text x="${p.x}" y="${p.y}" text-anchor="${p.anchor}">${escapeXml(p.text)}</text>`,
+        );
+      }
+      out.push('  </g>');
+    }
   }
 
   // Free annotations — decoration the user drew over the diagram. Rendering
@@ -621,6 +653,14 @@ export function computeContentBbox(model: InternalModel, opts: ExportOptions): B
       const x0 = placed.textAnchor === 'middle' ? lx - w / 2 : lx;
       update(x0, ly - labelFs);
       update(x0 + w, ly);
+    }
+    // Pin designations (circuit diagrams only).
+    const pinFs = pinLabelFontSize(labelFs);
+    for (const p of placePinLabels(model, labelFs)) {
+      const w = labelBlockWidth([p.text], pinFs);
+      const x0 = p.anchor === 'end' ? p.x - w : p.x;
+      update(x0, p.y - pinFs);
+      update(x0 + w, p.y);
     }
   }
 

@@ -174,7 +174,11 @@ describe('DXF text survives a non-English drawing', () => {
 
   it('writes a pure-ASCII file under a declared code page', () => {
     const dxf = dxfFor(twoBreakers, labels);
-    expect(/^[\x09\x0a\x0d\x20-\x7e]*$/.test(dxf)).toBe(true);
+    const nonAscii = [...dxf].filter((ch) => {
+      const c = ch.charCodeAt(0);
+      return !(c === 9 || c === 10 || c === 13 || (c >= 32 && c < 127));
+    });
+    expect(nonAscii).toEqual([]);
     expect(headerVar(dxf, '$DWGCODEPAGE')).toEqual([[3, 'ANSI_1252']]);
   });
 

@@ -1,0 +1,52 @@
+<definition version="0.100.0" type="element" link_type="simple" width="30" height="60" hotspot_x="15" hotspot_y="30">
+    <uuid uuid="{1b55531e-a24c-5e65-df87-b9f6ba21209e}"/>
+    <names>
+        <name lang="ar">مصباح</name>
+        <name lang="ca">Llum</name>
+        <name lang="cs">Kontrolka</name>
+        <name lang="da">Lys</name>
+        <name lang="de">Meldeleuchte</name>
+        <name lang="el">Λυχνία</name>
+        <name lang="en">Light</name>
+        <name lang="lv">Gaismas indikators</name>
+        <name lang="es">Lámpara</name>
+        <name lang="fi">Valo</name>
+        <name lang="fr">Lampe</name>
+        <name lang="hr">Svjetlo</name>
+        <name lang="hu">Lámpa</name>
+        <name lang="it">Luce</name>
+        <name lang="ja">表示灯</name>
+        <name lang="ko">등</name>
+        <name lang="mn">Гэрэл</name>
+        <name lang="nb">Lampe</name>
+        <name lang="nl">Lamp</name>
+        <name lang="nl_BE">Licht</name>
+        <name lang="pl">Lampa</name>
+        <name lang="pt">Lâmpada</name>
+        <name lang="pt_BR">Lâmpada</name>
+        <name lang="ro">Lumină</name>
+        <name lang="ru">Лампа</name>
+        <name lang="sk">Kontrolka</name>
+        <name lang="sl">Luč</name>
+        <name lang="sr">Светло</name>
+        <name lang="sv">Indikeringslampa</name>
+        <name lang="tr">Işık</name>
+        <name lang="uk">Світло</name>
+        <name lang="zh">灯2</name>
+    </names>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <ellipse x="-10" y="-10" width="20" height="20" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="7" y1="-7" x2="-7" y2="7" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-7" y1="-7" x2="7" y2="7" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-20" x2="0" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="10" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="15" y="-9.5" z="6" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{7c787e66-069c-4c07-853a-facb5c153948}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <terminal uuid="{e8f2916b-c880-40ab-99eb-0b6842bd3a4c}" name="A1" x="0" y="-20" orientation="n" type="Generic"/>
+        <terminal uuid="{144f0e22-3faf-4100-81eb-bc67fe9eaebe}" name="A2" x="0" y="20" orientation="s" type="Generic"/>
+    </description>
+</definition>

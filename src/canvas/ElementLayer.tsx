@@ -54,6 +54,9 @@ export function ElementLayer() {
   const selection = useCanvasStore((s) => s.selection);
   const selectedNode = useCanvasStore((s) => s.selectedNode);
   const nodes = useCanvasStore((s) => s.internal.nodes);
+  // Circuit diagrams print pin designations themselves (PinLabelLayer), so
+  // the library's own pin-digit glyphs would show the same pin twice.
+  const circuit = useCanvasStore((s) => s.internal.diagramType === 'circuit');
   // Live data (viewer only — empty in the editor). Drives `data-alarm` /
   // `data-quality` for the stylesheet and hides `visible: false` symbols.
   const runtime = useRuntime().props;
@@ -141,7 +144,7 @@ export function ElementLayer() {
                 __html: compensateStrokes(re.libraryDef.svg, place.scale),
               }}
             />
-            {re.libraryDef.terminalLabelsSvg && (
+            {re.libraryDef.terminalLabelsSvg && !circuit && (
               /* Pin digits — hidden unless wiring/selected (see styles.css). */
               <g
                 className="ole-terminal-labels"

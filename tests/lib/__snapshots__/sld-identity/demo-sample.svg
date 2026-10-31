@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="296 25 368 453" width="368" height="453">
+  <title>demo-sample</title>
+  <rect x="296" y="25" width="368" height="453" fill="#FFFFFF"/>
+  <g fill="none" stroke="black" stroke-width="1">
+    <polyline points="480,100 480,130"/>
+    <polyline points="480,190 480,220"/>
+    <polyline points="410,250 410,220"/>
+    <polyline points="550,250 550,220"/>
+    <polyline points="410,290 410,320"/>
+    <polyline points="410,380 410,410"/>
+    <polyline points="550,290 550,320"/>
+    <polyline points="550,380 550,410"/>
+  </g>
+  <line id="B1" x1="320" y1="220" x2="640" y2="220" stroke="black" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <g id="L_in" transform="translate(480 80)">
+    <circle cx="0" cy="-15" r="14" fill="none" stroke="black" stroke-width="1"/><text x="0" y="-12" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="14">~</text><line x1="0" y1="-1" x2="0" y2="20" stroke="black" stroke-width="1" fill="none"/>
+  </g>
+  <g id="QS_in" transform="translate(480 170)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF1" transform="translate(410 270)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS1" transform="translate(410 360)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="L1" transform="translate(410 430)">
+    <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="1" fill="none"/><polygon points="-6,10 6,10 0,22" fill="black" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF2" transform="translate(550 270)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS2" transform="translate(550 360)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="L2" transform="translate(550 430)">
+    <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="1" fill="none"/><polygon points="-6,10 6,10 0,22" fill="black" stroke="black" stroke-width="1"/>
+  </g>
+  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" font-size="7" paint-order="stroke" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round">
+    <text x="498" y="77.83333333333333" text-anchor="start">进线</text>
+    <text x="486" y="160" text-anchor="start">01</text>
+    <text x="416" y="268" text-anchor="start">101</text>
+    <text x="416" y="350" text-anchor="start">101-1</text>
+    <text x="416" y="430" text-anchor="start">馈线1</text>
+    <text x="556" y="268" text-anchor="start">102</text>
+    <text x="556" y="350" text-anchor="start">102-1</text>
+    <text x="556" y="430" text-anchor="start">馈线2</text>
+  </g>
+</svg>

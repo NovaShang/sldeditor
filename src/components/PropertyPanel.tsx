@@ -12,6 +12,7 @@ import { useLibT } from '../i18n/library';
 import { soleSelectedAnnotation, useEditorStore } from '../store';
 import {
   annotationKind,
+  isCircuitDiagram,
   SYMBOL_SCALE_MAX,
   SYMBOL_SCALE_MIN,
   type AnnotationId,
@@ -38,6 +39,13 @@ import {
   TABLE_DEFAULT_CELL_W,
 } from '../lib/annotation-geom';
 import { COLOR_ORDER, inkClass } from '../lib/colors';
+import {
+  applyConductor,
+  CONDUCTOR_PRESETS,
+  longestWire,
+  nodeHasConductor,
+  wireHasConductor,
+} from '../lib/conductors';
 import { nameLines } from '../lib/element-labels';
 import { continuationKey, familyOf, isContinuation } from '../lib/kind-families';
 import { centerOnWorld } from '../canvas/fit-to-content';
@@ -139,6 +147,7 @@ export function PropertyPanel() {
         }
       />
       {lib && <SizeRow id={id} />}
+      <PinNumbersSection id={id} element={element} />
       {isContinuation(element.kind) && <PartnerRow id={id} name={element.name} />}
       {lib?.state && lib.state.length > 0 && (
         <div className="mt-1 flex flex-col gap-1.5 border-t border-border/40 pt-2.5">
@@ -975,6 +984,7 @@ function WirePanel({ wireId }: { wireId: WireId }) {
         </div>
         <div className="font-mono text-[12px]">{wire.id}</div>
       </div>
+      <ConductorRow wireIds={[wire.id]} />
       <TextRow
         label={t('props.label')}
         value={wire.label ?? ''}
@@ -1021,6 +1031,198 @@ function WirePanel({ wireId }: { wireId: WireId }) {
         </button>
       )}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Circuit diagrams: conductor presets and pin numbers.
+// ---------------------------------------------------------------------------
+
+/**
+ * "Conductor" — five chips, L1 L2 L3 N PE, each setting the IEC 60445 colour
+ * AND the designation of the wire(s) in one undo step (see `lib/conductors`).
+ * Circuit diagrams only: a single-line diagram's one line is all phases.
+ * For a whole node (`node`), the label goes on its longest wire only.
+ */
+function ConductorRow({ wireIds, node }: { wireIds: string[]; node?: boolean }) {
+  const t = useT();
+  const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
+  const wires = useEditorStore((s) => s.diagram.wires);
+  const renders = useEditorStore((s) => s.internal.wireRenders);
+  if (!circuit || wireIds.length === 0) return null;
+  const ids = new Set(wireIds);
+  const picked = (wires ?? []).filter((w) => ids.has(w.id));
+  const labelOn = node ? longestWire(wireIds, renders) : undefined;
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[11px] text-muted-foreground">{t('props.conductor')}</span>
+      <div role="group" aria-label={t('props.conductor')} className="flex overflow-hidden rounded-md border border-border/60">
+        {CONDUCTOR_PRESETS.map((p) => {
+          const active = node
+            ? nodeHasConductor(picked, p, labelOn)
+            : picked.length > 0 && picked.every((w) => wireHasConductor(w, p));
+          const tip = `${p.label} · ${t(`props.conductor.${p.label}` as Parameters<typeof t>[0])}`;
+          return (
+            <button
+              key={p.label}
+              type="button"
+              aria-pressed={active}
+              aria-label={tip}
+              title={tip}
+              onClick={() =>
+                useEditorStore.getState().dispatch((d) => applyConductor(d, wireIds, p, labelOn))
+              }
+              className={cn(
+                'flex h-7 flex-1 items-center justify-center gap-1 border-border/60 font-mono text-[11px] transition-colors [&:not(:first-child)]:border-l',
+                active
+                  ? 'bg-accent font-semibold text-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  'size-2 shrink-0 rounded-full',
+                  p.color === 'green-yellow' ? 'ole-pe-swatch' : cn('bg-current', inkClass(p.color)),
+                )}
+                style={p.color === 'default' ? { backgroundColor: 'var(--foreground)' } : undefined}
+              />
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "Pin numbers" — the designation printed beside each terminal on a circuit
+ * diagram, editable per element (`Element.pinLabels`). The fields are laid out
+ * the way the pins sit on the canvas — top pins in the first row, left to
+ * right — so no terminal ids are needed to tell them apart.
+ *
+ * A field's placeholder is the library default; clearing a field returns to
+ * it. "Hide" blanks every designation of the element (stored as `''`, which
+ * `pinLabelOf` reads as hidden); a pin hidden that way shows "—".
+ */
+function PinNumbersSection({ id, element }: { id: string; element: Element }) {
+  const t = useT();
+  const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
+  const lib = useEditorStore((s) => s.internal.library.get(element.kind));
+  const terminals = useEditorStore((s) => s.internal.terminals);
+  if (!circuit || !lib || lib.terminals.length === 0) return null;
+
+  const own = element.pinLabels ?? {};
+  const allHidden = lib.terminals.every((lt) => own[lt.id] === '');
+
+  // Rows by on-canvas height, then left to right.
+  const placed = lib.terminals.map((lt, i) => {
+    const w = terminals.get(`${id}.${lt.id}`)?.world ?? [lt.x, lt.y];
+    return { lt, x: w[0], y: w[1], i };
+  });
+  placed.sort((a, b) => a.y - b.y || a.x - b.x || a.i - b.i);
+  const rows: (typeof placed)[] = [];
+  for (const p of placed) {
+    const last = rows[rows.length - 1];
+    if (last && Math.abs(last[0].y - p.y) < 1) last.push(p);
+    else rows.push([p]);
+  }
+
+  const write = (next: Record<string, string>) => {
+    useEditorStore.getState().updateElement(id, {
+      pinLabels: Object.keys(next).length > 0 ? next : undefined,
+    });
+  };
+  const commit = (terminalId: string, raw: string) => {
+    const v = raw.trim();
+    const fallback = lib.terminals.find((lt) => lt.id === terminalId)?.label ?? '';
+    const next = { ...own };
+    if (v === '' || v === fallback) delete next[terminalId];
+    else next[terminalId] = v;
+    write(next);
+  };
+  const toggleHidden = () => {
+    const next: Record<string, string> = {};
+    if (allHidden) {
+      // Show again: drop the blanks, keep any real overrides.
+      for (const [k, v] of Object.entries(own)) if (v !== '') next[k] = v;
+    } else {
+      for (const lt of lib.terminals) next[lt.id] = '';
+    }
+    write(next);
+  };
+
+  return (
+    <div className="mt-1 flex flex-col gap-1.5 border-t border-border/40 pt-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] text-muted-foreground">{t('props.pinNumbers')}</span>
+        <button
+          type="button"
+          onClick={toggleHidden}
+          aria-pressed={allHidden}
+          className="rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          {allHidden ? t('props.pinNumbersShow') : t('props.pinNumbersHide')}
+        </button>
+      </div>
+      {!allHidden &&
+        rows.map((row) => (
+          <div key={row[0].lt.id} className="flex gap-1">
+            {row.map(({ lt }) => (
+              <PinField
+                key={lt.id}
+                value={own[lt.id] ?? ''}
+                placeholder={own[lt.id] === '' ? '—' : lt.label ?? ''}
+                ariaLabel={`${t('props.pinNumbers')} ${lt.label ?? lt.id}`}
+                title={lt.label}
+                onCommit={(v) => commit(lt.id, v)}
+              />
+            ))}
+          </div>
+        ))}
+    </div>
+  );
+}
+
+function PinField({
+  value,
+  placeholder,
+  ariaLabel,
+  title,
+  onCommit,
+}: {
+  value: string;
+  placeholder: string;
+  ariaLabel: string;
+  /** The library default, so a filled-in field still says what it replaced. */
+  title?: string;
+  onCommit: (v: string) => void;
+}) {
+  const [local, setLocal] = useState(value);
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => setLocal(value), [value]);
+  return (
+    <input
+      ref={ref}
+      type="text"
+      value={local}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
+      title={title}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => {
+        if (local !== value) onCommit(local);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') ref.current?.blur();
+        if (e.key === 'Escape') {
+          setLocal(value);
+          ref.current?.blur();
+        }
+      }}
+      className="h-7 w-0 min-w-0 flex-1 rounded-md border border-border/60 bg-background/50 px-1 text-center font-mono text-[11px] placeholder:text-muted-foreground/60 focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
+    />
   );
 }
 
@@ -1080,6 +1282,8 @@ function NodePanel({ nodeId }: { nodeId: string }) {
   const t = useT();
   const node = useEditorStore((s) => s.internal.nodes.get(nodeId));
   const elements = useEditorStore((s) => s.diagram.elements);
+  const wires = useEditorStore((s) => s.diagram.wires);
+  const terminalToNode = useEditorStore((s) => s.internal.terminalToNode);
   const setSelection = useEditorStore((s) => s.setSelection);
 
   if (!node) {
@@ -1121,6 +1325,15 @@ function NodePanel({ nodeId }: { nodeId: string }) {
           })}
         </div>
       </div>
+
+      {/* A node is one potential: a preset colours every wire on it and
+          writes the designation once, on its longest wire. */}
+      <ConductorRow
+        node
+        wireIds={(wires ?? [])
+          .filter((w) => terminalToNode.get(w.ends[0]) === nodeId)
+          .map((w) => w.id)}
+      />
 
       <ul className="space-y-0.5 border-t border-border/40 pt-2">
         {[...byElement.entries()].map(([eId, pins]) => {

@@ -1,0 +1,63 @@
+<definition version="0.100.0" type="element" link_type="master" width="40" height="70" hotspot_x="20" hotspot_y="40">
+    <uuid uuid="{84dc805e-d5fe-343c-0651-4edb698dc29c}"/>
+    <names>
+        <name lang="ar">قاطع ثنائي القطبية - 1 قطب محمي</name>
+        <name lang="ca">Interruptor</name>
+        <name lang="cs">Dvoupólový jistič 1 pól chránící</name>
+        <name lang="da">Automatsikring</name>
+        <name lang="de">Leitungsschutzschalter LS 1P+N</name>
+        <name lang="el">Διακόπτης κυκλώματος</name>
+        <name lang="en">Circuit-breaker</name>
+        <name lang="lv">Automātslēdzis</name>
+        <name lang="es">Disyuntor termico magnetico en polo P+N</name>
+        <name lang="fi">Katkaisija</name>
+        <name lang="fr">Disjoncteur bipolaire 1 pole protege</name>
+        <name lang="hr">Prekidač</name>
+        <name lang="hu">Kismegszakító 1 + N pólusú</name>
+        <name lang="it">Int. Aut. Magneto-termico 1P+N</name>
+        <name lang="ja">遮断器</name>
+        <name lang="ko">회로 차단기</name>
+        <name lang="mn">Хэлхээ таслагч</name>
+        <name lang="nb">Effektbryter</name>
+        <name lang="nl">Lastscheider 1P+N</name>
+        <name lang="nl_BE">Stroomonderbreker</name>
+        <name lang="pl">Wyłącznik</name>
+        <name lang="pt">Disjuntor</name>
+        <name lang="pt_BR">Disjuntor termomagnético monopolar com neutro (1P+N)</name>
+        <name lang="ro">Întrerupător automat</name>
+        <name lang="ru">Выключатель</name>
+        <name lang="sk">Istič</name>
+        <name lang="sl">Odklopnik</name>
+        <name lang="sr">Прекидач</name>
+        <name lang="sv">Dvärgbrytare</name>
+        <name lang="tr">Devre kesici</name>
+        <name lang="uk">Автоматичний вимикач</name>
+        <name lang="zh">单极带中性线断路器</name>
+    </names>
+    <kindInformations>
+        <kindInformation name="type">protection</kindInformation>
+    </kindInformations>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <line x1="10" y1="15.5" x2="10" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="8" y1="-20" x2="12" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-12" y1="-10" x2="7" y2="-10" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:dashed;line-weight:thin;filling:none;color:black" antialias="false"/>
+        <arc x="6" y="10.5" width="8" height="5" start="270" angle="180" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <polygon x1="-10" y1="20" x2="-10" y2="0" x3="-15" y3="-20" closed="false" antialias="true" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <polygon x1="10" y1="10.5" x2="10" y2="8" x3="15" y3="8" x4="15" y4="3" x5="10" y5="3" x6="10" y6="0" x7="5" y7="-20" closed="false" antialias="true" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <line x1="10" y1="-30" x2="10" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <dynamic_text x="20" y="-17" z="6" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{354e61d0-423a-47fe-80f1-01fdded4eb22}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="12" y1="-26" x2="8" y2="-22" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="8" y1="-26" x2="12" y2="-22" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="true"/>
+        <line x1="-10" y1="-30" x2="-10" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-12" y1="-20" x2="-8" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{d8072852-5298-4e3f-866a-197fbe17dbdb}" name="OUT.4" x="10" y="20" orientation="s" type="Generic"/>
+        <terminal uuid="{be10271a-19d9-4e01-a316-219dbb283c29}" name="OUT.2" x="-10" y="20" orientation="s" type="Generic"/>
+        <terminal uuid="{778608f0-d679-4627-bdde-a4b0f1f6c541}" name="IN.3" x="10" y="-30" orientation="n" type="Generic"/>
+        <terminal uuid="{7e1874d7-9fac-41a0-98b5-250113a6fe5d}" name="IN.1" x="-10" y="-30" orientation="n" type="Generic"/>
+    </description>
+</definition>

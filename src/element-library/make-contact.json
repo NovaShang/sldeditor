@@ -12,13 +12,15 @@
       "id": "t1",
       "x": 0,
       "y": -40,
-      "orientation": "n"
+      "orientation": "n",
+      "label": "13"
     },
     {
       "id": "t2",
       "x": 0,
       "y": 20,
-      "orientation": "s"
+      "orientation": "s",
+      "label": "14"
     }
   ],
   "state": [

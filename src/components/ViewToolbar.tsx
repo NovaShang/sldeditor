@@ -27,7 +27,7 @@ import {
 } from '../lib/element-labels';
 import { cn } from '../lib/utils';
 import { useEditorStore } from '../store';
-import type { LabelMode, SymbolStandard } from '../model';
+import { diagramTypeOf, type DiagramType, type LabelMode, type SymbolStandard } from '../model';
 
 const ZOOM_STEPS = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 6, 8] as const;
 const MIN_SCALE = 0.1;
@@ -490,6 +490,52 @@ function StandardControls() {
   );
 }
 
+/**
+ * Drawing-type picker for the whole document: single-line diagram or circuit
+ * diagram. Same pattern as `StandardControls`, and the hint does the same job
+ * — a user switching the type of a drawing they have worked on needs to hear
+ * that nothing on it will move before they dare to press it.
+ */
+function DiagramTypeControls() {
+  const t = useT();
+  const type: DiagramType = useEditorStore((s) => diagramTypeOf(s.diagram));
+  const setType = useEditorStore((s) => s.setDiagramType);
+  const options: { value: DiagramType; label: string }[] = [
+    { value: 'sld', label: t('view.diagramTypeSld') },
+    { value: 'circuit', label: t('view.diagramTypeCircuit') },
+  ];
+  return (
+    <div className="flex flex-col gap-1.5 px-1.5 py-1">
+      <div className="text-[11px] font-medium text-muted-foreground">
+        {t('view.diagramType')}
+      </div>
+      <div className="flex overflow-hidden rounded-md border border-border/60">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={type === o.value}
+            onClick={() => {
+              if (type !== o.value) setType(o.value);
+            }}
+            className={cn(
+              'h-7 flex-1 whitespace-nowrap px-1.5 text-[11px] transition-colors',
+              type === o.value
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <div className="max-w-[210px] text-[10px] leading-snug text-muted-foreground">
+        {t('view.diagramTypeHint')}
+      </div>
+    </div>
+  );
+}
+
 /** Popover trigger wrapping `LabelControls` for the wide (icon-row) toolbar. */
 function LabelMenuBtn() {
   const t = useT();
@@ -524,6 +570,8 @@ function LabelMenuBtn() {
       }
     >
       <LabelControls />
+      <div aria-hidden className="my-1 h-px bg-border" />
+      <DiagramTypeControls />
       <div aria-hidden className="my-1 h-px bg-border" />
       <StandardControls />
     </UpwardPopover>
@@ -601,6 +649,8 @@ export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
             trigger row. */}
         <div aria-hidden className="my-1 h-px bg-border" />
         <LabelControls />
+        <div aria-hidden className="my-1 h-px bg-border" />
+        <DiagramTypeControls />
         <div aria-hidden className="my-1 h-px bg-border" />
         <StandardControls />
         <div aria-hidden className="my-1 h-px bg-border" />

@@ -1,0 +1,69 @@
+{
+  "id": "supply-3ph",
+  "name": "三相电源 L1/L2/L3/N/PE",
+  "category": "source",
+  "description": "三相五线电源引入点：L1、L2、L3、N、PE 向下引出。",
+  "viewBox": "-25 -10 90 22",
+  "width": 90,
+  "height": 22,
+  "svg": "<line x1=\"60\" y1=\"0\" x2=\"60\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"0\" x2=\"20\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"40\" y1=\"0\" x2=\"40\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"0\" x2=\"-20\" y2=\"10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminalLabelsSvg": "<text x=\"60\" y=\"-4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">PE</text><text x=\"40\" y=\"-4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">N</text><text x=\"20\" y=\"-4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">L3</text><text x=\"0\" y=\"-4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">L2</text><text x=\"-20\" y=\"-4\" text-anchor=\"middle\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"5\" fill=\"#000000\">L1</text>",
+  "terminals": [
+    {
+      "id": "t_l1",
+      "x": -20,
+      "y": 10,
+      "orientation": "s",
+      "label": "L1"
+    },
+    {
+      "id": "t_l2",
+      "x": 0,
+      "y": 10,
+      "orientation": "s",
+      "label": "L2"
+    },
+    {
+      "id": "t_l3",
+      "x": 20,
+      "y": 10,
+      "orientation": "s",
+      "label": "L3"
+    },
+    {
+      "id": "t_n",
+      "x": 40,
+      "y": 10,
+      "orientation": "s",
+      "label": "N"
+    },
+    {
+      "id": "t_pe",
+      "x": 60,
+      "y": 10,
+      "orientation": "s",
+      "label": "PE"
+    }
+  ],
+  "params": [
+    {
+      "name": "Un",
+      "label": "额定电压",
+      "type": "string",
+      "showOnCanvas": true
+    }
+  ],
+  "label": {
+    "x": 20,
+    "y": -11,
+    "anchor": "middle"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/110_network_supplies/src_3p_pe_n.elmt",
+    "qetEnglishName": "Three-pole source + PE +N"
+  }
+}

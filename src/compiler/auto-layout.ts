@@ -93,7 +93,7 @@ function rotationToAlignOrient(
   return [0, 90, 180, 270][steps] as 0 | 90 | 180 | 270;
 }
 
-interface AutoLayoutInput {
+export interface AutoLayoutInput {
   /** Devices only. Buses are in `buses`. */
   elements: Element[];
   buses: Bus[];

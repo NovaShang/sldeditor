@@ -144,6 +144,8 @@ function HealthMenuPopover({
   const selection = useEditorStore((s) => s.selection);
   const selectedAnnotations = useEditorStore((s) => s.selectedAnnotations);
   const selectedWire = useEditorStore((s) => s.selectedWire);
+  // A circuit diagram adds up no loads, so its hint must not promise to.
+  const circuit = useEditorStore((s) => s.internal.diagramType === 'circuit');
   const [shift, setShift] = useState(0);
   useLayoutEffect(() => {
     if (!open) return;
@@ -172,7 +174,9 @@ function HealthMenuPopover({
           content={
             <div className="space-y-0.5">
               <div className="font-medium">{t('health.title')}</div>
-              <div className="text-muted-foreground">{t('health.hint')}</div>
+              <div className="text-muted-foreground">
+                {t(circuit ? 'health.hintCircuit' : 'health.hint')}
+              </div>
             </div>
           }
         >
@@ -218,6 +222,9 @@ export function HealthControls({ onClose }: { onClose?: () => void } = {}) {
   const t = useT();
   const report = useHealth();
   const internal = useEditorStore((s) => s.internal);
+  // Load totals are a single-line notion (kW per bus / transformer); a
+  // circuit diagram's coils and lamps are not "loads" in that sense.
+  const showLoads = internal.diagramType !== 'circuit';
   const markers = usePanels((s) => s.healthMarkers);
   const setMarkers = usePanels((s) => s.setHealthMarkers);
   const focus = usePanels((s) => s.healthFocus);
@@ -371,7 +378,7 @@ export function HealthControls({ onClose }: { onClose?: () => void } = {}) {
             {grouped(problems, 'dismiss')}
           </>
         )}
-        {report.loads.length > 0 && (
+        {showLoads && report.loads.length > 0 && (
           <>
             <div className="px-2 pt-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               {t('health.sectionLoads')}

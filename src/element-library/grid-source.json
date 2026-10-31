@@ -15,6 +15,9 @@
       "orientation": "s"
     }
   ],
+  "diagramTypes": [
+    "sld"
+  ],
   "source": {
     "kind": "inline"
   }

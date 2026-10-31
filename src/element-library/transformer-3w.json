@@ -31,6 +31,9 @@
     "y": -64,
     "anchor": "start"
   },
+  "diagramTypes": [
+    "sld"
+  ],
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_04.elmt",

@@ -138,3 +138,45 @@ export const RATED_KINDS: Readonly<Record<string, { param: string; toKVA: number
   'transformer-2w': { param: 'S', toKVA: 1000 }, // MVA
   ups: { param: 'S', toKVA: 1 }, // kVA
 };
+
+/**
+ * Circuit diagrams: devices that work BY TAG. A contact is drawn where it
+ * switches, its coil where it is powered, and the only thing tying the two
+ * together is the shared device tag (-KM1, -KT2, -F3). These two tables are
+ * the single list of who operates whom — the tag checks read nothing else,
+ * so a new contact or coil symbol is one line here.
+ *
+ * Families: a `coil` is a relay / contactor / timer coil; `protection` is a
+ * device with its own auxiliary contacts (thermal overload relay, motor-
+ * protection breaker) — its 95-96 / 97-98 or 13-14 belong to it, not to a coil.
+ */
+export type OperatorFamily = 'coil' | 'protection';
+
+/** Kinds that operate contacts elsewhere on the drawing, by family. */
+export const OPERATOR_KINDS: Readonly<Record<string, OperatorFamily>> = {
+  'relay-coil': 'coil',
+  'time-relay': 'coil',
+  'thermal-overload': 'protection',
+  'overload-relay-3p': 'protection',
+  // A motor-protection breaker carries its own auxiliary contacts (13-14 …).
+  'motor-breaker-3p': 'protection',
+};
+
+/**
+ * Kinds operated by the device with the same tag, and which families may own
+ * them. Generic auxiliary contacts may belong to either: the overload relay's
+ * 95-96 is routinely drawn with the plain break-contact symbol.
+ */
+export const OPERATED_KINDS: Readonly<Record<string, readonly OperatorFamily[]>> = {
+  'make-contact': ['coil', 'protection'],
+  'break-contact': ['coil', 'protection'],
+  'on-delay-make-contact': ['coil'],
+  'on-delay-break-contact': ['coil'],
+  'off-delay-make-contact': ['coil'],
+  'off-delay-break-contact': ['coil'],
+  // A contactor's main contact: on a circuit diagram its coil is drawn apart.
+  contactor: ['coil'],
+  'contactor-3p': ['coil'],
+  'overload-contact-break': ['protection'],
+  'overload-contact-make': ['protection'],
+};

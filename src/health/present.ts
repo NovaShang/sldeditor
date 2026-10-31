@@ -74,6 +74,7 @@ export function issueText(t: T, internal: InternalModel, issue: HealthIssue): st
     value: fmt(d.value),
     load: fmt(d.load),
     rating: fmt(d.rating),
+    tag: fmt(d.tag),
   };
   const key = issue.code === 'unwired' && d.touching ? 'health.code.unwired-touching' : `health.code.${issue.code}`;
   const main = t(key as LocaleKey, params);

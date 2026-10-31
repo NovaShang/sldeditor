@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="334 -135 1403 1191" width="1403" height="1191">
+  <title>complex-substation</title>
+  <rect x="334" y="-135" width="1403" height="1191" fill="#FFFFFF"/>
+  <g fill="none" stroke="black" stroke-width="1">
+    <polyline points="600,-60 600,-30"/>
+    <polyline points="600,30 600,60"/>
+    <polyline points="600,100 600,130"/>
+    <polyline points="600,100 600,130 1340,130"/>
+    <polyline points="960,-60 960,-30"/>
+    <polyline points="960,30 960,60"/>
+    <polyline points="960,100 960,130"/>
+    <polyline points="960,100 960,130 1580,130"/>
+    <polyline points="1180,310 1180,340 1370,340"/>
+    <polyline points="1410,340 1410,310 1470,310"/>
+    <polyline points="480,290 480,325"/>
+    <polyline points="1660,290 1660,325"/>
+    <polyline points="600,190 600,220"/>
+    <polyline points="960,190 960,220"/>
+    <polyline points="1180,250 1180,220"/>
+    <polyline points="380,250 380,220"/>
+    <polyline points="480,250 480,220"/>
+    <polyline points="830,250 830,220"/>
+    <polyline points="1340,190 1340,220"/>
+    <polyline points="1580,190 1580,220"/>
+    <polyline points="1470,250 1470,220"/>
+    <polyline points="1560,250 1560,220"/>
+    <polyline points="1660,250 1660,220 1641,220"/>
+    <polyline points="1320,250 1320,220"/>
+    <polyline points="830,310 830,340 1140,340"/>
+    <polyline points="1320,310 1320,340 1140,340"/>
+    <polyline points="1140,380 1140,410"/>
+    <polyline points="1140,470 1140,500"/>
+    <polyline points="750,860 750,890"/>
+    <polyline points="920,740 920,775"/>
+    <polyline points="1140,640 1140,670"/>
+    <polyline points="750,700 750,670"/>
+    <polyline points="830,700 830,670"/>
+    <polyline points="920,700 920,670"/>
+    <polyline points="1010,700 1010,670"/>
+    <polyline points="1100,700 1100,670"/>
+    <polyline points="1180,700 1180,670"/>
+    <polyline points="1270,700 1270,670"/>
+    <polyline points="1360,700 1360,670"/>
+    <polyline points="1450,700 1450,670"/>
+    <polyline points="1530,700 1530,670"/>
+    <polyline points="1010,760 1010,790"/>
+    <polyline points="1010,830 1010,860"/>
+    <polyline points="1100,760 1100,790"/>
+    <polyline points="1100,830 1100,860"/>
+    <polyline points="1180,760 1180,790"/>
+    <polyline points="1180,830 1180,860"/>
+    <polyline points="1180,920 1180,950"/>
+    <polyline points="1270,760 1270,790"/>
+    <polyline points="1270,830 1270,859"/>
+    <polyline points="1270,882 1270,915"/>
+    <polyline points="1360,760 1360,790"/>
+    <polyline points="1360,830 1360,860"/>
+    <polyline points="1360,960 1360,995"/>
+    <polyline points="1450,760 1450,790"/>
+    <polyline points="1450,830 1450,860"/>
+    <polyline points="1450,900 1450,930"/>
+    <polyline points="1530,760 1530,790"/>
+    <polyline points="1530,830 1530,860"/>
+    <polyline points="1530,900 1530,930"/>
+  </g>
+  <line id="BI" x1="366.5" y1="220" x2="1193.5" y2="220" stroke="black" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <line id="BII" x1="1279" y1="220" x2="1641" y2="220" stroke="black" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <line id="B35" x1="700" y1="670" x2="1580" y2="670" stroke="black" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <g id="GRID1" transform="translate(600 -80)">
+    <circle cx="0" cy="-15" r="14" fill="none" stroke="black" stroke-width="1"/><text x="0" y="-12" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="14">~</text><line x1="0" y1="-1" x2="0" y2="20" stroke="black" stroke-width="1" fill="none"/>
+  </g>
+  <g id="QS_L1" transform="translate(600 10)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_L1" transform="translate(600 80)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_L1_I" transform="translate(600 170)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_L1_II" transform="translate(1340 170)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="GRID2" transform="translate(960 -80)">
+    <circle cx="0" cy="-15" r="14" fill="none" stroke="black" stroke-width="1"/><text x="0" y="-12" text-anchor="middle" font-family="Liberation Sans, Arial, sans-serif" font-size="14">~</text><line x1="0" y1="-1" x2="0" y2="20" stroke="black" stroke-width="1" fill="none"/>
+  </g>
+  <g id="QS_L2" transform="translate(960 10)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_L2" transform="translate(960 80)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_L2_I" transform="translate(960 170)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_L2_II" transform="translate(1580 170)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_BT_I" transform="translate(1180 290)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_BT" transform="translate(1390 340) rotate(270)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_BT_II" transform="translate(1470 290)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="PT_I" transform="translate(380 290)">
+    <ellipse cx="0" cy="1" rx="20" ry="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-40" x2="0" y2="-20" fill="none" stroke="black" stroke-width="1"/><ellipse cx="0" cy="30" rx="20" ry="20" fill="none" stroke="black" stroke-width="1"/><line x1="-0.13" y1="51" x2="-0.13" y2="71" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="FBL_I" transform="translate(480 270)">
+    <line x1="0" y1="-20" x2="0" y2="-5" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="10" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><polygon points="-2,-8 2,-8 0,-2" fill="black" stroke="black" stroke-width="1"/><rect x="-5" y="-10" width="10" height="20" rx="0" ry="0" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="GND_FBL_I" transform="translate(480 340)">
+    <line x1="-10" y1="0" x2="10" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-15" x2="0" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="-7" y1="5" x2="7" y2="5" fill="none" stroke="black" stroke-width="1"/><line x1="-4" y1="10" x2="4" y2="10" fill="none" stroke="black" stroke-width="1"/><line x1="0.5" y1="15" x2="-0.5" y2="15" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="PT_II" transform="translate(1560 290)">
+    <ellipse cx="0" cy="1" rx="20" ry="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-40" x2="0" y2="-20" fill="none" stroke="black" stroke-width="1"/><ellipse cx="0" cy="30" rx="20" ry="20" fill="none" stroke="black" stroke-width="1"/><line x1="-0.13" y1="51" x2="-0.13" y2="71" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="FBL_II" transform="translate(1660 270)">
+    <line x1="0" y1="-20" x2="0" y2="-5" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="10" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><polygon points="-2,-8 2,-8 0,-2" fill="black" stroke="black" stroke-width="1"/><rect x="-5" y="-10" width="10" height="20" rx="0" ry="0" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="GND_FBL_II" transform="translate(1660 340)">
+    <line x1="-10" y1="0" x2="10" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-15" x2="0" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="-7" y1="5" x2="7" y2="5" fill="none" stroke="black" stroke-width="1"/><line x1="-4" y1="10" x2="4" y2="10" fill="none" stroke="black" stroke-width="1"/><line x1="0.5" y1="15" x2="-0.5" y2="15" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_T1_I" transform="translate(830 290)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_T1_II" transform="translate(1320 290)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_T1" transform="translate(1140 360)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="CT_T1" transform="translate(1170 470)">
+    <line x1="-30" y1="-60" x2="-30" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="-20" y1="-30" x2="10" y2="-30" fill="none" stroke="black" stroke-width="1"/><ellipse cx="-30" cy="-30" rx="10" ry="10" fill="none" stroke="black" stroke-width="1"/><line x1="-10" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="-5" y1="-20" x2="5" y2="-40" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="T1" transform="translate(1170 640)">
+    <ellipse cx="-30" cy="-90" rx="30" ry="30" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-140" x2="-30" y2="-120" fill="none" stroke="black" stroke-width="1"/><ellipse cx="-30" cy="-50" rx="30" ry="30" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-20" x2="-30" y2="0" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="GT_T1" transform="translate(780 850)">
+    <line x1="-30" y1="-40" x2="-35" y2="-35" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-40" x2="-25" y2="-35" fill="none" stroke="black" stroke-width="1"/><ellipse cx="-30" cy="-90" rx="30" ry="30" fill="none" stroke="black" stroke-width="1"/><line x1="-35" y1="-35" x2="-40" y2="-38" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-150" x2="-30" y2="-120" fill="none" stroke="black" stroke-width="1"/><line x1="-25" y1="-35" x2="-25" y2="-30" fill="none" stroke="black" stroke-width="1"/><ellipse cx="-30" cy="-50" rx="30" ry="30" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-40" x2="-30" y2="-45" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-20" x2="-30" y2="10" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-45" x2="-25" y2="-48" fill="none" stroke="black" stroke-width="1"/><line x1="-40" y1="-130" x2="-20" y2="-140" fill="none" stroke="black" stroke-width="1"/><line x1="-40" y1="-135" x2="-20" y2="-145" fill="none" stroke="black" stroke-width="1"/><line x1="-40" y1="0" x2="-20" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="-40" y1="5" x2="-20" y2="-5" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-85" x2="-30" y2="-95" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-95" x2="-20" y2="-100" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-95" x2="-40" y2="-100" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-40" x2="-20" y2="-40" fill="none" stroke="black" stroke-width="1"/><ellipse cx="-30" cy="-40" rx="2" ry="2" fill="black" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="NGR_T1" transform="translate(750 920)">
+    <line x1="0" y1="-30" x2="0" y2="-15" fill="none" stroke="black" stroke-width="1"/><rect x="-6" y="-15" width="12" height="22" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="7" x2="0" y2="15" fill="none" stroke="black" stroke-width="1"/><line x1="-10" y1="15" x2="10" y2="15" fill="none" stroke="black" stroke-width="1"/><line x1="-7" y1="19" x2="7" y2="19" fill="none" stroke="black" stroke-width="1"/><line x1="-4" y1="23" x2="4" y2="23" fill="none" stroke="black" stroke-width="1"/><line x1="-1.5" y1="27" x2="1.5" y2="27" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="PT_35" transform="translate(830 740)">
+    <ellipse cx="0" cy="1" rx="20" ry="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-40" x2="0" y2="-20" fill="none" stroke="black" stroke-width="1"/><ellipse cx="0" cy="30" rx="20" ry="20" fill="none" stroke="black" stroke-width="1"/><line x1="-0.13" y1="51" x2="-0.13" y2="71" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="FBL_35" transform="translate(920 720)">
+    <line x1="0" y1="-20" x2="0" y2="-5" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="10" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><polygon points="-2,-8 2,-8 0,-2" fill="black" stroke="black" stroke-width="1"/><rect x="-5" y="-10" width="10" height="20" rx="0" ry="0" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="GND_FBL_35" transform="translate(920 790)">
+    <line x1="-10" y1="0" x2="10" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-15" x2="0" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="-7" y1="5" x2="7" y2="5" fill="none" stroke="black" stroke-width="1"/><line x1="-4" y1="10" x2="4" y2="10" fill="none" stroke="black" stroke-width="1"/><line x1="0.5" y1="15" x2="-0.5" y2="15" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_F1" transform="translate(1010 740)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_F1" transform="translate(1010 810)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="LD1" transform="translate(1010 880)">
+    <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="1" fill="none"/><polygon points="-6,10 6,10 0,22" fill="black" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_F2" transform="translate(1100 740)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_F2" transform="translate(1100 810)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="LD2" transform="translate(1100 880)">
+    <line x1="0" y1="-20" x2="0" y2="10" stroke="black" stroke-width="1" fill="none"/><polygon points="-6,10 6,10 0,22" fill="black" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_M" transform="translate(1180 740)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_M" transform="translate(1180 810)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="CT_M" transform="translate(1210 920)">
+    <line x1="-30" y1="-60" x2="-30" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="-20" y1="-30" x2="10" y2="-30" fill="none" stroke="black" stroke-width="1"/><ellipse cx="-30" cy="-30" rx="10" ry="10" fill="none" stroke="black" stroke-width="1"/><line x1="-10" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="-5" y1="-20" x2="5" y2="-40" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="MOT" transform="translate(1210 1030)">
+    <ellipse cx="-30" cy="-30" rx="30" ry="30" fill="none" stroke="black" stroke-width="1"/><text x="-34" y="-24.8" font-family="Liberation Sans, Arial, sans-serif" font-size="14" fill="#000000">M</text><text x="-45" y="-7.8" font-family="Liberation Sans, Arial, sans-serif" font-size="14" fill="#000000">3</text><path d="M -25 -20 A 5 2.5 0 0 0 -35 -20" fill="none" stroke="black" stroke-width="1"/><path d="M -25 -20 A 5 2.5 0 0 0 -15 -20" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-80" x2="-30" y2="-60" fill="none" stroke="black" stroke-width="1"/><line x1="-50" y1="-80" x2="-50" y2="-53" fill="none" stroke="black" stroke-width="1"/><line x1="-10" y1="-80" x2="-10" y2="-53" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_C" transform="translate(1270 740)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_C" transform="translate(1270 810)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="C1" transform="translate(1270 880)">
+    <line x1="-5" y1="2" x2="5" y2="2" fill="none" stroke="black" stroke-width="1"/><line x1="-5" y1="-2" x2="5" y2="-2" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-2" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="GND_C1" transform="translate(1270 930)">
+    <line x1="-10" y1="0" x2="10" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-15" x2="0" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="-7" y1="5" x2="7" y2="5" fill="none" stroke="black" stroke-width="1"/><line x1="-4" y1="10" x2="4" y2="10" fill="none" stroke="black" stroke-width="1"/><line x1="0.5" y1="15" x2="-0.5" y2="15" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_R" transform="translate(1360 740)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_R" transform="translate(1360 810)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="SR1" transform="translate(1390 940)">
+    <line x1="-30" y1="0" x2="-30" y2="20" fill="none" stroke="black" stroke-width="1"/><path d="M -30 0 A 30 30 0 1 0 -60 -30" fill="none" stroke="black" stroke-width="1"/><line x1="-30" y1="-80" x2="-30" y2="-30" fill="none" stroke="black" stroke-width="1"/><line x1="-60" y1="-30" x2="-30" y2="-30" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="GND_R1" transform="translate(1360 1010)">
+    <line x1="-10" y1="0" x2="10" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-15" x2="0" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="-7" y1="5" x2="7" y2="5" fill="none" stroke="black" stroke-width="1"/><line x1="-4" y1="10" x2="4" y2="10" fill="none" stroke="black" stroke-width="1"/><line x1="0.5" y1="15" x2="-0.5" y2="15" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_BAT" transform="translate(1450 740)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_BAT" transform="translate(1450 810)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="PCS" transform="translate(1470 900)">
+    <line x1="-40" y1="0" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><rect x="-40" y="-40" width="40" height="40" rx="0" ry="0" fill="none" stroke="black" stroke-width="1"/><line x1="-20" y1="-10" x2="-4" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="-20" y1="-6" x2="-14" y2="-6" fill="none" stroke="black" stroke-width="1"/><line x1="-10" y1="-6" x2="-4" y2="-6" fill="none" stroke="black" stroke-width="1"/><path d="M -25 -30 A 5 2.5 0 0 0 -35 -30" fill="none" stroke="black" stroke-width="1"/><path d="M -25 -30 A 5 2.5 0 0 0 -15 -30" fill="none" stroke="black" stroke-width="1"/><polyline points="-28,-4 -32,0 -28,4" fill="none" stroke="black" stroke-width="1"/><polyline points="-16,-4 -12,0 -16,4" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="BAT" transform="translate(1450 940) rotate(90)">
+    <line x1="-10" y1="0" x2="0" y2="0" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-5" x2="0" y2="5" fill="none" stroke="black" stroke-width="1"/><line x1="5" y1="-10" x2="5" y2="10" fill="none" stroke="black" stroke-width="1"/><line x1="5" y1="0" x2="15" y2="0" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QS_PV" transform="translate(1530 740)">
+    <line x1="0" y1="-20" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="0" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="0" x2="-8" y2="-23" fill="none" stroke="black" stroke-width="1"/><line x1="-3" y1="-20" x2="3" y2="-20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="QF_PV" transform="translate(1530 810)">
+    <polyline points="0,20 0,10 -5,-10" fill="none" stroke="black" stroke-width="1"/><line x1="0" y1="-20" x2="0" y2="-10" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-8" x2="-2" y2="-12" fill="none" stroke="black" stroke-width="1"/><line x1="2" y1="-12" x2="-2" y2="-8" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g id="INV1" transform="translate(1550 900)">
+    <g transform="matrix(1 0 0 -1 0 -40)"><path d="M -15 -8 A 5 2.5 0 0 0 -25 -8" fill="none" stroke="black" stroke-width="1"/><line x1="-40" y1="0" x2="0" y2="-40" fill="none" stroke="black" stroke-width="1"/><path d="M -15 -8 A 5 2.5 0 0 0 -5 -8" fill="none" stroke="black" stroke-width="1"/><rect x="-40" y="-40" width="40" height="40" rx="0" ry="0" fill="none" stroke="black" stroke-width="1"/><line x1="-36" y1="-36" x2="-20" y2="-36" fill="none" stroke="black" stroke-width="1"/><line x1="-36" y1="-32" x2="-30" y2="-32" fill="none" stroke="black" stroke-width="1"/><line x1="-26" y1="-32" x2="-20" y2="-32" fill="none" stroke="black" stroke-width="1"/></g>
+  </g>
+  <g id="PV1" transform="translate(1530 970) rotate(180)">
+    <line x1="-16" y1="24" x2="-26" y2="14" fill="none" stroke="black" stroke-width="1"/><line x1="-21" y1="29" x2="-31" y2="19" fill="none" stroke="black" stroke-width="1"/><polygon points="-20,23 -17,20 -15,25" fill="black" stroke="black" stroke-width="1"/><polygon points="-22,25 -25,28 -20,30" fill="black" stroke="black" stroke-width="1"/><rect x="-10" y="-20" width="60" height="60" rx="0" ry="0" fill="none" stroke="black" stroke-width="1"/><text x="15" y="7.2" font-family="Liberation Sans, Arial, sans-serif" font-size="14" fill="#000000">G</text><line x1="10" y1="20" x2="20" y2="20" fill="none" stroke="black" stroke-width="1"/><line x1="20" y1="15" x2="20" y2="25" fill="none" stroke="black" stroke-width="1"/><line x1="25" y1="10" x2="25" y2="30" fill="none" stroke="black" stroke-width="1"/><line x1="25" y1="20" x2="35" y2="20" fill="none" stroke="black" stroke-width="1"/>
+  </g>
+  <g fill="black" font-family="ui-sans-serif, system-ui, sans-serif" font-size="7" paint-order="stroke" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round">
+    <text x="618" y="-82.16666666666667" text-anchor="start">线路 L1（北郊变）</text>
+    <text x="606" y="0" text-anchor="start">L1-01</text>
+    <text x="606" y="78" text-anchor="start">L1-Q</text>
+    <text x="606" y="160" text-anchor="start">L1-1</text>
+    <text x="1346" y="160" text-anchor="start">L1-2</text>
+    <text x="978" y="-82.16666666666667" text-anchor="start">线路 L2（南郊变）</text>
+    <text x="966" y="0" text-anchor="start">L2-01</text>
+    <text x="966" y="78" text-anchor="start">L2-Q</text>
+    <text x="966" y="160" text-anchor="start">L2-1</text>
+    <text x="1586" y="160" text-anchor="start">L2-2</text>
+    <text x="1186" y="280" text-anchor="start">母联 BT-1</text>
+    <text x="1388" y="334" text-anchor="middle">母联 BT-Q</text>
+    <text x="1476" y="280" text-anchor="start">母联 BT-2</text>
+    <text x="404" y="307.8333333333333" text-anchor="start">母线 I PT</text>
+    <text x="489" y="272.3333333333333" text-anchor="start">母线 I 避雷器</text>
+    <text x="494" y="342.3333333333333" text-anchor="start">GND_FBL_I</text>
+    <text x="1584" y="307.8333333333333" text-anchor="start">母线 II PT</text>
+    <text x="1669" y="272.3333333333333" text-anchor="start">母线 II 避雷器</text>
+    <text x="1674" y="342.3333333333333" text-anchor="start">GND_FBL_II</text>
+    <text x="836" y="280" text-anchor="start">T1-1</text>
+    <text x="1326" y="280" text-anchor="start">T1-2</text>
+    <text x="1146" y="358" text-anchor="start">T1-Q</text>
+    <text x="1184" y="442.3333333333333" text-anchor="start">主变 CT</text>
+    <text x="1174" y="572" text-anchor="start">1#主变</text>
+    <text x="1174" y="581" text-anchor="start">240MVA</text>
+    <text x="1174" y="590" text-anchor="start">220/35</text>
+    <text x="784" y="782.3333333333334" text-anchor="start">35kV 接地变</text>
+    <text x="764" y="921.3333333333334" text-anchor="start">中性点电阻</text>
+    <text x="854" y="757.8333333333334" text-anchor="start">35kV PT</text>
+    <text x="929" y="722.3333333333334" text-anchor="start">35kV 避雷器</text>
+    <text x="934" y="792.3333333333334" text-anchor="start">GND_FBL_35</text>
+    <text x="1016" y="730" text-anchor="start">F1-1</text>
+    <text x="1016" y="808" text-anchor="start">F1-Q</text>
+    <text x="1016" y="880" text-anchor="start">馈线 1（城东配电）</text>
+    <text x="1016" y="889" text-anchor="start">8MW</text>
+    <text x="1106" y="730" text-anchor="start">F2-1</text>
+    <text x="1106" y="808" text-anchor="start">F2-Q</text>
+    <text x="1106" y="880" text-anchor="start">馈线 2（备用）</text>
+    <text x="1186" y="730" text-anchor="start">M-1</text>
+    <text x="1186" y="808" text-anchor="start">M-Q</text>
+    <text x="1224" y="892.3333333333334" text-anchor="start">电机 CT</text>
+    <text x="1214" y="992.3333333333334" text-anchor="start">循环水泵 (800kW)</text>
+    <text x="1276" y="730" text-anchor="start">C-1</text>
+    <text x="1276" y="808" text-anchor="start">C-Q</text>
+    <text x="1279" y="872.8333333333334" text-anchor="start">无功补偿 C1</text>
+    <text x="1284" y="932.3333333333334" text-anchor="start">GND_C1</text>
+    <text x="1366" y="730" text-anchor="start">R-1</text>
+    <text x="1366" y="808" text-anchor="start">R-Q</text>
+    <text x="1394" y="912.3333333333334" text-anchor="start">并联电抗器</text>
+    <text x="1374" y="1012.3333333333334" text-anchor="start">GND_R1</text>
+    <text x="1456" y="730" text-anchor="start">BAT-1</text>
+    <text x="1456" y="808" text-anchor="start">BAT-Q</text>
+    <text x="1474" y="884.3333333333334" text-anchor="start">储能 PCS</text>
+    <text x="1447.6666666666667" y="966" text-anchor="middle">100kWh 储能</text>
+    <text x="1536" y="730" text-anchor="start">PV-1</text>
+    <text x="1536" y="808" text-anchor="start">PV-Q</text>
+    <text x="1554" y="882.3333333333334" text-anchor="start">光伏逆变器</text>
+    <text x="1476" y="957.6666666666666" text-anchor="end">光伏阵列 (2MWp)</text>
+  </g>
+</svg>

@@ -1,0 +1,34 @@
+{
+  "id": "overload-contact-break",
+  "name": "热继电器常闭触点 95-96",
+  "category": "control",
+  "description": "热过载继电器的常闭辅助触点（脱扣时断开），串在线圈回路中。代号与热继电器主回路相同。",
+  "viewBox": "-20 -22 29 44",
+  "width": 29,
+  "height": 44,
+  "svg": "<line x1=\"-13\" y1=\"0\" x2=\"3\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\" stroke-dasharray=\"4 2\"/><polyline points=\"-18,7 -18,3 -13,3 -13,-3 -18,-3 -18,-7\" fill=\"none\" stroke=\"black\" stroke-width=\"0.4\"/><polyline points=\"0,20 0,10 6,-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-9\" x2=\"7\" y2=\"-9\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-9\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "95"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "96"
+    }
+  ],
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/310_relays_contactors_contacts/02_contacts_cross_referencing/15_protection_contacts/act_thermique_nf_esclave.elmt",
+    "qetEnglishName": "Thermal relay NC"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "terminal-block",
+  "name": "直通接线端子 (X)",
+  "category": "busbar",
+  "description": "端子排上的直通端子：上下各接一根线。端子号写在元件名称里（如 -X1:3）。",
+  "viewBox": "-5 -12 10 24",
+  "width": 10,
+  "height": 24,
+  "svg": "<line x1=\"0\" y1=\"10\" x2=\"0\" y2=\"3\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-10\" x2=\"0\" y2=\"-3\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"0\" cy=\"0\" rx=\"2.5\" ry=\"2.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -10,
+      "orientation": "n"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 10,
+      "orientation": "s"
+    }
+  ],
+  "label": {
+    "x": 5,
+    "y": 2,
+    "anchor": "start"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/130_terminals_terminal_strips/borne_continuite.elmt",
+    "qetEnglishName": "Terminal block"
+  }
+}

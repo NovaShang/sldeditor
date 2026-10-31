@@ -5,6 +5,7 @@
  *   2. Resolve buses (geometry from `Bus.layout` or auto-layout below)
  *   3. Validate wire endpoints (errors → diagnostics; pipeline keeps going)
  *   4. Auto-layout for devices without `Placement` and buses without layout
+ *      (circuit diagrams: a plain grid beside the drawing instead)
  *   5. Compute world-frame terminal geometry
  *   6. Union-find on wires → ConnectivityNode set with deterministic ids
  *      (sorted endpoints hashed) so `routes[nodeId]` keys stay stable
@@ -28,6 +29,8 @@ import type {
 } from '../model';
 import { normalizePath } from '../model/wire-path';
 import { autoLayout } from './auto-layout';
+import { gridLayout } from './grid-layout';
+import { diagramTypeOf, isCircuitDiagram } from '../model/diagram-type';
 import { routeWire, wireEndWorld } from './auto-route';
 import { applySymbolStandard, mergeCustomKinds } from './library-index';
 import {
@@ -72,6 +75,7 @@ export function compile(diagram: DiagramFile): InternalModel {
     diagram.meta?.symbolStandard,
   );
   m.library = library;
+  m.diagramType = diagramTypeOf(diagram);
 
   // ---- 1. Resolve elements + library ------------------------------------
   const elementById = new Map<ElementId, Element>();
@@ -207,7 +211,9 @@ export function compile(diagram: DiagramFile): InternalModel {
         });
     }
   }
-  const layoutResult = autoLayout({
+  // Circuit diagrams have no auto-layout: unplaced items only get a plain
+  // grid beside the drawing (see grid-layout.ts).
+  const layoutResult = (isCircuitDiagram(diagram) ? gridLayout : autoLayout)({
     elements: diagram.elements,
     buses: diagram.buses ?? [],
     junctions: diagram.junctions ?? [],

@@ -17,7 +17,7 @@ OneLineEditor 包含、使用或基于以下第三方资源。本文件汇总它
 
 > Electrical symbols originally from the QElectroTech project (https://qelectrotech.org), distributed under the Creative Commons Attribution 3.0 License.
 >
-> 本产品中的电气元件符号源自 QElectroTech 项目（https://qelectrotech.org），依 CC-BY 3.0 许可使用。如有改动（例如适配 Web 渲染、调整端子坐标），均为 OneLineEditor 项目所做的修改。
+> 本产品中的电气元件符号源自 QElectroTech 项目（https://qelectrotech.org），依 CC-BY 3.0 许可使用。如有改动（例如适配 Web 渲染、调整端子坐标、统一多极符号的极间距、转置方向），均为 OneLineEditor 项目所做的修改。
 
 ### 使用约束
 

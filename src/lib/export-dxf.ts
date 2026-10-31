@@ -17,6 +17,12 @@
  *   element label   → TEXT (one per line, ID + showOnCanvas params)
  *   wire label      → TEXT (mid-wire, phase designation etc.)
  *
+ * Circuit diagrams only (`diagramType: 'circuit'`):
+ *   pin designation → TEXT (layer LABELS, beside each terminal)
+ *   solder dot      → filled donut POLYLINE (layer WIRES)
+ *
+ *   PE (green-yellow) wire → green POLYLINE + yellow (ACI 2) dash LINEs
+ *
  *   drawing sheet   → POLYLINE borders + LINE grid + TEXT (layer SHEETS)
  *
  * Y is flipped to CAD convention (Y up). 4 layers: WIRES, ELEMENTS, LABELS,
@@ -58,6 +64,12 @@ import {
   tableSize,
 } from './annotation-geom';
 import { dxfColor } from './colors';
+import {
+  circuitSolderDots,
+  pinLabelFontSize,
+  placePinLabels,
+  stripeSegments,
+} from './circuit-marks';
 import { sheetRect, type Sheet, type TitleBlockShared } from '../model/sheet';
 import { exportSheetPrimitives, regionHits, type ExportRegion } from './export-sheets';
 import {
@@ -106,6 +118,10 @@ const ELLIPSE_SAMPLES = 64;
 const ANNOTATION_FONT_SIZE = 8;
 const ANNOTATION_LINE_HEIGHT = 1.25;
 const TEXT_FONT_SIZE_DEFAULT = 6;
+/** ACI 2 — the yellow of a PE conductor's stripes. */
+const ACI_YELLOW = 2;
+/** Solder-dot radius, as in the SVG export. */
+const DOT_RADIUS = 3.5;
 
 export function buildExportDxf(
   model: InternalModel,
@@ -169,8 +185,27 @@ export function buildExportDxf(
     if (r.path.length < 2 || !keptWires.has(id)) continue;
     w.setColor(dxfColor(r.color));
     w.polyline(LAYER_WIRES, r.path.map(worldToDxf), false);
+    // PE stripes as explicit yellow dashes: an R12 file has no linetype
+    // table here (see `tables`), and real geometry survives every reader.
+    if (r.color === 'green-yellow') {
+      w.setColor(ACI_YELLOW);
+      for (const [a, b] of stripeSegments(r.path)) {
+        w.line(LAYER_WIRES, worldToDxf(a), worldToDxf(b));
+      }
+    }
   }
   w.setColor(undefined);
+
+  // Solder dots — circuit diagrams only. (Single-line DXF has never carried
+  // junction dots, and keeps not doing so.)
+  if (model.diagramType === 'circuit') {
+    const dots: [number, number][] = [];
+    for (const rj of model.junctions.values()) if (rj.degree >= 3) dots.push(rj.world);
+    dots.push(...circuitSolderDots(model));
+    for (const d of dots) {
+      if (keep(pointsBox([d]))) w.dot(LAYER_WIRES, worldToDxf(d), DOT_RADIUS);
+    }
+  }
 
   // Buses (drawn after wires so the heavier bar sits on top).
   for (const { bus, geometry } of model.buses.values()) {
@@ -241,6 +276,12 @@ export function buildExportDxf(
       w.text(LAYER_LABELS, p, label, labelFs, 0, false, placed.textAnchor);
     }
     w.setColor(undefined);
+    // Pin designations (circuit diagrams only — empty otherwise).
+    const pinFs = pinLabelFontSize(labelFs);
+    for (const pin of placePinLabels(model, labelFs)) {
+      if (!keptElements.has(pin.ref.slice(0, pin.ref.indexOf('.')))) continue;
+      w.text(LAYER_LABELS, worldToDxf([pin.x, pin.y]), pin.text, pinFs, 0, false, pin.anchor);
+    }
   }
 
   // Free annotations (text / rect / line / table). Dashed strokes flatten to
@@ -964,6 +1005,38 @@ class DxfWriter {
     this.g(40, radius);
     this.track(center[0] - radius, center[1] - radius);
     this.track(center[0] + radius, center[1] + radius);
+  }
+
+  /**
+   * A filled dot, written the way AutoCAD's own DONUT command writes one: a
+   * closed two-vertex POLYLINE of half-circle bulges whose width equals its
+   * centre-line radius, so it fills to the centre. R12 has no filled circle.
+   */
+  dot(layer: string, center: [number, number], radius: number): void {
+    const [cx, cy] = center;
+    const h = radius / 2;
+    this.g(0, 'POLYLINE');
+    this.g(8, layer);
+    this.color();
+    this.g(66, 1);
+    this.g(70, 1);
+    this.g(10, 0);
+    this.g(20, 0);
+    this.g(30, 0);
+    this.g(40, radius);
+    this.g(41, radius);
+    for (const x of [cx - h, cx + h]) {
+      this.g(0, 'VERTEX');
+      this.g(8, layer);
+      this.g(10, x);
+      this.g(20, cy);
+      this.g(30, 0);
+      this.g(42, 1);
+    }
+    this.g(0, 'SEQEND');
+    this.g(8, layer);
+    this.track(cx - radius, cy - radius);
+    this.track(cx + radius, cy + radius);
   }
 
   text(

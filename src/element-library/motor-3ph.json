@@ -1,0 +1,57 @@
+{
+  "id": "motor-3ph",
+  "name": "三相电动机 U/V/W/PE",
+  "category": "load",
+  "description": "三相异步电动机（多线表示），端子 U、V、W 及 PE。",
+  "viewBox": "-25 -22 67 63",
+  "width": 67,
+  "height": 63,
+  "svg": "<path d=\"M 4.5 25 A 3 2.5 0 0 0 10.5 25\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 4.5 25 A 3 2.5 0 0 0 -1.5 25\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-10.25\" y=\"18\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"18\" fill=\"#000000\">M</text><ellipse cx=\"0\" cy=\"16\" rx=\"23\" ry=\"23\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-7\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"-20\" x2=\"20\" y2=\"4\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-20\" x2=\"-20\" y2=\"4\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><text x=\"-11\" y=\"29\" font-family=\"Liberation Sans, Arial, sans-serif\" font-size=\"9\" fill=\"#000000\">3</text><line x1=\"23\" y1=\"20\" x2=\"40\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t_u",
+      "x": -20,
+      "y": -20,
+      "orientation": "n",
+      "label": "U"
+    },
+    {
+      "id": "t_v",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "V"
+    },
+    {
+      "id": "t_w",
+      "x": 20,
+      "y": -20,
+      "orientation": "n",
+      "label": "W"
+    },
+    {
+      "id": "t_pe",
+      "x": 40,
+      "y": 20,
+      "orientation": "e",
+      "label": "PE"
+    }
+  ],
+  "params": [
+    {
+      "name": "P",
+      "label": "功率",
+      "type": "number",
+      "unit": "kW",
+      "showOnCanvas": true
+    }
+  ],
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/391_consumers_actuators/10_engines/moteur_tri_2.elmt",
+    "qetEnglishName": "Three-phase engine"
+  }
+}

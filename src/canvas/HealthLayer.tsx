@@ -48,7 +48,9 @@ export function HealthLayer() {
     }
   }
 
-  const figures = report.loads.flatMap((l) => {
+  // Load totals are single-line only (see HealthControls).
+  const loads = internal.diagramType === 'circuit' ? [] : report.loads;
+  const figures = loads.flatMap((l) => {
     // Nothing rated yet: a "0 kW" on the drawing would read as a result.
     // The panel still says how many loads are missing a rating.
     if (l.known === 0) return [];

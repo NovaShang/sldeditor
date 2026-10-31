@@ -1,0 +1,69 @@
+<definition version="0.100.0" type="element" link_type="master" width="60" height="60" hotspot_x="10" hotspot_y="30">
+    <uuid uuid="{ae457c4d-1c65-446a-d44f-319b3ff2ebe0}"/>
+    <names>
+        <name lang="ar">مرحل حراري</name>
+        <name lang="ca">Relé tèrmic ample</name>
+        <name lang="cs">Tepelné relé 3P</name>
+        <name lang="da">Termisk relæ bred</name>
+        <name lang="de">Überstromrelais 3P</name>
+        <name lang="el">Θερμικό</name>
+        <name lang="en">Thermal relay wide</name>
+        <name lang="lv">Plats termorelejs</name>
+        <name lang="es">Relé térmico</name>
+        <name lang="fi">Lämpörele leveä</name>
+        <name lang="fr">Relais thermique</name>
+        <name lang="hr">Termički relej široki</name>
+        <name lang="hu">Hőkioldó 3 pólusú</name>
+        <name lang="it">Relè termico</name>
+        <name lang="ja">熱動継電器 ワイド</name>
+        <name lang="ko">열동 계전기 와이드</name>
+        <name lang="mn">Өргөн дулааны реле</name>
+        <name lang="nb">Termisk relé bred</name>
+        <name lang="nl">Thermisch blok breed</name>
+        <name lang="nl_BE">Thermisch relais breed</name>
+        <name lang="pl">Przekaźnik termiczny</name>
+        <name lang="pt">Relé térmico de proteção contra sobrecarga de motor</name>
+        <name lang="pt_BR">Relé térmico de proteção contra sobrecarga de motor</name>
+        <name lang="ro">Releu termic lat</name>
+        <name lang="ru">Тепловое реле</name>
+        <name lang="sk">Tepelné relé široké</name>
+        <name lang="sl">Termični rele široki</name>
+        <name lang="sr">Термички релеј широки</name>
+        <name lang="sv">Termiskt relä brett</name>
+        <name lang="tr">Geniş termik röle</name>
+        <name lang="uk">Термічне реле широке</name>
+        <name lang="zh">四极热继电器_宽型</name>
+    </names>
+    <kindInformations>
+        <kindInformation name="type">protection</kindInformation>
+    </kindInformations>
+    <informations>Author: The QElectroTech team
+License: see http://qelectrotech.org/wiki/doc/elements_license</informations>
+    <description>
+        <dynamic_text x="50" y="-10" z="1" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{41ca1c56-2941-4056-9349-3c06e6181869}" font="Liberation Sans,9,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="0" y1="-20" x2="0" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="5" x2="0" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="5" y1="-5" x2="5" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="-5" x2="5" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="0" y1="5" x2="5" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="40" y1="-20" x2="40" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="40" y1="5" x2="40" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="45" y1="-5" x2="45" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="40" y1="-5" x2="45" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="40" y1="5" x2="45" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="20" y1="-20" x2="20" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="20" y1="5" x2="20" y2="20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="25" y1="-5" x2="25" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="20" y1="-5" x2="25" y2="-5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="20" y1="5" x2="25" y2="5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <terminal uuid="{2d01b195-3d22-43de-ace4-14f83f07b8a1}" name="" x="0" y="-21" orientation="n" type="Generic"/>
+        <terminal uuid="{701fe570-0b16-491b-adef-e27aed17be2f}" name="" x="0" y="21" orientation="s" type="Generic"/>
+        <terminal uuid="{3182c6b9-c1ad-4b8d-9926-80352e9cb613}" name="" x="40" y="-21" orientation="n" type="Generic"/>
+        <terminal uuid="{1d1d2246-a77b-44cb-ab0e-a025313278fb}" name="" x="40" y="21" orientation="s" type="Generic"/>
+        <terminal uuid="{4bc9084e-930d-47a0-82d5-c3dc7b3de135}" name="" x="20" y="-21" orientation="n" type="Generic"/>
+        <terminal uuid="{7d0334bd-b4ac-4294-a1aa-b628765fdb81}" name="" x="20" y="21" orientation="s" type="Generic"/>
+    </description>
+</definition>

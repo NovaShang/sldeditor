@@ -114,6 +114,8 @@ export {
 } from './sheet';
 export { sheetPrimitives } from './sheet-render';
 export { DIAGRAM_TYPES, diagramTypeOf, isCircuitDiagram, entryFitsDiagramType, pinLabelOf } from './diagram-type';
+export { numberWiresByPotential, isWireNumber } from './wire-numbers';
+export type { WireNumbering } from './wire-numbers';
 export type {
   SheetPrimitives,
   SheetRectPrim,

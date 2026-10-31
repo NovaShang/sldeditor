@@ -39,6 +39,81 @@ const dropFormLabel = (p) =>
  */
 const TERMINAL_LABEL_RADIUS = 20;
 
+/**
+ * Re-space the poles of a multi-pole QET symbol: `from[i]` is the x of pole i
+ * in the .elmt, `to[i]` where it should land. Every stroke is QET's own; only
+ * the distance between the identical pole drawings changes. Used so that every
+ * 3-pole symbol in the library puts its poles at x = −20 / 0 / 20 (the 4-pole
+ * ones add the neutral at 40) — then a breaker, contactor and overload stacked
+ * at the same x connect with straight wires.
+ *
+ * A primitive narrower than the pole pitch (a blade, a fuse body, a pin digit)
+ * moves with the pole its centre is nearest to. A wider one (the coupling
+ * line, the RCD's toroid) spans poles: each of its x coordinates moves with
+ * the pole nearest to it, so it stretches to the new spacing.
+ */
+function repitch(from, to) {
+  const pitch = Math.min(...from.slice(1).map((x, i) => Math.abs(x - from[i])));
+  const shiftAt = (x) => {
+    const d = from.map((p) => Math.abs(x - p));
+    const best = Math.min(...d);
+    const hits = d.filter((v) => Math.abs(v - best) < 1e-9).length;
+    if (hits > 1) throw new Error(`repitch: x=${x} is equidistant from two poles`);
+    const i = d.indexOf(best);
+    return to[i] - from[i];
+  };
+  const mv = (v, dx) => String(+(+v + dx).toFixed(3));
+  return (p) => {
+    const a = p.attrs;
+    const xs = [];
+    if (p.tag === 'line') xs.push(+a.x1, +a.x2);
+    else if (p.tag === 'rect' || p.tag === 'ellipse' || p.tag === 'arc') xs.push(+a.x, +a.x + +a.width);
+    else if (p.tag === 'polygon' || p.tag === 'polyline') {
+      for (let i = 1; a[`x${i}`] !== undefined; i++) xs.push(+a[`x${i}`]);
+    } else if (p.tag === 'text') xs.push(+a.x);
+    if (!xs.length) return p;
+    const lo = Math.min(...xs), hi = Math.max(...xs);
+    const unit = hi - lo < pitch ? shiftAt((lo + hi) / 2) : null;
+    const at = (x) => (unit !== null ? unit : shiftAt(x));
+    const out = { ...a };
+    if (p.tag === 'line') {
+      out.x1 = mv(a.x1, at(+a.x1));
+      out.x2 = mv(a.x2, at(+a.x2));
+    } else if (p.tag === 'rect' || p.tag === 'ellipse' || p.tag === 'arc') {
+      const l = +a.x + at(+a.x), r = +a.x + +a.width + at(+a.x + +a.width);
+      out.x = String(+l.toFixed(3));
+      out.width = String(+(r - l).toFixed(3));
+    } else if (p.tag === 'text') {
+      out.x = mv(a.x, at(+a.x));
+    } else {
+      for (let i = 1; a[`x${i}`] !== undefined; i++) out[`x${i}`] = mv(a[`x${i}`], at(+a[`x${i}`]));
+    }
+    return { ...p, attrs: out };
+  };
+}
+
+/** Text primitives whose whole content matches `re` (QET pin-name glyphs). */
+const textMatching = (re) => (p) => p.tag === 'text' && re.test((p.attrs.text || '').trim());
+
+/**
+ * Terminals of a 3-pole symbol with poles at x = −20 / 0 / 20: ids t1…t6 are
+ * the pin numbers (1/3/5 on the line side at `top`, 2/4/6 at `bottom`).
+ */
+function threePole(top, bottom) {
+  return [-20, 0, 20].flatMap((x, i) => [
+    { id: `t${2 * i + 1}`, x, y: top, orientation: 'n', label: String(2 * i + 1) },
+    { id: `t${2 * i + 2}`, x, y: bottom, orientation: 's', label: String(2 * i + 2) },
+  ]);
+}
+
+/** The neutral pole of a 4-pole / 1P+N device: N in, N out. */
+function neutralPole(x, top, bottom) {
+  return [
+    { id: 't_n1', x, y: top, orientation: 'n', label: 'N' },
+    { id: 't_n2', x, y: bottom, orientation: 's', label: 'N' },
+  ];
+}
+
 const MANIFEST = [
   // ---- 母线 / 接线 ----
   {
@@ -78,6 +153,8 @@ const MANIFEST = [
     name: '母线槽',
     category: 'busbar',
     description: '封闭式母线槽直线段（IEC 60617-11-17）',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_11/en_60617_11_17/en_60617_11_17_01.elmt' },
     terminals: [
       { id: 't_left', x: -20, y: 0, orientation: 'w' },
@@ -94,6 +171,8 @@ const MANIFEST = [
     name: '母线槽插接段',
     category: 'busbar',
     description: '带固定插接口的母线槽段，插接口向下引出',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_11/en_60617_11_17/en_60617_11_17_24.elmt' },
     // QET declares only the two run ends; the tap-off stub (the short line
     // dropping out of the circle down to y=20) carries no terminal of its own.
@@ -120,6 +199,9 @@ const MANIFEST = [
     id: 'breaker',
     name: '断路器 (QF)',
     category: 'switching',
+    // Pin designations matching QET's own "1"/"2" glyphs, so a circuit
+    // diagram (which prints labels instead of the glyph layer) still shows them.
+    terminalLabels: { t1: '1', t2: '2' },
     source: { kind: 'elmt', path: '11_singlepole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur1.elmt' },
     // ANSI drawing: the square. Traced off IEEE Std 315-1975 §9.4.4 at 300 dpi
     // — the figure measures a true square of 101 px with 67 px of lead above
@@ -249,6 +331,8 @@ const MANIFEST = [
     id: 'transformer-3w',
     name: '三绕组变压器',
     category: 'transformer',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_09/en_60617_06_09_04.elmt' },
     dropPrimitive: dropFormLabel,
     // QET ships only the high-side terminal; add the two low-side terminals.
@@ -307,6 +391,8 @@ const MANIFEST = [
     name: '系统电源',
     category: 'source',
     description: '无穷大母线 / 外部电网',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: {
       kind: 'inline',
       svg: [
@@ -456,6 +542,8 @@ const MANIFEST = [
     name: '接地变 (Z形)',
     category: 'grounding',
     description: '星-曲折接线变压器，中性点接地用',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_06/en_60617_06_10/en_60617_06_10_15.elmt' },
     dropPrimitive: dropFormLabel,
     // QET source lists the bottom terminal first; force convention t1=top, t2=bottom.
@@ -469,6 +557,8 @@ const MANIFEST = [
     name: '中性点电阻 (NGR)',
     category: 'grounding',
     description: '小电阻接地：连接变压器中性点到地',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: {
       kind: 'inline',
       svg: [
@@ -490,6 +580,8 @@ const MANIFEST = [
     name: '消弧线圈',
     category: 'grounding',
     description: '中性点谐振接地：电感线圈连接到地',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: {
       kind: 'inline',
       svg: [
@@ -512,6 +604,8 @@ const MANIFEST = [
     name: '配电箱',
     category: 'load',
     description: '配电箱 / 负荷中心（IEC 60617 分配中心符号）：顶部进线，底部分路示意',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_11/en_60617_11_12/en_60617_11_12_07.elmt' },
     // QET draws this distribution centre incoming-at-bottom / ways-on-top —
     // upside down for a load, which takes its feeder from above (the load
@@ -670,6 +764,8 @@ const MANIFEST = [
     name: '重合闸 (Recloser)',
     category: 'protection',
     description: '中压自动重合闸开关。',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: {
       kind: 'inline',
       svg: [
@@ -976,12 +1072,15 @@ const MANIFEST = [
     name: '指示灯 (HL)',
     category: 'control',
     description: '信号 / 状态指示灯。',
-    source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_10/en_60617_08_10_01.elmt' },
-    // QET lamp ships no terminals; it's a circle (cx0, cy-10, r10) — wire top/bottom.
-    terminals: [
-      { id: 't1', x: 0, y: -20, orientation: 'n' },
-      { id: 't2', x: 0, y: 0, orientation: 's' },
-    ],
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: 'X1', t2: 'X2' },
+    // The same IEC 60617-08-10-01 lamp (circle r10 with the cross) in the
+    // drawing that has its leads: the EN 60617 file this entry used before
+    // has none, so the pins sat ON the circle and a wire — and, on circuit
+    // diagrams, the X1/X2 designations — ran into the lamp. Here the leads end
+    // at y = ±20. t1 keeps its position; t2 moved from (0, 0) to (0, 20)
+    // — an existing wire on t2 re-attaches 20 lower.
+    source: { kind: 'elmt', path: '10_allpole/380_signaling_operating/11_optical_signaling/lampe2.elmt' },
     params: [{ name: 'color', label: '颜色', type: 'string' }],
   },
   {
@@ -989,6 +1088,8 @@ const MANIFEST = [
     name: '按钮 (SB)',
     category: 'control',
     description: '手动按钮, 自动复位 (常开 make)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: '13', t2: '14' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_07/en_60617_07_07_02.elmt' },
     // QET lists the bottom terminal first; force convention t1=top, t2=bottom.
     terminals: [
@@ -1001,6 +1102,8 @@ const MANIFEST = [
     name: '继电器线圈 (KA)',
     category: 'control',
     description: '继电器 / 接触器操作线圈 (方框)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: 'A1', t2: 'A2' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_15/en_60617_07_15_01.elmt' },
     // QET lists the bottom terminal first; force convention t1=top, t2=bottom.
     terminals: [
@@ -1013,6 +1116,8 @@ const MANIFEST = [
     name: '常开触点 (NO)',
     category: 'control',
     description: '常开辅助触点 (make contact)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: '13', t2: '14' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_02/en_60617_07_02_01.elmt' },
     state: [{ name: 'closed', type: 'boolean', default: false, label: '闭合' }],
   },
@@ -1021,6 +1126,8 @@ const MANIFEST = [
     name: '常闭触点 (NC)',
     category: 'control',
     description: '常闭辅助触点 (break contact)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: '21', t2: '22' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_02/en_60617_07_02_03.elmt' },
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
   },
@@ -1033,6 +1140,8 @@ const MANIFEST = [
     name: '通电延时闭合常开触点 (KT)',
     category: 'control',
     description: '常开触点，线圈通电后延时闭合 (IEC 60617-07-05-01)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: '67', t2: '68' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_05/en_60617_07_05_01.elmt' },
     terminals: [
       { id: 't1', x: 0, y: -40, orientation: 'n' },
@@ -1046,6 +1155,8 @@ const MANIFEST = [
     name: '断电延时断开常开触点 (KT)',
     category: 'control',
     description: '常开触点，线圈断电后延时断开 (IEC 60617-07-05-02)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: '67', t2: '68' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_05/en_60617_07_05_02.elmt' },
     terminals: [
       { id: 't1', x: 0, y: -40, orientation: 'n' },
@@ -1059,6 +1170,8 @@ const MANIFEST = [
     name: '通电延时断开常闭触点 (KT)',
     category: 'control',
     description: '常闭触点，线圈通电后延时断开 (IEC 60617-07-05-03)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: '55', t2: '56' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_05/en_60617_07_05_03.elmt' },
     terminals: [
       { id: 't1', x: 0, y: -40, orientation: 'n' },
@@ -1072,6 +1185,8 @@ const MANIFEST = [
     name: '断电延时闭合常闭触点 (KT)',
     category: 'control',
     description: '常闭触点，线圈断电后延时闭合 (IEC 60617-07-05-04)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: '55', t2: '56' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_05/en_60617_07_05_04.elmt' },
     terminals: [
       { id: 't1', x: 0, y: -40, orientation: 'n' },
@@ -1211,6 +1326,8 @@ const MANIFEST = [
     name: '选择开关 (SA)',
     category: 'switching',
     description: '转换 / 选择开关 (旋转操作, 保位)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: '13', t2: '14' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_07/en_60617_07_07_04.elmt' },
     // QET lists top terminal first (t1=top n, t2=bottom s) — convention OK.
     state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
@@ -1224,6 +1341,8 @@ const MANIFEST = [
     name: '限位开关 (SQ)',
     category: 'control',
     description: '行程 / 位置开关 (常开, 机械操作)。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: '13', t2: '14' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_08/en_60617_07_08_01.elmt' },
     // QET lists top terminal first (t1=top n, t2=bottom s) — convention OK.
     state: [{ name: 'closed', type: 'boolean', default: false, label: '闭合' }],
@@ -1241,6 +1360,8 @@ const MANIFEST = [
     name: '时间继电器 (KT)',
     category: 'control',
     description: '延时 (缓动) 继电器线圈。',
+    // Default pin designations (IEC 60947 / EN 50005), printed on circuit diagrams.
+    terminalLabels: { t1: 'A1', t2: 'A2' },
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_15/en_60617_07_15_08.elmt' },
     // QET lists the bottom terminal first; force convention t1=top, t2=bottom.
     terminals: [
@@ -1425,6 +1546,8 @@ const MANIFEST = [
     name: '过流继电器 (50/51)',
     category: 'protection',
     description: '过电流保护继电器 (ANSI 50/51)。',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_05.elmt' },
     extraTerminals: [{ id: 't_top', x: -30, y: -60, orientation: 'n' }],
   },
@@ -1433,6 +1556,8 @@ const MANIFEST = [
     name: '欠压继电器 (27)',
     category: 'protection',
     description: '欠电压保护继电器 (ANSI 27)。',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_07.elmt' },
     extraTerminals: [{ id: 't_top', x: -30, y: -80, orientation: 'n' }],
   },
@@ -1441,6 +1566,8 @@ const MANIFEST = [
     name: '逆功率继电器 (32)',
     category: 'protection',
     description: '逆功率 / 逆流保护继电器 (ANSI 32)。',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_02.elmt' },
     extraTerminals: [{ id: 't_top', x: -30, y: -40, orientation: 'n' }],
   },
@@ -1449,6 +1576,8 @@ const MANIFEST = [
     name: '距离继电器 (21)',
     category: 'protection',
     description: '距离 / 低阻抗保护继电器 (ANSI 21)。',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_17/en_60617_07_17_09.elmt' },
     extraTerminals: [{ id: 't_top', x: -30, y: -40, orientation: 'n' }],
   },
@@ -1465,6 +1594,8 @@ const MANIFEST = [
     name: '瓦斯继电器 (63)',
     category: 'protection',
     description: '瓦斯 / 气体继电器 (Buchholz, ANSI 63)。',
+    // Single-line overview block — no meaning in a circuit diagram.
+    diagramTypes: ['sld'],
     source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_18/en_60617_07_18_01.elmt' },
     extraTerminals: [{ id: 't_top', x: 0, y: -60, orientation: 'n' }],
   },
@@ -1491,6 +1622,290 @@ const MANIFEST = [
     description: '无功功率表 (var)。',
     source: { kind: 'elmt', path: '91_en_60617/en_60617_08/en_60617_08_02/en_60617_08_02_04.elmt' },
     extraTerminals: [{ id: 't_top', x: 0, y: -40, orientation: 'n' }],
+  },
+  // ======================================================================
+  // Circuit diagrams (电路图) — multi-line power symbols and the control
+  // devices a Stromlaufplan needs. Pin designations (`label`) follow
+  // IEC 60947 / EN 50005; see LibraryTerminal.label. Every 3-pole symbol
+  // puts its poles at x = −20 / 0 / 20 with pins 1/3/5 on top and 2/4/6 below
+  // (terminal ids t1…t6 = pin numbers), so a breaker, contactor and overload
+  // relay placed at the same x line up pole for pole; a neutral pole sits at
+  // x = 40. Line side on top throughout.
+  // ======================================================================
+  {
+    id: 'supply-3ph',
+    name: '三相电源 L1/L2/L3/N/PE',
+    category: 'source',
+    description: '三相五线电源引入点：L1、L2、L3、N、PE 向下引出。',
+    source: { kind: 'elmt', path: '10_allpole/110_network_supplies/src_3p_pe_n.elmt' },
+    // QET draws the five conductors as horizontal stubs (labels at the left,
+    // wires leaving to the right). Transposed (x ↔ y) they leave downwards
+    // side by side, L1 leftmost, so the supply sits directly above the main
+    // switch and feeds it with straight wires; shifted 20 right so L1–L3 land
+    // on the 3-pole x = −20 / 0 / 20. The names are QET's own text, set
+    // upright and centred over each stub, and kept in the pin-glyph layer:
+    // on a circuit diagram the terminal labels below print them.
+    transformPrimitive: (p) => {
+      const a = p.attrs;
+      if (p.tag === 'line') {
+        return { ...p, attrs: { ...a, x1: String(+a.y1 + 20), y1: a.x1, x2: String(+a.y2 + 20), y2: a.x2 } };
+      }
+      if (p.tag === 'text') {
+        // Each name's top sits 3 units below its stub in the source.
+        return { ...p, attrs: { ...a, x: String(+a.y - 3 + 20), y: '-8', anchor: 'middle' } };
+      }
+      return p;
+    },
+    pinGlyph: (p) => p.tag === 'text',
+    terminals: [
+      { id: 't_l1', x: -20, y: 10, orientation: 's', label: 'L1' },
+      { id: 't_l2', x: 0, y: 10, orientation: 's', label: 'L2' },
+      { id: 't_l3', x: 20, y: 10, orientation: 's', label: 'L3' },
+      { id: 't_n', x: 40, y: 10, orientation: 's', label: 'N' },
+      { id: 't_pe', x: 60, y: 10, orientation: 's', label: 'PE' },
+    ],
+    params: [{ name: 'Un', label: '额定电压', type: 'string', showOnCanvas: true }],
+    // Tag centred above the five conductors (extra lines stack upward), clear
+    // of the pin designations, which sit left of each lead below — and above
+    // the QET names (pin-glyph layer, top y = −8) for single-line drawings.
+    label: { x: 20, y: -11, anchor: 'middle' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'breaker-3p',
+    name: '三极断路器',
+    category: 'switching',
+    description: '三极断路器（多线表示），端子 1-2、3-4、5-6。',
+    // Same QET family as `breaker` (disjoncteur1): one blade per pole, the
+    // ✕ breaker function, a dashed mechanical link.
+    source: { kind: 'elmt', path: '10_allpole/200_fuses_protective_gears/11_circuit_breakers/disjoncteur4.elmt' },
+    terminals: threePole(-20, 20),
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    params: [{ name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true }],
+    label: { x: 26, y: -2, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'motor-breaker-3p',
+    name: '电动机保护断路器',
+    category: 'motor-control',
+    description: '三极电动机保护断路器（热磁脱扣：过载 + 短路），端子 1-2、3-4、5-6。',
+    // Each pole carries the ✕ breaker function, the thermal (overload) and
+    // the magnetic (short-circuit) release — the magneto-thermal breaker.
+    source: { kind: 'elmt', path: '10_allpole/200_fuses_protective_gears/11_circuit_breakers/disjonct-m_3f.elmt' },
+    terminals: threePole(-30, 20),
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    params: [{ name: 'Ir', label: '整定电流', type: 'string', unit: 'A', showOnCanvas: true }],
+    label: { x: 26, y: -6, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'fuse-3p',
+    name: '三极熔断器',
+    category: 'switching',
+    description: '三极熔断器（多线表示），端子 1-2、3-4、5-6。',
+    // QET draws the three fuses at a 10-unit pitch; spread to the 20-unit
+    // pole pitch every other 3-pole symbol here uses.
+    source: { kind: 'elmt', path: '10_allpole/200_fuses_protective_gears/10_fuses/pojistka3p.elmt' },
+    transformPrimitive: repitch([-10, 0, 10], [-20, 0, 20]),
+    terminals: threePole(-20, 20),
+    state: [{ name: 'blown', type: 'boolean', default: false, label: '熔断' }],
+    params: [{ name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true }],
+    label: { x: 26, y: -2, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'switch-disconnector-3p',
+    name: '三极负荷隔离开关',
+    category: 'switching',
+    description: '三极负荷隔离开关（主开关），手动操作，端子 1-2、3-4、5-6。',
+    // Fixed contacts carry both the disconnector bar and the switch circle,
+    // like `load-switch` (IEC 60617-07-13-08); the lever at the left is the
+    // manual actuator.
+    source: { kind: 'elmt', path: '10_allpole/200_fuses_protective_gears/20_disconnecting_switches/inter_sectionneur_tri.elmt' },
+    terminals: threePole(-20, 20),
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    params: [{ name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true }],
+    label: { x: 26, y: -2, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'contactor-3p',
+    name: '接触器主触点（三极）',
+    category: 'motor-control',
+    description: '接触器三极主触点，端子 1-2、3-4、5-6。线圈用"继电器线圈"并取相同代号。',
+    source: { kind: 'elmt', path: '10_allpole/310_relays_contactors_contacts/02_contacts_cross_referencing/02_power_contacts/com_puiss4.elmt' },
+    // QET prints "1 L1" … "6 T3" beside the pins; the terminal labels carry
+    // the designations instead.
+    dropPrimitive: (p) => p.tag === 'text',
+    terminals: threePole(-20, 20),
+    state: [{ name: 'open', type: 'boolean', default: true, label: '断开' }],
+    label: { x: 26, y: -2, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'overload-relay-3p',
+    name: '热继电器（三极主回路）',
+    category: 'motor-control',
+    description: '热过载继电器的三极发热元件，端子 1-2、3-4、5-6；95-96 / 97-98 触点另放并取相同代号。',
+    // QET's poles sit at x = 0 / 20 / 40; shift onto −20 / 0 / 20.
+    source: { kind: 'elmt', path: '10_allpole/200_fuses_protective_gears/30_thermal_relays/relais_therm4_wide.elmt' },
+    transformPrimitive: repitch([0, 20, 40], [-20, 0, 20]),
+    terminals: threePole(-20, 20),
+    state: [{ name: 'tripped', type: 'boolean', default: false, label: '动作' }],
+    params: [{ name: 'Ir', label: '整定电流', type: 'string', unit: 'A', showOnCanvas: true }],
+    label: { x: 30, y: -2, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'motor-3ph',
+    name: '三相电动机 U/V/W/PE',
+    category: 'load',
+    description: '三相异步电动机（多线表示），端子 U、V、W 及 PE。',
+    source: { kind: 'elmt', path: '10_allpole/391_consumers_actuators/10_engines/moteur_tri_2.elmt' },
+    // QET's "U1"/"V1"/"W1"/"PE" pin names; the terminal labels print U/V/W/PE.
+    dropPrimitive: textMatching(/^(U1|V1|W1|PE)$/),
+    textBaseline: true,
+    // QET's PE lead is 7 units (circle edge x = 23 → 30): too short for the
+    // "PE" designation, which sits above the lead and would touch the circle.
+    // Run the same lead out to x = 40.
+    transformPrimitive: (p) =>
+      p.tag === 'line' && p.attrs.x1 === '23' && p.attrs.y1 === '20' && p.attrs.x2 === '30'
+        ? { ...p, attrs: { ...p.attrs, x2: '40' } }
+        : p,
+    terminals: [
+      { id: 't_u', x: -20, y: -20, orientation: 'n', label: 'U' },
+      { id: 't_v', x: 0, y: -20, orientation: 'n', label: 'V' },
+      { id: 't_w', x: 20, y: -20, orientation: 'n', label: 'W' },
+      { id: 't_pe', x: 40, y: 20, orientation: 'e', label: 'PE' },
+    ],
+    params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'rcd-4p',
+    name: '剩余电流断路器 4P (RCCB)',
+    category: 'protection',
+    description: '四极剩余电流动作断路器（不带过流保护），端子 1-2、3-4、5-6、N-N。',
+    // QET draws the four poles at a 10-unit pitch; spread to the library's
+    // 20-unit pitch (L1–L3 at −20 / 0 / 20, neutral at 40). The toroid and the
+    // trip link stretch with them.
+    source: { kind: 'elmt', path: '10_allpole/200_fuses_protective_gears/50_residual_current_circuit_breaker/int_diff4.elmt' },
+    // QET's load-side leads are 10 units with the toroid across them at
+    // y = 13…17, so the 2/4/6/N designations beside them landed on the
+    // toroid; the same leads run on to y = 30.
+    transformPrimitive: (p) => {
+      const q = repitch([0, 10, 20, 30], [-20, 0, 20, 40])(p);
+      return q.tag === 'line' && q.attrs.y1 === '10' && q.attrs.y2 === '20' && q.attrs.x1 === q.attrs.x2
+        ? { ...q, attrs: { ...q.attrs, y2: '30' } }
+        : q;
+    },
+    terminals: [...threePole(-20, 30), ...neutralPole(40, -20, 30)],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    params: [
+      { name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true },
+      { name: 'IDn', label: '剩余动作电流', type: 'number', unit: 'mA', default: 30, showOnCanvas: true },
+    ],
+    label: { x: 50, y: -2, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'mcb-1pn',
+    name: '微型断路器 1P+N',
+    category: 'protection',
+    description: '单极 + 中性极微型断路器（相极热磁脱扣），端子 1-2、N-N。',
+    // QET's neutral pole (left, disconnector bar only) and phase pole (right,
+    // ✕ + thermal + magnetic release).
+    source: { kind: 'elmt', path: '10_allpole/200_fuses_protective_gears/11_circuit_breakers/disjonct-m_1fn.elmt' },
+    terminals: [
+      { id: 't1', x: 10, y: -30, orientation: 'n', label: '1' },
+      { id: 't2', x: 10, y: 20, orientation: 's', label: '2' },
+      ...neutralPole(-10, -30, 20),
+    ],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    params: [{ name: 'In', label: '额定电流', type: 'number', unit: 'A', showOnCanvas: true }],
+    label: { x: 16, y: -6, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'terminal-block',
+    name: '直通接线端子 (X)',
+    category: 'busbar',
+    description: '端子排上的直通端子：上下各接一根线。端子号写在元件名称里（如 -X1:3）。',
+    source: { kind: 'elmt', path: '10_allpole/130_terminals_terminal_strips/borne_continuite.elmt' },
+    terminals: [
+      { id: 't1', x: 0, y: -10, orientation: 'n' },
+      { id: 't2', x: 0, y: 10, orientation: 's' },
+    ],
+    label: { x: 5, y: 2, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'push-button-break',
+    name: '停止按钮（常闭）',
+    category: 'control',
+    description: '手动按钮，自动复位，常闭（break），端子 11-12。',
+    source: { kind: 'elmt', path: '10_allpole/380_signaling_operating/20_push_buttons/poussoir_nf.elmt' },
+    // QET puts the pins one unit beyond the line ends (±21); snap them onto
+    // the ends.
+    terminals: [
+      { id: 't1', x: 0, y: -20, orientation: 'n', label: '11' },
+      { id: 't2', x: 0, y: 20, orientation: 's', label: '12' },
+    ],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'emergency-stop',
+    name: '急停按钮',
+    category: 'control',
+    description: '急停开关：蘑菇头，强制断开（positive opening），常闭，端子 11-12。',
+    // IEC 60617-07-07-06, same EN 60617 set as `push-button`.
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_07/en_60617_07_07_06.elmt' },
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n', label: '11' },
+      { id: 't2', x: 0, y: 20, orientation: 's', label: '12' },
+    ],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'limit-switch-break',
+    name: '限位开关（常闭）',
+    category: 'control',
+    description: '行程 / 位置开关，常闭，机械操作，端子 11-12。',
+    // IEC 60617-07-08-02, the break twin of `limit-switch` (07-08-01).
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_08/en_60617_07_08_02.elmt' },
+    terminals: [
+      { id: 't1', x: 0, y: -40, orientation: 'n', label: '11' },
+      { id: 't2', x: 0, y: 20, orientation: 's', label: '12' },
+    ],
+    state: [{ name: 'open', type: 'boolean', default: false, label: '断开' }],
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'overload-contact-break',
+    name: '热继电器常闭触点 95-96',
+    category: 'control',
+    description: '热过载继电器的常闭辅助触点（脱扣时断开），串在线圈回路中。代号与热继电器主回路相同。',
+    source: { kind: 'elmt', path: '10_allpole/310_relays_contactors_contacts/02_contacts_cross_referencing/15_protection_contacts/act_thermique_nf_esclave.elmt' },
+    terminals: [
+      { id: 't1', x: 0, y: -20, orientation: 'n', label: '95' },
+      { id: 't2', x: 0, y: 20, orientation: 's', label: '96' },
+    ],
+    diagramTypes: ['circuit'],
+  },
+  {
+    id: 'overload-contact-make',
+    name: '热继电器常开触点 97-98',
+    category: 'control',
+    description: '热过载继电器的常开辅助触点（脱扣时闭合），常用于故障指示。代号与热继电器主回路相同。',
+    source: { kind: 'elmt', path: '10_allpole/310_relays_contactors_contacts/02_contacts_cross_referencing/15_protection_contacts/act_termique_no_esclave.elmt' },
+    terminals: [
+      { id: 't1', x: 0, y: -20, orientation: 'n', label: '97' },
+      { id: 't2', x: 0, y: 20, orientation: 's', label: '98' },
+    ],
+    diagramTypes: ['circuit'],
   },
 ];
 
@@ -1643,7 +2058,7 @@ function shapeAttrs(style) {
   return ` fill="${fillFromStyle(s)}"` + strokeAttrs(style);
 }
 
-function primitiveToSvg(p) {
+function primitiveToSvg(p, textBaseline = false) {
   const a = p.attrs;
   switch (p.tag) {
     case 'line':
@@ -1677,11 +2092,18 @@ function primitiveToSvg(p) {
       const fontSize = +(a.font?.split(',')[1] || 9);
       const color = a.color || '#000000';
       // QET positions text from its top-left; SVG `y` is the baseline. Bias
-      // by ~0.8em so visual placement matches QElectroTech.
-      const ySvg = +a.y + fontSize * 0.8;
+      // by ~0.8em so visual placement matches QElectroTech. Entries flagged
+      // `textBaseline` skip the bias: in those files `y` already is the
+      // baseline (checked against the drawing — e.g. the motor's "M" over
+      // "3~" only centres in its circle that way). Existing symbols were
+      // audited against the biased placement and keep it.
+      const ySvg = textBaseline ? +a.y : +a.y + fontSize * 0.8;
       const rot = +(a.rotation || 0);
       const transform = rot ? ` transform="rotate(${rot} ${num(a.x)} ${num(ySvg)})"` : '';
-      return `<text x="${num(a.x)}" y="${num(ySvg)}" font-family="Liberation Sans, Arial, sans-serif" font-size="${fontSize}" fill="${color}"${transform}>${escapeXml(decodeXmlEntities(a.text || ''))}</text>`;
+      // `anchor` is never present in a QET file; only a build-time
+      // `transformPrimitive` sets it (see `transposeSupply`).
+      const anchor = a.anchor ? ` text-anchor="${a.anchor}"` : '';
+      return `<text x="${num(a.x)}" y="${num(ySvg)}"${anchor} font-family="Liberation Sans, Arial, sans-serif" font-size="${fontSize}" fill="${color}"${transform}>${escapeXml(decodeXmlEntities(a.text || ''))}</text>`;
     }
     case 'terminal':
       return null; // handled outside the visual layer
@@ -1704,7 +2126,7 @@ function unionBBox(a, b) {
   };
 }
 
-function primitiveBBox(p) {
+function primitiveBBox(p, textBaseline = false) {
   const a = p.attrs;
   switch (p.tag) {
     case 'line':
@@ -1725,7 +2147,9 @@ function primitiveBBox(p) {
     case 'text': {
       const fontSize = +(a.font?.split(',')[1] || 9);
       const len = (a.text || '').length * fontSize * 0.6;
-      return { x1: +a.x, y1: +a.y, x2: +a.x + len, y2: +a.y + fontSize };
+      const x1 = a.anchor === 'middle' ? +a.x - len / 2 : +a.x;
+      const y1 = textBaseline ? +a.y - fontSize * 0.8 : +a.y;
+      return { x1, y1, x2: x1 + len, y2: y1 + fontSize };
     }
     case 'terminal':
       return null; // do not influence visual bbox
@@ -1766,7 +2190,7 @@ function buildElement(entry) {
   const terminalPrims = parsed.primitives.filter((p) => p.tag === 'terminal');
 
   let bbox = null;
-  for (const p of visualPrims) bbox = unionBBox(bbox, primitiveBBox(p));
+  for (const p of visualPrims) bbox = unionBBox(bbox, primitiveBBox(p, entry.textBaseline));
   if (!bbox) bbox = { x1: -10, y1: -10, x2: 10, y2: 10 };
 
   const terminalsFromElmt = terminalPrims.map((p, i) => ({
@@ -1784,14 +2208,19 @@ function buildElement(entry) {
   // like the motor's "M 3~" digits are far from any terminal and stay put.
   // Note: they still count toward the bbox above so the viewBox (and thus
   // hit rect / anchors) is independent of this split.
+  // `entry.pinGlyph` marks further QET pin-name glyphs (e.g. the supply's
+  // "L1"…"PE") that should live in the same layer: on circuit diagrams the
+  // canvas prints the terminal `label`s instead, so leaving them in the
+  // artwork would print every name twice.
   const isTerminalNumber = (p) =>
-    p.tag === 'text' &&
-    /^\d+$/.test((p.attrs.text || '').trim()) &&
-    terminals.some(
-      (t) => Math.hypot(+p.attrs.x - t.x, +p.attrs.y - t.y) <= TERMINAL_LABEL_RADIUS,
-    );
+    (p.tag === 'text' &&
+      /^\d+$/.test((p.attrs.text || '').trim()) &&
+      terminals.some(
+        (t) => Math.hypot(+p.attrs.x - t.x, +p.attrs.y - t.y) <= TERMINAL_LABEL_RADIUS,
+      )) ||
+    (entry.pinGlyph?.(p) ?? false);
   const toSvg = (prims) => {
-    let body = prims.map(primitiveToSvg).filter(Boolean).join('');
+    let body = prims.map((p) => primitiveToSvg(p, entry.textBaseline)).filter(Boolean).join('');
     // Post-process: rewrite all <text font-size="..."> in the output. Used for
     // visibility tweaks where we want bigger glyphs without recomputing the
     // QET-derived y baseline (the text label still lives at QET's intended
@@ -1847,6 +2276,18 @@ function finalize(entry, { svgBody, terminalLabelsSvg, bbox, terminals, sourceMe
     vb,
   ));
 
+  // Default pin designations for symbols whose terminals come from the QET
+  // file (new circuit symbols spell `label` inline in `terminals` instead).
+  if (entry.terminalLabels) {
+    const known = new Set(terminals.map((t) => t.id));
+    for (const id of Object.keys(entry.terminalLabels)) {
+      if (!known.has(id)) throw new Error(`${entry.id}: terminalLabels names unknown terminal ${id}`);
+    }
+    terminals = terminals.map((t) =>
+      entry.terminalLabels[t.id] !== undefined ? { ...t, label: entry.terminalLabels[t.id] } : t,
+    );
+  }
+
   // Drop optional fields when absent so JSON keys stay stable across builds.
   const out = {
     id: entry.id,
@@ -1865,6 +2306,7 @@ function finalize(entry, { svgBody, terminalLabelsSvg, bbox, terminals, sourceMe
   if (entry.params) out.params = entry.params;
   if (entry.label) out.label = entry.label;
   if (entry.ansi) out.variants = { ansi: buildVariant(entry, entry.ansi, terminals) };
+  if (entry.diagramTypes) out.diagramTypes = entry.diagramTypes;
   out.source = sourceMeta;
   return out;
 }

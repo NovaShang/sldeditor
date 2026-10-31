@@ -23,6 +23,9 @@
       "unit": "Ω"
     }
   ],
+  "diagramTypes": [
+    "sld"
+  ],
   "source": {
     "kind": "inline"
   }

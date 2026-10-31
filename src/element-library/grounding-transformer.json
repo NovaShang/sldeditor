@@ -21,6 +21,9 @@
       "orientation": "s"
     }
   ],
+  "diagramTypes": [
+    "sld"
+  ],
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_06/en_60617_06_10/en_60617_06_10_15.elmt",

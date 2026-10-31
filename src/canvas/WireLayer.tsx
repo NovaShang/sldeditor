@@ -12,10 +12,14 @@
  * with a small gap at the crossing so it's unambiguous they aren't joined.
  * A junction dot (rendered separately) remains the only "connected" signal.
  * The hit polyline is never gapped, so selection still spans the whole wire.
+ *
+ * A green-yellow (PE) wire gets a second, dashed polyline in the stripe
+ * colour over its green base — the IEC 60445 look of the conductor itself.
  */
 
 import { useCanvasStore } from '../store';
 import { inkClass } from '../lib/colors';
+import { PE_STRIPE_DASHARRAY } from '../lib/circuit-marks';
 import { endOwner } from '../store/group-move';
 import { maxAlarm, useRuntime } from '../runtime/runtime-context';
 import type { AlarmLevel } from '../model';
@@ -167,6 +171,17 @@ export function WireLayer() {
               points={seg.map((p) => `${p[0]},${p[1]}`).join(' ')}
             />
           )),
+          ...(r.color === 'green-yellow'
+            ? visibleSegments.map((seg, idx) => (
+                <polyline
+                  key={`${r.wireId}-pe-${idx}`}
+                  data-selected={selected}
+                  className="ole-pe-stripe"
+                  strokeDasharray={PE_STRIPE_DASHARRAY}
+                  points={seg.map((p) => `${p[0]},${p[1]}`).join(' ')}
+                />
+              ))
+            : []),
         ];
       })}
     </g>

@@ -60,6 +60,8 @@ import {
 } from './id-allocator';
 import { normalizePath } from '../model/wire-path';
 import { clampSymbolScale } from '../model';
+import { numberWiresByPotential } from '../model/wire-numbers';
+import { isCircuitDiagram } from '../model/diagram-type';
 import {
   SHEET_GAP_MM,
   UNITS_PER_MM,
@@ -366,8 +368,10 @@ export interface EditorState {
    * electrical node gets the same number; nodes are numbered in reading order
    * (top→bottom, then left→right). Nodes on a named supply rail (bus) take
    * the rail's name and are not numbered. Numeric labels are replaced; a
-   * hand-written non-numeric label (L1, PE, 24V…) is kept. One undo step.
-   * Returns how many nodes were numbered.
+   * hand-written non-numeric label (L1, PE, 24V…) is kept, and its node is
+   * then named by hand and not numbered either (stale numbers on rails and
+   * hand-named nodes are removed). One undo step; none when nothing changes.
+   * Returns how many nodes were numbered. See `model/wire-numbers.ts`.
    */
   numberWires: () => number;
   /** Append a wire between two endpoints (idempotent — duplicate is a no-op). */
@@ -1088,6 +1092,9 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
 
   autoArrangeAll: () => {
     get().dispatch((d) => {
+      // Circuit diagrams have no auto-layout: dropping positions would only
+      // pile the drawing onto the placement grid.
+      if (isCircuitDiagram(d)) return d;
       const hasDeviceLayout = d.layout && Object.keys(d.layout).length > 0;
       const hasBusLayout = (d.buses ?? []).some((b) => b.layout);
       if (!hasDeviceLayout && !hasBusLayout) return d;
@@ -1107,6 +1114,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     if (selection.length === 0) return;
     const drop = new Set(selection);
     get().dispatch((d) => {
+      if (isCircuitDiagram(d)) return d; // see autoArrangeAll
       let changed = false;
       let layout = d.layout;
       if (layout) {
@@ -1690,8 +1698,16 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     });
   },
 
-  // Implemented in model/wire-numbers.ts (workstream C); stub until then.
-  numberWires: () => 0,
+  numberWires: () => {
+    let count = 0;
+    get().dispatch((d) => {
+      const { diagram, internal } = get();
+      const r = numberWiresByPotential(d, d === diagram ? internal : compile(d));
+      count = r.count;
+      return r.diagram;
+    });
+    return count;
+  },
 
   addWire: (a, b) => {
     if (a === b) return;

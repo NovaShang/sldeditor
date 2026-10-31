@@ -36,6 +36,7 @@ import { SheetLayer } from './canvas/SheetLayer';
 import { ElementLayer } from './canvas/ElementLayer';
 import { FreeAnnotationLayer } from './canvas/FreeAnnotationLayer';
 import { JunctionLayer } from './canvas/JunctionLayer';
+import { PinLabelLayer, SolderDotLayer } from './canvas/CircuitMarksLayer';
 import { RuntimeOverlayLayer } from './canvas/RuntimeOverlayLayer';
 import { SelectionOverlay } from './canvas/SelectionOverlay';
 import { WireLayer } from './canvas/WireLayer';
@@ -340,8 +341,10 @@ function ViewerCanvas({
           <BusLayer />
           <WireLayer />
           <JunctionLayer />
+          <SolderDotLayer />
           <ElementLayer />
           <AnnotationLayer />
+          <PinLabelLayer />
           <FreeAnnotationLayer />
           <SelectionOverlay />
           <RuntimeOverlayLayer />
