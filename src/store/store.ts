@@ -35,6 +35,7 @@ import type {
   DiagramColor,
   DiagramFile,
   DiagramMeta,
+  DiagramType,
   Element,
   ElementId,
   EllipseAnnotation,
@@ -353,6 +354,22 @@ export interface EditorState {
    *  this sheet. */
   enlargeLabelsForPrint: (id: string) => void;
   updateTitleBlock: (patch: Partial<TitleBlockShared>) => void;
+  /**
+   * Switch the document between single-line and circuit diagram. Only the
+   * meta flag changes — elements, wires and positions are untouched; what
+   * follows the flag is how the drawing is rendered and checked. `sld` drops
+   * the field so an untouched document serialises exactly as before.
+   */
+  setDiagramType: (type: DiagramType) => void;
+  /**
+   * Wire numbering for circuit diagrams, by POTENTIAL: every wire on one
+   * electrical node gets the same number; nodes are numbered in reading order
+   * (top→bottom, then left→right). Nodes on a named supply rail (bus) take
+   * the rail's name and are not numbered. Numeric labels are replaced; a
+   * hand-written non-numeric label (L1, PE, 24V…) is kept. One undo step.
+   * Returns how many nodes were numbered.
+   */
+  numberWires: () => number;
   /** Append a wire between two endpoints (idempotent — duplicate is a no-op). */
   addWire: (a: WireEnd, b: WireEnd) => void;
   /**
@@ -1663,6 +1680,18 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
       return { ...d, meta };
     });
   },
+
+  setDiagramType: (type) => {
+    get().dispatch((d) => {
+      const meta: DiagramMeta = { ...d.meta };
+      if (type === 'circuit') meta.diagramType = 'circuit';
+      else delete meta.diagramType;
+      return { ...d, meta };
+    });
+  },
+
+  // Implemented in model/wire-numbers.ts (workstream C); stub until then.
+  numberWires: () => 0,
 
   addWire: (a, b) => {
     if (a === b) return;
