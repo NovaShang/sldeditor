@@ -240,3 +240,65 @@ describe('main circuit vs control circuit', () => {
     expect([l.c1, l.c7]).toEqual([undefined, undefined]); // rails
   });
 });
+
+describe('which pieces of a potential show its number', () => {
+  it('a seal-in T: the wires at the device pins, not the piece between the joints', () => {
+    const d = control();
+    // S1 start ∥ KA seal-in, both fed from the same potential through J1–J2.
+    d.elements.push({ id: 'KB', kind: 'make-contact', name: '-K1' });
+    d.layout!.KB = { at: [-20, 140] };
+    d.junctions = [{ id: 'J1', layout: { at: [-100, 60] } }, { id: 'J2', layout: { at: [-20, 60] } }];
+    d.wires = d.wires!.filter((w) => w.id !== 'w1');
+    d.wires.push(
+      { id: 'feed', ends: ['L', 'J1'] },
+      { id: 'piece', ends: ['J1', 'J2'], label: '7' },
+      { id: 'toS1', ends: ['J1', 'S1.t1'] },
+      { id: 'toKB', ends: ['J2', 'KB.t1'] },
+      { id: 'KBout', ends: ['KB.t2', 'K1.t1'] },
+    );
+    // Off the rail so the T's potential is numbered: rename L away.
+    d.buses = d.buses!.map((b) => (b.id === 'L' ? { ...b, name: undefined } : b));
+    const l = labels(run(d).diagram);
+    expect(l.toS1).toBe(l.toKB);
+    expect(l.toS1).toMatch(/^\d+$/);
+    expect(l.piece).toBeUndefined();
+    expect(l.feed).toBeUndefined(); // junction → bus: a piece too
+  });
+
+  it('a distribution line: one number per drop, none along the line', () => {
+    const d: DiagramFile = {
+      version: '1',
+      meta: { diagramType: 'circuit' },
+      elements: [0, 1, 2].map((i) => ({ id: `H${i}`, kind: 'indicator-light' })),
+      junctions: [0, 1, 2].map((i) => ({ id: `J${i}`, layout: { at: [i * 80, 60] as [number, number] } })),
+      wires: [
+        { id: 'line0', ends: ['J0', 'J1'], label: '3' },
+        { id: 'line1', ends: ['J1', 'J2'], label: '3' },
+        ...[0, 1, 2].map((i) => ({ id: `drop${i}`, ends: [`J${i}`, `H${i}.t1`] as [string, string] })),
+      ],
+      layout: Object.fromEntries([0, 1, 2].map((i) => [`H${i}`, { at: [i * 80, 140] as [number, number] }])),
+    };
+    const r = run(d);
+    const l = labels(r.diagram);
+    expect([l.drop0, l.drop1, l.drop2]).toEqual(['1', '1', '1']);
+    expect([l.line0, l.line1]).toEqual([undefined, undefined]);
+    expect(run(r.diagram).diagram).toBe(r.diagram); // still idempotent
+  });
+
+  it('a potential drawn only of pieces shows its number once, on the longest', () => {
+    const d: DiagramFile = {
+      version: '1',
+      meta: { diagramType: 'circuit' },
+      elements: [],
+      buses: [{ id: 'B', layout: { at: [0, 0], span: 100 } }],
+      junctions: [{ id: 'J1', layout: { at: [0, 40] } }, { id: 'J2', layout: { at: [120, 40] } }],
+      wires: [
+        { id: 'short', ends: ['B', 'J1'] },
+        { id: 'long', ends: ['J1', 'J2'] },
+      ],
+    };
+    const r = run(d);
+    expect(r.count).toBe(1);
+    expect(labels(r.diagram)).toEqual({ short: undefined, long: '1' });
+  });
+});

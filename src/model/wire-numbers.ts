@@ -18,9 +18,15 @@
  *     their phase labels (L1/L2/L3/N/PE), not by numbers: no number.
  *   - A node where the user wrote a non-numeric label on any wire (L1, PE,
  *     24V…) is named by hand: the label is kept and the node gets no number.
+ *   - On a numbered node, the number is written on the wires that end on a
+ *     device terminal — that is where an electrician reads it. A piece
+ *     running only between junctions (or a junction and a bus) carries none,
+ *     or a distribution line would repeat it on every segment and a T would
+ *     show it twice side by side. A node drawn only of such pieces shows it
+ *     once, on its longest piece.
  *   - Numeric labels are owned by this function: they are replaced on
- *     numbered nodes and removed on every unnumbered node above, so a stale
- *     number never survives a re-run.
+ *     numbered nodes and removed everywhere else (unnumbered nodes, pieces
+ *     that carry no number), so a stale number never survives a re-run.
  *
  * Re-running on an unchanged drawing gives the same result (labels do not
  * affect geometry or connectivity). Pure: the caller passes the compiled
@@ -29,7 +35,7 @@
 
 import type { InternalModel } from '../compiler/internal-model';
 import type { LibraryEntry } from './library';
-import type { DiagramFile, NodeId, Wire } from './types';
+import type { DiagramFile, NodeId, Wire, WireId } from './types';
 
 export interface WireNumbering {
   /** The renumbered document — the input itself when no label changed. */
@@ -90,10 +96,8 @@ export function numberWiresByPotential(diagram: DiagramFile, m: InternalModel): 
   };
 
   const numbered: { node: NodeId; at: [number, number] }[] = [];
-  const named = new Set<NodeId>();
   for (const [node, ws] of byNode) {
-    if (namedRail(node) || mainCircuit(node) || namedByHand(ws)) named.add(node);
-    else numbered.push({ node, at: anchor(ws) });
+    if (!namedRail(node) && !mainCircuit(node) && !namedByHand(ws)) numbered.push({ node, at: anchor(ws) });
   }
   numbered.sort(
     (a, b) => a.at[1] - b.at[1] || a.at[0] - b.at[0] || (a.node < b.node ? -1 : a.node > b.node ? 1 : 0),
@@ -101,18 +105,40 @@ export function numberWiresByPotential(diagram: DiagramFile, m: InternalModel): 
   const numberOf = new Map<NodeId, string>();
   numbered.forEach((n, i) => numberOf.set(n.node, String(i + 1)));
 
+  // Which wires of a numbered node show the number (see the header).
+  const atDevice = (w: Wire) => w.ends.some((end) => end.includes('.'));
+  const length = (w: Wire) => {
+    const path = m.wireRenders.get(w.id)?.path ?? [];
+    let len = 0;
+    for (let i = 1; i < path.length; i++) len += Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
+    return len;
+  };
+  const shows = new Set<WireId>();
+  for (const { node } of numbered) {
+    const ws = byNode.get(node)!;
+    const onDevice = ws.filter(atDevice);
+    if (onDevice.length > 0) for (const w of onDevice) shows.add(w.id);
+    else {
+      const longest = ws.reduce((best, w) => {
+        const d = length(w) - length(best);
+        return d > 0 || (d === 0 && w.id < best.id) ? w : best;
+      });
+      shows.add(longest.id);
+    }
+  }
+
   let changed = false;
   const next = wires.map((w) => {
     const node = m.terminalToNode.get(w.ends[0]);
     if (!node || !byNode.has(node)) return w;
-    const want = numberOf.get(node);
+    const want = shows.has(w.id) ? numberOf.get(node) : undefined;
     if (want !== undefined) {
       if (w.label === want) return w;
       changed = true;
       return { ...w, label: want };
     }
-    // An unnumbered node: drop only a stale number, never a hand-written name.
-    if (named.has(node) && isWireNumber(w.label)) {
+    // Shows no number: drop only a stale number, never a hand-written name.
+    if (isWireNumber(w.label)) {
       changed = true;
       const { label: _label, ...rest } = w;
       void _label;

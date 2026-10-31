@@ -46,6 +46,11 @@
       "showOnCanvas": true
     }
   ],
+  "label": {
+    "x": -27,
+    "y": 14,
+    "anchor": "end"
+  },
   "diagramTypes": [
     "circuit"
   ],

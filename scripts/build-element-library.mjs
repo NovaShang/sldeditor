@@ -1780,6 +1780,11 @@ const MANIFEST = [
       { id: 't_pe', x: 40, y: 20, orientation: 'e', label: 'PE' },
     ],
     params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
+    // Tag + rating left of the circle (right-aligned towards it, the usual
+    // two lines centred on the circle's middle, y = 16): the right side is
+    // where the PE wire leaves, and the default right-edge anchor put the
+    // label across it.
+    label: { x: -27, y: 14, anchor: 'end' },
     diagramTypes: ['circuit'],
   },
   {
@@ -1818,7 +1823,9 @@ const MANIFEST = [
       { id: 't_pe', x: 50, y: -10, orientation: 'e', label: 'PE' },
     ],
     params: [{ name: 'P', label: '功率', type: 'number', unit: 'kW', showOnCanvas: true }],
-    label: { x: 44, y: -44, anchor: 'start' },
+    // Left of the circle, centred on its middle (y = −40) — the right side
+    // is where the PE wire leaves (see motor-3ph).
+    label: { x: -44, y: -42, anchor: 'end' },
     diagramTypes: ['circuit'],
   },
   {
