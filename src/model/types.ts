@@ -92,6 +92,23 @@ export interface DiagramFile {
   sheets?: Sheet[];
 }
 
+/**
+ * What kind of drawing this document is. Absent → `sld`.
+ *
+ * - `sld`: single-line diagram — one line stands for all phases; buses,
+ *   feeders and ratings. Everything written before this field existed.
+ * - `circuit`: IEC circuit diagram (Stromlaufplan) — the main circuit drawn
+ *   multi-line (L1/L2/L3/N/PE) next to the control circuit (coils, contacts,
+ *   push-buttons) between two supply rails. Pin designations (A1/A2, 13/14,
+ *   95/96…) are shown, wire numbers are by potential, auto-layout is off.
+ *
+ * A per-DOCUMENT choice, like `symbolStandard`: the two drawing conventions
+ * contradict each other (one line = three phases vs one line = one
+ * conductor), so a document follows one of them throughout. Hosts use it to
+ * pick the AI's rules, the library catalog, the health checks and templates.
+ */
+export type DiagramType = 'sld' | 'circuit';
+
 export interface DiagramMeta {
   title?: string;
   description?: string;
@@ -120,6 +137,8 @@ export interface DiagramMeta {
    * with an ANSI one is a mistake, not a feature.
    */
   symbolStandard?: SymbolStandard;
+  /** Single-line diagram or circuit diagram — see `DiagramType`. Absent → `sld`. */
+  diagramType?: DiagramType;
   /**
    * Health-check issues the user marked as intentional ("这是有意的"), by
    * stable issue id (see `health/check.ts`). Kept in the document so the
@@ -170,6 +189,14 @@ export interface Element {
    * name falls back to the ID, which is the right default for everything else.
    */
   labelHidden?: boolean;
+  /**
+   * Per-instance pin designations, keyed by terminal id — overrides the
+   * library default (`LibraryTerminal.label`). The second auxiliary contact of
+   * a contactor is 23/24, not the library's 13/14; a push-button wired as a
+   * stop uses 11/12. An empty string hides that pin's designation. Absent =
+   * the library's own labels.
+   */
+  pinLabels?: Record<string, string>;
 }
 
 export interface Bus {
@@ -263,7 +290,11 @@ export type DiagramColor =
   | 'blue'
   | 'green'
   | 'amber'
-  | 'gray';
+  | 'gray'
+  /** IEC 60445 L1. */
+  | 'brown'
+  /** IEC 60445 PE — rendered as green with yellow stripes on wires. */
+  | 'green-yellow';
 
 /** Stroke style shared by rect / ellipse / line annotations. */
 export type AnnotationStroke = 'solid' | 'dashed' | 'dotted';

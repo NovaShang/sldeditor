@@ -28,6 +28,8 @@ const COLOR_LABEL: Record<DiagramColor, LocaleKey> = {
   green: 'ctx.colorGreen',
   blue: 'ctx.colorBlue',
   gray: 'ctx.colorGray',
+  brown: 'ctx.colorBrown',
+  'green-yellow': 'ctx.colorGreenYellow',
 };
 
 const GAP_PX = 12;

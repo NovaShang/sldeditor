@@ -307,6 +307,8 @@ export const ui: UiTable = {
   'ctx.colorGreen': 'أخضر',
   'ctx.colorBlue': 'أزرق',
   'ctx.colorGray': 'رمادي',
+  'ctx.colorBrown': 'بني',
+  'ctx.colorGreenYellow': 'أخضر-أصفر',
   'ctx.deleteHintNode': 'فصل كل الأسلاك المتصلة بهذه العقدة (تبقى العناصر)',
   'ctx.deleteHintWire': 'إزالة هذا السلك فقط (تبقى الأسلاك الأخرى على نفس العقدة)',
   'ctx.deleteHintElement': 'إزالة التحديد وأسلاكه',

@@ -45,8 +45,11 @@ describe('every named colour resolves in every medium', () => {
     expect(dxfColor(c)).toBeTypeOf('number');
   });
 
-  it('covers the whole DiagramColor union in the picker order', () => {
-    expect([...COLOR_ORDER].sort()).toEqual(
+  it('covers the whole DiagramColor union in the picker order, except the phase colours', () => {
+    // brown / green-yellow are IEC 60445 conductor presets (L1, PE) offered by
+    // the wire inspector on circuit diagrams, not general-purpose inks.
+    const phaseOnly: DiagramColor[] = ['brown', 'green-yellow'];
+    expect([...COLOR_ORDER, ...phaseOnly].sort()).toEqual(
       (Object.keys(NAMED_COLORS) as DiagramColor[]).sort(),
     );
   });

@@ -307,6 +307,8 @@ export const ui: UiTable = {
   'ctx.colorGreen': '緑',
   'ctx.colorBlue': '青',
   'ctx.colorGray': 'グレー',
+  'ctx.colorBrown': '茶色',
+  'ctx.colorGreenYellow': '緑黄',
   'ctx.deleteHintNode': 'このノードのすべての配線を切断（要素は残る）',
   'ctx.deleteHintWire': 'この配線のみを削除（同じノードの他の配線は残る）',
   'ctx.deleteHintElement': '選択部分とその配線を削除',

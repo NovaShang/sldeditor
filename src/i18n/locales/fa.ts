@@ -307,6 +307,8 @@ export const ui: UiTable = {
   'ctx.colorGreen': 'سبز',
   'ctx.colorBlue': 'آبی',
   'ctx.colorGray': 'خاکستری',
+  'ctx.colorBrown': 'قهوه‌ای',
+  'ctx.colorGreenYellow': 'سبز-زرد',
   'ctx.deleteHintNode': 'قطع تمام سیم‌های این گره (عناصر باقی می‌مانند)',
   'ctx.deleteHintWire': 'فقط این سیم حذف می‌شود (سیم‌های دیگر همان گره باقی می‌مانند)',
   'ctx.deleteHintElement': 'حذف انتخاب‌شده و سیم‌های آن',

@@ -293,6 +293,8 @@ export const ui: UiTable = {
   'ctx.colorGreen': 'ירוק',
   'ctx.colorBlue': 'כחול',
   'ctx.colorGray': 'אפור',
+  'ctx.colorBrown': 'חום',
+  'ctx.colorGreenYellow': 'ירוק-צהוב',
   'ctx.deleteHintNode': 'נתק את כל התילים בצומת זה (הרכיבים נשארים)',
   'ctx.deleteHintWire': 'הסר רק את התיל הזה (תילים אחרים באותו צומת נשארים)',
   'ctx.deleteHintElement': 'הסר את הבחירה ואת התילים המחוברים אליה',

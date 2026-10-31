@@ -293,6 +293,8 @@ export const ui: UiTable = {
   'ctx.colorGreen': 'Зелёный',
   'ctx.colorBlue': 'Синий',
   'ctx.colorGray': 'Серый',
+  'ctx.colorBrown': 'Коричневый',
+  'ctx.colorGreenYellow': 'Жёлто-зелёный',
   'ctx.deleteHintNode': 'Отключить все провода этого узла (элементы останутся)',
   'ctx.deleteHintWire': 'Удалить только этот провод (остальные провода узла останутся)',
   'ctx.deleteHintElement': 'Удалить выделенное и его провода',

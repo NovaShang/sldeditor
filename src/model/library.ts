@@ -1,4 +1,4 @@
-import type { SymbolStandard } from './types';
+import type { SymbolStandard, DiagramType } from './types';
 
 /**
  * Schema for the element library: one JSON file per symbol under
@@ -23,6 +23,13 @@ export interface LibraryTerminal {
   x: number;
   y: number;
   orientation: Orientation;
+  /**
+   * Pin designation printed next to the terminal on circuit diagrams
+   * (IEC 60947 / EN 50005: coil A1/A2, auxiliary make 13/14, break 21/22,
+   * overload 95/96, main poles 1/3/5 → 2/4/6). Absent = no designation.
+   * Instances may override it (`Element.pinLabels`).
+   */
+  label?: string;
 }
 
 /** Stretch behavior, e.g. for busbar segments. */
@@ -171,5 +178,13 @@ export interface LibraryEntry {
    * (IEEE 315 marks a large share of its symbols as IEC-harmonised).
    */
   variants?: Partial<Record<Exclude<SymbolStandard, 'iec'>, LibraryVariant>>;
+  /**
+   * Drawing types this symbol belongs to (palette + AI catalog filtering).
+   * Absent = both. Multi-pole power symbols (3-pole breaker, contactor main
+   * poles, 3-phase motor with U/V/W) are `['circuit']`; symbols that only make
+   * sense as single-line overview blocks may be `['sld']`. Search always
+   * covers the whole library.
+   */
+  diagramTypes?: DiagramType[];
   source: LibrarySource;
 }

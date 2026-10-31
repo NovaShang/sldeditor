@@ -13,6 +13,7 @@ export type {
   DiagramColor,
   DiagramFile,
   DiagramMeta,
+  DiagramType,
   DiagramVersion,
   Element,
   ElementId,
@@ -112,6 +113,7 @@ export {
   LEGACY_FRAME_IDS,
 } from './sheet';
 export { sheetPrimitives } from './sheet-render';
+export { DIAGRAM_TYPES, diagramTypeOf, isCircuitDiagram, entryFitsDiagramType, pinLabelOf } from './diagram-type';
 export type {
   SheetPrimitives,
   SheetRectPrim,

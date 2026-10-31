@@ -38,7 +38,17 @@ export const NAMED_COLORS: Record<DiagramColor, ColorSpec> = {
   green: { light: '#197D3F', dark: '#4ADE80', aci: 3 },
   amber: { light: '#B45309', dark: '#FBBF24', aci: 30 },
   gray: { light: '#6B7280', dark: '#9CA3AF', aci: 8 },
+  // Phase colours (IEC 60445) for circuit diagrams. Not in `COLOR_ORDER`:
+  // they are offered as conductor presets (L1 brown / N blue / PE green-
+  // yellow), not as general-purpose inks.
+  brown: { light: '#8B4513', dark: '#C9814B', aci: 34 },
+  // Base ink of the PE conductor; wire renderers overlay yellow stripes
+  // (`PE_STRIPE`) so the green-yellow reads as such on paper.
+  'green-yellow': { light: '#197D3F', dark: '#4ADE80', aci: 3 },
 };
+
+/** Stripe colour drawn over a `green-yellow` wire (IEC 60445 PE). */
+export const PE_STRIPE = { light: '#E6B800', dark: '#FDE047' } as const;
 
 /** Palette order for pickers — `default` first, then warm → cool → neutral. */
 export const COLOR_ORDER: DiagramColor[] = [

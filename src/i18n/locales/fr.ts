@@ -307,6 +307,8 @@ export const ui: UiTable = {
   'ctx.colorGreen': 'Vert',
   'ctx.colorBlue': 'Bleu',
   'ctx.colorGray': 'Gris',
+  'ctx.colorBrown': 'Marron',
+  'ctx.colorGreenYellow': 'Vert-jaune',
   'ctx.deleteHintNode': 'Déconnecte tous les fils de ce nœud (les éléments restent)',
   'ctx.deleteHintWire': 'Retire uniquement ce fil (les autres fils du même nœud restent)',
   'ctx.deleteHintElement': 'Retire la sélection et ses fils',

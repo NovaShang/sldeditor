@@ -307,6 +307,8 @@ export const ui: UiTable = {
   'ctx.colorGreen': 'Grün',
   'ctx.colorBlue': 'Blau',
   'ctx.colorGray': 'Grau',
+  'ctx.colorBrown': 'Braun',
+  'ctx.colorGreenYellow': 'Grün-gelb',
   'ctx.deleteHintNode': 'Alle Leitungen an diesem Knoten trennen (Elemente bleiben erhalten)',
   'ctx.deleteHintWire': 'Nur diese Leitung entfernen (andere Leitungen am selben Knoten bleiben erhalten)',
   'ctx.deleteHintElement': 'Auswahl und ihre Leitungen entfernen',

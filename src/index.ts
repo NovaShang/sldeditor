@@ -37,6 +37,7 @@ export type {
   DiagramColor,
   DiagramFile,
   DiagramMeta,
+  DiagramType,
   DiagramVersion,
   Element,
   ElementId,
@@ -111,6 +112,11 @@ export {
   sheetIndexAt,
   migrateLegacyFrame,
   sheetPrimitives,
+  DIAGRAM_TYPES,
+  diagramTypeOf,
+  isCircuitDiagram,
+  entryFitsDiagramType,
+  pinLabelOf,
 } from './model';
 
 // Named ink palette — exposed so an embedding app can offer the same six

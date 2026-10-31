@@ -293,6 +293,8 @@ export const ui: UiTable = {
   'ctx.colorGreen': 'Verde',
   'ctx.colorBlue': 'Azul',
   'ctx.colorGray': 'Cinza',
+  'ctx.colorBrown': 'Marrom',
+  'ctx.colorGreenYellow': 'Verde-amarelo',
   'ctx.deleteHintNode': 'Desconecta todos os fios deste nó (os elementos permanecem)',
   'ctx.deleteHintWire': 'Remove apenas este fio (os demais no mesmo nó permanecem)',
   'ctx.deleteHintElement': 'Remove a seleção e seus fios',
