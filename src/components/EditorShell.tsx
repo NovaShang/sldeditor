@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { CanvasSvg } from '../canvas';
 import { ElementHoverLabel } from '../canvas/ElementHoverLabel';
-import { useObservedWidth } from '../hooks/editor-tier';
+import { tierForWidth, useObservedWidth } from '../hooks/editor-tier';
+import { BottomBarProvider } from '../hooks/bottom-bar-provider';
 import { EditorTierProvider } from '../hooks/use-editor-tier';
 import { useEditorStore } from '../store';
 import { ContextMenuHost } from './ContextMenu';
@@ -34,11 +35,7 @@ function useFocusGuards() {
       const t = e.target as HTMLElement | null;
       if (!t) return;
       // Don't steal text selection or input focus.
-      if (
-        t.tagName === 'INPUT' ||
-        t.tagName === 'TEXTAREA' ||
-        t.isContentEditable
-      ) {
+      if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) {
         return;
       }
       const btn = t.closest('button');
@@ -52,11 +49,7 @@ function useFocusGuards() {
       if (!active || active === document.body) return;
       // Leave inputs alone — clicking outside an input naturally blurs it
       // anyway, and we don't want to fight any deliberate focus.
-      if (
-        active.tagName === 'INPUT' ||
-        active.tagName === 'TEXTAREA' ||
-        active.isContentEditable
-      ) {
+      if (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable) {
         return;
       }
       active.blur();
@@ -85,27 +78,29 @@ export function EditorShell() {
         className="relative h-full w-full overflow-hidden bg-background text-foreground"
       >
         <EditorTierProvider width={width}>
-          <CanvasSvg />
-          {readOnly ? (
-            // View-only: canvas + zoom/fit controls + hover labels, no editing
-            // chrome (panels, tools, contextual/library popovers, onboarding).
-            <>
-              <ViewToolbar />
-              <ElementHoverLabel />
-            </>
-          ) : (
-            <>
-              <LeftPanel />
-              <RightPanel />
-              <FloatingToolbar />
-              <ViewToolbar />
-              <ContextualToolbar />
-              <AnnotationEditToolbar />
-              <LibraryPopover />
-              <OnboardingCard />
-              <ElementHoverLabel />
-            </>
-          )}
+          <BottomBarProvider width={width} tier={width == null ? 'full' : tierForWidth(width)}>
+            <CanvasSvg />
+            {readOnly ? (
+              // View-only: canvas + zoom/fit controls + hover labels, no editing
+              // chrome (panels, tools, contextual/library popovers, onboarding).
+              <>
+                <ViewToolbar />
+                <ElementHoverLabel />
+              </>
+            ) : (
+              <>
+                <LeftPanel />
+                <RightPanel />
+                <FloatingToolbar />
+                <ViewToolbar />
+                <ContextualToolbar />
+                <AnnotationEditToolbar />
+                <LibraryPopover />
+                <OnboardingCard />
+                <ElementHoverLabel />
+              </>
+            )}
+          </BottomBarProvider>
         </EditorTierProvider>
       </div>
     </ContextMenuHost>

@@ -8,8 +8,8 @@
 import { useCanvasStore } from '../store';
 import { inkClass } from '../lib/colors';
 import { alarmAttr, qualityAttr, useRuntime } from '../runtime/runtime-context';
+import { busStrokeWidth, PE_STRIPE_DASHARRAY } from '../lib/circuit-marks';
 
-const STROKE_WIDTH = 3;
 /** Invisible click target wider than the visible stroke, mirroring
  *  ElementLayer's `HitRect`. */
 const HIT_WIDTH = 12;
@@ -20,6 +20,9 @@ export function BusLayer() {
   const selectedNode = useCanvasStore((s) => s.selectedNode);
   const nodes = useCanvasStore((s) => s.internal.nodes);
   const terminalToNode = useCanvasStore((s) => s.internal.terminalToNode);
+  // A busbar on a single-line diagram, a supply rail (conductor weight) on a
+  // circuit diagram.
+  const strokeWidth = useCanvasStore((s) => busStrokeWidth(s.internal.diagramType));
   // A bus is a legal binding target too (see `Binding.target`).
   const runtime = useRuntime().props;
   const selSet = new Set(selection);
@@ -89,10 +92,23 @@ export function BusLayer() {
               x2={x2}
               y2={y2}
               stroke="currentColor"
-              strokeWidth={STROKE_WIDTH}
+              strokeWidth={strokeWidth}
               strokeLinecap="round"
               fill="none"
             />
+            {/* A green-yellow (PE) rail is striped like a PE wire. */}
+            {bus.color === 'green-yellow' && (
+              <line
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                data-selected={isSelected ? 'true' : undefined}
+                className="ole-pe-stripe"
+                strokeWidth={strokeWidth}
+                strokeDasharray={PE_STRIPE_DASHARRAY}
+              />
+            )}
           </g>
         );
       })}

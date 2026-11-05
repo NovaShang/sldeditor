@@ -21,6 +21,7 @@ import {
   placePinLabel,
   placePinLabels,
   stripeSegments,
+  busStrokeWidth,
   PE_STRIPE_DASHARRAY,
 } from '../../src/lib/circuit-marks';
 import { PE_STRIPE } from '../../src/lib/colors';
@@ -215,6 +216,29 @@ describe('SVG export', () => {
   it('stripes a green-yellow wire', () => {
     const svg = buildExportSvg(compile(doc('circuit')));
     expect(svg).toContain(`stroke="${PE_STRIPE.light}" stroke-dasharray="${PE_STRIPE_DASHARRAY}"`);
+  });
+});
+
+describe('rails', () => {
+  it('draw at conductor weight on a circuit diagram, as busbars on a single-line one', () => {
+    expect(busStrokeWidth('circuit')).toBe(1);
+    expect(busStrokeWidth('sld')).toBe(3);
+    const bar = (svg: string) => svg.match(/<line id="L"[^>]*stroke-width="([\d.]+)"/)?.[1];
+    const circuit = Number(bar(buildExportSvg(compile(doc('circuit')))));
+    const sld = Number(bar(buildExportSvg(compile(doc()))));
+    expect(sld / circuit).toBeCloseTo(3);
+  });
+
+  it('stripe a green-yellow (PE) rail like a PE wire, in SVG and DXF', () => {
+    const d = doc('circuit');
+    d.buses!.push({ id: 'PE', name: 'PE', color: 'green-yellow', layout: { at: [100, 340], span: 200 } });
+    const svg = buildExportSvg(compile(d));
+    expect(svg).toMatch(new RegExp(`<line x1="0" y1="340" x2="200" y2="340" stroke="${PE_STRIPE.light}"[^>]*stroke-dasharray="${PE_STRIPE_DASHARRAY}"`));
+    // The wire-only document has one yellow DXF dash run (w5); the rail adds
+    // 200 / (2 * 4) = 25 more.
+    const count = (x: DiagramFile) =>
+      (buildExportDxf(compile(x)).match(/LINE\n8\nWIRES\n62\n2\n/g) ?? []).length;
+    expect(count(d) - count(doc('circuit'))).toBe(25);
   });
 });
 

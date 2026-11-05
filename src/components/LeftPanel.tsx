@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { ListTree, PanelBottomClose } from 'lucide-react';
+import { barAtLeast, useBottomBar, useReportBarWidth } from '../hooks/bottom-bar';
 import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { usePanels } from '../hooks/use-panels';
 import { useT } from '../i18n';
@@ -9,10 +11,10 @@ import type { Element } from '../model';
 export function LeftPanel() {
   const open = usePanels((s) => s.outlineOpen);
   const setOpen = usePanels((s) => s.setOutlineOpen);
-  const tier = useEditorTier();
-  const dense = atLeast(tier, 'dense');
+  const { mode } = useBottomBar();
+  const dense = barAtLeast(mode, 'dense');
 
-  // At dense+ the collapsed tab is replaced by an outline button embedded
+  // In the dense bottom row the collapsed tab is replaced by an outline button embedded
   // directly into the FloatingToolbar bottom bar. The outline panel itself
   // still lives here but switches to a full-width bottom sheet anchored just
   // above that bar so it doesn't compete for horizontal room with the canvas.
@@ -32,8 +34,18 @@ export function LeftPanel() {
     );
   }
 
+  return <BottomLeft open={open} setOpen={setOpen} />;
+}
+
+/** The outline tab (or open outline panel) at the left end of the bottom row.
+ *  Its own component so the width it reports to the row is observed from
+ *  mount, whichever layout came before. */
+function BottomLeft({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useReportBarWidth('left', rootRef);
   return (
     <div
+      ref={rootRef}
       className="absolute z-10 flex flex-col items-start"
       style={{
         bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))',
@@ -52,8 +64,8 @@ export function LeftPanel() {
 
 function CollapsedTab({ onClick }: { onClick: () => void }) {
   const t = useT();
-  const tier = useEditorTier();
-  const compact = atLeast(tier, 'compact');
+  const { mode } = useBottomBar();
+  const compact = barAtLeast(mode, 'compact');
   return (
     <button
       type="button"

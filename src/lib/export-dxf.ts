@@ -209,7 +209,7 @@ export function buildExportDxf(
     }
   }
 
-  // Buses (drawn after wires so the heavier bar sits on top).
+  // Buses (drawn after wires so a busbar sits on top of its taps).
   for (const { bus, geometry } of model.buses.values()) {
     const { axis, at, span } = geometry;
     const half = span / 2;
@@ -218,6 +218,12 @@ export function buildExportDxf(
     if (!keep(pointsBox([a, b]))) continue;
     w.setColor(dxfColor(bus.color));
     w.polyline(LAYER_WIRES, [a, b].map(worldToDxf), false);
+    if (bus.color === 'green-yellow') {
+      w.setColor(ACI_YELLOW);
+      for (const [p, q] of stripeSegments([a, b])) {
+        w.line(LAYER_WIRES, worldToDxf(p), worldToDxf(q));
+      }
+    }
   }
   w.setColor(undefined);
 

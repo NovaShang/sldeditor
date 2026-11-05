@@ -47,6 +47,7 @@ import {
   placeBusNames,
   placePinLabels,
   PE_STRIPE_DASHARRAY,
+  busStrokeWidth,
 } from './circuit-marks';
 import { sheetRect, type Sheet, type TitleBlockShared } from '../model/sheet';
 import { exportSheetPrimitives, type ExportRegion } from './export-sheets';
@@ -169,9 +170,16 @@ export function buildExportSvg(
     const y1 = axis === 'x' ? at[1] : at[1] - half;
     const x2 = axis === 'x' ? at[0] + half : at[0];
     const y2 = axis === 'x' ? at[1] : at[1] + half;
+    const width = sw(busStrokeWidth(model.diagramType));
     out.push(
-      `  <line id="${escapeXml(bus.id)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${exportInk(bus.color)}" stroke-width="${sw(3)}" stroke-linecap="round" fill="none"/>`,
+      `  <line id="${escapeXml(bus.id)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${exportInk(bus.color)}" stroke-width="${width}" stroke-linecap="round" fill="none"/>`,
     );
+    // A PE rail is striped like a PE wire.
+    if (bus.color === 'green-yellow') {
+      out.push(
+        `  <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${PE_STRIPE.light}" stroke-width="${width}" stroke-dasharray="${PE_STRIPE_DASHARRAY}" fill="none"/>`,
+      );
+    }
   }
 
   // Junctions — a filled solder dot per point node, but only where 3+

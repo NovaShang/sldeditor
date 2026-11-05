@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   Cable,
   Circle,
@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { Tooltip } from './ui/tooltip';
 import { UpwardPopover } from './ui/upward-popover';
-import { atLeast, useEditorTier } from '../hooks/editor-tier';
+import { barAtLeast, barCenter, useBottomBar, useReportBarWidth } from '../hooks/bottom-bar';
 import { usePanels } from '../hooks/use-panels';
 import { useNotice } from '../hooks/use-notice';
 import { useT, type LocaleKey } from '../i18n';
@@ -289,27 +289,39 @@ export function FloatingToolbar() {
   const future = useEditorStore((s) => s.future.length);
   const undo = useEditorStore((s) => s.undo);
   const redo = useEditorStore((s) => s.redo);
-  const tier = useEditorTier();
+  const { mode, width, widths } = useBottomBar();
   const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
   const notice = useNotice((s) => s.text);
-  // Drop labels from `tight` (≥720 < 900) so the centered main toolbar stops
-  // colliding with the right-anchored ViewToolbar. The outline tab on the
-  // left still has room for its label until `compact`.
-  const forceIconOnly = atLeast(tier, 'tight');
-  const showHint = !atLeast(tier, 'dense');
-  // Phone-class layout (`dense` and below): the outline tab and the view
-  // toolbar disappear and their entry points are embedded directly into this
-  // pill as a tab-bar-style row, so the whole bottom chrome stays on a single
-  // visual row. The [Undo/Redo/Layout] group also collapses into one overflow
-  // button to keep the bar narrow. Select and the annotation cluster are
-  // dropped from the main bar — Pan is the default on touch and absorbs
-  // single-tap selection (see PanTool), and annotation drawing is rare
-  // enough on a phone to hide.
-  const unifiedBar = atLeast(tier, 'dense');
+  const barRef = useRef<HTMLDivElement>(null);
+  useReportBarWidth('bar', barRef);
+  // How collapsed the bottom row is comes from measured widths (see
+  // hooks/bottom-bar): labels go before this bar would touch the outline tab
+  // or the view toolbar, in any language.
+  const forceIconOnly = barAtLeast(mode, 'tight');
+  const showHint = !barAtLeast(mode, 'dense');
+  // Unified layout (`dense`, phones and very narrow editors): the outline tab
+  // and the view toolbar disappear and their entry points are embedded
+  // directly into this pill as a tab-bar-style row, so the whole bottom
+  // chrome stays on a single visual row. The [Undo/Redo/Layout] group also
+  // collapses into one overflow button to keep the bar narrow. Select and the
+  // annotation cluster are dropped from the main bar — Pan is the default on
+  // touch and absorbs single-tap selection (see PanTool), and annotation
+  // drawing is rare enough on a phone to hide.
+  const unifiedBar = barAtLeast(mode, 'dense');
   const PHONE_HIDDEN = new Set(['select']);
-  const visibleTools = unifiedBar
-    ? BAR_TOOLS.filter((def) => !PHONE_HIDDEN.has(def.id))
-    : BAR_TOOLS;
+  // Circuit diagrams have no busbar tool: their rails come from templates and
+  // the assistant, and draw as ordinary conductors.
+  const visibleTools = BAR_TOOLS.filter(
+    (def) => !(unifiedBar && PHONE_HIDDEN.has(def.id)) && !(circuit && def.id === 'busbar'),
+  );
+  // Opening a circuit diagram (template, file, project type switch) while the
+  // busbar tool is active drops back to Select: the tool has no button there.
+  useEffect(() => {
+    if (circuit && active === 'busbar') setTool('select');
+  }, [circuit, active, setTool]);
+  // Centred in the editor when that clears both side pieces, otherwise slid
+  // towards the roomier side.
+  const center = width == null || unifiedBar ? null : barCenter(widths, width);
 
   const isToolActive = (def: ToolDef): boolean => active === def.switchTo;
 
@@ -321,8 +333,14 @@ export function FloatingToolbar() {
 
   return (
     <div
-      className="absolute left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5"
-      style={{ bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))' }}
+      className={cn(
+        'absolute z-20 flex w-max -translate-x-1/2 flex-col items-center gap-1.5',
+        center == null && 'left-1/2',
+      )}
+      style={{
+        bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))',
+        left: center == null ? undefined : center,
+      }}
     >
       {notice ? (
         // A result notice wins over the tool hint, at every width.
@@ -345,6 +363,7 @@ export function FloatingToolbar() {
         )
       )}
       <div
+        ref={barRef}
         onPointerEnter={() => setBarHover(true)}
         onPointerLeave={() => setBarHover(false)}
         className={cn(

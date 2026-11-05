@@ -14,7 +14,7 @@
 
 import type { InternalModel } from '../compiler/internal-model';
 import { pinLabelOf } from '../model/diagram-type';
-import type { DiagramColor, Orientation, TerminalRef } from '../model';
+import type { DiagramColor, DiagramType, Orientation, TerminalRef } from '../model';
 
 type Pt = [number, number];
 
@@ -226,6 +226,19 @@ function busConductorsAt(
   const across = g.axis === 'x' ? p[1] - g.at[1] : p[0] - g.at[0];
   if (Math.abs(across) > EPS || Math.abs(along) > half + EPS) return 0;
   return Math.abs(Math.abs(along) - half) <= EPS ? 1 : 2;
+}
+
+// ---- Rails --------------------------------------------------------------------
+
+/**
+ * Stroke width of a bus, in world units. On a single-line diagram a bus is a
+ * busbar and reads as one (3, heavier than a wire). On a circuit diagram the
+ * same object is a supply rail — L / N, +24V / 0V, L1 L2 L3 N PE — which is
+ * drawn as an ordinary conductor, so it takes the wire weight (1). The canvas
+ * and every exporter read this, so screen and paper agree.
+ */
+export function busStrokeWidth(diagramType: DiagramType): number {
+  return diagramType === 'circuit' ? 1 : 3;
 }
 
 // ---- PE stripes ---------------------------------------------------------------

@@ -14,11 +14,15 @@
 import { Cable, Minus, Shapes, X } from 'lucide-react';
 import { useOnboarding } from '../hooks/use-onboarding';
 import { useT } from '../i18n';
+import { isCircuitDiagram } from '../model';
+import { useEditorStore } from '../store';
 
 export function OnboardingCard() {
   const t = useT();
   const dismissed = useOnboarding((s) => s.dismissed);
   const dismiss = useOnboarding((s) => s.dismiss);
+  // The busbar tip is single-line only: circuit diagrams have no busbar tool.
+  const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
   if (dismissed) return null;
 
   return (
@@ -51,12 +55,14 @@ export function OnboardingCard() {
           title={t('onboard.step2.title')}
           body={t('onboard.step2.body')}
         />
-        <Step
-          n={3}
-          icon={<Minus />}
-          title={t('onboard.step3.title')}
-          body={t('onboard.step3.body')}
-        />
+        {!circuit && (
+          <Step
+            n={3}
+            icon={<Minus />}
+            title={t('onboard.step3.title')}
+            body={t('onboard.step3.body')}
+          />
+        )}
       </ol>
       <button
         type="button"

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Grid2x2,
   Maximize2,
@@ -17,7 +17,7 @@ import {
   getScale,
   subscribeScale,
 } from '../canvas';
-import { atLeast, useEditorTier, type Tier } from '../hooks/editor-tier';
+import { barAtLeast, useBottomBar, useReportBarWidth, type BarMode } from '../hooks/bottom-bar';
 import { useT } from '../i18n';
 import {
   LABEL_FONT_SIZE,
@@ -667,19 +667,21 @@ export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
  * FloatingToolbar bottom bar so the chrome stays on a single line.
  */
 export function ViewToolbar() {
-  const tier = useEditorTier();
+  const { mode } = useBottomBar();
   const readOnly = useEditorStore((s) => s.readOnly);
-  // Normally the dense+ FloatingToolbar hosts the zoom controls, so this bar
+  // Normally the dense FloatingToolbar hosts the zoom controls, so this bar
   // hides there. In read-only mode the FloatingToolbar isn't rendered, so keep
-  // this bar visible at every tier to preserve on-screen zoom/fit buttons.
-  if (!readOnly && atLeast(tier, 'dense')) return null;
-  return <ViewToolbarExpanded tier={tier} />;
+  // this bar visible in every mode to preserve on-screen zoom/fit buttons.
+  if (!readOnly && barAtLeast(mode, 'dense')) return null;
+  return <ViewToolbarExpanded mode={mode} />;
 }
 
-function ViewToolbarExpanded({ tier }: { tier: Tier }) {
-  // Hide the zoom-% pill from `tight` (≥720 < 900) onward — that's where the
-  // centered FloatingToolbar starts colliding with this right-anchored bar.
-  const hidePercentPill = atLeast(tier, 'tight');
+function ViewToolbarExpanded({ mode }: { mode: BarMode }) {
+  // The zoom-% pill goes as soon as the bottom row is short of room — the
+  // same step that drops the main toolbar's labels.
+  const hidePercentPill = barAtLeast(mode, 'tight');
+  const rootRef = useRef<HTMLDivElement>(null);
+  useReportBarWidth('right', rootRef);
   const readOnly = useEditorStore((s) => s.readOnly);
   const [grid, setGrid] = useGridState();
 
@@ -693,6 +695,7 @@ function ViewToolbarExpanded({ tier }: { tier: Tier }) {
     // Safe against host side panels: those are expected to move this toolbar
     // aside via `--ole-right-inset`, not to paint over it.
     <div
+      ref={rootRef}
       className="absolute z-50"
       style={{
         bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))',
