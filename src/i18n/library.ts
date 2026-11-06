@@ -498,6 +498,12 @@ export function libText(key: string, fallback?: string): string {
   return lookup(useLocale.getState().locale, key) ?? fallback ?? key;
 }
 
+/** Lookup in a given locale, whatever the UI's: palette search also matches
+ *  the English names, which engineers type in every language. */
+export function libTextIn(locale: Locale, key: string, fallback?: string): string {
+  return lookup(locale, key) ?? fallback ?? key;
+}
+
 /** Returns a translator that re-renders on locale change. */
 export function useLibT(): (key: string, fallback?: string) => string {
   const locale = useLocale((s) => s.locale);

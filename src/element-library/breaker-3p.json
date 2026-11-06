@@ -3,6 +3,18 @@
   "name": "三极断路器",
   "category": "switching",
   "description": "三极断路器（多线表示），端子 1-2、3-4、5-6。",
+  "keywords": [
+    "MCB",
+    "MCCB",
+    "CB",
+    "breaker",
+    "空开",
+    "Leitungsschutzschalter",
+    "disjuntor",
+    "disyuntor",
+    "disjoncteur",
+    "автомат"
+  ],
   "viewBox": "-27 -22 55 46",
   "width": 55,
   "height": 46,

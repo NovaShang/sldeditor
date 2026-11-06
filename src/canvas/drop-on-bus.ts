@@ -24,7 +24,8 @@ import type {
   WireEnd,
 } from '../model';
 import type { TerminalGeometry } from '../compiler/internal-model';
-import { newElementId, useEditorStore, wireIdFromEnds } from '../store';
+import { useEditorStore, wireIdFromEnds } from '../store';
+import { newPlacedElement } from '../store/id-allocator';
 import { snap } from './grid';
 
 const PROXIMITY_PX = 30;
@@ -54,7 +55,7 @@ export function dropElement(kind: string, at: [number, number]): DropResult {
 
   const { busId, busAt, axis } = target;
   const tapPin = pickTapTerminal(lib, axis);
-  const newId = newElementId(diagram, kind);
+  const { id: newId, name } = newPlacedElement(diagram, kind);
 
   const tapLocal = lib.terminals.find((t) => t.id === tapPin);
   const dropX = axis === 'x' ? at[0] : busAt[0];
@@ -64,7 +65,7 @@ export function dropElement(kind: string, at: [number, number]): DropResult {
     : [snap(at[0]), snap(at[1])];
 
   store.dispatch((d) => {
-    const newElement: Element = { id: newId, kind };
+    const newElement: Element = { id: newId, kind, ...(name ? { name } : {}) };
     const placement: Placement = { at: placedAt };
     const newEnd = `${newId}.${tapPin}` as TerminalRef;
     const wire: Wire = {
@@ -532,10 +533,10 @@ export function dropElementFromTerminal(
 
   const plan = planPlaceFromTerminal(lib, sourceRef, cursorAt);
   if (!plan) return null;
-  const newId = newElementId(diagram, kind);
+  const { id: newId, name } = newPlacedElement(diagram, kind);
 
   store.dispatch((d) => {
-    const newElement: Element = { id: newId, kind };
+    const newElement: Element = { id: newId, kind, ...(name ? { name } : {}) };
     const placement: Placement = { at: plan.placedAt };
     const wires: Wire[] = plan.links.map((l) => {
       const newPinRef = `${newId}.${l.pin}` as TerminalRef;

@@ -3,6 +3,16 @@
   "name": "剩余电流装置 (RCD)",
   "category": "protection",
   "description": "不带过流保护的剩余电流断路器 (IEC 61008)。",
+  "keywords": [
+    "RCCB",
+    "GFCI",
+    "ELCB",
+    "residual current",
+    "漏电",
+    "漏保",
+    "FI",
+    "диф"
+  ],
   "viewBox": "-12 -22 19 44",
   "width": 19,
   "height": 44,

@@ -3,6 +3,12 @@
   "name": "热继电器常闭触点 95-96",
   "category": "control",
   "description": "热过载继电器的常闭辅助触点（脱扣时断开），串在线圈回路中。代号与热继电器主回路相同。",
+  "keywords": [
+    "overload",
+    "thermal",
+    "OL",
+    "热继电器"
+  ],
   "viewBox": "-20 -22 29 44",
   "width": 29,
   "height": 44,

@@ -12,8 +12,10 @@ import {
 } from '../element-library';
 import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { usePanels } from '../hooks/use-panels';
-import { useT, type LocaleKey } from '../i18n';
+import { useLocale, useT, type LocaleKey } from '../i18n';
+import { termKey } from '../i18n/circuit-terms';
 import { useLibT } from '../i18n/library';
+import { searchEntries } from '../lib/library-search';
 import { useEditorStore } from '../store';
 import { isCustomKind } from '../compiler';
 import { useHostActions } from '../hooks/use-host-actions';
@@ -53,8 +55,9 @@ const CUSTOM_CATEGORY = '__custom__';
  *
  * With `type`, only the symbols that belong in that drawing type are listed
  * (`entryFitsDiagramType`): a 3-pole contactor has no place in a single-line
- * palette, a busduct none in a circuit diagram's. Search passes no type — it
- * always covers the whole library, so nothing is ever unreachable.
+ * palette, a busduct none in a circuit diagram's. Search uses the same list:
+ * a search that turns up a distance relay in a circuit diagram offers a
+ * symbol the drawing type has no use for.
  */
 function groupByCategory(
   library: ReadonlyMap<string, LibraryEntry>,
@@ -182,7 +185,7 @@ export function LibraryPopover() {
 
 function LibraryBody({ sheet }: { sheet: boolean }) {
   const t = useT();
-  const libT = useLibT();
+  const locale = useLocale((s) => s.locale);
   const [query, setQuery] = useState('');
   const [collapsed, setCollapsed] = useState<Set<string>>(() =>
     readPaletteCollapsed(),
@@ -191,33 +194,34 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
   const diagramType = useEditorStore((s) => s.internal.diagramType);
   const onCreateComponent = useHostActions((s) => s.onCreateComponent);
   const isSearching = query.trim().length > 0;
-  // Browsing lists the document type's symbols; search covers everything.
-  const allByCat = useMemo(() => groupByCategory(library), [library]);
-  const typeByCat = useMemo(
+  // Browsing and search both list the document type's symbols.
+  const paletteByCat = useMemo(
     () => groupByCategory(library, diagramType),
     [library, diagramType],
   );
-  const paletteByCat = isSearching ? allByCat : typeByCat;
-  const categories = useMemo(() => categoryIds(paletteByCat), [paletteByCat]);
+  const browseCategories = useMemo(() => categoryIds(paletteByCat), [paletteByCat]);
 
-  const filteredByCat = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return paletteByCat;
-    const out: Record<string, LibraryEntry[]> = {};
+  // Search keeps the category groups, but best matches first: within a group
+  // by score (name hit > keyword > description), and the groups by their best
+  // hit, so "lamp" opens on the indicator light rather than whatever group
+  // happens to come first in the palette.
+  const search = useMemo(() => {
+    if (!isSearching) return null;
+    const byCat: Record<string, LibraryEntry[]> = {};
+    const best: Record<string, number> = {};
     for (const [cat, entries] of Object.entries(paletteByCat)) {
-      const hits = entries.filter((e) => {
-        const name = libT(`${e.id}.name`, e.name).toLowerCase();
-        const desc = libT(`${e.id}.desc`, e.description ?? '').toLowerCase();
-        return (
-          name.includes(q) ||
-          e.id.toLowerCase().includes(q) ||
-          desc.includes(q)
-        );
-      });
-      if (hits.length) out[cat] = hits;
+      const hits = searchEntries(entries, query, locale);
+      if (!hits.length) continue;
+      byCat[cat] = hits.map((h) => h.entry);
+      best[cat] = hits[0].score;
     }
-    return out;
-  }, [query, libT, paletteByCat]);
+    const order = browseCategories
+      .filter((c) => byCat[c])
+      .sort((a, b) => best[b] - best[a]);
+    return { byCat, order };
+  }, [isSearching, query, locale, paletteByCat, browseCategories]);
+  const filteredByCat = search ? search.byCat : paletteByCat;
+  const categories = search ? search.order : browseCategories;
 
   const noMatch =
     isSearching && Object.values(filteredByCat).every((e) => !e?.length);
@@ -262,7 +266,7 @@ function LibraryBody({ sheet }: { sheet: boolean }) {
             const label =
               catId === CUSTOM_CATEGORY
                 ? t('cat.custom')
-                : t(`cat.${catId}` as LocaleKey);
+                : t(termKey(`cat.${catId}` as LocaleKey, diagramType === 'circuit'));
             const isOpen = isSearching || !collapsed.has(catId);
             return (
               <details

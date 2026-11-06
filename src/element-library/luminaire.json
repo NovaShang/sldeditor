@@ -3,6 +3,16 @@
   "name": "灯具 / 照明负荷",
   "category": "load",
   "description": "照明负荷（IEC 60617 荧光灯具通用符号）。区别于 indicator-light：那是面板信号灯，这是回路末端的照明负荷。",
+  "keywords": [
+    "lamp",
+    "light",
+    "lighting",
+    "灯",
+    "Leuchte",
+    "luminaria",
+    "éclairage",
+    "светильник"
+  ],
   "viewBox": "-27 -7 54 14",
   "width": 54,
   "height": 14,

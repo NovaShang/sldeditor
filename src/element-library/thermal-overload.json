@@ -3,6 +3,18 @@
   "name": "热过载继电器",
   "category": "motor-control",
   "description": "电机热过载保护继电器, 通常串接在接触器和电机之间。",
+  "keywords": [
+    "overload",
+    "thermal",
+    "OL",
+    "motor protection",
+    "热继电器",
+    "过载",
+    "Überlast",
+    "Motorschutz",
+    "relé térmico",
+    "тепловое реле"
+  ],
   "viewBox": "-9 -32 19 64",
   "width": 19,
   "height": 64,

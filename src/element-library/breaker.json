@@ -2,6 +2,18 @@
   "id": "breaker",
   "name": "断路器 (QF)",
   "category": "switching",
+  "keywords": [
+    "MCB",
+    "MCCB",
+    "CB",
+    "breaker",
+    "空开",
+    "Leitungsschutzschalter",
+    "disjuntor",
+    "disyuntor",
+    "disjoncteur",
+    "автомат"
+  ],
   "viewBox": "-7 -22 15 46",
   "width": 15,
   "height": 46,

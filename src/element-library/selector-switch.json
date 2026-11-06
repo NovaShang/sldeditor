@@ -3,6 +3,16 @@
   "name": "选择开关 (SA)",
   "category": "switching",
   "description": "转换 / 选择开关 (旋转操作, 保位)。",
+  "keywords": [
+    "switch",
+    "selector",
+    "rotary switch",
+    "hand-off-auto",
+    "HOA",
+    "转换开关",
+    "Wahlschalter",
+    "переключатель"
+  ],
   "viewBox": "-34 -42 36 64",
   "width": 36,
   "height": 64,

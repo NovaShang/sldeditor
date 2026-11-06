@@ -2210,6 +2210,71 @@ function extractTerminal(p) {
 }
 
 // ---------------------------------------------------------------------------
+// Search keywords: the words people type for a symbol that its name and
+// description do not contain — trade names, abbreviations, the everyday word
+// ("lamp" for an indicator light, "timer" for a time relay). Emitted as
+// `keywords` on the entry; the palette search matches them alongside the
+// localised name (see `src/lib/library-search.ts`). Language-neutral: a
+// keyword in any language is matched in every UI language, so the common
+// trade words of the shipped locales live here too.
+// ---------------------------------------------------------------------------
+
+const SEARCH_KEYWORDS = {
+  'indicator-light': [
+    'lamp', 'light', 'pilot light', 'pilot lamp', 'signal lamp', 'indicator', 'LED',
+    '信号灯', '灯', 'Lampe', 'Leuchtmelder', 'lámpara', 'piloto', 'voyant', 'lampe',
+    'lâmpada', 'sinaleiro', 'лампа', 'индикатор',
+  ],
+  luminaire: ['lamp', 'light', 'lighting', '灯', 'Leuchte', 'luminaria', 'éclairage', 'светильник'],
+  'time-relay': [
+    'timer', 'time delay relay', 'timer coil', 'delay', 'TDR', '定时器', '延时继电器',
+    'Timer', 'temporizador', 'temporisateur', 'relais temporisé', 'таймер',
+  ],
+  'relay-coil': [
+    'coil', 'contactor coil', 'relay', 'operating coil', 'A1 A2', '接触器线圈', '线圈',
+    'Spule', 'Schützspule', 'bobina', 'bobine', 'катушка',
+  ],
+  'push-button': [
+    'pushbutton', 'push button', 'button', 'start button', 'start', 'PB', 'NO',
+    '启动按钮', '按钮', 'Taster', 'Drucktaster', 'pulsador', 'bouton-poussoir', 'botão', 'botoeira',
+    'кнопка', 'пуск',
+  ],
+  'push-button-break': [
+    'pushbutton', 'push button', 'button', 'stop button', 'stop', 'PB', 'NC',
+    '停止按钮', '按钮', 'Taster', 'Stopptaster', 'pulsador', 'bouton-poussoir', 'botão', 'botoeira',
+    'кнопка', 'стоп',
+  ],
+  'emergency-stop': [
+    'e-stop', 'estop', 'emergency', 'emergency stop button', 'mushroom', 'stop',
+    '急停', 'Not-Halt', 'Not-Aus', 'parada de emergencia', 'seta', "arrêt d'urgence",
+    'emergência', 'аварийный', 'грибок',
+  ],
+  'thermal-overload': ['overload', 'thermal', 'OL', 'motor protection', '热继电器', '过载', 'Überlast', 'Motorschutz', 'relé térmico', 'тепловое реле'],
+  'overload-relay-3p': ['overload', 'thermal', 'OL', 'motor protection', '热继电器', '过载', 'Überlast', 'Motorschutz', 'relé térmico', 'тепловое реле'],
+  'overload-contact-break': ['overload', 'thermal', 'OL', '热继电器'],
+  'overload-contact-make': ['overload', 'thermal', 'OL', '热继电器'],
+  breaker: ['MCB', 'MCCB', 'CB', 'breaker', '空开', 'Leitungsschutzschalter', 'disjuntor', 'disyuntor', 'disjoncteur', 'автомат'],
+  'breaker-3p': ['MCB', 'MCCB', 'CB', 'breaker', '空开', 'Leitungsschutzschalter', 'disjuntor', 'disyuntor', 'disjoncteur', 'автомат'],
+  'mcb-1pn': ['MCB', 'breaker', 'circuit breaker', '空开', '小型断路器', 'Leitungsschutzschalter', 'disjuntor', 'disyuntor', 'disjoncteur', 'автомат'],
+  'motor-breaker-3p': ['MPCB', 'motor protection', 'manual motor starter', 'breaker', 'Motorschutzschalter', 'guardamotor', 'disjoncteur moteur', 'автомат защиты двигателя'],
+  rcd: ['RCCB', 'GFCI', 'ELCB', 'residual current', '漏电', '漏保', 'FI', 'диф'],
+  'rcd-4p': ['RCD', 'GFCI', 'ELCB', 'residual current', '漏电', '漏保', 'FI', 'диф'],
+  'gfci-breaker': ['RCD', 'RCBO', 'ELCB', 'residual current', 'breaker', '漏电', '漏保', 'FI/LS', 'диф'],
+  contactor: ['KM', 'Schütz', 'contactor', 'contacteur', 'контактор'],
+  'contactor-3p': ['KM', 'Schütz', 'contactor', 'contacteur', 'контактор'],
+  terminal: ['terminal strip', 'terminal block', 'connector', '端子排', 'Klemme', 'borne', 'клемма'],
+  'terminal-block': ['terminal', 'terminal strip', 'connector', '端子', '端子排', 'Klemme', 'borne', 'клемма'],
+  'selector-switch': ['switch', 'selector', 'rotary switch', 'hand-off-auto', 'HOA', '转换开关', 'Wahlschalter', 'переключатель'],
+  'switch-disconnector-3p': ['main switch', 'isolator', 'disconnector', '主开关', 'Hauptschalter', 'interruptor general', 'sectionneur', 'рубильник'],
+  disconnector: ['isolator', 'Trennschalter', 'seccionador', 'sectionneur', 'разъединитель'],
+  'power-supply': ['PSU', 'SMPS', '24V', '24 V DC', 'DC supply', '电源', 'Netzteil', 'fuente de alimentación', 'alimentation', 'блок питания'],
+  'supply-3ph': ['supply', 'mains', 'incoming', 'feeder', '进线', 'Einspeisung', 'alimentación', 'arrivée', 'ввод'],
+  buzzer: ['horn', 'alarm', 'sounder'],
+  bell: ['alarm', 'sounder'],
+  siren: ['horn', 'alarm', 'sounder'],
+};
+
+// ---------------------------------------------------------------------------
 // Build a single element.
 // ---------------------------------------------------------------------------
 
@@ -2345,6 +2410,7 @@ function finalize(entry, { svgBody, terminalLabelsSvg, bbox, terminals, sourceMe
     category: entry.category,
   };
   if (entry.description !== undefined) out.description = entry.description;
+  if (SEARCH_KEYWORDS[entry.id]) out.keywords = SEARCH_KEYWORDS[entry.id];
   out.viewBox = `${vb.x} ${vb.y} ${vb.w} ${vb.h}`;
   out.width = vb.w;
   out.height = vb.h;
@@ -2488,6 +2554,10 @@ function main() {
     );
     count++;
     console.log(`✓ ${entry.id.padEnd(22)} ${built.viewBox.padEnd(20)} terminals=${built.terminals.length}`);
+  }
+
+  for (const id of Object.keys(SEARCH_KEYWORDS)) {
+    if (!seenIds.has(id)) throw new Error(`SEARCH_KEYWORDS names unknown element ${id}`);
   }
 
   console.log(`\nWrote ${count} elements to ${path.relative(ROOT, OUT_DIR)}`);

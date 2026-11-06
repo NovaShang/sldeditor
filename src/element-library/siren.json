@@ -3,6 +3,11 @@
   "name": "警笛 (HA)",
   "category": "control",
   "description": "声响警笛 / 报警器。",
+  "keywords": [
+    "horn",
+    "alarm",
+    "sounder"
+  ],
   "viewBox": "-32 -42 44 54",
   "width": 44,
   "height": 54,

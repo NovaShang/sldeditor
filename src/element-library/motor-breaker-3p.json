@@ -3,6 +3,16 @@
   "name": "电动机保护断路器",
   "category": "motor-control",
   "description": "三极电动机保护断路器（热磁脱扣：过载 + 短路），端子 1-2、3-4、5-6。",
+  "keywords": [
+    "MPCB",
+    "motor protection",
+    "manual motor starter",
+    "breaker",
+    "Motorschutzschalter",
+    "guardamotor",
+    "disjoncteur moteur",
+    "автомат защиты двигателя"
+  ],
   "viewBox": "-27 -32 54 54",
   "width": 54,
   "height": 54,

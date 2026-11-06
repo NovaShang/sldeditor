@@ -3,6 +3,18 @@
   "name": "热继电器（三极主回路）",
   "category": "motor-control",
   "description": "热过载继电器的三极发热元件，端子 1-2、3-4、5-6；95-96 / 97-98 触点另放并取相同代号。",
+  "keywords": [
+    "overload",
+    "thermal",
+    "OL",
+    "motor protection",
+    "热继电器",
+    "过载",
+    "Überlast",
+    "Motorschutz",
+    "relé térmico",
+    "тепловое реле"
+  ],
   "viewBox": "-22 -22 49 44",
   "width": 49,
   "height": 44,

@@ -3,6 +3,11 @@
   "name": "蜂鸣器 (HA)",
   "category": "control",
   "description": "信号蜂鸣器。",
+  "keywords": [
+    "horn",
+    "alarm",
+    "sounder"
+  ],
   "viewBox": "-32 -52 44 64",
   "width": 44,
   "height": 64,

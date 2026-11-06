@@ -3,6 +3,15 @@
   "name": "接线端子 / 节点 (X)",
   "category": "busbar",
   "description": "接线端子 / 接线盒 / 汇接节点。",
+  "keywords": [
+    "terminal strip",
+    "terminal block",
+    "connector",
+    "端子排",
+    "Klemme",
+    "borne",
+    "клемма"
+  ],
   "viewBox": "-5 -5 10 10",
   "width": 10,
   "height": 10,

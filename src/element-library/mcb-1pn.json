@@ -3,6 +3,18 @@
   "name": "微型断路器 1P+N",
   "category": "protection",
   "description": "单极 + 中性极微型断路器（相极热磁脱扣），端子 1-2、N-N。",
+  "keywords": [
+    "MCB",
+    "breaker",
+    "circuit breaker",
+    "空开",
+    "小型断路器",
+    "Leitungsschutzschalter",
+    "disjuntor",
+    "disyuntor",
+    "disjoncteur",
+    "автомат"
+  ],
   "viewBox": "-17 -32 34 54",
   "width": 34,
   "height": 54,
