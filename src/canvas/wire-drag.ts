@@ -21,6 +21,10 @@ const snap = (v: number): number => Math.round(v / GRID) * GRID;
 /** Screen-px radius within which a release snaps onto an existing wire (taps a
  *  junction). Wider than the wire's own hit region so near-misses still land. */
 export const SCREEN_TAP_TOL = 16;
+/** Screen-px radius within which a press/release snaps onto a pin, junction
+ *  or bus it just missed. A pin's hit circle is only ~11 px across, and a
+ *  near miss used to mint a loose junction beside the pin instead. */
+export const SCREEN_PIN_TOL = 14;
 
 /** Where a press/release at `cursor` would land, for both preview and commit. */
 export interface DragTarget {
@@ -80,14 +84,57 @@ function nearestWireWithin(
   return best;
 }
 
-/** Resolve the landing under the cursor into a spec + preview info. A release
- *  on/near an existing wire taps a junction into it; empty space drops one. */
+/**
+ * The connectable nearest the cursor within `worldTol`: a device pin, a
+ * junction, or the nearest point of a bus axis. Ties go to the pin.
+ */
+export function nearestConnectableWithin(
+  cursor: [number, number],
+  worldTol: number,
+): WireEnd | null {
+  const m = useEditorStore.getState().internal;
+  let best: WireEnd | null = null;
+  let bestD = worldTol;
+  const consider = (end: WireEnd, p: readonly [number, number]) => {
+    const d = Math.hypot(p[0] - cursor[0], p[1] - cursor[1]);
+    if (d < bestD || (d === bestD && best === null)) {
+      bestD = d;
+      best = end;
+    }
+  };
+  for (const t of m.terminals.values()) consider(t.ref, t.world);
+  for (const [id, rj] of m.junctions) consider(id, rj.world);
+  for (const [id, rb] of m.buses) {
+    const { axis, at: c, span } = rb.geometry;
+    const half = span / 2;
+    const p: [number, number] =
+      axis === 'x'
+        ? [Math.max(c[0] - half, Math.min(c[0] + half, cursor[0])), c[1]]
+        : [c[0], Math.max(c[1] - half, Math.min(c[1] + half, cursor[1]))];
+    consider(id, p);
+  }
+  return best;
+}
+
+/** Resolve the landing under the cursor into a spec + preview info. A press or
+ *  release just off a pin, junction or bus snaps onto it; on/near an existing
+ *  wire it taps a junction into it; empty space drops one. */
 export function resolveDragTarget(
   under: Element | null,
   cursor: [number, number],
   worldTol: number,
 ): DragTarget {
-  const ref = under ? hitTerminal(under) : null;
+  let ref = under ? hitTerminal(under) : null;
+  if (!ref) {
+    // A near miss snaps onto the pin — but a release right on another wire's
+    // body taps that wire, unless the pin is where that wire ends anyway.
+    const near = nearestConnectableWithin(cursor, (worldTol * SCREEN_PIN_TOL) / SCREEN_TAP_TOL);
+    const onWire = under ? hitWire(under) : null;
+    const wire = onWire
+      ? useEditorStore.getState().diagram.wires?.find((w) => w.id === onWire)
+      : undefined;
+    if (near && (!wire || wire.ends.includes(near))) ref = near;
+  }
   if (ref) {
     const t = resolveWireTarget(ref, cursor);
     if (t) return { spec: { end: ref }, world: t.world, ref, isBus: t.isBus, create: false };
