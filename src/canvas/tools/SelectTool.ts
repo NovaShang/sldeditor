@@ -144,9 +144,13 @@ export const SelectTool: Tool = {
     // host but their React handlers run after the host's native bubble phase
     // (React 17+ root delegation). Ignoring handle hits here keeps
     // SelectTool from clearing the very selection that owns those handles.
+    // The in-canvas name editor is the same case: a press in it places the
+    // caret, and must not read as "clicked empty canvas" (which closed it).
     if (
       e.target instanceof Element &&
-      e.target.closest('.ole-bus-handle, .ole-wire-handle, .ole-annotation-handle, .ole-health-marker')
+      e.target.closest(
+        '.ole-bus-handle, .ole-wire-handle, .ole-annotation-handle, .ole-health-marker, .ole-element-name-editor',
+      )
     ) {
       return;
     }

@@ -26,6 +26,15 @@ import { ViewToolbar } from './ViewToolbar';
  *      reset short of clicking. Fix: clicking the canvas blurs the active
  *      element, restoring the "no focus" baseline shortcuts expect.
  *
+ * Clicking the canvas also blurs a focused text field — the property panel's
+ * Name box, the in-canvas name editor — and that one is load-bearing: their
+ * onBlur is what commits the typed text. The canvas tools preventDefault
+ * their pointerdown (drag, marquee, double-click), which cancels the
+ * browser's own blur, so without this the field stayed focused, the click
+ * changed the selection underneath it and the edit was thrown away. This
+ * listener runs in the capture phase, i.e. before any tool, so the commit
+ * lands on the object the field was editing, not the one just clicked.
+ *
  * Tab still works for keyboard-only users who actually want to navigate the
  * chrome — only mouse interactions are made focus-neutral.
  */
@@ -47,11 +56,9 @@ function useFocusGuards() {
       if (!t.closest('.ole-canvas-root')) return;
       const active = document.activeElement as HTMLElement | null;
       if (!active || active === document.body) return;
-      // Leave inputs alone — clicking outside an input naturally blurs it
-      // anyway, and we don't want to fight any deliberate focus.
-      if (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable) {
-        return;
-      }
+      // A press inside the focused editor itself (the in-canvas editors live
+      // in the canvas) is the user placing the caret, not leaving.
+      if (active.contains(t)) return;
       active.blur();
     };
     window.addEventListener('mousedown', onMouseDown);

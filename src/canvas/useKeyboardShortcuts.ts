@@ -7,23 +7,15 @@
 
 import { useEffect } from 'react';
 import { useEditorStore } from '../store';
-
-function isEditing(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  return (
-    tag === 'INPUT' ||
-    tag === 'TEXTAREA' ||
-    tag === 'SELECT' ||
-    target.isContentEditable
-  );
-}
+import { isTypingKeyEvent } from '../lib/text-entry';
 
 /**
- * Step out of drawing state. Wire/busbar tools always return to select.
+ * Step out of drawing state. Wire/busbar tools always return to select, and
+ * so does the hand tool — Esc is the universal "back to the pointer".
  * Place tool clears its placeKind first; if no kind is selected, returns to
  * select. For non-drawing tools, falls back to clearing selection. Shared
- * between Esc and the canvas right-click handler.
+ * between Esc and the canvas right-click handler (which only calls it for
+ * drawing tools, so a right-click while panning is unaffected).
  */
 export function exitDrawingState(): void {
   const store = useEditorStore.getState();
@@ -48,7 +40,8 @@ export function exitDrawingState(): void {
     tool === 'rect' ||
     tool === 'ellipse' ||
     tool === 'line' ||
-    tool === 'table'
+    tool === 'table' ||
+    tool === 'pan'
   ) {
     store.setActiveTool('select');
     return;
@@ -74,13 +67,18 @@ export function exitDrawingState(): void {
 export function useKeyboardShortcuts(): void {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isEditing(e.target)) return;
+      if (isTypingKeyEvent(e)) return;
       // View-only: no editing shortcuts (delete/undo/redo/copy/paste/tools/
       // rotate/mirror). Space-to-pan lives in useViewport and is unaffected.
       if (useEditorStore.getState().readOnly) return;
 
       const mod = e.metaKey || e.ctrlKey;
       const store = useEditorStore.getState();
+
+      // An in-canvas editor is open but focus slipped out of it (it lost a
+      // race with a click, a host stole focus…). The user still believes
+      // they are typing into it, so only Esc — which closes it — may act.
+      if ((store.editingElement || store.editingAnnotation) && e.key !== 'Escape') return;
 
       // Cmd+Z / Cmd+Shift+Z — undo / redo. Save shortcut handled in TopBar.
       if (mod && e.key.toLowerCase() === 'z') {

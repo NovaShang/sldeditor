@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { dispatchSyntheticPointerCancel } from './synthetic-pointer-cancel';
 import { publishScale } from './zoom-bus';
+import { isTypingKeyEvent } from '../lib/text-entry';
 
 export interface Viewport {
   tx: number;
@@ -269,9 +270,8 @@ export function useViewport(
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !spaceDown) {
-        // Don't hijack typing into a future input element.
-        const target = e.target as HTMLElement | null;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+        // Don't hijack a space typed into a name or note.
+        if (isTypingKeyEvent(e)) return;
         spaceDown = true;
         host.style.cursor = 'grab';
         e.preventDefault();

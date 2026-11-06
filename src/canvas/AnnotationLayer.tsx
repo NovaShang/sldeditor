@@ -199,12 +199,16 @@ const EDITOR_FS = 9;
  * and read while typing) but never smaller — so a document with enlarged
  * labels edits at the size it renders at.
  *
- * ENTER INSERTS A LINE BREAK; it does not commit. A device tag is routinely
- * stacked ("QF1" over "630A/25kA"), and this box is the only place a name is
- * typed, so Enter has to mean what it means in every other place you type a
- * multi-line label. Escape, clicking away, and ⌘/Ctrl+Enter all commit —
- * Escape kept its existing meaning (commit, not cancel) rather than quietly
- * changing under users who already rely on it.
+ * Enter commits, Shift+Enter inserts a line break — the same keys as the
+ * panel's Name field and a text annotation. A device tag is routinely stacked
+ * ("QF1" over "630A/25kA"), but Enter-as-newline turned the "done" key most
+ * people press into a stray empty line, and the edit then sat open until the
+ * next click. Clicking anywhere else and ⌘/Ctrl+Enter also commit; Escape
+ * cancels, as it does in the panel's fields and in text annotations.
+ *
+ * The typed text is also saved if the editor unmounts without a blur (the
+ * selection was cleared under it, another element went into edit) — a name
+ * the user typed is never silently dropped. Only Escape discards.
  */
 function NameEditor({
   elementId,
@@ -227,6 +231,15 @@ function NameEditor({
   const [lineCount, setLineCount] = useState(() =>
     Math.max(1, currentName.split('\n').length),
   );
+  // Set once the edit is settled (saved or cancelled), so the blur that
+  // follows a commit, or the unmount that follows either, does nothing more.
+  const settled = useRef(false);
+  // What has been typed, mirrored on every input: null until the first
+  // keystroke, so opening and closing the editor without typing never
+  // rewrites the name (not even to its normalised form). Kept in a ref, not
+  // read from the DOM, because by the time an unmount cleanup runs React has
+  // already detached `ref`.
+  const typed = useRef<string | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -239,33 +252,57 @@ function NameEditor({
     sel?.addRange(range);
   }, [elementId]);
 
-  function commit(): void {
+  /** Write the typed text to the element; the editor stays as it is. */
+  function save(): void {
+    if (settled.current || typed.current === null) return;
+    settled.current = true;
     const store = useEditorStore.getState();
     const el = store.diagram.elements.find((x) => x.id === elementId);
-    if (!el) {
-      store.setEditingElement(null);
-      return;
-    }
+    if (!el) return;
     // Normalise through the same helper the label renderer uses, so what is
     // stored is exactly what will be drawn: per-line trim, blank lines
     // dropped (a stray trailing Enter is an accident, not a gap).
-    const raw = (ref.current?.innerText ?? '').replace(/\u00a0/g, ' ');
+    const raw = typed.current.replace(/\u00a0/g, ' ');
     const text = nameLines(raw, '').join('\n');
     // Empty text clears the override; the structural label falls back to ID.
     const next = text === '' || text === elementId ? undefined : text;
     if (next !== el.name) store.updateElement(elementId, { name: next });
-    store.setEditingElement(null);
   }
 
+  function close(): void {
+    // Only close our own session: by the time a late blur arrives another
+    // element may already be in edit.
+    const store = useEditorStore.getState();
+    if (store.editingElement === elementId) store.setEditingElement(null);
+  }
+
+  function commit(): void {
+    save();
+    close();
+  }
+
+  // Unmounted without a blur: keep what was typed.
+  useEffect(() => {
+    return save;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- save reads refs/store only
+  }, []);
+
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {
-    if (e.key === 'Escape' || (e.key === 'Enter' && (e.metaKey || e.ctrlKey))) {
+    // Keep every key — Enter, Backspace, M, R… — away from the canvas
+    // hotkeys behind the editor.
+    e.stopPropagation();
+    if (e.nativeEvent.isComposing) return; // Enter picking an IME candidate
+    if (e.key === 'Escape') {
       e.preventDefault();
-      commit();
+      settled.current = true;
+      close();
       return;
     }
-    // Everything else — plain Enter included — is the editor's own; just keep
-    // it away from the canvas hotkeys.
-    e.stopPropagation();
+    // Shift+Enter falls through to the contentEditable: a line break.
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      commit();
+    }
   }
 
   // Position the foreignObject so the contentEditable's left edge matches
@@ -289,14 +326,16 @@ function NameEditor({
         suppressContentEditableWarning
         onBlur={commit}
         onKeyDown={onKeyDown}
-        onInput={() =>
-          setLineCount(
-            Math.max(1, (ref.current?.innerText ?? '').split('\n').length),
-          )
-        }
+        onInput={() => {
+          typed.current = ref.current?.innerText ?? '';
+          setLineCount(Math.max(1, typed.current.split('\n').length));
+        }}
         onPointerDown={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         style={{
+          // The label layer is click-through; the box being typed in is not,
+          // or a click to move the caret lands on the canvas behind it.
+          pointerEvents: 'auto',
           fontSize: `${fs}px`,
           fontFamily: 'ui-sans-serif, system-ui, sans-serif',
           color: 'var(--foreground)',

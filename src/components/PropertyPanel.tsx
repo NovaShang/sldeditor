@@ -66,9 +66,13 @@ export function PropertyPanel() {
   const selectedAnnotations = useEditorStore((s) => s.selectedAnnotations);
   const soleAnnotation = useEditorStore(soleSelectedAnnotation);
 
-  if (selectedWire) return <WirePanel wireId={selectedWire} />;
-  if (selectedNode) return <NodePanel nodeId={selectedNode} />;
-  if (soleAnnotation) return <AnnotationPanel annId={soleAnnotation} />;
+  // Every inspector is keyed by the id it edits, so a selection change
+  // remounts it: a draft typed for one object can never be shown for, or
+  // committed to, the next one. The unmounting fields commit what they hold
+  // to the object they were editing (see `useDraft`).
+  if (selectedWire) return <WirePanel key={selectedWire} wireId={selectedWire} />;
+  if (selectedNode) return <NodePanel key={selectedNode} nodeId={selectedNode} />;
+  if (soleAnnotation) return <AnnotationPanel key={soleAnnotation} annId={soleAnnotation} />;
 
   // Mixed / multi selections get a plain count. There is no bulk editing for
   // anything, so the only requirement is that a mixed set doesn't fall
@@ -93,15 +97,15 @@ export function PropertyPanel() {
 
   const id = selection[0];
   const bus = (buses ?? []).find((b) => b.id === id);
-  if (bus) return <BusInspector bus={bus} />;
+  if (bus) return <BusInspector key={id} bus={bus} />;
   const junction = (junctions ?? []).find((j) => j.id === id);
-  if (junction) return <JunctionPanel junction={junction} />;
+  if (junction) return <JunctionPanel key={id} junction={junction} />;
   const element = elements.find((e) => e.id === id);
   if (!element) return null;
   const lib = libraryById[element.kind];
 
   return (
-    <div className="flex flex-col gap-2.5 overflow-y-auto px-3 py-3 text-xs">
+    <div key={id} className="flex flex-col gap-2.5 overflow-y-auto px-3 py-3 text-xs">
       <KindFamilyRow id={id} kind={element.kind} />
       <TextRow
         label={t('props.name')}
@@ -109,8 +113,9 @@ export function PropertyPanel() {
         placeholder={element.id}
         // A device tag is routinely stacked ("QF1" over "630A/25kA"). This is
         // the same field as the canvas in-place editor and must behave the
-        // same way, or a name typed on the canvas comes back here as one run-
-        // on line the moment anything else is edited.
+        // same way (Enter done, Shift+Enter new line), or a name typed on the
+        // canvas comes back here as one run-on line the moment anything else
+        // is edited.
         multiline
         onCommit={(v) => {
           const next = nameLines(v, '').join('\n');
@@ -1270,25 +1275,24 @@ function PinField({
   title?: string;
   onCommit: (v: string) => void;
 }) {
-  const [local, setLocal] = useState(value);
+  const draft = useDraft(value, onCommit);
   const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => setLocal(value), [value]);
   return (
     <input
       ref={ref}
       type="text"
-      value={local}
+      value={draft.text}
       placeholder={placeholder}
       aria-label={ariaLabel}
       title={title}
-      onChange={(e) => setLocal(e.target.value)}
-      onBlur={() => {
-        if (local !== value) onCommit(local);
-      }}
+      onChange={(e) => draft.set(e.target.value)}
+      onFocus={draft.onFocus}
+      onBlur={draft.onBlur}
       onKeyDown={(e) => {
+        if (e.nativeEvent.isComposing) return;
         if (e.key === 'Enter') ref.current?.blur();
         if (e.key === 'Escape') {
-          setLocal(value);
+          draft.revert();
           ref.current?.blur();
         }
       }}
@@ -1453,6 +1457,68 @@ export function Field({
   );
 }
 
+/**
+ * The uncommitted text of a field that commits on blur (TextRow, PinField,
+ * NumberRow). A typed value must never be silently dropped, so besides blur
+ * it is also committed when the field unmounts — the inspector remounts per
+ * selected object (see `PropertyPanel`), and some ways of changing the
+ * selection never blur the field (outline clicks, the assistant, a chrome
+ * button that keeps focus where it is). The unmount commit goes through the
+ * field's own latest `commit`, i.e. to the object it was editing.
+ *
+ * `set` writes through a ref as well as state, so a blur dispatched in the
+ * same tick as a keystroke or an Escape revert sees the current text, not
+ * the previous render's.
+ */
+function useDraft(value: string, commit: (text: string) => void) {
+  const [text, setText] = useState(value);
+  const focused = useRef(false);
+  const live = useRef({ text, value, commit });
+  live.current.value = value;
+  live.current.commit = commit;
+  // The last text handed to `commit`: blur followed by unmount (or a commit
+  // the store normalises back to the old value) must not commit it twice.
+  const lastSent = useRef<string | null>(null);
+
+  const set = (next: string) => {
+    live.current.text = next;
+    setText(next);
+  };
+  const flush = () => {
+    const cur = live.current;
+    if (cur.text === cur.value || cur.text === lastSent.current) return;
+    lastSent.current = cur.text;
+    cur.commit(cur.text);
+  };
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+
+  // External change (undo/redo, the assistant): adopt it unless the user is
+  // typing here — resetting mid-edit would clobber keystrokes.
+  useEffect(() => {
+    if (focused.current) return;
+    live.current.text = value;
+    setText(value);
+    lastSent.current = null;
+  }, [value]);
+
+  useEffect(() => () => flushRef.current(), []);
+
+  return {
+    text,
+    set,
+    /** Back to the stored value; the blur that usually follows is a no-op. */
+    revert: () => set(live.current.value),
+    onFocus: () => {
+      focused.current = true;
+    },
+    onBlur: () => {
+      focused.current = false;
+      flush();
+    },
+  };
+}
+
 /** Rows a `multiline` TextRow will grow to before it starts scrolling. */
 const TEXT_ROW_MAX_ROWS = 6;
 
@@ -1469,23 +1535,25 @@ export function TextRow({
   placeholder?: string;
   unit?: string;
   /**
-   * Enter inserts a line break instead of committing, and the box grows with
-   * the content. Escape (revert) and blur (commit) are unchanged, and
-   * ⌘/Ctrl+Enter commits for anyone who reaches for a keyboard "done".
+   * The value may hold line breaks and the box grows with the content.
+   * Enter still commits — it is a name, and "type it, press Enter" is what
+   * everyone does; with Enter as a newline, most users' first Enter became
+   * a stray line break in the name instead of "done". A deliberate line
+   * break is Shift+Enter, the same as in a text annotation on the canvas.
+   * ⌘/Ctrl+Enter also commits; Escape reverts.
    */
   multiline?: boolean;
   onCommit: (v: string) => void;
 }) {
-  const [local, setLocal] = useState(value);
+  const draft = useDraft(value, onCommit);
+  const local = draft.text;
   const ref = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
-  useEffect(() => setLocal(value), [value]);
   const commonProps = {
     value: local,
     placeholder,
-    onChange: (e: { target: { value: string } }) => setLocal(e.target.value),
-    onBlur: () => {
-      if (local !== value) onCommit(local);
-    },
+    onChange: (e: { target: { value: string } }) => draft.set(e.target.value),
+    onFocus: draft.onFocus,
+    onBlur: draft.onBlur,
     className: cn(
       'w-full rounded-md border border-border/60 bg-background/50 px-2 text-[11px] focus:border-border focus:outline-none focus:ring-1 focus:ring-ring',
       unit && 'pr-8',
@@ -1503,16 +1571,17 @@ export function TextRow({
               Math.max(1, local.split('\n').length),
             )}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              // Shift+Enter falls through to the textarea: a line break.
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 ref.current?.blur();
               }
               if (e.key === 'Escape') {
-                setLocal(value);
+                draft.revert();
                 ref.current?.blur();
               }
-              // Everything else, plain Enter included, belongs to the box —
-              // but must not reach the canvas hotkeys behind it.
+              // Everything else belongs to the box — but must not reach the
+              // canvas hotkeys behind it.
               e.stopPropagation();
             }}
             {...commonProps}
@@ -1522,9 +1591,10 @@ export function TextRow({
             ref={ref}
             type="text"
             onKeyDown={(e) => {
+              if (e.nativeEvent.isComposing) return;
               if (e.key === 'Enter') ref.current?.blur();
               if (e.key === 'Escape') {
-                setLocal(value);
+                draft.revert();
                 ref.current?.blur();
               }
             }}
@@ -1647,31 +1717,32 @@ function NumberRow({
   onCommit: (v: number | undefined) => void;
 }) {
   const shown = value === undefined ? '' : String(value);
-  const [local, setLocal] = useState(shown);
+  const draft = useDraft(shown, (text) => {
+    if (text.trim() === '') {
+      if (value !== undefined) onCommit(undefined);
+      return;
+    }
+    const n = Number(text);
+    if (Number.isFinite(n) && n !== value) onCommit(n);
+    else draft.revert();
+  });
   const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => setLocal(shown), [shown]);
   return (
     <Field label={label}>
       <div className="relative">
         <input
           ref={ref}
           type="number"
-          value={local}
+          value={draft.text}
           placeholder={placeholder}
-          onChange={(e) => setLocal(e.target.value)}
-          onBlur={() => {
-            if (local.trim() === '') {
-              if (value !== undefined) onCommit(undefined);
-              return;
-            }
-            const n = Number(local);
-            if (Number.isFinite(n) && n !== value) onCommit(n);
-            else setLocal(shown);
-          }}
+          onChange={(e) => draft.set(e.target.value)}
+          onFocus={draft.onFocus}
+          onBlur={draft.onBlur}
           onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
             if (e.key === 'Enter') ref.current?.blur();
             if (e.key === 'Escape') {
-              setLocal(shown);
+              draft.revert();
               ref.current?.blur();
             }
           }}
