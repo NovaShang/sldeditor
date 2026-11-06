@@ -25,6 +25,7 @@ import {
   LABEL_FONT_SIZE_MIN,
   resolveLabelFontSize,
 } from '../lib/element-labels';
+import { isTypingKeyEvent } from '../lib/text-entry';
 import { cn } from '../lib/utils';
 import { useEditorStore } from '../store';
 import { diagramTypeOf, type DiagramType, type LabelMode, type SymbolStandard } from '../model';
@@ -182,15 +183,7 @@ function useGridState(): [boolean, React.Dispatch<React.SetStateAction<boolean>>
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key !== 'g' && e.key !== 'G') return;
-      const target = e.target as HTMLElement | null;
-      if (
-        target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
+      if (isTypingKeyEvent(e)) return;
       e.preventDefault();
       setGrid((v) => !v);
     };

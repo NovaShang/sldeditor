@@ -998,7 +998,21 @@
   stroke: none;
   cursor: inherit;
 }
-.ole-canvas-root.tool-wire .ole-element-hit {
+/* Minimum hit width for thin symbols (ElementLayer's `HitPad`). The stroke
+   is non-scaling, so this is screen px: 24 px across at working zooms. Below
+   ~60 % zoom it shrinks with the drawing (40 world units) instead — at an
+   overview zoom a fixed 24 px band would swallow the gaps between devices,
+   and with them the empty canvas a marquee has to start on. */
+.ole-element-hit-pad {
+  stroke: transparent;
+  stroke-width: min(24px, calc(var(--canvas-scale, 1) * 40px));
+  stroke-linecap: butt;
+  fill: none;
+  pointer-events: stroke;
+  cursor: inherit;
+}
+.ole-canvas-root.tool-wire .ole-element-hit,
+.ole-canvas-root.tool-wire .ole-element-hit-pad {
   /* Don't swallow clicks meant for terminals when wiring. */
   pointer-events: none;
 }

@@ -12,6 +12,11 @@
  * we paint an invisible `<rect>` covering the library's viewBox before the
  * symbol. `fill="transparent"` is hittable (unlike `none`); the visual lines
  * still draw on top because they're added after.
+ *
+ * A bounding box alone is not enough for thin symbols: a contact is ~12
+ * units wide, so ~17 px at a normal zoom — double-clicks missed it, and the
+ * name the user then typed went to the single-key shortcuts instead. Each
+ * element therefore also gets an invisible `HitPad` (see styles.css).
  */
 
 import { useCanvasStore } from '../store';
@@ -26,6 +31,26 @@ interface BBox {
   y: number;
   w: number;
   h: number;
+}
+
+/**
+ * One `{ __html }` object per distinct markup string. React 19 diffs props by
+ * identity, so a fresh object literal re-assigns `innerHTML` on every render
+ * of this layer — and every selection change or edit renders it. That swapped
+ * out every symbol's DOM nodes under the pointer: a click whose pointerdown
+ * committed a half-typed name (blur → store update → render) arrived at the
+ * select tool with a detached target, hit "nothing" and cleared the
+ * selection. Same markup, same object, untouched DOM.
+ */
+const htmlObjects = new Map<string, { __html: string }>();
+function innerHtml(markup: string): { __html: string } {
+  let hit = htmlObjects.get(markup);
+  if (!hit) {
+    if (htmlObjects.size > 500) htmlObjects.clear();
+    hit = { __html: markup };
+    htmlObjects.set(markup, hit);
+  }
+  return hit;
 }
 
 function parseViewBox(s: string): BBox | null {
@@ -44,6 +69,32 @@ function HitRect({ lib }: { lib: LibraryEntry }) {
       y={bb.y}
       width={bb.w}
       height={bb.h}
+    />
+  );
+}
+
+/**
+ * An invisible band down the long axis of the symbol's box, drawn with a
+ * screen-space (`non-scaling-stroke`) stroke so the element is at least
+ * 24 px across at working zooms (the width lives in styles.css). Butt caps
+ * keep it inside the box lengthwise — where a contact meets its wires — so
+ * it only widens the thin dimension. It is never painted, and does nothing
+ * for a symbol that is already wider than the band.
+ */
+function HitPad({ lib }: { lib: LibraryEntry }) {
+  const bb = parseViewBox(lib.viewBox);
+  if (!bb) return null;
+  const tall = bb.h >= bb.w;
+  const cx = bb.x + bb.w / 2;
+  const cy = bb.y + bb.h / 2;
+  return (
+    <line
+      className="ole-element-hit-pad"
+      x1={tall ? cx : bb.x}
+      y1={tall ? bb.y : cy}
+      x2={tall ? cx : bb.x + bb.w}
+      y2={tall ? bb.y + bb.h : cy}
+      vectorEffect="non-scaling-stroke"
     />
   );
 }
@@ -138,19 +189,18 @@ export function ElementLayer() {
                 : 'ole-element'
             }
           >
+            <HitPad lib={re.libraryDef} />
             <HitRect lib={re.libraryDef} />
             <g
-              dangerouslySetInnerHTML={{
-                __html: compensateStrokes(re.libraryDef.svg, place.scale),
-              }}
+              dangerouslySetInnerHTML={innerHtml(
+                compensateStrokes(re.libraryDef.svg, place.scale),
+              )}
             />
             {re.libraryDef.terminalLabelsSvg && !circuit && (
               /* Pin digits — hidden unless wiring/selected (see styles.css). */
               <g
                 className="ole-terminal-labels"
-                dangerouslySetInnerHTML={{
-                  __html: re.libraryDef.terminalLabelsSvg,
-                }}
+                dangerouslySetInnerHTML={innerHtml(re.libraryDef.terminalLabelsSvg)}
               />
             )}
           </g>
