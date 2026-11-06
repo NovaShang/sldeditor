@@ -3,6 +3,17 @@
   "name": "三相电源 L1/L2/L3/N/PE",
   "category": "source",
   "description": "三相五线电源引入点：L1、L2、L3、N、PE 向下引出。",
+  "keywords": [
+    "supply",
+    "mains",
+    "incoming",
+    "feeder",
+    "进线",
+    "Einspeisung",
+    "alimentación",
+    "arrivée",
+    "ввод"
+  ],
   "viewBox": "-25 -10 90 22",
   "width": 90,
   "height": 22,

@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { libraryById } from '../element-library';
-import { useT } from '../i18n';
+import { useT, type LocaleKey } from '../i18n';
 import { useLibT } from '../i18n/library';
 import { soleSelectedAnnotation, useEditorStore } from '../store';
 import {
@@ -41,10 +41,14 @@ import {
 import { COLOR_ORDER, inkClass } from '../lib/colors';
 import {
   applyConductor,
+  applyRailPreset,
   CONDUCTOR_PRESETS,
   longestWire,
   nodeHasConductor,
+  RAIL_PRESETS,
+  railHasPreset,
   wireHasConductor,
+  type RailPreset,
 } from '../lib/conductors';
 import { nameLines } from '../lib/element-labels';
 import { continuationKey, familyOf, isContinuation } from '../lib/kind-families';
@@ -337,12 +341,14 @@ function ParamField({
 function BusInspector({ bus }: { bus: Bus }) {
   const t = useT();
   const id = bus.id;
+  const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
   const onName = (v: string) => {
     const name = v.trim();
     updateBusEntry(id, { name: name === '' ? undefined : name });
   };
   return (
     <div className="flex flex-col gap-2.5 overflow-y-auto px-3 py-3 text-xs">
+      {circuit && <RailConductorRow bus={bus} />}
       <TextRow
         label={t('props.name')}
         value={bus.name ?? ''}
@@ -1061,37 +1067,102 @@ function ConductorRow({ wireIds, node }: { wireIds: string[]; node?: boolean }) 
           const active = node
             ? nodeHasConductor(picked, p, labelOn)
             : picked.length > 0 && picked.every((w) => wireHasConductor(w, p));
-          const tip = `${p.label} · ${t(`props.conductor.${p.label}` as Parameters<typeof t>[0])}`;
           return (
-            <button
+            <ConductorChip
               key={p.label}
-              type="button"
-              aria-pressed={active}
-              aria-label={tip}
-              title={tip}
+              preset={p}
+              active={active}
               onClick={() =>
                 useEditorStore.getState().dispatch((d) => applyConductor(d, wireIds, p, labelOn))
               }
-              className={cn(
-                'flex h-7 flex-1 items-center justify-center gap-1 border-border/60 font-mono text-[11px] transition-colors [&:not(:first-child)]:border-l',
-                active
-                  ? 'bg-accent font-semibold text-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-              )}
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  'size-2 shrink-0 rounded-full',
-                  p.color === 'green-yellow' ? 'ole-pe-swatch' : cn('bg-current', inkClass(p.color)),
-                )}
-                style={p.color === 'default' ? { backgroundColor: 'var(--foreground)' } : undefined}
-              />
-              {p.label}
-            </button>
+            />
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** The colour name each conductor colour is announced by (tooltip). */
+const CONDUCTOR_COLOR_KEY: Partial<Record<DiagramColor, LocaleKey>> = {
+  brown: 'props.conductor.L1',
+  default: 'props.conductor.L2',
+  gray: 'props.conductor.L3',
+  blue: 'props.conductor.N',
+  'green-yellow': 'props.conductor.PE',
+};
+
+/** One segment of a conductor row: colour dot + designation. */
+function ConductorChip({
+  preset,
+  active,
+  onClick,
+}: {
+  preset: RailPreset;
+  active: boolean;
+  onClick: () => void;
+}) {
+  const t = useT();
+  const colorKey = CONDUCTOR_COLOR_KEY[preset.color];
+  const tip = colorKey ? `${preset.label} · ${t(colorKey)}` : preset.label;
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      aria-label={tip}
+      title={tip}
+      onClick={onClick}
+      className={cn(
+        'flex h-7 flex-1 items-center justify-center gap-1 border-border/60 font-mono text-[11px] transition-colors [&:not(:first-child)]:border-l',
+        active
+          ? 'bg-accent font-semibold text-foreground'
+          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          'size-2 shrink-0 rounded-full',
+          preset.color === 'green-yellow' ? 'ole-pe-swatch' : cn('bg-current', inkClass(preset.color)),
+        )}
+        style={preset.color === 'default' ? { backgroundColor: 'var(--foreground)' } : undefined}
+      />
+      {preset.label}
+    </button>
+  );
+}
+
+/**
+ * "Conductor" for a supply rail: one click names AND colours it. Two rows —
+ * the main-circuit conductors (L1 L2 L3 N PE, as on a wire) and the control
+ * potentials (L +24V 0V) — because eight chips do not fit one row of the
+ * panel.
+ */
+function RailConductorRow({ bus }: { bus: Bus }) {
+  const t = useT();
+  const rows = [RAIL_PRESETS.slice(0, CONDUCTOR_PRESETS.length), RAIL_PRESETS.slice(CONDUCTOR_PRESETS.length)];
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[11px] text-muted-foreground">{t('props.conductor')}</span>
+      {rows.map((row, i) => (
+        <div
+          key={i}
+          role="group"
+          aria-label={t('props.conductor')}
+          className="flex overflow-hidden rounded-md border border-border/60"
+        >
+          {row.map((p) => (
+            <ConductorChip
+              key={p.label}
+              preset={p}
+              active={railHasPreset(bus, p)}
+              onClick={() =>
+                useEditorStore.getState().dispatch((d) => applyRailPreset(d, bus.id, p))
+              }
+            />
+          ))}
+        </div>
+      ))}
     </div>
   );
 }

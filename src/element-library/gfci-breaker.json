@@ -3,6 +3,17 @@
   "name": "GFCI 断路器 (RCBO)",
   "category": "protection",
   "description": "剩余电流断路器带过流保护 (UL943 / IEC 61009)。北美 GFCI / 欧洲 RCBO。",
+  "keywords": [
+    "RCD",
+    "RCBO",
+    "ELCB",
+    "residual current",
+    "breaker",
+    "漏电",
+    "漏保",
+    "FI/LS",
+    "диф"
+  ],
   "viewBox": "-18 -22 22 44",
   "width": 22,
   "height": 44,

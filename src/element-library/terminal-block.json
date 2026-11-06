@@ -3,6 +3,16 @@
   "name": "直通接线端子 (X)",
   "category": "busbar",
   "description": "端子排上的直通端子：上下各接一根线。端子号写在元件名称里（如 -X1:3）。",
+  "keywords": [
+    "terminal",
+    "terminal strip",
+    "connector",
+    "端子",
+    "端子排",
+    "Klemme",
+    "borne",
+    "клемма"
+  ],
   "viewBox": "-5 -12 10 24",
   "width": 10,
   "height": 24,

@@ -1,10 +1,11 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useRef, useState } from 'react';
 import {
   Cable,
   Circle,
   CircleDot,
   Clipboard,
   Copy,
+  Equal,
   Hand,
   Hash,
   LayoutGrid,
@@ -29,6 +30,7 @@ import { barAtLeast, barCenter, useBottomBar, useReportBarWidth } from '../hooks
 import { usePanels } from '../hooks/use-panels';
 import { useNotice } from '../hooks/use-notice';
 import { useT, type LocaleKey } from '../i18n';
+import { termKey } from '../i18n/circuit-terms';
 import { cn } from '../lib/utils';
 import { annotationKind, isCircuitDiagram } from '../model';
 import { soleSelectedAnnotation, useEditorStore, type ToolId } from '../store';
@@ -172,6 +174,29 @@ const DRAWING_TOOLS = TOOLS.filter((d) => d.drawing);
 const BAR_TOOLS = TOOLS.filter((d) => !d.drawing);
 
 /**
+ * How a bar tool presents itself in this drawing type. On a circuit diagram
+ * the busbar tool is the Rail tool — same gesture, same `Bus`, but its own
+ * name, hint and icon (two rails: L over N, +24V over 0V); the wire and place
+ * hints say "rail" there too (see `i18n/circuit-terms`).
+ */
+function presentTool(def: ToolDef, circuit: boolean): ToolDef {
+  const labelKey = termKey(def.labelKey, circuit);
+  const descriptionKey = termKey(def.descriptionKey, circuit);
+  const icon = circuit && def.id === 'busbar' ? Equal : def.icon;
+  if (labelKey === def.labelKey && descriptionKey === def.descriptionKey && icon === def.icon) {
+    return def;
+  }
+  return { ...def, labelKey, descriptionKey, icon };
+}
+
+/** The tools on the bar, in order, as this drawing type shows them. */
+function barTools(circuit: boolean, unified: boolean): ToolDef[] {
+  return BAR_TOOLS.filter((def) => !(unified && def.id === 'select')).map((def) =>
+    presentTool(def, circuit),
+  );
+}
+
+/**
  * Short usage hint shown above the toolbar for whichever tool is active.
  * Keeps users oriented without forcing them to discover a tooltip — most
  * tools have a non-obvious gesture and the hint paid off in usability tests.
@@ -183,6 +208,9 @@ function ToolHint() {
   const placeFrom = useEditorStore((s) => s.placeFromTerminal);
   const wireFrom = useEditorStore((s) => s.wireDragFrom);
   const busbarStart = useEditorStore((s) => s.busbarDrawStart);
+  const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
+  // Rails, not buses, on a circuit diagram (see `i18n/circuit-terms`).
+  const tt = (key: LocaleKey) => t(termKey(key, circuit));
   const hasSelection = useEditorStore(
     (s) => s.selection.length > 0 || s.selectedNode != null,
   );
@@ -230,11 +258,11 @@ function ToolHint() {
       text = t('mode.pan');
       break;
     case 'wire':
-      text = wireFrom ? t('mode.wireDragging') : t('mode.wireInit');
+      text = wireFrom ? tt('mode.wireDragging') : t('mode.wireInit');
       cancelHint = true;
       break;
     case 'busbar':
-      text = busbarStart ? t('mode.busDragging') : t('mode.busInit');
+      text = busbarStart ? tt('mode.busDragging') : tt('mode.busInit');
       cancelHint = true;
       break;
     case 'junction':
@@ -244,7 +272,7 @@ function ToolHint() {
     case 'place':
       if (!placeKind) text = t('mode.placeNoKind');
       else if (placeFrom) text = t('mode.placeFromTerm');
-      else text = t('mode.placeNormal');
+      else text = tt('mode.placeNormal');
       cancelHint = true;
       break;
     case 'text':
@@ -308,17 +336,8 @@ export function FloatingToolbar() {
   // touch and absorbs single-tap selection (see PanTool), and annotation
   // drawing is rare enough on a phone to hide.
   const unifiedBar = barAtLeast(mode, 'dense');
-  const PHONE_HIDDEN = new Set(['select']);
-  // Circuit diagrams have no busbar tool: their rails come from templates and
-  // the assistant, and draw as ordinary conductors.
-  const visibleTools = BAR_TOOLS.filter(
-    (def) => !(unifiedBar && PHONE_HIDDEN.has(def.id)) && !(circuit && def.id === 'busbar'),
-  );
-  // Opening a circuit diagram (template, file, project type switch) while the
-  // busbar tool is active drops back to Select: the tool has no button there.
-  useEffect(() => {
-    if (circuit && active === 'busbar') setTool('select');
-  }, [circuit, active, setTool]);
+  // A circuit diagram keeps the busbar tool, presented as the Rail tool.
+  const visibleTools = barTools(circuit, unifiedBar);
   // Centred in the editor when that clears both side pieces, otherwise slid
   // towards the roomier side.
   const center = width == null || unifiedBar ? null : barCenter(widths, width);
@@ -331,10 +350,13 @@ export function FloatingToolbar() {
   // bar doesn't jump) — you see the hint at rest, the tooltip on hover.
   const [barHover, setBarHover] = useState(false);
 
+  // Only the bar itself takes the pointer. The column around it (the hint
+  // pill, the gap, the width the hint adds beside the bar) sits over the
+  // canvas, and a wire dragged onto a pin underneath must land on the pin.
   return (
     <div
       className={cn(
-        'absolute z-20 flex w-max -translate-x-1/2 flex-col items-center gap-1.5',
+        'pointer-events-none absolute z-20 flex w-max -translate-x-1/2 flex-col items-center gap-1.5',
         center == null && 'left-1/2',
       )}
       style={{
@@ -354,8 +376,8 @@ export function FloatingToolbar() {
         showHint && (
           <div
             className={cn(
-              'transition-opacity duration-150',
-              barHover && 'pointer-events-none opacity-0',
+              'pointer-events-none transition-opacity duration-150',
+              barHover && 'opacity-0',
             )}
           >
             <ToolHint />
@@ -367,7 +389,7 @@ export function FloatingToolbar() {
         onPointerEnter={() => setBarHover(true)}
         onPointerLeave={() => setBarHover(false)}
         className={cn(
-          'ole-glass flex flex-row items-center rounded-2xl border border-border shadow-sm',
+          'ole-glass pointer-events-auto flex flex-row items-center rounded-2xl border border-border shadow-sm',
           unifiedBar ? 'gap-0.5 p-1' : 'gap-0.5 p-1.5',
         )}
       >

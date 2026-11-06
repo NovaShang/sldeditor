@@ -1,7 +1,8 @@
 /**
  * First-visit onboarding card. Surfaces the canonical drawing flow:
  * place a component → wire pins together (drag to empty space = junction) →
- * reach for a busbar only when several circuits share one rail.
+ * reach for a busbar only when several circuits share one rail. On a circuit
+ * diagram the third step is the supply rails (L / N, +24V / 0V) instead.
  *
  * Visibility: shown until the user dismisses it (persisted to localStorage),
  * regardless of whether the canvas is empty — the card and the sample
@@ -11,9 +12,10 @@
  * dismiss controls accept clicks.
  */
 
-import { Cable, Minus, Shapes, X } from 'lucide-react';
+import { Cable, Equal, Minus, Shapes, X } from 'lucide-react';
 import { useOnboarding } from '../hooks/use-onboarding';
 import { useT } from '../i18n';
+import { termKey } from '../i18n/circuit-terms';
 import { isCircuitDiagram } from '../model';
 import { useEditorStore } from '../store';
 
@@ -21,7 +23,7 @@ export function OnboardingCard() {
   const t = useT();
   const dismissed = useOnboarding((s) => s.dismissed);
   const dismiss = useOnboarding((s) => s.dismiss);
-  // The busbar tip is single-line only: circuit diagrams have no busbar tool.
+  // Circuit diagrams get the rail tip in place of the busbar one.
   const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
   if (dismissed) return null;
 
@@ -55,14 +57,12 @@ export function OnboardingCard() {
           title={t('onboard.step2.title')}
           body={t('onboard.step2.body')}
         />
-        {!circuit && (
-          <Step
-            n={3}
-            icon={<Minus />}
-            title={t('onboard.step3.title')}
-            body={t('onboard.step3.body')}
-          />
-        )}
+        <Step
+          n={3}
+          icon={circuit ? <Equal /> : <Minus />}
+          title={t(termKey('onboard.step3.title', circuit))}
+          body={t(termKey('onboard.step3.body', circuit))}
+        />
       </ol>
       <button
         type="button"

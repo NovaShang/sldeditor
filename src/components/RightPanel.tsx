@@ -1,9 +1,10 @@
 import { libraryById } from '../element-library';
 import { atLeast, useEditorTier } from '../hooks/editor-tier';
 import { useT } from '../i18n';
+import { termKey } from '../i18n/circuit-terms';
 import { useLibT } from '../i18n/library';
 import { cn } from '../lib/utils';
-import { annotationKind } from '../model';
+import { annotationKind, isCircuitDiagram } from '../model';
 import { soleSelectedAnnotation, useEditorStore } from '../store';
 import { PropertyPanel } from './PropertyPanel';
 import { SheetInspector } from './SheetInspector';
@@ -19,6 +20,7 @@ export function RightPanel() {
   const annotations = useEditorStore((s) => s.diagram.annotations);
   const elements = useEditorStore((s) => s.diagram.elements);
   const buses = useEditorStore((s) => s.diagram.buses);
+  const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));
   const selectedSheet = useEditorStore((s) => s.selectedSheet);
   const sheets = useEditorStore((s) => s.diagram.sheets);
   const tier = useEditorTier();
@@ -64,7 +66,8 @@ export function RightPanel() {
     const id = selection[0];
     const bus = (buses ?? []).find((b) => b.id === id);
     if (bus) {
-      title = bus.name ?? t('props.bus');
+      // A circuit diagram's bus is a supply rail.
+      title = bus.name ?? t(termKey('props.bus', circuit));
     } else {
       const el = elements.find((e) => e.id === id);
       if (el) {

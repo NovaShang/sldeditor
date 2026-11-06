@@ -10,7 +10,7 @@
  * follows; see `setSelectionColor`).
  */
 
-import type { DiagramColor, DiagramFile, Wire } from '../model';
+import type { Bus, BusId, DiagramColor, DiagramFile, Wire } from '../model';
 
 export interface ConductorPreset {
   /** Designation written as the wire label. Not localised: L1/L2/L3/N/PE
@@ -26,6 +26,44 @@ export const CONDUCTOR_PRESETS: readonly ConductorPreset[] = [
   { label: 'N', color: 'blue' },
   { label: 'PE', color: 'green-yellow' },
 ];
+
+/**
+ * Presets for a supply rail (a `Bus` on a circuit diagram): the five main-
+ * circuit conductors plus the control-circuit potentials. The rail's name IS
+ * its potential, so a preset sets `name` and `color` together. Control rails
+ * stay in the drawing's default ink — only main-circuit conductors carry
+ * IEC 60445 colours, as on the shipped templates.
+ */
+export interface RailPreset {
+  label: string;
+  color: DiagramColor;
+}
+
+export const RAIL_PRESETS: readonly RailPreset[] = [
+  ...CONDUCTOR_PRESETS,
+  { label: 'L', color: 'default' },
+  { label: '+24V', color: 'default' },
+  { label: '0V', color: 'default' },
+];
+
+/** Whether a rail currently carries exactly this preset. */
+export function railHasPreset(bus: Pick<Bus, 'name' | 'color'>, preset: RailPreset): boolean {
+  return bus.name?.trim() === preset.label && (bus.color ?? 'default') === preset.color;
+}
+
+/** Name and colour one rail from a preset. Returns `d` itself when nothing
+ *  would change (no empty undo step). */
+export function applyRailPreset(d: DiagramFile, busId: BusId, preset: RailPreset): DiagramFile {
+  const bus = (d.buses ?? []).find((b) => b.id === busId);
+  if (!bus || railHasPreset(bus, preset)) return d;
+  const { color: _c, ...rest } = bus;
+  const next: Bus = {
+    ...rest,
+    name: preset.label,
+    ...(preset.color !== 'default' ? { color: preset.color } : {}),
+  };
+  return { ...d, buses: (d.buses ?? []).map((b) => (b.id === busId ? next : b)) };
+}
 
 /** Whether a wire currently carries exactly this preset. */
 export function wireHasConductor(wire: Pick<Wire, 'label' | 'color'>, preset: ConductorPreset): boolean {

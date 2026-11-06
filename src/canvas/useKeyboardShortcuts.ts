@@ -7,7 +7,6 @@
 
 import { useEffect } from 'react';
 import { useEditorStore } from '../store';
-import { isCircuitDiagram } from '../model';
 
 function isEditing(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -145,9 +144,7 @@ export function useKeyboardShortcuts(): void {
           return;
         case 'b':
         case 'B':
-          // Circuit diagrams have no busbar tool (their rails come from the
-          // assistant and templates), so B does nothing there.
-          if (isCircuitDiagram(store.diagram)) return;
+          // The Busbar tool; on a circuit diagram the same tool is the Rail tool.
           store.setActiveTool('busbar');
           return;
         case 'j':

@@ -56,6 +56,7 @@ import {
   newBusId,
   newElementId,
   newJunctionId,
+  newPlacedElement,
   wireIdFromEnds,
 } from './id-allocator';
 import { normalizePath } from '../model/wire-path';
@@ -1476,9 +1477,13 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     if (kind === 'busbar') {
       return get().addBus(at, 320);
     }
-    const id = newElementId(get().diagram, kind);
+    const diagram = get().diagram;
+    // On a circuit diagram a new device is tagged the IEC 81346 way (-Q1,
+    // -KM2, -S3…) unless the caller names it.
+    const { id, name } =
+      extra?.name === undefined ? newPlacedElement(diagram, kind) : { id: newElementId(diagram, kind) };
     get().dispatch((d) => {
-      const newElement: Element = { id, kind, ...(extra ?? {}) };
+      const newElement: Element = { id, kind, ...(name ? { name } : {}), ...(extra ?? {}) };
       return {
         ...d,
         elements: [...d.elements, newElement],

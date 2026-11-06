@@ -3,6 +3,16 @@
   "name": "三极负荷隔离开关",
   "category": "switching",
   "description": "三极负荷隔离开关（主开关），手动操作，端子 1-2、3-4、5-6。",
+  "keywords": [
+    "main switch",
+    "isolator",
+    "disconnector",
+    "主开关",
+    "Hauptschalter",
+    "interruptor general",
+    "sectionneur",
+    "рубильник"
+  ],
   "viewBox": "-47 -22 71 44",
   "width": 71,
   "height": 44,

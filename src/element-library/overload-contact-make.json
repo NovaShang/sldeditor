@@ -3,6 +3,12 @@
   "name": "热继电器常开触点 97-98",
   "category": "control",
   "description": "热过载继电器的常开辅助触点（脱扣时闭合），常用于故障指示。代号与热继电器主回路相同。",
+  "keywords": [
+    "overload",
+    "thermal",
+    "OL",
+    "热继电器"
+  ],
   "viewBox": "-20 -22 22 44",
   "width": 22,
   "height": 44,

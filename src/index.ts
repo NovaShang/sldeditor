@@ -130,15 +130,19 @@ export { useOnboarding } from './hooks/use-onboarding';
 export type { HostActions } from './hooks/use-host-actions';
 export type { ColorSpec } from './lib/colors';
 // Circuit diagrams: the IEC 60445 conductor presets (colour + designation)
-// the wire inspector offers, so a host's agent writes exactly the same pairs.
+// the wire and rail inspectors offer, so a host's agent writes exactly the
+// same pairs.
 export {
   CONDUCTOR_PRESETS,
+  RAIL_PRESETS,
   applyConductor,
+  applyRailPreset,
   longestWire,
   nodeHasConductor,
+  railHasPreset,
   wireHasConductor,
 } from './lib/conductors';
-export type { ConductorPreset } from './lib/conductors';
+export type { ConductorPreset, RailPreset } from './lib/conductors';
 // Gates on a document-defined symbol. Exported because the app that hosts the
 // agent is the one that has to run them before a generated kind reaches a file.
 export {
@@ -184,11 +188,16 @@ export type { EditorState } from './store';
 // programmatically and need to mint stable ids without colliding with the
 // existing diagram. `wireIdFromEnds` produces deterministic content-hash
 // WireIds so the same endpoint pair always maps to the same id.
+// `newCircuitTag` / `newPlacedElement`: the IEC 81346 tag (-KM2) a circuit
+// diagram's device gets when placed by hand.
 export {
+  circuitTagCode,
   newAnnotationId,
   newBusId,
+  newCircuitTag,
   newElementId,
   newJunctionId,
+  newPlacedElement,
   wireIdFromEnds,
 } from './store/id-allocator';
 

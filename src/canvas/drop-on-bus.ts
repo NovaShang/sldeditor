@@ -23,7 +23,8 @@ import type {
   Wire,
   WireEnd,
 } from '../model';
-import { newElementId, useEditorStore, wireIdFromEnds } from '../store';
+import { useEditorStore, wireIdFromEnds } from '../store';
+import { newPlacedElement } from '../store/id-allocator';
 import { snap } from './grid';
 
 const PROXIMITY_PX = 30;
@@ -57,7 +58,7 @@ export function dropElement(kind: string, at: [number, number]): DropResult {
 
   const { busId, busAt, axis } = target;
   const tapPin = pickTapTerminal(lib, axis);
-  const newId = newElementId(diagram, kind);
+  const { id: newId, name } = newPlacedElement(diagram, kind);
 
   const tapLocal = lib.terminals.find((t) => t.id === tapPin);
   const dropX = axis === 'x' ? at[0] : busAt[0];
@@ -67,7 +68,7 @@ export function dropElement(kind: string, at: [number, number]): DropResult {
     : [snap(at[0]), snap(at[1])];
 
   store.dispatch((d) => {
-    const newElement: Element = { id: newId, kind };
+    const newElement: Element = { id: newId, kind, ...(name ? { name } : {}) };
     const placement: Placement = { at: placedAt };
     const newEnd = `${newId}.${tapPin}` as TerminalRef;
     const wire: Wire = {
@@ -287,10 +288,10 @@ export function dropElementFromTerminal(
     snap(anchor[0] - chosen.x),
     snap(anchor[1] - chosen.y),
   ];
-  const newId = newElementId(diagram, kind);
+  const { id: newId, name } = newPlacedElement(diagram, kind);
 
   store.dispatch((d) => {
-    const newElement: Element = { id: newId, kind };
+    const newElement: Element = { id: newId, kind, ...(name ? { name } : {}) };
     const placement: Placement = { at: placedAt };
     const newPinRef = `${newId}.${chosen.id}` as TerminalRef;
     const tieEnd: WireEnd = source.isBus && source.busId ? source.busId : sourceRef;

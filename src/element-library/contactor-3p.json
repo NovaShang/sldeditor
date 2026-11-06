@@ -3,6 +3,13 @@
   "name": "接触器主触点（三极）",
   "category": "motor-control",
   "description": "接触器三极主触点，端子 1-2、3-4、5-6。线圈用\"继电器线圈\"并取相同代号。",
+  "keywords": [
+    "KM",
+    "Schütz",
+    "contactor",
+    "contacteur",
+    "контактор"
+  ],
   "viewBox": "-27 -22 52 44",
   "width": 52,
   "height": 44,

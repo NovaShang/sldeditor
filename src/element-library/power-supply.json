@@ -3,6 +3,18 @@
   "name": "开关电源 (PS)",
   "category": "source",
   "description": "AC→DC 开关电源 / 直流电源模块。t_ac 上(~), t_dc 下(=)。",
+  "keywords": [
+    "PSU",
+    "SMPS",
+    "24V",
+    "24 V DC",
+    "DC supply",
+    "电源",
+    "Netzteil",
+    "fuente de alimentación",
+    "alimentation",
+    "блок питания"
+  ],
   "viewBox": "-24 -42 48 84",
   "width": 48,
   "height": 84,

@@ -139,6 +139,12 @@ export interface LibraryEntry {
   /** Palette grouping; consumers group entries by this for the side panel. */
   category: string;
   description?: string;
+  /**
+   * Extra words the palette search matches — what people type for this
+   * symbol that its name does not say ("lamp", "timer", "MCB", "E-stop").
+   * Any language; matched in every UI language.
+   */
+  keywords?: string[];
   /** SVG viewBox. The element's hotspot/origin is at local (0, 0). */
   viewBox: string;
   width: number;
@@ -182,8 +188,8 @@ export interface LibraryEntry {
    * Drawing types this symbol belongs to (palette + AI catalog filtering).
    * Absent = both. Multi-pole power symbols (3-pole breaker, contactor main
    * poles, 3-phase motor with U/V/W) are `['circuit']`; symbols that only make
-   * sense as single-line overview blocks may be `['sld']`. Search always
-   * covers the whole library.
+   * sense as single-line overview blocks may be `['sld']`. Palette search
+   * applies the same filter as browsing.
    */
   diagramTypes?: DiagramType[];
   source: LibrarySource;

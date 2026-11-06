@@ -3,6 +3,10 @@
   "name": "电铃 (HA)",
   "category": "control",
   "description": "信号电铃 / 警铃。",
+  "keywords": [
+    "alarm",
+    "sounder"
+  ],
   "viewBox": "-32 -32 44 44",
   "width": 44,
   "height": 44,

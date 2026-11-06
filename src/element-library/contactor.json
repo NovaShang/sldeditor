@@ -3,6 +3,13 @@
   "name": "接触器 (KM)",
   "category": "motor-control",
   "description": "主回路接触器, 通常配热继电器和电机使用。",
+  "keywords": [
+    "KM",
+    "Schütz",
+    "contactor",
+    "contacteur",
+    "контактор"
+  ],
   "viewBox": "-10 -42 15 64",
   "width": 15,
   "height": 64,

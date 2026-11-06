@@ -3,6 +3,16 @@
   "name": "剩余电流断路器 4P (RCCB)",
   "category": "protection",
   "description": "四极剩余电流动作断路器（不带过流保护），端子 1-2、3-4、5-6、N-N。",
+  "keywords": [
+    "RCD",
+    "GFCI",
+    "ELCB",
+    "residual current",
+    "漏电",
+    "漏保",
+    "FI",
+    "диф"
+  ],
   "viewBox": "-30 -22 77 54",
   "width": 77,
   "height": 54,
