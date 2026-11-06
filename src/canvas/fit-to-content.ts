@@ -13,8 +13,14 @@ import { getViewportApi } from './viewport-bus';
 import type { ViewportApi } from './useViewport';
 
 const FIT_PADDING_PX = 60;
+/** Clearance kept between the fitted drawing and the bottom toolbar row. */
+const CHROME_GAP_PX = 16;
 const MIN_SCALE = 0.1;
-const MAX_SCALE = 8;
+/**
+ * Fit never zooms in past this. Manual zoom still goes to 8×, but a fit of a
+ * lone symbol at 800% reads as a bug, not as "the whole drawing".
+ */
+const MAX_FIT_SCALE = 2;
 const READY_RETRY_FRAMES = 8;
 
 /**
@@ -106,6 +112,31 @@ function visibleSpan(rect: DOMRect): { x0: number; x1: number } {
 }
 
 /**
+ * The vertical band a fit may use, in canvas-local px, padding included: the
+ * bottom edge comes up to clear the bottom toolbar row (every piece tagged
+ * `data-ole-bottom-chrome` in the canvas's lower half). The main toolbar's
+ * hint pill stacks above it in the same column, so a piece whose parent is a
+ * short column counts with the whole column. Fit used to centre on the full
+ * height and park the bottom rail and coil pins under the toolbar.
+ */
+function visibleBand(rect: DOMRect): { y0: number; y1: number } {
+  let bottom = rect.bottom;
+  for (const el of document.querySelectorAll('[data-ole-bottom-chrome]')) {
+    let r = el.getBoundingClientRect();
+    const col = el.parentElement?.getBoundingClientRect();
+    if (col && col.height > r.height && col.height < rect.height / 2) r = col;
+    if (r.height === 0 || r.right < rect.left || r.left > rect.right) continue;
+    if (r.top < rect.top + rect.height / 2 || r.top > rect.bottom) continue;
+    bottom = Math.min(bottom, r.top - CHROME_GAP_PX);
+  }
+  const y0 = FIT_PADDING_PX;
+  const y1 = Math.min(rect.height - FIT_PADDING_PX, bottom - rect.top);
+  // Too little left (tiny editors): ignore the chrome rather than squeeze.
+  if (y1 - y0 < rect.height / 3) return { y0, y1: rect.height - FIT_PADDING_PX };
+  return { y0, y1 };
+}
+
+/**
  * Fit the whole rendered drawing to the viewport with padding. Falls back to a
  * centered 100% reset when the canvas is empty. Returns false if the
  * viewport / canvas isn't ready yet.
@@ -140,19 +171,17 @@ export function fitToContentWith(api: ViewportApi, root: HTMLElement): boolean {
   const contentW = Math.max(bx - ax, 1);
   const contentH = Math.max(by - ay, 1);
   const { x0, x1 } = visibleSpan(rect);
+  const { y0, y1 } = visibleBand(rect);
   const targetScale = clamp(
-    Math.min(
-      (x1 - x0 - FIT_PADDING_PX * 2) / contentW,
-      (rect.height - FIT_PADDING_PX * 2) / contentH,
-    ),
+    Math.min((x1 - x0 - FIT_PADDING_PX * 2) / contentW, (y1 - y0) / contentH),
     MIN_SCALE,
-    MAX_SCALE,
+    MAX_FIT_SCALE,
   );
   const cx = (ax + bx) / 2;
   const cy = (ay + by) / 2;
   api.setViewport({
     tx: (x0 + x1) / 2 - targetScale * cx,
-    ty: rect.height / 2 - targetScale * cy,
+    ty: (y0 + y1) / 2 - targetScale * cy,
     scale: targetScale,
   });
   return true;
@@ -171,9 +200,10 @@ export function centerOnWorld(world: readonly [number, number]): boolean {
   if (rect.width === 0 || rect.height === 0) return false;
   const { scale } = api.getViewport();
   const { x0, x1 } = visibleSpan(rect);
+  const { y0, y1 } = visibleBand(rect);
   api.setViewport({
     tx: (x0 + x1) / 2 - scale * world[0],
-    ty: rect.height / 2 - scale * world[1],
+    ty: (y0 + y1) / 2 - scale * world[1],
   });
   return true;
 }
@@ -204,14 +234,15 @@ export function fitToWorldRect(rect: { x: number; y: number; w: number; h: numbe
   const box = root.getBoundingClientRect();
   if (box.width === 0 || box.height === 0 || rect.w <= 0 || rect.h <= 0) return false;
   const { x0, x1 } = visibleSpan(box);
+  const { y0, y1 } = visibleBand(box);
   const scale = clamp(
-    Math.min((x1 - x0 - FIT_PADDING_PX * 2) / rect.w, (box.height - FIT_PADDING_PX * 2) / rect.h),
+    Math.min((x1 - x0 - FIT_PADDING_PX * 2) / rect.w, (y1 - y0) / rect.h),
     MIN_SCALE,
-    MAX_SCALE,
+    MAX_FIT_SCALE,
   );
   api.setViewport({
     tx: (x0 + x1) / 2 - scale * (rect.x + rect.w / 2),
-    ty: box.height / 2 - scale * (rect.y + rect.h / 2),
+    ty: (y0 + y1) / 2 - scale * (rect.y + rect.h / 2),
     scale,
   });
   return true;

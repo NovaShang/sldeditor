@@ -135,6 +135,66 @@ describe('fitToContentWith', () => {
     expect(api.last?.scale).toBeCloseTo(2);
   });
 
+  it('does not zoom a lone symbol to the 8× cap', () => {
+    const root = canvasRoot();
+    child(root, 'data-element-id', { left: 480, top: 470, width: 40, height: 60 });
+    const api = fakeViewport();
+
+    expect(fitToContentWith(api, root)).toBe(true);
+    expect(api.last?.scale).toBe(2);
+  });
+
+  describe('with the bottom toolbar row', () => {
+    const chrome: Element[] = [];
+    afterEach(() => {
+      for (const el of chrome.splice(0)) el.remove();
+    });
+
+    /** A bottom-row piece; `column` stacks it under a hint pill like the
+     *  main toolbar. */
+    function bottomPiece(b: Box, column?: Box): void {
+      const el = document.createElement('div');
+      el.setAttribute('data-ole-bottom-chrome', 'bar');
+      stubRect(el, b);
+      if (column) {
+        const col = document.createElement('div');
+        stubRect(col, column);
+        col.appendChild(el);
+        document.body.appendChild(col);
+        chrome.push(col);
+      } else {
+        document.body.appendChild(el);
+        chrome.push(el);
+      }
+    }
+
+    it('keeps the drawing clear of the toolbar and the hint pill above it', () => {
+      const root = canvasRoot();
+      child(root, 'data-element-id', { left: 0, top: 0, width: 1000, height: 1000 });
+      // Toolbar 920…976, hint pill from 880.
+      bottomPiece({ left: 300, top: 920, width: 400, height: 56 }, { left: 300, top: 880, width: 400, height: 96 });
+      bottomPiece({ left: 12, top: 928, width: 48, height: 48 });
+      const api = fakeViewport();
+
+      expect(fitToContentWith(api, root)).toBe(true);
+      // Band 60 … 880 − 16 = 864 → 804 px tall for 1000 of content.
+      const s = 804 / 1000;
+      expect(api.last?.scale).toBeCloseTo(s);
+      // Content bottom (world 1000) sits on the band's bottom edge.
+      expect((api.last?.ty ?? 0) + s * 1000).toBeCloseTo(864);
+    });
+
+    it('ignores chrome outside the canvas', () => {
+      const root = canvasRoot();
+      child(root, 'data-element-id', { left: 0, top: 0, width: 1000, height: 1000 });
+      bottomPiece({ left: 1200, top: 920, width: 400, height: 56 });
+      const api = fakeViewport();
+
+      expect(fitToContentWith(api, root)).toBe(true);
+      expect(api.last?.scale).toBeCloseTo(0.88);
+    });
+  });
+
   it('resets to a centred 100% view on an empty canvas', () => {
     const root = canvasRoot();
     const api = fakeViewport();

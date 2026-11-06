@@ -115,6 +115,9 @@ export function useBottomBar(): BottomBarState {
  * rendered in. Nothing is reported on unmount: a piece only disappears in
  * `dense` (folded into the unified bar), which never consults the cache, and
  * a zero filed under the mode it left would make that mode look roomy.
+ *
+ * The element is also marked `data-ole-bottom-chrome`, which is how Fit view
+ * finds the bottom row and keeps the drawing clear of it.
  */
 export function useReportBarWidth(part: BarPart, ref: RefObject<HTMLElement | null>): void {
   const { mode, report } = useBottomBar();
@@ -123,6 +126,7 @@ export function useReportBarWidth(part: BarPart, ref: RefObject<HTMLElement | nu
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    el.setAttribute('data-ole-bottom-chrome', part);
     const apply = () => report(part, modeRef.current, el.offsetWidth);
     apply();
     if (typeof ResizeObserver === 'undefined') return;
