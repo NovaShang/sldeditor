@@ -1,5 +1,30 @@
 # sldeditor
 
+## 0.33.1
+
+### Patch Changes
+
+- [`68e59cb`](https://github.com/NovaShang/sldeditor/commit/68e59cbac915dda91227c1b63e46870968677fd8) Thanks [@NovaShang](https://github.com/NovaShang)! - Placing and wiring multi-pole devices, and a few snapping fixes:
+  - Placing a device from a pin of a multi-pole device now connects the matching pole (breaker 2 → contactor 1, 4 → 3, 6 → 5) instead of whichever pole sat nearest the cursor, lines the new device up so the conductor runs straight, and wires every matching pole pair in one step (one undo). Works from any outgoing pin, by tap or drag; the ghost previews every conductor. Single-pole chaining is unchanged.
+  - A multi-pole device placed by clicking (or dropped from the library) just below or above another one snaps sideways — by up to one pole — so the poles line up, instead of landing one pole off.
+  - Releasing a wire a few pixels off a pin, junction or bus now connects to it rather than creating a loose junction next to it. Releasing in open space still drops a junction.
+  - Tapping a junction at the end of a horizontal run places the device hanging downward (and continues a vertical run straight on) instead of standing it on its head.
+  - Fit view no longer zooms past 200% on a tiny drawing, and keeps the drawing clear of the bottom toolbar row and its hint.
+
+- [`3a72ef7`](https://github.com/NovaShang/sldeditor/commit/3a72ef77f3ed669dffef09350dbaa53f29a3c151) Thanks [@NovaShang](https://github.com/NovaShang)! - Circuit diagrams: supply rails, library search and device tags
+  - Supply rails can be drawn again on circuit diagrams: the busbar tool is back there as the **Rail** tool (hotkey B), with its own icon and hint, and the quick-start card teaches rails instead of busbars. A selected rail is titled "Supply rail", and one click on L1, L2, L3, N, PE, L, +24V or 0V names and colours it together. Wire and place hints say "rail" too. Single-line diagrams are unchanged ("Busbar").
+  - Library search matches every word in any order ("push button", "contactor coil"), knows the everyday words for symbols ("lamp", "timer", "coil", "E-stop", "MCB", "overload", "terminal", in several languages), ranks name matches first, ignores accents, also matches English names in any UI language, and only lists symbols that belong in the current drawing type.
+  - Devices placed on a circuit diagram get the next free IEC 81346 tag of their letter code (-Q1, -F2, -KM1, -K1, -KT1, -S3, -H1, -M1, -X2, -T1, -G1…) instead of names like "breaker-3p1". Contacts keep their old naming (their tag is their operator's).
+  - The hint above the bottom toolbar no longer swallows drags onto pins underneath it.
+
+- [`1c448f7`](https://github.com/NovaShang/sldeditor/commit/1c448f796667fd89bab5fa313856d5b4a8595240) Thanks [@NovaShang](https://github.com/NovaShang)! - Typing names no longer loses text or triggers shortcuts:
+  - A name or value typed in the property panel is kept when you click the canvas to finish (it used to be thrown away), and is saved to the element you were editing even when the click selects another one.
+  - Selecting another element no longer shows the previous element's half-typed text in its Name box (the "KM1↵KM1" carry-over).
+  - The Name field and the on-canvas name editor (double-click a device): Enter finishes, Shift+Enter starts a second line, Escape cancels, clicking anywhere else saves. Clicking inside the on-canvas editor moves the caret instead of closing it.
+  - Thin symbols such as contacts are easier to hit: every device is at least 24 px wide to the pointer at normal zoom, so a double-click to rename no longer misses and sends the typed name to the M / R / Backspace shortcuts. Symbols look exactly the same.
+  - Single-key shortcuts stay inert while any text field or on-canvas editor is in use, including during IME composition.
+  - Esc returns from the hand (pan) tool to the select tool.
+
 ## 0.33.0
 
 ### Minor Changes
