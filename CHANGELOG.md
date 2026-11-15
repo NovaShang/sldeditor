@@ -1,5 +1,13 @@
 # sldeditor
 
+## 0.36.1
+
+### Patch Changes
+
+- [#58](https://github.com/NovaShang/sldeditor/pull/58) [`27fc8c0`](https://github.com/NovaShang/sldeditor/commit/27fc8c0be8fe2494829cb8e8e00887df7c20b1c3) Thanks [@NovaShang](https://github.com/NovaShang)! - Circuit diagrams: deleting a device only closes the conductor back up when the device sat in line (contacts, push-buttons, switches, fuses, breakers, overload elements, terminals; new `series` library flag). Deleting a lamp, coil, motor or other load now leaves the rung open instead of drawing a wire straight from the supply to the return, and a switch between two different named potentials (rail L and rail N, conductors L1 and L2) is never healed into a short.
+
+  A branch pulled out of a vertical rail now leaves it sideways from the pressed point, so the tap stays where you pressed, and the drag preview shows the same route the release stores.
+
 ## 0.36.0
 
 ### Minor Changes
