@@ -23,6 +23,9 @@ export function BusLayer() {
   // A busbar on a single-line diagram, a supply rail (conductor weight) on a
   // circuit diagram.
   const strokeWidth = useCanvasStore((s) => busStrokeWidth(s.internal.diagramType));
+  // On a circuit diagram an unselected rail is a wire source: pressing it
+  // pulls a branch out (see SelectTool), so it shows the drawing cursor.
+  const circuit = useCanvasStore((s) => s.internal.diagramType === 'circuit');
   // A bus is a legal binding target too (see `Binding.target`).
   const runtime = useRuntime().props;
   const selSet = new Set(selection);
@@ -71,6 +74,7 @@ export function BusLayer() {
             data-element-id={bus.id}
             data-node-id={nodeId}
             data-selected={isSelected ? 'true' : undefined}
+            data-rail-branch={circuit && !isSelected ? 'true' : undefined}
             data-node-related={isNodeRelated ? 'true' : undefined}
             data-alarm={alarmAttr(rt)}
             data-quality={qualityAttr(rt)}
@@ -104,6 +108,7 @@ export function BusLayer() {
                 x2={x2}
                 y2={y2}
                 data-selected={isSelected ? 'true' : undefined}
+            data-rail-branch={circuit && !isSelected ? 'true' : undefined}
                 className="ole-pe-stripe"
                 strokeWidth={strokeWidth}
                 strokeDasharray={PE_STRIPE_DASHARRAY}

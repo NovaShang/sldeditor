@@ -60,6 +60,7 @@ import {
   wireIdFromEnds,
 } from './id-allocator';
 import { normalizePath } from '../model/wire-path';
+import { healSeries } from './series';
 import { clampSymbolScale } from '../model';
 import { numberWiresByPotential } from '../model/wire-numbers';
 import { isCircuitDiagram } from '../model/diagram-type';
@@ -409,7 +410,13 @@ export interface EditorState {
    * new junction (free-space drop), or a tap that splits an existing wire —
    * all minted/split in one dispatch so the gesture is a single undo step.
    */
-  connectWire: (from: WireEndSpec, to: WireEndSpec) => void;
+  connectWire: (
+    from: WireEndSpec,
+    to: WireEndSpec,
+    /** A route for the new wire, drawn from `from` to `to` (e.g. a branch
+     *  pulled out of a rail keeps its tap where the rail was pressed). */
+    opts?: { path?: [number, number][] },
+  ) => void;
   /** Replace a wire's manual route. `null` clears it → back to auto-route. */
   updateWirePath: (id: WireId, path: [number, number][] | null) => void;
   /** Clear a wire's manual route (alias for `updateWirePath(id, null)`). */
@@ -1283,13 +1290,20 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     if (selection.length === 0 && selectedAnnotations.length === 0) return;
     const ids = new Set(selection);
     const annIds = new Set(selectedAnnotations);
+    const internal = get().internal;
     get().dispatch((d) => {
       const elements = d.elements.filter((e) => !ids.has(e.id));
       const buses = (d.buses ?? []).filter((b) => !ids.has(b.id));
       const junctions = (d.junctions ?? []).filter((j) => !ids.has(j.id));
-      const wires = (d.wires ?? []).filter(
-        (w) => !ids.has(endOwner(w.ends[0])) && !ids.has(endOwner(w.ends[1])),
-      );
+      // Circuit diagrams: a device taken out of a conductor closes it back
+      // up, pole by pole — the inverse of dropping one onto a wire.
+      const healed = isCircuitDiagram(d) ? healSeries(d, internal, ids) : [];
+      const wires = [
+        ...(d.wires ?? []).filter(
+          (w) => !ids.has(endOwner(w.ends[0])) && !ids.has(endOwner(w.ends[1])),
+        ),
+        ...healed,
+      ];
       // Annotations are a separate channel but share the gesture, so they go
       // in the same dispatch — one undo entry for the whole mixed selection.
       const annotations = annIds.size
@@ -1777,7 +1791,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     });
   },
 
-  connectWire: (from, to) => {
+  connectWire: (from, to, opts) => {
     get().dispatch((d) => {
       let working = d;
       const usedIds = new Set<string>([
@@ -1831,7 +1845,9 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
       const id = wireIdFromEnds(a, b);
       const existing = working.wires ?? [];
       if (existing.some((w) => w.id === id)) return working;
-      return { ...working, wires: [...existing, { id, ends: [a, b] }] };
+      const path = opts?.path && opts.path.length >= 2 ? normalizePath(opts.path) : null;
+      const wire: Wire = { id, ends: [a, b], ...(path && path.length > 2 ? { path } : {}) };
+      return { ...working, wires: [...existing, wire] };
     });
   },
 

@@ -715,6 +715,21 @@
   fill: var(--selection);
   stroke: none;
 }
+/* Drop-on-wire preview: the conductor(s) the symbol will be put in line
+   with, and where they are cut. */
+.ole-insert-host {
+  stroke: var(--selection);
+  stroke-width: 6;
+  stroke-opacity: 0.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.ole-insert-cut {
+  fill: var(--selection);
+  stroke: none;
+}
 /* Drop-target indicator during the wire drag — solid dot inside a halo
    ring so the user sees exactly where a release will land. */
 .ole-wire-preview-target-ring {
@@ -811,6 +826,10 @@
 }
 
 /* Buses inherit `currentColor` so they track light/dark theme like wires. */
+/* Circuit diagrams: an unselected rail pulls a branch wire (select tool). */
+.ole-root:not(.ole-viewer) .ole-bus[data-rail-branch='true'] {
+  cursor: crosshair;
+}
 .ole-bus-layer {
   color: var(--foreground);
 }

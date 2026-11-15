@@ -42,6 +42,7 @@ import { BusNameLayer, PinLabelLayer, SolderDotLayer } from './CircuitMarksLayer
 import { ElementLayer } from './ElementLayer';
 import { MarqueeOverlay } from './MarqueeOverlay';
 import { PlaceGhost } from './PlaceGhost';
+import { InsertPreview } from './InsertPreview';
 import { SelectionOverlay } from './SelectionOverlay';
 import { SheetLayer } from './SheetLayer';
 import { hitSheet } from './sheet-hit';
@@ -409,6 +410,7 @@ export function CanvasSvg() {
           <BusbarPreview />
           <AnnotationDraftPreview />
           <PlaceGhost />
+          <InsertPreview />
           <MarqueeOverlay />
         </g>
       </svg>
