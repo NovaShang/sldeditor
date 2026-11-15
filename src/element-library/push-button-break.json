@@ -42,6 +42,7 @@
       "label": "12"
     }
   ],
+  "series": true,
   "state": [
     {
       "name": "open",

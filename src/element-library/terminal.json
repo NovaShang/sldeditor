@@ -42,6 +42,7 @@
       "orientation": "e"
     }
   ],
+  "series": true,
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_03/en_60617_03_02/en_60617_03_02_02.elmt",

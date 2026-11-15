@@ -52,6 +52,7 @@
       "label": "6"
     }
   ],
+  "series": true,
   "state": [
     {
       "name": "blown",

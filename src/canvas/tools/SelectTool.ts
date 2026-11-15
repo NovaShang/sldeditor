@@ -52,6 +52,7 @@ import {
 import { transformAttr } from '../transform-attr';
 import { publishWireTarget } from '../wire-target-bus';
 import { resolveWireTarget } from '../resolve-wire-target';
+import { railBranchPath } from '../rail-branch';
 import {
   applyInsert,
   insertTol,
@@ -100,27 +101,20 @@ function inLinePlan(
   return planInsertOnWire(lib, cursor, insertTol(), scale ? { scale } : {});
 }
 
-/**
- * Route for a wire pulled out of a horizontal rail: down from the pressed
- * point, so the tap sits where the user pressed, then across to the landing.
- * A pin that faces up is entered from above (a jog half-way down). Null —
- * the router's own line — when the landing is straight below or another
- * rail.
- */
-function railBranchPath(
-  press: [number, number],
+/** The rail-branch route to a landing (see `railBranchPath`), with the
+ *  landing pin's facing looked up. Preview and release both call this. */
+function branchRoute(
+  rail: NonNullable<WireDragState['railPress']>,
   to: DragTarget,
 ): [number, number][] | undefined {
-  const [tx, ty] = to.world;
-  if (to.isBus || tx === press[0] || ty === press[1]) return undefined;
   const pin = to.ref && to.ref.includes('.')
     ? useEditorStore.getState().internal.terminals.get(to.ref as `${string}.${string}`)
     : undefined;
-  if (pin?.orientation === 'n' && ty > press[1]) {
-    const mid = snap((press[1] + ty) / 2);
-    return [press, [press[0], mid], [tx, mid], [tx, ty]];
-  }
-  return [press, [press[0], ty], [tx, ty]];
+  return railBranchPath(rail.world, rail.axis, {
+    world: to.world,
+    isBus: to.isBus,
+    orientation: pin?.orientation,
+  });
 }
 
 /**
@@ -171,8 +165,9 @@ interface WireDragState {
   fromRef: WireEnd;
   /** Set when the wire is being pulled out of a circuit rail's body: the
    *  point pressed on the rail (where the tap goes) and the press in screen
-   *  px (a release without real movement is a click — select the rail). */
-  railPress?: { world: [number, number]; client: [number, number] };
+   *  px (a release without real movement is a click — select the rail), and
+   *  the rail's direction (the branch leaves it at right angles). */
+  railPress?: { world: [number, number]; client: [number, number]; axis: 'x' | 'y' };
 }
 
 interface AnnotationDragState {
@@ -456,7 +451,11 @@ export const SelectTool: Tool = {
         wireDrag = {
           pointerId: e.pointerId,
           fromRef: id,
-          railPress: { world: onRail.world, client: [e.clientX, e.clientY] },
+          railPress: {
+            world: onRail.world,
+            client: [e.clientX, e.clientY],
+            axis: store.internal.buses.get(id)!.geometry.axis,
+          },
         };
         return;
       }
@@ -534,7 +533,12 @@ export const SelectTool: Tool = {
         isBus: false,
         create: false,
       };
-      publishWireTarget(sameLanding(fromTarget, to) ? null : toWireTarget(to));
+      if (sameLanding(fromTarget, to)) publishWireTarget(null);
+      else {
+        // A rail branch previews the route its release will store.
+        const path = wireDrag.railPress ? branchRoute(wireDrag.railPress, to) : undefined;
+        publishWireTarget({ ...toWireTarget(to), ...(path ? { path } : {}) });
+      }
       return;
     }
 
@@ -686,7 +690,7 @@ export const SelectTool: Tool = {
           return;
         }
         store.connectWire({ end: from }, to.spec, {
-          path: railBranchPath(rail.world, to),
+          path: branchRoute(rail, to),
         });
         return;
       }

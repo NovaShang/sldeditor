@@ -2210,6 +2210,35 @@ function extractTerminal(p) {
 }
 
 // ---------------------------------------------------------------------------
+// In-line devices: kinds whose every pole is a switching or protective element
+// current passes straight through. Emitted as `series: true`; deleting one on
+// a circuit diagram heals the conductor (`healSeries`). Category cannot say
+// this — `control` holds both contacts and coils / lamps, `protection` holds
+// the arrester (line to earth) — so the list is explicit. Loads, coils,
+// lamps, motors, sources, meters, converters and anything wired across a
+// supply stay off it: closing the gap they leave would draw a short.
+// ---------------------------------------------------------------------------
+
+const SERIES_KINDS = new Set([
+  // Contacts (auxiliary, timed, overload).
+  'make-contact', 'break-contact',
+  'on-delay-make-contact', 'on-delay-break-contact',
+  'off-delay-make-contact', 'off-delay-break-contact',
+  'overload-contact-make', 'overload-contact-break',
+  // Operated switches.
+  'push-button', 'push-button-break', 'emergency-stop', 'selector-switch',
+  'limit-switch', 'limit-switch-break', 'proximity-switch',
+  // Power switching / protection poles.
+  'breaker', 'breaker-3p', 'motor-breaker-3p', 'mcb-1pn', 'rcd', 'rcd-4p',
+  'gfci-breaker', 'recloser',
+  'disconnector', 'dc-disconnector', 'load-switch', 'switch-disconnector-3p',
+  'fuse', 'fuse-3p', 'fuse-switch-disconnector',
+  'contactor', 'contactor-3p', 'overload-relay-3p', 'thermal-overload', 'motor-starter',
+  // Terminals.
+  'terminal', 'terminal-block',
+]);
+
+// ---------------------------------------------------------------------------
 // Search keywords: the words people type for a symbol that its name and
 // description do not contain — trade names, abbreviations, the everyday word
 // ("lamp" for an indicator light, "timer" for a time relay). Emitted as
@@ -2418,6 +2447,7 @@ function finalize(entry, { svgBody, terminalLabelsSvg, bbox, terminals, sourceMe
   if (terminalLabelsSvg) out.terminalLabelsSvg = terminalLabelsSvg;
   out.terminals = terminals;
   if (entry.stretchable) out.stretchable = entry.stretchable;
+  if (SERIES_KINDS.has(entry.id)) out.series = true;
   if (entry.state) out.state = entry.state;
   if (entry.params) out.params = entry.params;
   if (entry.label) out.label = entry.label;
@@ -2558,6 +2588,9 @@ function main() {
 
   for (const id of Object.keys(SEARCH_KEYWORDS)) {
     if (!seenIds.has(id)) throw new Error(`SEARCH_KEYWORDS names unknown element ${id}`);
+  }
+  for (const id of SERIES_KINDS) {
+    if (!seenIds.has(id)) throw new Error(`SERIES_KINDS names unknown element ${id}`);
   }
 
   console.log(`\nWrote ${count} elements to ${path.relative(ROOT, OUT_DIR)}`);

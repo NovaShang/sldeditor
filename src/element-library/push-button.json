@@ -42,6 +42,7 @@
       "label": "14"
     }
   ],
+  "series": true,
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_07/en_60617_07_07/en_60617_07_07_02.elmt",

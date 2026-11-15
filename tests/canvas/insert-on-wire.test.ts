@@ -29,6 +29,7 @@ vi.hoisted(() => {
 
 import { dropElement } from '../../src/canvas/drop-on-bus';
 import { applyInsert, planInsertOnWire } from '../../src/canvas/insert-on-wire';
+import { railBranchPath, type RailBranchLanding } from '../../src/canvas/rail-branch';
 import { libraryById } from '../../src/element-library';
 import { useEditorStore } from '../../src/store';
 import type { DiagramFile, Wire } from '../../src/model';
@@ -337,6 +338,102 @@ describe('delete heals the conductor (circuit diagrams)', () => {
     expect(pairs()).toEqual([]);
   });
 
+  /** Rails L (y 0) and N (y 440), horizontal, x 0…400. */
+  const ladder = (extra: Partial<DiagramFile>) =>
+    S().setDiagram(
+      doc({
+        buses: [
+          { id: 'L', name: 'L', layout: { at: [200, 0], span: 400 } },
+          { id: 'N', name: 'N', layout: { at: [200, 440], span: 400 } },
+        ],
+        ...extra,
+      }),
+    );
+
+  it('leaves the rung open when a lamp between the rails goes (no L–N short)', () => {
+    ladder({
+      elements: [{ id: 'H1', kind: 'indicator-light', name: '-H1' }],
+      layout: { H1: { at: [100, 220] } },
+      wires: [
+        { id: 'a', ends: ['L', 'H1.t1'] },
+        { id: 'b', ends: ['H1.t2', 'N'] },
+      ],
+    });
+    S().setSelection(['H1']);
+    S().deleteSelection();
+    expect(pairs()).toEqual([]);
+  });
+
+  it('leaves the rung open when a coil goes (the button is not wired to N)', () => {
+    ladder({
+      elements: [
+        { id: 'S1', kind: 'push-button', name: '-S1' },
+        { id: 'K1', kind: 'relay-coil', name: '-K1' },
+      ],
+      layout: { S1: { at: [100, 100] }, K1: { at: [100, 300] } },
+      wires: [
+        { id: 'a', ends: ['L', 'S1.t1'] },
+        { id: 'b', ends: ['S1.t2', 'K1.t1'] },
+        { id: 'c', ends: ['K1.t2', 'N'] },
+      ],
+    });
+    S().setSelection(['K1']);
+    S().deleteSelection();
+    expect(pairs()).toEqual([pair('L', 'S1.t1')]);
+  });
+
+  it('heals a fuse between the L1 rail and a load', () => {
+    S().setDiagram(
+      doc({
+        buses: [
+          { id: 'R1', name: 'L1', layout: { at: [200, 0], span: 400 } },
+          { id: 'R2', name: 'N', layout: { at: [200, 440], span: 400 } },
+        ],
+        elements: [
+          { id: 'F1', kind: 'fuse', name: '-F1' },
+          { id: 'H1', kind: 'indicator-light', name: '-H1' },
+        ],
+        layout: { F1: { at: [100, 100] }, H1: { at: [100, 300] } },
+        wires: [
+          { id: 'a', ends: ['R1', 'F1.t1'] },
+          { id: 'b', ends: ['F1.t2', 'H1.t1'] },
+          { id: 'c', ends: ['H1.t2', 'R2'] },
+        ],
+      }),
+    );
+    S().setSelection(['F1']);
+    S().deleteSelection();
+    expect(pairs()).toEqual([pair('R1', 'H1.t1'), pair('H1.t2', 'R2')].sort());
+  });
+
+  it('never closes a switch that sits between two different potentials', () => {
+    // A contact straight across L and N, and a fuse between conductors
+    // labelled L1 and L2: healing either would draw a short.
+    ladder({
+      elements: [
+        { id: 'K1', kind: 'make-contact', name: '-K1' },
+        { id: 'Q1', kind: 'breaker' },
+        { id: 'F1', kind: 'fuse' },
+        { id: 'Q2', kind: 'breaker' },
+      ],
+      layout: {
+        K1: { at: [60, 220] },
+        Q1: { at: [300, 100] },
+        F1: { at: [300, 220] },
+        Q2: { at: [300, 340] },
+      },
+      wires: [
+        { id: 'a', ends: ['L', 'K1.t1'] },
+        { id: 'b', ends: ['K1.t2', 'N'] },
+        { id: 'c', ends: ['Q1.t2', 'F1.t1'], label: 'L1' },
+        { id: 'd', ends: ['F1.t2', 'Q2.t1'], label: 'L2' },
+      ],
+    });
+    S().setSelection(['K1', 'F1']);
+    S().deleteSelection();
+    expect(pairs()).toEqual([]);
+  });
+
   it('leaves single-line diagrams alone', () => {
     vertical('sld');
     dropElement('fuse', [100, 100]);
@@ -426,5 +523,61 @@ describe('connectWire with a route', () => {
       [100, 100],
       [200, 100],
     ]);
+  });
+});
+
+describe('rail branch route', () => {
+  const at = (world: [number, number], extra: Partial<RailBranchLanding> = {}): RailBranchLanding => ({
+    world,
+    isBus: false,
+    ...extra,
+  });
+
+  it('leaves a horizontal rail downward from the pressed point', () => {
+    expect(railBranchPath([100, 0], 'x', at([300, 120]))).toEqual([
+      [100, 0],
+      [100, 120],
+      [300, 120],
+    ]);
+    // An up-facing pin below is entered from above, with a jog half-way down.
+    expect(railBranchPath([100, 0], 'x', at([300, 120], { orientation: 'n' }))).toEqual([
+      [100, 0],
+      [100, 60],
+      [300, 60],
+      [300, 120],
+    ]);
+  });
+
+  it('leaves a vertical rail sideways from the pressed point, so the tap stays there', () => {
+    expect(railBranchPath([100, 150], 'y', at([300, 280]))).toEqual([
+      [100, 150],
+      [300, 150],
+      [300, 280],
+    ]);
+    // A lamp's top pin to the right, lower down: across, then down into it.
+    expect(railBranchPath([100, 150], 'y', at([400, 280], { orientation: 'n' }))).toEqual([
+      [100, 150],
+      [400, 150],
+      [400, 280],
+    ]);
+    // A pin facing back at the rail is entered head-on.
+    expect(railBranchPath([100, 150], 'y', at([300, 280], { orientation: 'w' }))).toEqual([
+      [100, 150],
+      [200, 150],
+      [200, 280],
+      [300, 280],
+    ]);
+    // Out of the left side of the rail.
+    expect(railBranchPath([100, 150], 'y', at([-100, 40]))).toEqual([
+      [100, 150],
+      [-100, 150],
+      [-100, 40],
+    ]);
+  });
+
+  it('leaves it to the router when one segment says it all, or the landing is a rail', () => {
+    expect(railBranchPath([100, 150], 'y', at([300, 150]))).toBeUndefined();
+    expect(railBranchPath([100, 0], 'x', at([100, 200]))).toBeUndefined();
+    expect(railBranchPath([100, 150], 'y', at([300, 280], { isBus: true }))).toBeUndefined();
   });
 });

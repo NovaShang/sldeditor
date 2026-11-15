@@ -32,13 +32,22 @@ export function WirePreview() {
 
   return (
     <g className="ole-wire-preview" pointerEvents="none">
-      <line
-        x1={fromWorld[0]}
-        y1={fromWorld[1]}
-        x2={endX}
-        y2={endY}
-        className="ole-wire-preview-line"
-      />
+      {target?.path ? (
+        // The route the release will store (a rail branch), not a chord.
+        <polyline
+          points={target.path.map((p) => `${p[0]},${p[1]}`).join(' ')}
+          fill="none"
+          className="ole-wire-preview-line"
+        />
+      ) : (
+        <line
+          x1={fromWorld[0]}
+          y1={fromWorld[1]}
+          x2={endX}
+          y2={endY}
+          className="ole-wire-preview-line"
+        />
+      )}
       <circle
         cx={fromWorld[0]}
         cy={fromWorld[1]}

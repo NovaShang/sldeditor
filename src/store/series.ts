@@ -22,6 +22,8 @@ import type {
   WireEnd,
 } from '../model';
 import { normalizePath } from '../model/wire-path';
+import { isWireNumber } from '../model/wire-numbers';
+import { isContinuation } from '../lib/kind-families';
 import { wireIdFromEnds } from './id-allocator';
 
 type Pt = [number, number];
@@ -193,12 +195,50 @@ export function splitWiresForSeries(
 }
 
 /**
+ * The names a potential goes by: the rails it touches (by name, or by id
+ * when unnamed), the named continuation connectors on it, and any
+ * hand-written wire label (L1, PE, 24V; wire numbers are not names). Keyed
+ * by the compiler's connectivity node, lower-cased so "L1" on a rail and
+ * "l1" on a wire agree.
+ */
+function potentialNames(d: DiagramFile, m: InternalModel): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  const add = (node: string | undefined, name: string | undefined) => {
+    const n = name?.trim().toLowerCase();
+    if (!node || !n) return;
+    const set = out.get(node);
+    if (set) set.add(n);
+    else out.set(node, new Set([n]));
+  };
+  for (const [node, cn] of m.nodes) {
+    for (const end of cn.terminals) {
+      const rb = m.buses.get(end);
+      if (rb) {
+        add(node, rb.bus.name?.trim() || `#${rb.bus.id}`);
+        continue;
+      }
+      const dot = end.indexOf('.');
+      const el = dot > 0 ? m.elements.get(end.slice(0, dot)) : undefined;
+      if (el && isContinuation(el.element.kind)) add(node, el.element.name);
+    }
+  }
+  for (const w of d.wires ?? []) {
+    if (w.label && !isWireNumber(w.label)) add(m.terminalToNode.get(w.ends[0]), w.label);
+  }
+  return out;
+}
+
+/**
  * Close the conductors back up through every pole of the devices being
- * deleted. A pole heals when each of its pins carries exactly one wire and
- * both far ends survive the delete (and are not the same point): the two
- * wires become one, keeping the label / colour and — when the router would
- * draw it differently — the route the two halves made. Returns the wires to
- * add; the caller removes the deleted devices' wires as usual.
+ * deleted. Only in-line devices heal (`series` in the library: contacts,
+ * switches, fuses, breakers, terminals) — a coil, lamp or motor sits across
+ * a supply, and closing its gap would draw a short. A pole heals when each
+ * of its pins carries exactly one wire, both far ends survive the delete
+ * (and are not the same point), and the two sides are not two different
+ * named potentials (rail L and rail N, conductor L1 and L2): the two wires
+ * become one, keeping the label / colour and — when the router would draw
+ * it differently — the route the two halves made. Returns the wires to add;
+ * the caller removes the deleted devices' wires as usual.
  */
 export function healSeries(
   d: DiagramFile,
@@ -206,6 +246,15 @@ export function healSeries(
   deleted: ReadonlySet<string>,
 ): Wire[] {
   const wires = d.wires ?? [];
+  let names: Map<string, Set<string>> | null = null;
+  const differentPotentials = (refA: WireEnd, refB: WireEnd) => {
+    names ??= potentialNames(d, m);
+    const a = names.get(m.terminalToNode.get(refA) ?? '');
+    const b = names.get(m.terminalToNode.get(refB) ?? '');
+    if (!a || !b) return false;
+    for (const n of a) if (b.has(n)) return false;
+    return true;
+  };
   const owner = (end: WireEnd) => {
     const dot = end.indexOf('.');
     return dot < 0 ? end : end.slice(0, dot);
@@ -224,7 +273,7 @@ export function healSeries(
     if (!deleted.has(el.id)) continue;
     const lib = m.library.get(el.kind);
     const placement = m.layout.get(el.id);
-    if (!lib || !placement) continue;
+    if (!lib?.series || !placement) continue;
     for (const pole of polesOf(lib, placement, false)) {
       const refA = `${el.id}.${pole.a.id}` as TerminalRef;
       const refB = `${el.id}.${pole.b.id}` as TerminalRef;
@@ -234,6 +283,7 @@ export function healSeries(
       const farA = wa[0].ends[0] === refA ? wa[0].ends[1] : wa[0].ends[0];
       const farB = wb[0].ends[0] === refB ? wb[0].ends[1] : wb[0].ends[0];
       if (farA === farB || deleted.has(owner(farA)) || deleted.has(owner(farB))) continue;
+      if (differentPotentials(refA, refB)) continue;
       const id = wireIdFromEnds(farA, farB);
       if (ids.has(id)) continue;
       ids.add(id);
