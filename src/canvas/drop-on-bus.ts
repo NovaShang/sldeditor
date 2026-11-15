@@ -26,7 +26,9 @@ import type {
 import type { TerminalGeometry } from '../compiler/internal-model';
 import { useEditorStore, wireIdFromEnds } from '../store';
 import { newPlacedElement } from '../store/id-allocator';
+import { isCircuitDiagram } from '../model/diagram-type';
 import { snap } from './grid';
+import { dropElementInLine, planInsertOnWire } from './insert-on-wire';
 
 const PROXIMITY_PX = 30;
 const CLICK_SLOP_SQ = 12 * 12;
@@ -36,9 +38,13 @@ export interface DropResult {
   attachedToBus: boolean;
 }
 
-export function dropElement(kind: string, at: [number, number]): DropResult {
-  const lib = libraryById[kind];
+export function dropElement(
+  kind: string,
+  at: [number, number],
+  opts: { tol?: number } = {},
+): DropResult {
   const store = useEditorStore.getState();
+  const lib = store.internal.library.get(kind) ?? libraryById[kind];
   const diagram = store.diagram;
 
   // Busbar drops are handled by BusbarTool directly. Bus-on-bus = nonsense.
@@ -47,10 +53,36 @@ export function dropElement(kind: string, at: [number, number]): DropResult {
     return { newElementId: id, attachedToBus: false };
   }
 
+  // Right on a conductor: cut it open and put the symbol in line.
+  const inLine = planInsertOnWire(lib, at, opts.tol);
+  if (inLine) {
+    return { newElementId: dropElementInLine(kind, inLine), attachedToBus: false };
+  }
+
   const target = nearestBus(diagram, at);
   if (!target) {
-    const id = store.addElement(kind, freePlacementAt(lib, at));
-    return { newElementId: id, attachedToBus: false };
+    const placedAt = freePlacementAt(lib, at);
+    const taps = planRailTaps(lib, placedAt);
+    if (taps.length === 0) {
+      const id = store.addElement(kind, placedAt);
+      return { newElementId: id, attachedToBus: false };
+    }
+    const { id: newId, name } = newPlacedElement(diagram, kind);
+    store.dispatch((d) => {
+      const newElement: Element = { id: newId, kind, ...(name ? { name } : {}) };
+      const wires: Wire[] = taps.map((l) => {
+        const pin = `${newId}.${l.pin}` as TerminalRef;
+        return { id: wireIdFromEnds(l.from, pin), ends: [l.from, pin] };
+      });
+      return {
+        ...d,
+        elements: [...d.elements, newElement],
+        wires: [...(d.wires ?? []), ...wires],
+        layout: { ...(d.layout ?? {}), [newId]: { at: placedAt } },
+      };
+    });
+    store.setSelection([newId]);
+    return { newElementId: newId, attachedToBus: true };
   }
 
   const { busId, busAt, axis } = target;
@@ -142,6 +174,65 @@ export function pickPlaceCursorTerminal(
   if (!lib || lib.stretchable || lib.terminals.length === 0) return null;
   const sorted = [...lib.terminals].sort((a, b) => a.y - b.y);
   return sorted[0];
+}
+
+/** World units above a symbol's top pins searched for a rail to hang from. */
+const RAIL_REACH = 200;
+
+/**
+ * Circuit diagrams: a symbol placed under a supply rail hangs from it. Each
+ * upward-facing pin gets a conductor straight up to a horizontal rail whose
+ * span covers it — the nearest rail for a single pin; for a row of poles,
+ * one rail per pole from the top down (the L1… rails first when there are
+ * enough of them), so a three-pole device under L1 / L2 / L3 / N / PE taps
+ * L1, L2 and L3. Nothing when a device already sits between the pin and the
+ * rail (the symbol is being stacked under that device instead), when there
+ * are fewer rails than poles, or outside circuit diagrams.
+ */
+export function planRailTaps(lib: LibraryEntry, placedAt: [number, number]): PlaceLink[] {
+  const { diagram, internal } = useEditorStore.getState();
+  if (!isCircuitDiagram(diagram) || lib.stretchable) return [];
+  const pins = lib.terminals
+    .filter((t) => t.orientation === 'n')
+    .map((t) => ({ id: t.id, world: [placedAt[0] + t.x, placedAt[1] + t.y] as [number, number] }))
+    .sort((p, q) => p.world[0] - q.world[0]);
+  if (pins.length === 0) return [];
+  const topY = Math.min(...pins.map((p) => p.world[1]));
+  const rails = [...internal.buses.values()]
+    .filter((rb) => rb.geometry.axis === 'x')
+    .filter((rb) => {
+      const { at, span } = rb.geometry;
+      const gap = topY - at[1];
+      if (gap <= 0 || gap > RAIL_REACH) return false;
+      return pins.every(
+        (p) => p.world[0] >= at[0] - span / 2 && p.world[0] <= at[0] + span / 2,
+      );
+    })
+    .sort((p, q) => p.geometry.at[1] - q.geometry.at[1]);
+  if (rails.length < pins.length) return [];
+  let chosen = rails;
+  if (pins.length === 1) {
+    chosen = [rails[rails.length - 1]];
+  } else {
+    const phases = rails.filter((rb) => /^L\d$/i.test(rb.bus.name ?? ''));
+    chosen = (phases.length >= pins.length ? phases : rails).slice(0, pins.length);
+  }
+  const terminals = [...internal.terminals.values()];
+  const links: PlaceLink[] = [];
+  for (let i = 0; i < pins.length; i++) {
+    const p = pins[i];
+    const rail = chosen[i];
+    const railY = rail.geometry.at[1];
+    const blocked = terminals.some(
+      (t) =>
+        Math.abs(t.world[0] - p.world[0]) < 0.5 &&
+        t.world[1] > railY &&
+        t.world[1] < p.world[1],
+    );
+    if (blocked) return [];
+    links.push({ from: rail.bus.id, fromWorld: [p.world[0], railY], pin: p.id, pinWorld: p.world });
+  }
+  return links;
 }
 
 /** World units above / below a multi-pole row searched for pins to line up with. */

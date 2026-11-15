@@ -11,10 +11,22 @@
  * draw a dashed wire from the source terminal to the pin it will connect to
  * (one per pole for a multi-pole pair) — same visual language as
  * `WirePreview`, so the user sees the connections committed on release.
+ *
+ * A free placement right on a conductor previews going in line: the ghost
+ * sits on the wire, turned along it, and the conductor(s) it will cut are
+ * highlighted with the cut points marked. Under a rail on a circuit diagram
+ * the taps it will hang from are drawn as dashed conductors.
  */
 
 import { useEditorStore } from '../store';
-import { freePlacementAt, planPlaceFromTerminal, type PlaceLink } from './drop-on-bus';
+import {
+  freePlacementAt,
+  planPlaceFromTerminal,
+  planRailTaps,
+  type PlaceLink,
+} from './drop-on-bus';
+import { planInsertOnWire, type InsertPlan } from './insert-on-wire';
+import { InsertHighlight } from './InsertPreview';
 
 export function PlaceGhost() {
   const tool = useEditorStore((s) => s.activeTool);
@@ -35,18 +47,30 @@ export function PlaceGhost() {
   // pin that connects back to the source (and, for a multi-pole pair, every
   // further pole wired with it) — drawn as dashed conductors.
   let at: [number, number];
+  let rot = 0;
   let links: PlaceLink[] = [];
+  let inLine: InsertPlan | null = null;
   if (fromRef) {
     const plan = planPlaceFromTerminal(lib, fromRef, cursor);
     if (!plan) return null;
     at = plan.placedAt;
     links = plan.links;
   } else {
-    at = freePlacementAt(lib, cursor);
+    // On a conductor: the symbol snaps in line and the wire(s) it would cut
+    // light up. Under a rail (circuit diagrams): the taps it would get.
+    inLine = planInsertOnWire(lib, cursor);
+    if (inLine) {
+      at = inLine.placement.at;
+      rot = inLine.placement.rot ?? 0;
+    } else {
+      at = freePlacementAt(lib, cursor);
+      links = planRailTaps(lib, at);
+    }
   }
 
   return (
     <g className="ole-place-ghost-group" pointerEvents="none">
+      {inLine && <InsertHighlight plan={inLine} />}
       {links.map((l) => (
         <g key={`${l.from}>${l.pin}`}>
           <line
@@ -66,7 +90,7 @@ export function PlaceGhost() {
       ))}
       <g
         className="ole-place-ghost"
-        transform={`translate(${at[0]} ${at[1]})`}
+        transform={`translate(${at[0]} ${at[1]})${rot ? ` rotate(${rot})` : ''}`}
         opacity={0.5}
       >
         <g dangerouslySetInnerHTML={{ __html: lib.svg }} />

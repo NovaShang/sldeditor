@@ -51,9 +51,77 @@ import {
 } from '../wire-drag';
 import { transformAttr } from '../transform-attr';
 import { publishWireTarget } from '../wire-target-bus';
+import { resolveWireTarget } from '../resolve-wire-target';
+import {
+  applyInsert,
+  insertTol,
+  planInsertOnWire,
+  publishInsertPreview,
+  type InsertPlan,
+} from '../insert-on-wire';
+import { endOwner } from '../../store/group-move';
+import { isCircuitDiagram } from '../../model/diagram-type';
 import type { Tool, ToolContext } from './types';
 
 const MARQUEE_THRESHOLD = 3;
+/** Screen px a rail press must travel before it pulls a wire, not a click. */
+const RAIL_CLICK_PX = 4;
+
+/**
+ * The in-line placement for the device a drag carries, when it is a lone,
+ * unconnected device and the pointer is over a conductor it can take.
+ */
+function inLinePlan(
+  d: DragState,
+  cursor: [number, number],
+): InsertPlan | null {
+  if (d.loose === undefined) {
+    let loose: ElementId | null = null;
+    if (
+      !d.sheetId &&
+      d.originals.size === 1 &&
+      d.busOriginals.size === 0 &&
+      d.junctionOriginals.size === 0 &&
+      d.annotationOriginals.size === 0
+    ) {
+      const [id] = d.originals.keys();
+      const wired = (useEditorStore.getState().diagram.wires ?? []).some(
+        (w) => endOwner(w.ends[0]) === id || endOwner(w.ends[1]) === id,
+      );
+      if (!wired) loose = id;
+    }
+    d.loose = loose;
+  }
+  if (!d.loose) return null;
+  const store = useEditorStore.getState();
+  const el = store.diagram.elements.find((x) => x.id === d.loose);
+  const lib = el ? store.internal.library.get(el.kind) : undefined;
+  const scale = d.originals.get(d.loose)?.scale;
+  return planInsertOnWire(lib, cursor, insertTol(), scale ? { scale } : {});
+}
+
+/**
+ * Route for a wire pulled out of a horizontal rail: down from the pressed
+ * point, so the tap sits where the user pressed, then across to the landing.
+ * A pin that faces up is entered from above (a jog half-way down). Null —
+ * the router's own line — when the landing is straight below or another
+ * rail.
+ */
+function railBranchPath(
+  press: [number, number],
+  to: DragTarget,
+): [number, number][] | undefined {
+  const [tx, ty] = to.world;
+  if (to.isBus || tx === press[0] || ty === press[1]) return undefined;
+  const pin = to.ref && to.ref.includes('.')
+    ? useEditorStore.getState().internal.terminals.get(to.ref as `${string}.${string}`)
+    : undefined;
+  if (pin?.orientation === 'n' && ty > press[1]) {
+    const mid = snap((press[1] + ty) / 2);
+    return [press, [press[0], mid], [tx, mid], [tx, ty]];
+  }
+  return [press, [press[0], ty], [tx, ty]];
+}
 
 /**
  * The inner group of an element's label block — the one that carries the live
@@ -83,6 +151,9 @@ interface DragState {
    *  drawn on it (preview only) and the release commits `moveSheet`. */
   sheetId?: string;
   moved: boolean;
+  /** The one device this drag carries when it is alone and unconnected —
+   *  dropped on a wire, it goes in line. Undefined until first asked. */
+  loose?: ElementId | null;
 }
 
 interface MarqueeState {
@@ -98,6 +169,10 @@ interface MarqueeState {
 interface WireDragState {
   pointerId: number;
   fromRef: WireEnd;
+  /** Set when the wire is being pulled out of a circuit rail's body: the
+   *  point pressed on the rail (where the tap goes) and the press in screen
+   *  px (a release without real movement is a click — select the rail). */
+  railPress?: { world: [number, number]; client: [number, number] };
 }
 
 interface AnnotationDragState {
@@ -356,6 +431,37 @@ export const SelectTool: Tool = {
       return;
     }
 
+    // Circuit diagrams: pull a wire straight out of a supply rail. Pressing
+    // a rail that isn't selected starts a branch from the pressed point (a
+    // click without moving selects it); a selected rail drags as before, so
+    // rails can still be moved.
+    if (
+      !e.shiftKey &&
+      store.internal.buses.has(id) &&
+      isCircuitDiagram(store.diagram) &&
+      !store.selection.includes(id)
+    ) {
+      const press = ctx.viewport.screenToSvg(e.clientX, e.clientY);
+      const onRail = resolveWireTarget(id, [snap(press[0]), snap(press[1])]);
+      if (onRail) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.target instanceof Element && e.target.hasPointerCapture?.(e.pointerId)) {
+          e.target.releasePointerCapture(e.pointerId);
+        }
+        ctx.hostEl.classList.add('tool-wire');
+        store.setWireFromTerminal(id);
+        store.setWireDragFrom({ spec: { end: id }, world: onRail.world, ref: id });
+        store.setCursorSvg(press);
+        wireDrag = {
+          pointerId: e.pointerId,
+          fromRef: id,
+          railPress: { world: onRail.world, client: [e.clientX, e.clientY] },
+        };
+        return;
+      }
+    }
+
     // Update selection.
     const sel = store.selection;
     if (e.shiftKey) {
@@ -484,6 +590,8 @@ export const SelectTool: Tool = {
       // wrapper translate previews it like a bus.
       const sheetNode = sheetGroup(ctx, drag.sheetId);
       if (sheetNode) sheetNode.setAttribute('transform', `translate(${dx} ${dy})`);
+      // A loose device over a wire: light up the conductor(s) it would cut.
+      if (drag.moved) publishInsertPreview(inLinePlan(drag, cur));
       return;
     }
 
@@ -549,6 +657,7 @@ export const SelectTool: Tool = {
     if (wireDrag && e.pointerId === wireDrag.pointerId) {
       const store = useEditorStore.getState();
       const from = wireDrag.fromRef;
+      const railPress = wireDrag.railPress;
       wireDrag = null;
       ctx.hostEl.classList.remove('tool-wire');
       store.setWireFromTerminal(null);
@@ -569,6 +678,18 @@ export const SelectTool: Tool = {
         isBus: false,
         create: false,
       };
+      const rail = railPress;
+      if (rail) {
+        const moved = Math.hypot(e.clientX - rail.client[0], e.clientY - rail.client[1]);
+        if (moved < RAIL_CLICK_PX || sameLanding(fromTarget, to)) {
+          store.setSelection([from]);
+          return;
+        }
+        store.connectWire({ end: from }, to.spec, {
+          path: railBranchPath(rail.world, to),
+        });
+        return;
+      }
       if (sameLanding(fromTarget, to)) return;
       store.connectWire({ end: from }, to.spec);
       return;
@@ -602,7 +723,14 @@ export const SelectTool: Tool = {
               worldTolAt(ctx, e.clientX, e.clientY),
             )
           : null;
-        if (soloJunction && landing) {
+        const inLine = inLinePlan(drag, cur);
+        publishInsertPreview(null);
+        if (inLine && drag.loose) {
+          const id = drag.loose;
+          const store = useEditorStore.getState();
+          const m = store.internal;
+          store.dispatch((d) => applyInsert(d, m, id, inLine));
+        } else if (soloJunction && landing) {
           useEditorStore.getState().mergeJunctionInto(soloJunction[0], landing);
         } else if (drag.sheetId) {
           // The store re-derives the sheet's contents itself; the preview
@@ -713,6 +841,7 @@ export const SelectTool: Tool = {
       annDrag = null;
     }
     if (drag && e.pointerId === drag.pointerId) {
+      publishInsertPreview(null);
       // Reset the live preview transforms so the elements snap back to
       // their pre-drag placements (the store wasn't mutated yet).
       for (const [id, orig] of drag.originals) {
