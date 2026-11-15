@@ -12,6 +12,7 @@ import { FloatingToolbar } from './FloatingToolbar';
 import { LeftPanel } from './LeftPanel';
 import { LibraryPopover } from './LibraryPopover';
 import { OnboardingCard } from './OnboardingCard';
+import { QuickInsert } from './QuickInsert';
 import { RightPanel } from './RightPanel';
 import { ViewToolbar } from './ViewToolbar';
 
@@ -103,6 +104,7 @@ export function EditorShell() {
                 <ContextualToolbar />
                 <AnnotationEditToolbar />
                 <LibraryPopover />
+                <QuickInsert />
                 <OnboardingCard />
                 <ElementHoverLabel />
               </>

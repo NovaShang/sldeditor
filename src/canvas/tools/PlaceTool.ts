@@ -19,7 +19,7 @@
  */
 
 import { useEditorStore } from '../../store';
-import { dropElement, dropElementFromTerminal } from '../drop-on-bus';
+import { dropElement, dropElementFromTerminal, type DropResult } from '../drop-on-bus';
 import { hitTerminal } from '../hit-test';
 import { disarmPlaceOnPhone } from '../touch';
 import type { Tool } from './types';
@@ -77,7 +77,7 @@ export const PlaceTool: Tool = {
     }
 
     const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
-    dropElement(placeKind, pt);
+    stamp(dropElement(placeKind, pt));
     disarmOnUp = true;
   },
 
@@ -94,7 +94,7 @@ export const PlaceTool: Tool = {
       const { placeKind } = store;
       if (!placeKind) return;
       const pt = ctx.viewport.screenToSvg(e.clientX, e.clientY);
-      dropElementFromTerminal(placeKind, from, pt);
+      stamp(dropElementFromTerminal(placeKind, from, pt));
       scheduleDisarm();
       return;
     }
@@ -120,6 +120,11 @@ export const PlaceTool: Tool = {
     disarmOnUp = false;
   },
 };
+
+/** An armed "add contact" (see `armContact`) names and numbers what was placed. */
+function stamp(result: DropResult | null): void {
+  if (result) useEditorStore.getState().stampPlaced(result.newElementId);
+}
 
 function snap(v: number): number {
   return Math.round(v / GRID) * GRID;

@@ -8,6 +8,7 @@
 import { useEffect } from 'react';
 import { useEditorStore } from '../store';
 import { isTypingKeyEvent } from '../lib/text-entry';
+import { openQuickInsertAtPointer } from '../components/quick-insert-state';
 
 /**
  * Step out of drawing state. Wire/busbar tools always return to select, and
@@ -210,6 +211,11 @@ export function useKeyboardShortcuts(): void {
           return;
         case 'Escape':
           exitDrawingState();
+          return;
+        case '/':
+          // Quick insert: search the library, drop the pick at the mouse.
+          e.preventDefault();
+          openQuickInsertAtPointer();
           return;
       }
     };

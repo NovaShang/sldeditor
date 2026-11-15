@@ -86,6 +86,7 @@ import { familyOf } from '../lib/kind-families';
 import { endOwner, translateManualWirePaths } from './group-move';
 import { pruneOrphanedJunctions } from './prune-junctions';
 import { removeBindingsForTargets } from '../runtime/bindings';
+import { nextContactPins, pinLabelsOnRename, pinLabelsWith } from '../lib/contact-numbers';
 
 const EMPTY_DIAGRAM: DiagramFile = { version: '1', elements: [] };
 const HISTORY_LIMIT = 100;
@@ -149,6 +150,13 @@ export type WireEndSpec =
   | { onWire: WireId; at: [number, number] };
 
 /** Live state of an in-progress wire drag (origin). */
+/** See `EditorState.placeTemplate`. */
+export interface PlaceTemplate {
+  kind: string;
+  /** Device tag as the device writes it, e.g. "-KM1". */
+  tag: string;
+}
+
 export interface WireDragFrom {
   spec: WireEndSpec;
   /** Anchor point for the preview line. */
@@ -171,6 +179,12 @@ export interface EditorState {
   /** Canonical in-progress wire-drag origin (supports free-space starts). */
   wireDragFrom: WireDragFrom | null;
   placeFromTerminal: WireEnd | null;
+  /**
+   * Identity the next placement of `kind` takes: another contact of device
+   * `tag`, with the device's next free terminal numbers (`armContact`).
+   * Lives as long as the place tool stays armed with that kind.
+   */
+  placeTemplate: PlaceTemplate | null;
   busbarDrawStart: [number, number] | null;
   cursorSvg: [number, number] | null;
   /** Selected devices, buses and/or junctions (shared id namespace). */
@@ -239,6 +253,17 @@ export interface EditorState {
   setPlaceFromTerminal: (ref: WireEnd | null) => void;
   setBusbarDrawStart: (pt: [number, number] | null) => void;
   setCursorSvg: (pt: [number, number] | null) => void;
+  /**
+   * Arm the place tool with another contact of the device `sourceId` belongs
+   * to: the next click (or press on a pin) places a `kind` contact tagged
+   * like the device, numbered with its next free terminal numbers.
+   */
+  armContact: (sourceId: ElementId, kind: string) => void;
+  /**
+   * Give the element just placed the armed template's identity (tag + next
+   * free pins). Folded into the placement's own undo step: no history entry.
+   */
+  stampPlaced: (id: ElementId) => void;
 
   /**
    * Replace the element/bus/junction selection. `annIds` replaces the
@@ -573,6 +598,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
   wireFromTerminal: null,
   wireDragFrom: null,
   placeFromTerminal: null,
+  placeTemplate: null,
   busbarDrawStart: null,
   cursorSvg: null,
   selection: [],
@@ -713,6 +739,8 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
       wireFromTerminal: tool === 'wire' ? cur.wireFromTerminal : null,
       wireDragFrom: tool === 'wire' ? cur.wireDragFrom : null,
       placeFromTerminal: tool === 'place' ? cur.placeFromTerminal : null,
+      placeTemplate:
+        tool === 'place' && cur.placeTemplate?.kind === placeKind ? cur.placeTemplate : null,
       annotationDraft: null,
     });
   },
@@ -720,7 +748,27 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     set((s) => ({
       placeKind: kind,
       lastPlaceKind: kind ?? s.lastPlaceKind,
+      placeTemplate: s.placeTemplate?.kind === kind ? s.placeTemplate : null,
     })),
+  armContact: (sourceId, kind) => {
+    const el = get().diagram.elements.find((e) => e.id === sourceId);
+    const tag = el?.name?.trim();
+    if (!tag) return;
+    get().setActiveTool('place', { placeKind: kind });
+    set({ placeTemplate: { kind, tag } });
+  },
+  stampPlaced: (id) => {
+    const { diagram, placeTemplate: tpl, internal } = get();
+    const el = diagram.elements.find((e) => e.id === id);
+    if (!tpl || !el || el.kind !== tpl.kind) return;
+    const pins = nextContactPins(diagram, tpl.tag, el.kind, id, internal.library);
+    const stamped: Element = { ...el, name: tpl.tag };
+    const pinLabels = pins ? pinLabelsWith(el, pins, internal.library) : el.pinLabels;
+    if (pinLabels) stamped.pinLabels = pinLabels;
+    else delete stamped.pinLabels;
+    const next = { ...diagram, elements: diagram.elements.map((e) => (e.id === id ? stamped : e)) };
+    set({ diagram: next, internal: compile(next) });
+  },
   setWireFromTerminal: (ref) => set({ wireFromTerminal: ref }),
   setWireDragFrom: (from) => set({ wireDragFrom: from }),
   setPlaceFromTerminal: (ref) => set({ placeFromTerminal: ref }),
@@ -1858,10 +1906,24 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
   },
 
   updateElement: (id, patch) => {
-    get().dispatch((d) => ({
-      ...d,
-      elements: d.elements.map((e) => (e.id === id ? { ...e, ...patch } : e)),
-    }));
+    get().dispatch((d) => {
+      let full = patch;
+      // Typing an existing device's tag into a contact ("-KM1") numbers it
+      // as that device's next free contact.
+      if ('name' in patch && !('pinLabels' in patch) && isCircuitDiagram(d)) {
+        const pins = pinLabelsOnRename(d, id, patch.name, get().internal.library);
+        if (pins !== null) full = { ...patch, pinLabels: pins };
+      }
+      return {
+        ...d,
+        elements: d.elements.map((e) => {
+          if (e.id !== id) return e;
+          const next = { ...e, ...full };
+          if ('pinLabels' in full && full.pinLabels === undefined) delete next.pinLabels;
+          return next;
+        }),
+      };
+    });
   },
 
   updatePlacement: (id, patch) => {
