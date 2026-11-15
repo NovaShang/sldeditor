@@ -6,6 +6,7 @@ import { useEditorStore } from './store';
 import { useLocale, type Locale } from './i18n';
 import { applyTheme, type Theme } from './hooks/use-theme';
 import { useHostActions, type HealthEvent } from './hooks/use-host-actions';
+import { useToolUseReporter, type ToolUseEvent } from './hooks/use-tool-use';
 
 export interface OneLineEditorProps {
   className?: string;
@@ -45,6 +46,13 @@ export interface OneLineEditorProps {
   /** Export one drawing sheet, offered as "Export this sheet" in the sheet
    *  inspector. Omit it and the button is not offered. */
   onExportSheet?: (sheetId: string) => void;
+  /**
+   * The user activated a drawing tool (wire, busbar/rail, place, junction,
+   * text, rect, …), for host analytics. Once per activation — switching to a
+   * tool, not every stroke drawn with it; `select`/`pan` are not reported, and
+   * nothing is in `readOnly` mode. Throwing from it is swallowed.
+   */
+  onToolUse?: (e: ToolUseEvent) => void;
 }
 
 export function OneLineEditor({
@@ -56,7 +64,10 @@ export function OneLineEditor({
   onCreateComponent,
   onHealthEvent,
   onExportSheet,
+  onToolUse,
 }: OneLineEditorProps) {
+  useToolUseReporter(onToolUse, readOnly);
+
   useEffect(() => {
     useHostActions.getState().setHostActions({
       onCreateComponent: readOnly ? null : (onCreateComponent ?? null),

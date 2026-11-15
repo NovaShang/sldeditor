@@ -6,6 +6,7 @@
 
 import { libraryById } from '../element-library';
 import type { LibraryEntry, SymbolStandard } from '../model';
+import { normalizeSymbolTextPaint } from '../lib/symbol-text';
 
 export const LIBRARY: ReadonlyMap<string, LibraryEntry> = new Map(
   Object.entries(libraryById),
@@ -41,9 +42,27 @@ export function mergeCustomKinds(
   const merged = new Map(LIBRARY);
   for (const entry of custom) {
     if (!entry?.id || !isCustomKind(entry.id)) continue;
-    merged.set(entry.id, entry);
+    merged.set(entry.id, withPrintableText(entry));
   }
   return merged;
+}
+
+/**
+ * A custom entry with its text paint made explicit (see
+ * `normalizeSymbolTextPaint`). Done here, at the one point every renderer
+ * reads from, so the canvas, the exports and DXF all draw the same text —
+ * and done at read time, so documents saved before the rule are fixed too.
+ * Memoised per entry object: the document's entries are immutable, and the
+ * same object back keeps downstream identity checks cheap.
+ */
+const printable = new WeakMap<LibraryEntry, LibraryEntry>();
+function withPrintableText(entry: LibraryEntry): LibraryEntry {
+  const hit = printable.get(entry);
+  if (hit) return hit;
+  const svg = typeof entry.svg === 'string' ? normalizeSymbolTextPaint(entry.svg) : entry.svg;
+  const out = svg === entry.svg ? entry : { ...entry, svg };
+  printable.set(entry, out);
+  return out;
 }
 
 /**

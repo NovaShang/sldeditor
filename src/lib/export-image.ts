@@ -12,6 +12,7 @@
  */
 
 import { compensateStrokes } from './symbol-scale';
+import { uprightSymbolText } from './symbol-text';
 import { transformAttr } from '../canvas/transform-attr';
 import { transformPoint, type InternalModel } from '../compiler';
 import {
@@ -217,7 +218,7 @@ export function buildExportSvg(
       `  <g id="${escapeXml(re.element.id)}" transform="${transformAttr(place)}"${inherit}>`,
     );
     out.push(
-      `    ${recolorSymbol(compensateStrokes(floorSymbolStrokes(re.libraryDef.svg, sw), place.scale), re.element.color)}`,
+      `    ${recolorSymbol(compensateStrokes(floorSymbolStrokes(uprightSymbolText(re.libraryDef.svg, place.mirror), sw), place.scale), re.element.color)}`,
     );
     out.push('  </g>');
   }

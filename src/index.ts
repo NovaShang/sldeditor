@@ -237,4 +237,5 @@ export type { DxfExportOptions } from './lib/export-dxf';
 export { checkHealth, parseRatio, sameVoltageLevel } from './health';
 export type { HealthCode, HealthIssue, HealthReport, HealthSeverity, LoadSummary } from './health';
 export type { HealthEvent } from './hooks/use-host-actions';
+export type { ToolUseEvent } from './hooks/use-tool-use';
 export { sheetExportRegion, sheetMinStroke, sheetExportOptions } from './lib/export-sheets';
