@@ -9,8 +9,8 @@
  * it tracks pan, zoom, and element/wire moves "for free".
  */
 
-import { useEffect, useRef } from 'react';
-import { FlipHorizontal, RotateCw, Spline, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { FlipHorizontal, ListPlus, RotateCw, Spline, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tooltip } from './ui/tooltip';
 import { useT } from '../i18n';
@@ -18,6 +18,9 @@ import { useEditorStore } from '../store';
 import { COLOR_ORDER, inkClass } from '../lib/colors';
 import type { DiagramColor } from '../model';
 import type { LocaleKey } from '../i18n/messages';
+import { isTypingKeyEvent } from '../lib/text-entry';
+import { useContextMenu } from './ContextMenu';
+import { addContactItems, addContactSource } from './contact-actions';
 
 /** Swatch labels, spelled out rather than built by template so the keys stay
  *  greppable and type-checked against the message table. */
@@ -54,6 +57,41 @@ export function ContextualToolbar() {
     selectedWire != null && wireRenders.get(selectedWire)?.userEdited === true;
 
   const ref = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLButtonElement>(null);
+  const contextMenu = useContextMenu();
+  // Re-evaluated on every document change: renaming a coil makes it (or
+  // stops it being) a device contacts can be added to.
+  const elements = useEditorStore((s) => s.diagram.elements);
+  const soleId = selection.length === 1 ? selection[0] : undefined;
+  const contactSource = useMemo(
+    () => (soleId ? addContactSource(soleId) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [soleId, elements],
+  );
+  const openContacts = useCallback(() => {
+    const btn = contactRef.current;
+    if (!btn || !soleId) return;
+    const items = addContactItems(t, soleId);
+    if (items.length === 0) return;
+    const r = btn.getBoundingClientRect();
+    contextMenu.open(r.left, r.bottom + 4, items);
+  }, [contextMenu, soleId, t]);
+
+  // C — "add contact" for the selected coil / contactor / timer.
+  useEffect(() => {
+    if (!contactSource) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'c' && e.key !== 'C') return;
+      if (e.metaKey || e.ctrlKey || e.altKey || isTypingKeyEvent(e)) return;
+      const st = useEditorStore.getState();
+      if (st.readOnly || st.editingElement || st.editingAnnotation) return;
+      if (st.activeTool !== 'select' && st.activeTool !== 'pan') return;
+      e.preventDefault();
+      openContacts();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [contactSource, openContacts]);
 
   useEffect(() => {
     const el = ref.current;
@@ -170,6 +208,36 @@ export function ContextualToolbar() {
               aria-label={t('ctx.resetWirePath')}
             >
               <Spline />
+            </Button>
+          </Tooltip>
+          <div aria-hidden className="mx-0.5 h-4 w-px bg-border" />
+        </>
+      )}
+      {!hideTransform && contactSource && (
+        <>
+          <Tooltip
+            content={
+              <div className="space-y-0.5">
+                <div>
+                  <span className="font-medium">{t('contacts.add')}</span>
+                  <span className="ml-1.5 text-muted-foreground">C</span>
+                </div>
+                <div className="text-muted-foreground">
+                  {t('contacts.addHint', { tag: contactSource.tag })}
+                </div>
+              </div>
+            }
+          >
+            <Button
+              ref={contactRef}
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={openContacts}
+              aria-label={t('contacts.add')}
+              aria-haspopup="menu"
+            >
+              <ListPlus />
             </Button>
           </Tooltip>
           <div aria-hidden className="mx-0.5 h-4 w-px bg-border" />

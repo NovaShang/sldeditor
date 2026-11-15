@@ -54,6 +54,10 @@ import { nameLines } from '../lib/element-labels';
 import { continuationKey, familyOf, isContinuation } from '../lib/kind-families';
 import { centerOnWorld } from '../canvas/fit-to-content';
 import { cn } from '../lib/utils';
+import { contactDeviceOf } from '../lib/contact-numbers';
+import { pinLabelOf } from '../model/diagram-type';
+import { addContactItems } from './contact-actions';
+import { useContextMenu } from './ContextMenu';
 
 export function PropertyPanel() {
   const t = useT();
@@ -157,6 +161,7 @@ export function PropertyPanel() {
       />
       {lib && <SizeRow id={id} />}
       <PinNumbersSection id={id} element={element} />
+      <DeviceContactsSection id={id} element={element} />
       {isContinuation(element.kind) && <PartnerRow id={id} name={element.name} />}
       {lib?.state && lib.state.length > 0 && (
         <div className="mt-1 flex flex-col gap-1.5 border-t border-border/40 pt-2.5">
@@ -1182,6 +1187,84 @@ function RailConductorRow({ bus }: { bus: Bus }) {
  * it. "Hide" blanks every designation of the element (stored as `''`, which
  * `pinLabelOf` reads as hidden); a pin hidden that way shows "—".
  */
+/**
+ * The device's cross-reference, in the inspector: every other piece carrying
+ * the selected coil's / contact's tag with its terminal numbers (click one
+ * to go to it), and "Add contact" for the next one.
+ */
+function DeviceContactsSection({ id, element }: { id: string; element: Element }) {
+  const t = useT();
+  const libT = useLibT();
+  const contextMenu = useContextMenu();
+  const diagram = useEditorStore((s) => s.diagram);
+  const library = useEditorStore((s) => s.internal.library);
+  const terminals = useEditorStore((s) => s.internal.terminals);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  if (!isCircuitDiagram(diagram)) return null;
+  const device = contactDeviceOf(diagram, element);
+  if (!device) return null;
+  const others = device.members.filter((m) => m.id !== id);
+  const pinsOf = (m: Element) => {
+    const entry = library.get(m.kind);
+    const labels = (entry?.terminals ?? [])
+      .map((lt) => pinLabelOf(m, entry, lt.id))
+      .filter((l): l is string => !!l);
+    // In pairs, one per pole: "13-14", "1-2 3-4 5-6".
+    const pairs: string[] = [];
+    for (let i = 0; i < labels.length; i += 2) pairs.push(labels.slice(i, i + 2).join('-'));
+    return pairs.join(' ');
+  };
+  const goTo = (m: Element) => {
+    const st = useEditorStore.getState();
+    st.setSelection([m.id]);
+    const pin = terminals.get(`${m.id}.t1`);
+    if (pin) centerOnWorld(pin.world);
+  };
+  const openMenu = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    const items = addContactItems(t, id);
+    if (!r || items.length === 0) return;
+    contextMenu.open(r.left, r.bottom + 4, items);
+  };
+  return (
+    <div className="mt-1 flex flex-col gap-1.5 border-t border-border/40 pt-2.5">
+      <span className="text-[11px] text-muted-foreground">
+        {t('contacts.listTitle', { tag: device.tag })}
+      </span>
+      {others.length === 0 ? (
+        <span className="text-[11px] text-muted-foreground/70">{t('contacts.none')}</span>
+      ) : (
+        <ul className="flex flex-col gap-px">
+          {others.map((m) => {
+            const entry = library.get(m.kind);
+            return (
+              <li key={m.id}>
+                <button
+                  type="button"
+                  onClick={() => goTo(m)}
+                  className="flex w-full items-center justify-between gap-2 rounded px-1.5 py-1 text-left hover:bg-accent hover:text-accent-foreground"
+                >
+                  <span className="truncate">{libT(`${m.kind}.name`, entry?.name ?? m.kind)}</span>
+                  <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{pinsOf(m)}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={openMenu}
+        aria-haspopup="menu"
+        className="self-start rounded border border-dashed border-border px-1.5 py-0.5 text-[11px] text-muted-foreground hover:border-solid hover:bg-accent hover:text-foreground"
+      >
+        + {t('contacts.add')}
+      </button>
+    </div>
+  );
+}
+
 function PinNumbersSection({ id, element }: { id: string; element: Element }) {
   const t = useT();
   const circuit = useEditorStore((s) => isCircuitDiagram(s.diagram));

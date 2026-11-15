@@ -18,10 +18,13 @@ import {
   Redo2,
   RotateCw,
   Scissors,
+  Search,
   Trash2,
   Undo2,
 } from 'lucide-react';
 import { useContextMenu, type ContextMenuEntry } from '../components/ContextMenu';
+import { addContactItems } from '../components/contact-actions';
+import { openQuickInsert } from '../components/quick-insert-state';
 import { useT } from '../i18n';
 import { useEditorStore } from '../store';
 import { setViewportApi } from './viewport-bus';
@@ -153,6 +156,10 @@ export function CanvasSvg() {
       const hasClipboard = !!s.clipboard;
       const hasAnyElement = s.diagram.elements.length > 0;
       const selectionIds = new Set(s.selection);
+      const onEmptyCanvas =
+        !annotationId && !elementId && !hitNode(target) && !hitSheet(target);
+      const contactItems: ContextMenuEntry[] =
+        s.selection.length === 1 ? addContactItems(t, s.selection[0]) : [];
       const hasMovedLabel = s.diagram.elements.some(
         (e) => selectionIds.has(e.id) && e.labelOffset !== undefined,
       );
@@ -215,6 +222,22 @@ export function CanvasSvg() {
           disabled: !hasMovedLabel,
         },
         { type: 'separator' },
+        // Another contact of the device under the cursor (circuit diagrams).
+        ...(contactItems.length > 0
+          ? [...contactItems, { type: 'separator' } as const]
+          : []),
+        // On empty canvas: search the library and drop the pick right here.
+        ...(onEmptyCanvas
+          ? [
+              {
+                label: t('menu.insertSymbol'),
+                shortcut: '/',
+                icon: Search,
+                onSelect: () => openQuickInsert(clientX, clientY),
+              },
+              { type: 'separator' } as const,
+            ]
+          : []),
         {
           label: t('menu.selectAll'),
           shortcut: `${MOD}A`,
