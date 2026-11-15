@@ -471,10 +471,25 @@ function emitLibrarySvg(
   const doc = new DOMParser().parseFromString(wrapped, 'image/svg+xml');
   const root = doc.documentElement;
   if (!root || root.querySelector('parsererror')) return;
+  emitChildren(w, root, place);
+}
 
-  for (const el of Array.from(root.children)) {
+function emitChildren(
+  w: DxfWriter,
+  parent: Element,
+  place: ResolvedPlacement,
+): void {
+  for (const el of Array.from(parent.children)) {
     const tag = el.tagName.toLowerCase();
     switch (tag) {
+      case 'g':
+        // A plain grouping wrapper (document-defined symbols commonly put
+        // their whole drawing in one to share stroke/fill). A transformed
+        // group would need its matrix threaded through every emitter; the
+        // shipped library has none, so those are still skipped rather than
+        // exported in the wrong place.
+        if (!el.hasAttribute('transform')) emitChildren(w, el, place);
+        break;
       case 'line':
         emitLine(w, el, place);
         break;
@@ -616,13 +631,28 @@ function emitText(
 ): void {
   const x = numAttr(el, 'x');
   const y = numAttr(el, 'y');
-  const fs = parseFloat(el.getAttribute('font-size') ?? '') || TEXT_FONT_SIZE_DEFAULT;
+  // Size and anchor inherit, as in SVG (a symbol may set them on a group).
+  const fs =
+    parseFloat(el.closest('[font-size]')?.getAttribute('font-size') ?? '') ||
+    TEXT_FONT_SIZE_DEFAULT;
   const txt = (el.textContent ?? '').trim();
   if (!txt) return;
   const p = worldToDxf(localToWorld([x, y], place));
+  const authored = el.closest('[text-anchor]')?.getAttribute('text-anchor');
+  const anchor: 'start' | 'middle' | 'end' =
+    authored === 'middle' || authored === 'end' ? authored : 'start';
+  // A mirrored symbol keeps its text readable, exactly as the canvas does
+  // (`uprightSymbolText`): the anchor point mirrors with the symbol, the
+  // justification swaps so the text occupies the mirrored box, and the
+  // glyphs are NOT written backwards (no group-71 flag).
+  // Unmirrored text keeps its historical left justification: single-line
+  // DXF output is pinned byte-for-byte (tests/lib/sld-export-identity).
+  const halign = place.mirror
+    ? ({ start: 'end', end: 'start', middle: 'middle' } as const)[anchor]
+    : 'start';
   // place.rot is CCW in math frame (see transforms.ts); after flipping Y we
   // are in DXF's CCW frame, so the same numeric angle maps directly.
-  w.text(LAYER_ELEMENTS, p, txt, fs * (place.scale ?? 1), place.rot, place.mirror);
+  w.text(LAYER_ELEMENTS, p, txt, fs * (place.scale ?? 1), place.rot, false, halign);
 }
 
 // -----------------------------------------------------------------------------

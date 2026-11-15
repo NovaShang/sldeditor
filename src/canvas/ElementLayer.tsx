@@ -23,6 +23,7 @@ import { useCanvasStore } from '../store';
 import type { LibraryEntry } from '../model';
 import { transformAttr } from './transform-attr';
 import { compensateStrokes } from '../lib/symbol-scale';
+import { uprightSymbolText } from '../lib/symbol-text';
 import { inkClass } from '../lib/colors';
 import { alarmAttr, qualityAttr, useRuntime } from '../runtime/runtime-context';
 
@@ -193,7 +194,10 @@ export function ElementLayer() {
             <HitRect lib={re.libraryDef} />
             <g
               dangerouslySetInnerHTML={innerHtml(
-                compensateStrokes(re.libraryDef.svg, place.scale),
+                compensateStrokes(
+                  uprightSymbolText(re.libraryDef.svg, place.mirror),
+                  place.scale,
+                ),
               )}
             />
             {re.libraryDef.terminalLabelsSvg && !circuit && (
