@@ -29,6 +29,7 @@
       "label": "98"
     }
   ],
+  "series": true,
   "diagramTypes": [
     "circuit"
   ],

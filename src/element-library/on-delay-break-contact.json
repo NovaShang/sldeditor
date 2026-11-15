@@ -23,6 +23,7 @@
       "label": "56"
     }
   ],
+  "series": true,
   "state": [
     {
       "name": "open",

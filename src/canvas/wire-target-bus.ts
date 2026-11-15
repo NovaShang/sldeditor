@@ -16,6 +16,9 @@ export interface WireTarget {
   isBus: boolean;
   /** Set when releasing here mints a junction (empty space, or a wire tap). */
   create?: 'junction';
+  /** The route a release here would store, origin first, when it is not
+   *  the straight line (a branch pulled out of a rail). */
+  path?: [number, number][];
 }
 
 type Listener = (target: WireTarget | null) => void;

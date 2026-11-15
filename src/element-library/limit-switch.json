@@ -23,6 +23,7 @@
       "label": "14"
     }
   ],
+  "series": true,
   "state": [
     {
       "name": "closed",

@@ -28,6 +28,7 @@
       "orientation": "s"
     }
   ],
+  "series": true,
   "state": [
     {
       "name": "open",

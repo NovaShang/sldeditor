@@ -35,6 +35,7 @@
       "label": "2"
     }
   ],
+  "series": true,
   "state": [
     {
       "name": "open",

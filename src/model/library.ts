@@ -162,6 +162,15 @@ export interface LibraryEntry {
   terminals: LibraryTerminal[];
   stretchable?: LibraryStretchable;
   /**
+   * The device sits IN a conductor: every pole is a switching or protective
+   * element current passes straight through (contacts, push-buttons,
+   * switches, fuses, breakers, overload elements, terminals). Deleting one on
+   * a circuit diagram closes the conductor back up. Absent on everything that
+   * sits ACROSS a supply instead — coils, lamps, motors, sources, meters,
+   * arresters — where closing the gap would draw a short.
+   */
+  series?: boolean;
+  /**
    * State fields this kind accepts on `Element.state`. Omitted = no state.
    * Used by the property panel and validators; not enforced at TS compile time.
    */

@@ -75,6 +75,7 @@
       "label": "N"
     }
   ],
+  "series": true,
   "state": [
     {
       "name": "open",
