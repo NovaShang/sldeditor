@@ -26,7 +26,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          registry-url: https://registry.npmjs.org
+          # No registry-url: it writes an .npmrc with an empty _authToken, which
+          # makes `npm info` 401 so changesets thinks the current version is
+          # unpublished. Trusted publishing needs no .npmrc auth at all.
 
       # npm trusted publishing (OIDC) needs npm >= 11.5.1; no NPM_TOKEN involved.
       - name: Update npm
