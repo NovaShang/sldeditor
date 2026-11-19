@@ -31,8 +31,9 @@ jobs:
           # unpublished. Trusted publishing needs no .npmrc auth at all.
 
       # npm trusted publishing (OIDC) needs npm >= 11.5.1; no NPM_TOKEN involved.
+      # Pinned to 11: npm 12 broke changesets' `npm info` check (it re-published 0.36.1).
       - name: Update npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@^11.5.1
 
       - name: Install
         run: npm ci
