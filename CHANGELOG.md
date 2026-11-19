@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.36.2
+
+### Patch Changes
+
+- [#63](https://github.com/NovaShang/sldeditor/pull/63) [`5870a6a`](https://github.com/NovaShang/sldeditor/commit/5870a6a64212ced0ea9192ea9e4536267aa0e9f5) Thanks [@NovaShang](https://github.com/NovaShang)! - Releases are now published from GitHub Actions through npm trusted publishing, with provenance attached. No code changes.
+
 ## 0.36.1
 
 ### Patch Changes
