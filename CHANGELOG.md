@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.39.1
+
+### Patch Changes
+
+- [#72](https://github.com/NovaShang/sldeditor/pull/72) [`27f9cf6`](https://github.com/NovaShang/sldeditor/commit/27f9cf6003930eba12b6e75bd888814f2cd3f22a) Thanks [@NovaShang](https://github.com/NovaShang)! - Enclosure name tags export with `font-weight="bold"` instead of `600`, so SVG-to-PDF converters keep them in the sans-serif face instead of falling back to a serif one.
+
 ## 0.39.0
 
 ### Minor Changes
