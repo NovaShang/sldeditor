@@ -526,7 +526,7 @@ function exportEnclosure(
   if (name) {
     out.push(`  <g fill="${ink}" ${fontAttrs}>`);
     out.push(
-      `    <text x="${name.x}" y="${name.y}" font-size="${name.fontSize}" font-weight="600">${escapeXml(name.text)}</text>`,
+      `    <text x="${name.x}" y="${name.y}" font-size="${name.fontSize}" font-weight="bold">${escapeXml(name.text)}</text>`,
     );
     out.push('  </g>');
   }
