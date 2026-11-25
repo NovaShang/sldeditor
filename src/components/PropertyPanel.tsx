@@ -869,9 +869,9 @@ function SizeRow({ id }: { id: string }) {
               if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
               if (e.key === 'Escape') setDraft(null);
             }}
-            className="h-7 w-full rounded-md border border-border/60 bg-transparent pr-5 pl-2 font-mono text-[11px] tabular-nums outline-none focus:border-primary"
+            className="h-7 w-full rounded-md border border-border/60 bg-transparent pe-5 ps-2 font-mono text-[11px] tabular-nums outline-none focus:border-primary"
           />
-          <span className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-[11px] text-muted-foreground">
+          <span className="pointer-events-none absolute top-1/2 end-2 -translate-y-1/2 text-[11px] text-muted-foreground">
             %
           </span>
         </div>
@@ -1651,7 +1651,7 @@ export function TextRow({
     onBlur: draft.onBlur,
     className: cn(
       'w-full rounded-md border border-border/60 bg-background/50 px-2 text-[11px] focus:border-border focus:outline-none focus:ring-1 focus:ring-ring',
-      unit && 'pr-8',
+      unit && 'pe-8',
       multiline ? 'resize-none py-1.5 leading-snug' : 'h-7',
     ),
   };
@@ -1697,7 +1697,7 @@ export function TextRow({
           />
         )}
         {unit && (
-          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+          <span className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
             {unit}
           </span>
         )}
@@ -1844,11 +1844,11 @@ function NumberRow({
           min={min}
           className={cn(
             'h-7 w-full rounded-md border border-border/60 bg-background/50 px-2 font-mono text-[11px] tabular-nums placeholder:font-sans placeholder:text-muted-foreground/70 focus:border-border focus:outline-none focus:ring-1 focus:ring-ring',
-            unit && 'pr-8',
+            unit && 'pe-8',
           )}
         />
         {unit && (
-          <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+          <span className="pointer-events-none absolute end-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
             {unit}
           </span>
         )}

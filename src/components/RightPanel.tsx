@@ -90,7 +90,7 @@ export function RightPanel() {
       // that corner raises it so they never cover the panel's last rows.
       style={{
         top: `calc(${compactWidth ? '4.5rem' : '0.75rem'} + var(--ole-top-inset, 0px) + var(--ole-safe-top, 0px))`,
-        right: 'calc(0.75rem + var(--ole-right-inset, 0px) + var(--ole-safe-right, 0px))',
+        insetInlineEnd: 'calc(0.75rem + var(--ole-edge-end))',
         maxHeight: `calc(100% - ${compactWidth ? '5.25rem' : '1.5rem'} - var(--ole-top-inset, 0px) - var(--ole-safe-top, 0px) - var(--ole-bottom-inset, 0px) - var(--ole-safe-bottom, 0px) - var(--ole-right-panel-reserve, 4.5rem))`,
       }}
     >

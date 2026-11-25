@@ -22,6 +22,19 @@ export type ParamValue = number | string | boolean;
 export type LabelMode = 'off' | 'id' | 'all';
 
 /**
+ * Who created an item. Absent = drawn by a person, which is what every
+ * document written before this field existed means. `'ai'` = created by an AI
+ * assistant working through the host's API — the host stamps it; the editor's
+ * own tools never do.
+ *
+ * Records CREATION only: editing an AI-made item keeps the mark, while a
+ * copy the user pastes is theirs (copying drops it). Pure metadata — it is
+ * never drawn, never affects compile/connectivity/diagnostics, and never
+ * reaches an SVG/PNG/PDF/DXF export; it only travels in the JSON document.
+ */
+export type Provenance = 'ai';
+
+/**
  * Which graphical standard a drawing renders its symbols in.
  *
  * A drawing is IEC *or* ANSI — never a mix — so this is a document setting,
@@ -156,6 +169,8 @@ export interface DiagramMeta {
 
 export interface Element {
   id: ElementId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
   /** LibraryEntry.id (see src/element-library/). */
   kind: LibraryEntry['id'] | (string & {});
   name?: string;
@@ -201,6 +216,8 @@ export interface Element {
 
 export interface Bus {
   id: BusId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
   name?: string;
   note?: string;
   params?: Record<string, ParamValue>;
@@ -218,6 +235,8 @@ export interface BusLayout {
 
 export interface Junction {
   id: JunctionId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
   name?: string;
   note?: string;
   params?: Record<string, ParamValue>;
@@ -231,6 +250,8 @@ export interface JunctionLayout {
 
 export interface Wire {
   id: WireId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
   ends: [WireEnd, WireEnd];
   /** Optional manual route path. Absent → auto-route. */
   path?: [number, number][];
@@ -315,6 +336,8 @@ export type LineArrow = 'none' | 'end' | 'both';
  */
 export interface TextAnnotation {
   id: AnnotationId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
   type?: 'text';
   at: [number, number];
   text: string;
@@ -329,6 +352,8 @@ export interface TextAnnotation {
  */
 export interface RectAnnotation {
   id: AnnotationId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
   type: 'rect';
   at: [number, number];
   size: [number, number];
@@ -354,6 +379,8 @@ export interface RectAnnotation {
  */
 export interface EllipseAnnotation {
   id: AnnotationId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
   type: 'ellipse';
   at: [number, number];
   size: [number, number];
@@ -372,6 +399,8 @@ export interface EllipseAnnotation {
 /** Straight/poly line, optionally arrowed (leader lines, dividers). */
 export interface LineAnnotation {
   id: AnnotationId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
   type: 'line';
   at: [number, number];
   /** ≥2 vertices, relative to `at`. */
@@ -389,6 +418,8 @@ export interface LineAnnotation {
 /** Freehand grid table; cells are plain single-line text. */
 export interface TableAnnotation {
   id: AnnotationId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
   type: 'table';
   at: [number, number];
   colWidths: number[];

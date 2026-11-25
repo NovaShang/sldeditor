@@ -41,3 +41,16 @@ describe('styles.css host contract', () => {
     for (const u of sel) expect(u).toMatch(/^var\(--ole-selection,\s*var\(--selection/);
   });
 });
+
+describe('styles.css RTL contract', () => {
+  it('anchors side chrome to logical edges that swap under dir=rtl', () => {
+    expect(css).toMatch(/--ole-edge-start:\s*calc\(var\(--ole-start-inset,\s*var\(--ole-left-inset/);
+    expect(css).toMatch(
+      /\.ole-root:dir\(rtl\)\s*\{[^}]*--ole-edge-start:\s*calc\(var\(--ole-start-inset,\s*var\(--ole-right-inset/,
+    );
+  });
+
+  it('never mirrors the drawing itself', () => {
+    expect(css).toMatch(/\.ole-canvas-svg\s*\{[^}]*direction:\s*ltr/);
+  });
+});

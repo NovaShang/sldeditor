@@ -138,19 +138,19 @@ export function LibraryPopover() {
   if (!open) return null;
   if (sheet && placeKind != null) return null;
   // Phone-class layout: fill the canvas area between the top bar and the
-  // unified bottom bar. Wider viewports keep the classic 288px left-anchored
-  // dock.
+  // unified bottom bar. Wider viewports keep the classic 288px dock at the start
+  // edge (left, or right under `dir=rtl`).
   const wrapperStyle: React.CSSProperties = sheet
     ? {
         top: `calc(${TOP_INSET}px + var(--ole-top-inset, 0px) + var(--ole-safe-top, 0px))`,
-        left: 'calc(0.75rem + var(--ole-left-inset, 0px) + var(--ole-safe-left, 0px))',
-        right: 'calc(0.75rem + var(--ole-right-inset, 0px) + var(--ole-safe-right, 0px))',
+        insetInlineStart: 'calc(0.75rem + var(--ole-edge-start))',
+        insetInlineEnd: 'calc(0.75rem + var(--ole-edge-end))',
         bottom: 'calc(4rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px) + 0.75rem)',
       }
     : { top: TOP_INSET };
   return (
     <div
-      className={sheet ? 'absolute z-20' : 'absolute left-3 z-20'}
+      className={sheet ? 'absolute z-20' : 'absolute start-3 z-20'}
       style={wrapperStyle}
       role="dialog"
       aria-label={t('library.title')}
@@ -314,13 +314,13 @@ function SearchBox({
   const t = useT();
   return (
     <div className="relative">
-      <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+      <Search className="pointer-events-none absolute start-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t('library.searchPlaceholder')}
-        className="h-7 w-full rounded-md border border-border/60 bg-background/50 pl-7 pr-7 text-xs placeholder:text-muted-foreground focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
+        className="h-7 w-full rounded-md border border-border/60 bg-background/50 ps-7 pe-7 text-xs placeholder:text-muted-foreground focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
         aria-label={t('library.searchAria')}
       />
       {value && (
@@ -328,7 +328,7 @@ function SearchBox({
           type="button"
           aria-label={t('library.clearSearch')}
           onClick={() => onChange('')}
-          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          className="absolute end-1 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           <X className="size-3" />
         </button>
@@ -427,7 +427,7 @@ function ElementRow({
            search cuts across groups and this is exactly when it matters: a
            custom symbol is local vocabulary that nobody else's palette has. */
         <span
-          className="ml-auto shrink-0 rounded-sm border border-border/70 px-1 py-px font-mono text-[9px] leading-none text-muted-foreground/70"
+          className="ms-auto shrink-0 rounded-sm border border-border/70 px-1 py-px font-mono text-[9px] leading-none text-muted-foreground/70"
           title={t('library.customHint')}
         >
           {t('library.customTag')}

@@ -28,6 +28,7 @@ export type {
   ParamValue,
   PinName,
   Placement,
+  Provenance,
   RectAnnotation,
   SymbolStandard,
   TableAnnotation,

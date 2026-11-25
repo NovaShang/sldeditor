@@ -3,6 +3,11 @@
  * outline tab (left), the main toolbar (centre) and the view toolbar (right) —
  * share one row and must never overlap.
  *
+ * "left" and "right" here are the INLINE start and end: under `dir=rtl` the
+ * row mirrors (outline tab on the right) and every offset below is measured
+ * from the start edge, which the pieces honour by anchoring with
+ * `inset-inline-start` / `-end`. The arithmetic is the same either way.
+ *
  * Width breakpoints can't guarantee that: the main toolbar's width depends on
  * the language (German labels are half again as long as English), the drawing
  * type (circuit diagrams swap Layout for Number wires) and whatever tools a
@@ -78,7 +83,7 @@ export function pickBarMode(
 }
 
 /**
- * Centre of the main toolbar, px from the editor's left edge: the middle of
+ * Centre of the main toolbar, px from the editor's start (LTR: left) edge: the middle of
  * the editor when that leaves room on both sides, otherwise slid towards the
  * roomier side so it clears the outline tab and the view toolbar.
  */

@@ -26,7 +26,7 @@ export function DemoTopBar() {
       className="absolute z-20"
       style={{
         top: 'calc(0.75rem + var(--ole-top-inset, 0px) + var(--ole-safe-top, 0px))',
-        left: 'calc(0.75rem + var(--ole-left-inset, 0px) + var(--ole-safe-left, 0px))',
+        insetInlineStart: 'calc(0.75rem + var(--ole-edge-start))',
       }}
     >
       <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">

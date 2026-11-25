@@ -109,7 +109,7 @@ function QuickInsertBox({ at }: { at: QuickInsertAt }) {
       onContextMenu={(e) => e.preventDefault()}
     >
       <div className="relative">
-        <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute start-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <input
           ref={inputRef}
           type="text"
@@ -123,7 +123,7 @@ function QuickInsertBox({ at }: { at: QuickInsertAt }) {
           aria-label={t('quickInsert.aria')}
           aria-controls="ole-quick-insert-list"
           aria-activedescendant={results[current] ? `ole-qi-${results[current].id}` : undefined}
-          className="h-8 w-full rounded-md border border-border/60 bg-background/50 pl-7 pr-2 text-xs placeholder:text-muted-foreground focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 w-full rounded-md border border-border/60 bg-background/50 ps-7 pe-2 text-xs placeholder:text-muted-foreground focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
         />
       </div>
       {results.length > 0 ? (

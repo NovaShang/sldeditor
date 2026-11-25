@@ -60,6 +60,7 @@ export type {
   ParamValue,
   PinName,
   Placement,
+  Provenance,
   RectAnnotation,
   TableAnnotation,
   Tag,

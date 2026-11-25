@@ -220,7 +220,7 @@ export function ContextualToolbar() {
               <div className="space-y-0.5">
                 <div>
                   <span className="font-medium">{t('contacts.add')}</span>
-                  <span className="ml-1.5 text-muted-foreground">C</span>
+                  <span className="ms-1.5 text-muted-foreground">C</span>
                 </div>
                 <div className="text-muted-foreground">
                   {t('contacts.addHint', { tag: contactSource.tag })}
@@ -250,7 +250,7 @@ export function ContextualToolbar() {
               <div className="space-y-0.5">
                 <div>
                   <span className="font-medium">{t('ctx.rotate')}</span>
-                  <span className="ml-1.5 text-muted-foreground">R</span>
+                  <span className="ms-1.5 text-muted-foreground">R</span>
                 </div>
                 <div className="text-muted-foreground">{t('ctx.rotateHint')}</div>
               </div>
@@ -271,7 +271,7 @@ export function ContextualToolbar() {
               <div className="space-y-0.5">
                 <div>
                   <span className="font-medium">{t('ctx.mirror')}</span>
-                  <span className="ml-1.5 text-muted-foreground">M</span>
+                  <span className="ms-1.5 text-muted-foreground">M</span>
                 </div>
                 <div className="text-muted-foreground">{t('ctx.mirrorHint')}</div>
               </div>
@@ -328,7 +328,7 @@ export function ContextualToolbar() {
           <div className="space-y-0.5">
             <div>
               <span className="font-medium">{t('ctx.delete')}</span>
-              <span className="ml-1.5 text-muted-foreground">Del</span>
+              <span className="ms-1.5 text-muted-foreground">Del</span>
             </div>
             <div className="text-muted-foreground">
               {isWireMode

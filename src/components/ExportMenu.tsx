@@ -74,7 +74,7 @@ export function ExportMenu() {
       {open && (
         <div
           role="menu"
-          className="ole-glass absolute left-0 top-full mt-1.5 min-w-40 rounded-md border border-border p-1 shadow-md"
+          className="ole-glass absolute start-0 top-full mt-1.5 min-w-40 rounded-md border border-border p-1 shadow-md"
         >
           <button
             type="button"
