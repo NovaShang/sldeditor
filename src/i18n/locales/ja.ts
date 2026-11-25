@@ -50,6 +50,7 @@ export const ui: UiTable = {
   'props.multi': '{n} 個のオブジェクトを選択中',
   'props.name': '名前',
   'props.defaultHint': '既定 {v}',
+  'props.unit': '単位',
   'props.note': 'メモ',
   'props.label': 'ラベル',
   'props.labelPlaceholder': 'L1 / L2 / L3 / N / PE',

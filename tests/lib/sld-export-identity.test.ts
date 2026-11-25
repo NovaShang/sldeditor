@@ -13,6 +13,11 @@
  * (A `green-yellow` wire is deliberately absent: that colour is new with
  * circuit diagrams and draws its PE stripes in either drawing type.)
  *
+ * One deliberate change since: symbol text on a placement turned 180° is
+ * written upright (`uprightSymbolText`, DXF `emitText`). complex-substation
+ * has a generator at `rot: 180`, and its "G" — that one `<text>` / TEXT
+ * entity and nothing else — was updated for it.
+ *
  * @vitest-environment jsdom
  *
  * (jsdom because the DXF writer parses each symbol's SVG with `DOMParser`.)

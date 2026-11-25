@@ -13,6 +13,7 @@ import type { DiagramType, WireEnd } from '../model';
 import type { LibraryEntry } from '../model/library';
 import { entryFitsDiagramType } from '../model/diagram-type';
 import { dropElement, dropElementFromTerminal } from '../canvas/drop-on-bus';
+import { emitGesture } from '../store/gesture-events';
 
 export interface QuickInsertAt {
   /** Screen point the palette opens at. */
@@ -103,6 +104,7 @@ export function quickInsertEntries(
 export function quickInsertPlace(kind: string, at: QuickInsertAt): void {
   const placed = at.source ? dropElementFromTerminal(kind, at.source, at.world) : null;
   if (!placed) dropElement(kind, at.world);
+  emitGesture('quick_insert');
   const i = recent.indexOf(kind);
   if (i >= 0) recent.splice(i, 1);
   recent.unshift(kind);

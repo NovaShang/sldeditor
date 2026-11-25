@@ -45,6 +45,7 @@ export const ui: UiTable = {
   'props.multi': '{n} objetos seleccionados',
   'props.name': 'Nombre',
   'props.defaultHint': 'por defecto {v}',
+  'props.unit': 'Unidad',
   'props.note': 'Nota',
   'props.label': 'Etiqueta',
   'props.labelPlaceholder': 'L1 / L2 / L3 / N / PE',

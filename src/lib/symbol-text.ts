@@ -13,6 +13,13 @@
  *      placed symbol (canvas, SVG/PNG/PDF export); DXF does the same with its
  *      own entity fields.
  *
+ *      Rotation by 180° turns the glyphs upside down the same way (and so
+ *      does 180° + mirror, after the mirror counter-flip). `uprightSymbolText`
+ *      turns each such `<text>` a further 180° about the centre of its own
+ *      box and swaps the alignment, so the upright text occupies the box the
+ *      turned symbol gives it. 90° / 270° are left turned: text read from the
+ *      side is normal drawing practice, upside-down text is not.
+ *
  *   2. Paint that only works on screen. A document-defined symbol is authored
  *      by a model told to "use stroke=black", and a `<g stroke="black"
  *      fill="none">` wrapper around the whole drawing is the natural way to
@@ -83,6 +90,7 @@ interface Inherited {
   fill?: string;
   fontSize?: string;
   fontFamily?: string;
+  baseline?: string;
 }
 
 function inherit(parent: Inherited, attrs: string): Inherited {
@@ -91,6 +99,7 @@ function inherit(parent: Inherited, attrs: string): Inherited {
     fill: getAttr(attrs, 'fill') ?? parent.fill,
     fontSize: getAttr(attrs, 'font-size') ?? parent.fontSize,
     fontFamily: getAttr(attrs, 'font-family') ?? parent.fontFamily,
+    baseline: getAttr(attrs, 'dominant-baseline') ?? parent.baseline,
   };
 }
 
@@ -156,12 +165,151 @@ const mirrorText = memo((svg: string): string => {
 });
 
 /**
- * The symbol fragment as it should be drawn on a placement with this
- * `mirror` flag. Identity (same string) when not mirrored or text-free.
+ * Cap height of the symbol font (Liberation Sans / Arial), in em: half of it
+ * is how far above an alphabetic baseline the middle of a line of capitals
+ * sits.
  */
-export function uprightSymbolText(svg: string, mirror: boolean | undefined): string {
-  if (!mirror || !svg || !/<text\b/i.test(svg)) return svg;
-  return mirrorText(svg);
+const CAP_HEIGHT_EM = 0.716;
+
+/** A length in user units; `em` resolved against `fs`. */
+function lengthOf(v: string, fs: number): number {
+  const t = v.trim();
+  const n = parseFloat(t);
+  if (!Number.isFinite(n)) return 0;
+  return /em$/i.test(t) ? n * fs : n;
+}
+
+/**
+ * The vertical middle of each `<text>`'s box, in its own coordinates, in
+ * document order: the middle of its first and last baselines, raised by half
+ * a cap height for alphabetic text (centred text is already on it).
+ */
+function textMiddles(svg: string): number[] {
+  const out: number[] = [];
+  const stack: Inherited[] = [{}];
+  let cur: { lo: number; hi: number; y: number; fs: number; centred: boolean } | null = null;
+  for (const m of svg.matchAll(TAG_RE)) {
+    const [, close, rawTag, attrs, self] = m;
+    const tag = rawTag.toLowerCase();
+    const top = stack[stack.length - 1];
+    if (close) {
+      if ((tag === 'g' || tag === 'text' || tag === 'tspan') && stack.length > 1) stack.pop();
+      if (tag === 'text' && cur) {
+        const mid = (cur.lo + cur.hi) / 2;
+        out.push(cur.centred ? mid : mid - (CAP_HEIGHT_EM * cur.fs) / 2);
+        cur = null;
+      }
+      continue;
+    }
+    if (tag === 'g') {
+      if (!self) stack.push(inherit(top, attrs));
+      continue;
+    }
+    if (tag === 'text') {
+      const eff = inherit(top, attrs);
+      const fs = parseFloat(eff.fontSize ?? '') || SYMBOL_TEXT_DEFAULT_FONT_SIZE;
+      const y = firstNumber(getAttr(attrs, 'y')) + lengthOf(getAttr(attrs, 'dy') ?? '0', fs);
+      const centred = eff.baseline === 'middle' || eff.baseline === 'central';
+      if (self) {
+        out.push(centred ? y : y - (CAP_HEIGHT_EM * fs) / 2);
+      } else {
+        stack.push(eff);
+        cur = { lo: y, hi: y, y, fs, centred };
+      }
+      continue;
+    }
+    if (tag === 'tspan' && cur) {
+      const ty = getAttr(attrs, 'y');
+      const dy = getAttr(attrs, 'dy');
+      if (ty !== undefined) cur.y = firstNumber(ty);
+      if (dy !== undefined) cur.y += lengthOf(dy.trim().split(/[\s,]+/)[0] ?? '0', cur.fs);
+      cur.lo = Math.min(cur.lo, cur.y);
+      cur.hi = Math.max(cur.hi, cur.y);
+      if (!self) stack.push(inherit(top, attrs));
+    }
+  }
+  return out;
+}
+
+/**
+ * Turn every `<text>` a further 180° about the middle of its own box, in its
+ * own frame, and swap its alignment: the text is moved rigidly (lines keep
+ * their order) into the box the 180°-turned symbol gives it.
+ *
+ * With `vflip` (a mirrored placement turned 180°, i.e. a vertical flip) the
+ * counter-transform is the mirror flip and that turn composed — a flip about
+ * the box's middle line, alignment unchanged — written as ONE transform:
+ * svg2pdf.js (the PDF export) misplaces text under the composed
+ * `scale(-1 1) rotate(180 …)` list even though browsers draw it right.
+ */
+function turnTextWith(vflip: boolean) {
+  return memo((svg: string): string => turnOrFlip(svg, vflip));
+}
+
+function turnOrFlip(svg: string, vflip: boolean): string {
+  const middles = textMiddles(svg);
+  const stack: Inherited[] = [{}];
+  let i = 0;
+  return svg.replace(TAG_RE, (whole, close: string, rawTag: string, attrs: string, self: string) => {
+    const tag = rawTag.toLowerCase();
+    const top = stack[stack.length - 1];
+    if (close) {
+      if ((tag === 'g' || tag === 'text' || tag === 'tspan') && stack.length > 1) stack.pop();
+      return whole;
+    }
+    if (tag === 'g') {
+      if (!self) stack.push(inherit(top, attrs));
+      return whole;
+    }
+    if (tag === 'text') {
+      const x = firstNumber(getAttr(attrs, 'x'));
+      const cy = middles[i++] ?? firstNumber(getAttr(attrs, 'y'));
+      const own = getAttr(attrs, 'transform');
+      const turn = vflip
+        ? `translate(0 ${round(2 * cy)}) scale(1 -1)`
+        : `rotate(180 ${round(x)} ${round(cy)})`;
+      let next = attrs;
+      let anchor = getAttr(attrs, 'text-anchor') ?? top.anchor;
+      if (!vflip) {
+        anchor = SWAP[anchor ?? 'start'] ?? 'end';
+        next = setAttr(next, 'text-anchor', anchor);
+      }
+      next = setAttr(next, 'transform', own ? `${own} ${turn}` : turn);
+      if (!self) stack.push({ ...inherit(top, attrs), anchor });
+      return `<${rawTag}${next}${self ? '/' : ''}>`;
+    }
+    if (tag === 'tspan') {
+      const ta = getAttr(attrs, 'text-anchor');
+      const next = ta !== undefined && !vflip ? setAttr(attrs, 'text-anchor', SWAP[ta] ?? ta) : attrs;
+      if (!self) stack.push(inherit(top, next));
+      return `<${rawTag}${next}${self ? '/' : ''}>`;
+    }
+    return whole;
+  });
+}
+
+const turnText = turnTextWith(false);
+const flipTextVertically = turnTextWith(true);
+
+/** Whether a placement turns its symbol's text upside down (net 180°). */
+export function symbolTextUpsideDown(rot: number | undefined): boolean {
+  return (((rot ?? 0) % 360) + 360) % 360 === 180;
+}
+
+/**
+ * The symbol fragment as it should be drawn on a placement with this
+ * `mirror` flag and rotation: never mirrored, never upside down. Identity
+ * (same string) when neither applies or the fragment has no text.
+ */
+export function uprightSymbolText(
+  svg: string,
+  mirror: boolean | undefined,
+  rot?: number,
+): string {
+  const turn = symbolTextUpsideDown(rot);
+  if ((!mirror && !turn) || !svg || !/<text\b/i.test(svg)) return svg;
+  if (mirror && turn) return flipTextVertically(svg);
+  return mirror ? mirrorText(svg) : turnText(svg);
 }
 
 const normalizePaint = memo((svg: string): string => {

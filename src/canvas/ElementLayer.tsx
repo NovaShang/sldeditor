@@ -195,7 +195,7 @@ export function ElementLayer() {
             <g
               dangerouslySetInnerHTML={innerHtml(
                 compensateStrokes(
-                  uprightSymbolText(re.libraryDef.svg, place.mirror),
+                  uprightSymbolText(re.libraryDef.svg, place.mirror, place.rot),
                   place.scale,
                 ),
               )}

@@ -45,6 +45,7 @@ export const ui: UiTable = {
   'props.multi': '{n} פריטים נבחרו',
   'props.name': 'שם',
   'props.defaultHint': 'ברירת מחדל {v}',
+  'props.unit': 'יחידה',
   'props.note': 'הערה',
   'props.label': 'תווית',
   'props.labelPlaceholder': 'L1 / L2 / L3 / N / PE',

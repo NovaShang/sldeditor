@@ -218,7 +218,7 @@ export function buildExportSvg(
       `  <g id="${escapeXml(re.element.id)}" transform="${transformAttr(place)}"${inherit}>`,
     );
     out.push(
-      `    ${recolorSymbol(compensateStrokes(floorSymbolStrokes(uprightSymbolText(re.libraryDef.svg, place.mirror), sw), place.scale), re.element.color)}`,
+      `    ${recolorSymbol(compensateStrokes(floorSymbolStrokes(uprightSymbolText(re.libraryDef.svg, place.mirror, place.rot), sw), place.scale), re.element.color)}`,
     );
     out.push('  </g>');
   }

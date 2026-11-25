@@ -29,6 +29,7 @@ import { newPlacedElement } from '../store/id-allocator';
 import { isCircuitDiagram } from '../model/diagram-type';
 import { snap } from './grid';
 import { dropElementInLine, planInsertOnWire } from './insert-on-wire';
+import { emitGesture } from '../store/gesture-events';
 
 const PROXIMITY_PX = 30;
 const CLICK_SLOP_SQ = 12 * 12;
@@ -56,7 +57,9 @@ export function dropElement(
   // Right on a conductor: cut it open and put the symbol in line.
   const inLine = planInsertOnWire(lib, at, opts.tol);
   if (inLine) {
-    return { newElementId: dropElementInLine(kind, inLine), attachedToBus: false };
+    const newElementId = dropElementInLine(kind, inLine);
+    emitGesture('insert_on_wire');
+    return { newElementId, attachedToBus: false };
   }
 
   const target = nearestBus(diagram, at);
@@ -82,6 +85,7 @@ export function dropElement(
       };
     });
     store.setSelection([newId]);
+    emitGesture('rail_hang');
     return { newElementId: newId, attachedToBus: true };
   }
 
