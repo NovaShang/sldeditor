@@ -1,5 +1,18 @@
 # sldeditor
 
+## 0.38.0
+
+### Minor Changes
+
+- [#67](https://github.com/NovaShang/sldeditor/pull/67) [`44b1f67`](https://github.com/NovaShang/sldeditor/commit/44b1f675e90ac672b4865d5f32a8a17ada2fbaa9) Thanks [@NovaShang](https://github.com/NovaShang)! - Control-circuit symbols and editable title-block fields.
+  - New symbols, converted from QElectroTech elements: solenoid valve (A1/A2, tag -MB), photocell / light-operated switch (13-14, tag -B), changeover contact (11-12-14; "add contact" offers it, so a DPDT relay is a coil plus two changeovers numbered 11-12-14 / 21-22-24), 2-pole contactor main contacts (1-2, 3-4, tag -KM), and PLC digital input / output cards with 8 channels each (L+, L-, I0.0…I0.7 / Q0.0…Q0.7, tag -K). Larger PLCs are several cards with the same tag; the next byte's addresses are set per card under Pin numbers. Search keywords in every UI language.
+  - Title block: `meta.titleBlock.labels` renames a field and `meta.titleBlock.hidden` leaves it out, on every sheet, in the canvas and in SVG / PNG / PDF / DXF exports. A field whose row partner is hidden takes the whole row; a row with both hidden is dropped. The sheet inspector has a "Title-block fields" section for both. Documents without these settings render exactly as before.
+  - New exports: `TITLE_BLOCK_FIELDS`, `TitleBlockField`, `isTitleBlockField`, `normalizeTitleBlockFields`.
+
+- [#68](https://github.com/NovaShang/sldeditor/pull/68) [`dc0eda9`](https://github.com/NovaShang/sldeditor/commit/dc0eda983b2387adb438dacfd30d3c8e1c3659c3) Thanks [@NovaShang](https://github.com/NovaShang)! - Right-to-left layout and item provenance.
+  - **RTL:** under `dir="rtl"` the editor chrome now mirrors — the library panel, outline, bottom toolbar row, properties panel, view toolbar, health panel and menus anchor with logical start/end instead of physical left/right. The drawing itself never mirrors (the canvas SVG is pinned to `direction: ltr`), so the canvas matches the exports in every language. Hosts can reserve room with the new logical `--ole-start-inset` / `--ole-end-inset`; the existing `--ole-left-inset` / `--ole-right-inset` keep working and stay physical. The Arabic, Persian and Hebrew place-tool hints no longer say the library is "on the left".
+  - **Provenance:** elements, buses, junctions, wires and annotations accept an optional `by?: 'ai'` field (`Provenance` type) recording that an AI assistant created them; absent means the user. It survives save/load, is kept by edits, dropped from copies the user pastes, and never rendered or exported to SVG/PNG/PDF/DXF.
+
 ## 0.37.0
 
 ### Minor Changes
