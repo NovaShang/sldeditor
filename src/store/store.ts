@@ -91,6 +91,17 @@ import { nextContactPins, pinLabelsOnRename, pinLabelsWith } from '../lib/contac
 
 const EMPTY_DIAGRAM: DiagramFile = { version: '1', elements: [] };
 const HISTORY_LIMIT = 100;
+/**
+ * Clone an item for the clipboard as the USER's: a pasted copy is something
+ * the user made, whoever drew the original, so its `by` provenance mark is
+ * dropped (see `Provenance` in model/types).
+ */
+function userCopy<T extends { by?: unknown }>(item: T): T {
+  const cloned = structuredClone(item);
+  delete cloned.by;
+  return cloned;
+}
+
 const PASTE_OFFSET = 20;
 
 function defaultTool(): ToolId {
@@ -883,7 +894,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     const annSet = new Set(selectedAnnotations);
     const copiedAnnotations = (diagram.annotations ?? [])
       .filter((a) => annSet.has(a.id))
-      .map((a) => structuredClone(a));
+      .map((a) => userCopy(a));
     // Annotations live in their own channel, so an annotation-only selection
     // produces an annotations-only clipboard (see the paste fast path).
     if (selection.length === 0) {
@@ -906,16 +917,16 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
 
     const elements = diagram.elements
       .filter((e) => sel.has(e.id))
-      .map((e) => structuredClone(e));
+      .map((e) => userCopy(e));
 
     const buses = (diagram.buses ?? [])
       .filter((b) => sel.has(b.id))
-      .map((b) => structuredClone(b));
+      .map((b) => userCopy(b));
 
     const junctions = (diagram.junctions ?? [])
       .filter((j) => sel.has(j.id))
       .map((j) => {
-        const cloned = structuredClone(j);
+        const cloned = userCopy(j);
         if (!cloned.layout) {
           const world = internal.junctions.get(j.id)?.world;
           if (world) cloned.layout = { at: [world[0], world[1]] };
@@ -947,7 +958,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
       .filter((w) =>
         w.ends.every((e) => sel.has(endOwner(e))),
       )
-      .map((w) => structuredClone(w));
+      .map((w) => userCopy(w));
 
     set({
       clipboard: {
