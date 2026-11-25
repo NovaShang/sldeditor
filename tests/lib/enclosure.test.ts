@@ -112,6 +112,9 @@ describe('export', () => {
     expect(svg).toContain('width="200" height="120"');
     expect(svg).toContain('stroke-dasharray="6 4"');
     expect(svg).toContain('=+A1 ADU panel');
+    // A keyword weight, not 600: PDF converters map only normal/bold onto
+    // the standard fonts and fall back to a serif face for anything else.
+    expect(svg).toContain('font-weight="bold"');
   });
 
   it('writes the frame and name to an ENCLOSURES layer in DXF', () => {
