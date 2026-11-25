@@ -18,8 +18,8 @@ import { transformPoint, type InternalModel } from '../compiler';
 import {
   annotationKind,
   type Annotation,
-  type BoxAnnotation,
   type EllipseAnnotation,
+  type EnclosureAnnotation,
   type LabelMode,
   type LineAnnotation,
   type RectAnnotation,
@@ -30,6 +30,7 @@ import {
   ANNOTATION_FONT_SIZE as ANN_FONT_SIZE,
   annotationBBox,
   ellipseGeom,
+  enclosureNamePlacement,
   lineAbsPoints,
   lineArrowHeads,
   RECT_LABEL_PAD,
@@ -61,7 +62,7 @@ import {
   placeLabel,
   resolveLabelFontSize,
 } from './element-labels';
-import { placeWireLabel } from './wire-labels';
+import { placeWireLabels } from './wire-labels';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PADDING = 24;
@@ -150,7 +151,8 @@ export function buildExportSvg(
   out.push(`  <g fill="none" stroke="black" stroke-width="${sw(1)}">`);
   for (const r of model.wireRenders.values()) {
     if (r.path.length < 2) continue;
-    const pts = r.path.map(([px, py]) => `${px},${py}`).join(' ');
+    // `drawn` carries the wire-crossing hops when the document has them.
+    const pts = (r.drawn ?? r.path).map(([px, py]) => `${px},${py}`).join(' ');
     const ink = r.color ? ` stroke="${exportInk(r.color)}"` : '';
     out.push(`    <polyline points="${pts}"${ink}/>`);
     // PE (IEC 60445 green-yellow): yellow stripes over the green base, the
@@ -270,15 +272,16 @@ export function buildExportSvg(
     // `fill` is emitted only when the wire is actually coloured, so an
     // uncoloured diagram still inherits the group's `fill="black"` and its
     // bytes are unchanged.
+    const wireLabels = placeWireLabels(model.wireRenders, labelFs);
     for (const r of model.wireRenders.values()) {
-      const label = r.label?.trim();
-      if (!label) continue;
-      const placed = placeWireLabel(r.path, labelFs);
+      const placed = wireLabels.get(r.wireId);
       if (!placed) continue;
       const ink = r.color ? ` fill="${exportInk(r.color)}"` : '';
-      out.push(
-        `    <text x="${placed.world[0]}" y="${placed.world[1]}" text-anchor="${placed.textAnchor}"${ink}>${escapeXml(label)}</text>`,
-      );
+      placed.lines.forEach((line, i) => {
+        out.push(
+          `    <text x="${placed.world[0]}" y="${placed.world[1] + i * placed.lineHeight}" text-anchor="${placed.textAnchor}"${ink}>${escapeXml(line)}</text>`,
+        );
+      });
     }
     out.push('  </g>');
     // Pin designations (circuit diagrams only — empty otherwise), smaller
@@ -326,6 +329,9 @@ export function buildExportSvg(
           break;
         case 'ellipse':
           exportEllipse(out, ann as EllipseAnnotation, fontAttrs, sw);
+          break;
+        case 'enclosure':
+          exportEnclosure(out, ann as EnclosureAnnotation, fontAttrs, sw);
           break;
         case 'line':
           exportLine(out, ann as LineAnnotation, sw);
@@ -499,9 +505,36 @@ function exportEllipse(
   exportBoxLabel(out, ann, fontAttrs);
 }
 
+function exportEnclosure(
+  out: string[],
+  ann: EnclosureAnnotation,
+  fontAttrs: string,
+  sw: StrokeFloor,
+): void {
+  const [x, y] = ann.at;
+  const [w, h] = ann.size;
+  const ink = exportInk(ann.color);
+  if (ann.fill === 'tint') {
+    out.push(
+      `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${ink}" fill-opacity="${TINT_OPACITY}"/>`,
+    );
+  }
+  out.push(
+    `  <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="${ink}" stroke-width="${sw(strokeW(ann.strokeWidth))}"${dashAttr(ann.stroke ?? 'dashed')}/>`,
+  );
+  const name = enclosureNamePlacement(ann);
+  if (name) {
+    out.push(`  <g fill="${ink}" ${fontAttrs}>`);
+    out.push(
+      `    <text x="${name.x}" y="${name.y}" font-size="${name.fontSize}" font-weight="600">${escapeXml(name.text)}</text>`,
+    );
+    out.push('  </g>');
+  }
+}
+
 function exportBoxLabel(
   out: string[],
-  ann: BoxAnnotation,
+  ann: RectAnnotation | EllipseAnnotation,
   fontAttrs: string,
 ): void {
   if (!ann.label) return;
@@ -667,16 +700,12 @@ export function computeContentBbox(model: InternalModel, opts: ExportOptions): B
     }
     // Wire labels — offset perpendicular from the wire, so they can extend
     // past the polyline's own bbox.
-    for (const r of model.wireRenders.values()) {
-      const label = r.label?.trim();
-      if (!label) continue;
-      const placed = placeWireLabel(r.path, labelFs);
-      if (!placed) continue;
+    for (const placed of placeWireLabels(model.wireRenders, labelFs).values()) {
       const [lx, ly] = placed.world;
-      const w = labelBlockWidth([label], labelFs);
+      const w = labelBlockWidth(placed.lines, labelFs);
       const x0 = placed.textAnchor === 'middle' ? lx - w / 2 : lx;
       update(x0, ly - labelFs);
-      update(x0 + w, ly);
+      update(x0 + w, ly + (placed.lines.length - 1) * placed.lineHeight);
     }
     // Pin designations (circuit diagrams only).
     const pinFs = pinLabelFontSize(labelFs);

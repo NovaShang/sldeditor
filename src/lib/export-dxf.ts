@@ -47,6 +47,7 @@ import {
   annotationKind,
   type Annotation,
   type EllipseAnnotation,
+  type EnclosureAnnotation,
   type LabelMode,
   type LineAnnotation,
   type RectAnnotation,
@@ -57,6 +58,7 @@ import {
   ANNOTATION_FONT_SIZE as ANN_FONT_SIZE,
   annotationBBox,
   ellipsePolygon,
+  enclosureNamePlacement,
   lineAbsPoints,
   lineArrowHeads,
   RECT_LABEL_PAD,
@@ -83,7 +85,7 @@ import {
   placeLabel,
   resolveLabelFontSize,
 } from './element-labels';
-import { placeWireLabel } from './wire-labels';
+import { placeWireLabels } from './wire-labels';
 
 export interface DxfExportOptions {
   /** Used as the $PROJECTNAME header value when present. */
@@ -115,6 +117,10 @@ const LAYER_ELEMENTS = 'ELEMENTS';
 const LAYER_LABELS = 'LABELS';
 const LAYER_ANNOTATIONS = 'ANNOTATIONS';
 const LAYER_SHEETS = 'SHEETS';
+/** Enclosure frames + their name tags — their own layer so a CAD user can
+ *  isolate or re-linetype the panel outlines in one step. Declared only when
+ *  the drawing has an enclosure, so every other file's table is unchanged. */
+const LAYER_ENCLOSURES = 'ENCLOSURES';
 
 const ARC_SAMPLES = 32;
 const ELLIPSE_SAMPLES = 64;
@@ -143,6 +149,9 @@ export function buildExportDxf(
     { name: LAYER_LABELS, color: 8 },
     { name: LAYER_ANNOTATIONS, color: 3 },
     ...(sheets.length > 0 ? [{ name: LAYER_SHEETS, color: 7 }] : []),
+    ...((opts.annotations ?? []).some((a) => a.type === 'enclosure')
+      ? [{ name: LAYER_ENCLOSURES, color: 7 }]
+      : []),
   ]);
   w.beginEntities();
 
@@ -187,12 +196,14 @@ export function buildExportDxf(
   for (const [id, r] of model.wireRenders) {
     if (r.path.length < 2 || !keptWires.has(id)) continue;
     w.setColor(dxfColor(r.color));
-    w.polyline(LAYER_WIRES, r.path.map(worldToDxf), false);
+    // `drawn` carries the wire-crossing hops when the document has them.
+    const ink = r.drawn ?? r.path;
+    w.polyline(LAYER_WIRES, ink.map(worldToDxf), false);
     // PE stripes as explicit yellow dashes: an R12 file has no linetype
     // table here (see `tables`), and real geometry survives every reader.
     if (r.color === 'green-yellow') {
       w.setColor(ACI_YELLOW);
-      for (const [a, b] of stripeSegments(r.path)) {
+      for (const [a, b] of stripeSegments(ink)) {
         w.line(LAYER_WIRES, worldToDxf(a), worldToDxf(b));
       }
     }
@@ -275,14 +286,15 @@ export function buildExportDxf(
     // the canvas / SVG-export placement, and taking the wire's ink the way
     // they do there. Element structural labels above deliberately stay
     // neutral; see AnnotationLayer for why the two differ.
+    const wireLabels = placeWireLabels(model.wireRenders, labelFs);
     for (const [id, r] of model.wireRenders) {
-      const label = r.label?.trim();
-      if (!label || !keptWires.has(id)) continue;
-      const placed = placeWireLabel(r.path, labelFs);
-      if (!placed) continue;
-      const p = worldToDxf(placed.world);
+      const placed = wireLabels.get(id);
+      if (!placed || !keptWires.has(id)) continue;
       w.setColor(dxfColor(r.color));
-      w.text(LAYER_LABELS, p, label, labelFs, 0, false, placed.textAnchor);
+      placed.lines.forEach((line, i) => {
+        const p = worldToDxf([placed.world[0], placed.world[1] + i * placed.lineHeight]);
+        w.text(LAYER_LABELS, p, line, labelFs, 0, false, placed.textAnchor);
+      });
     }
     w.setColor(undefined);
     // Pin designations (circuit diagrams only — empty otherwise).
@@ -334,6 +346,35 @@ export function buildExportDxf(
             e.at[1] + RECT_LABEL_PAD + ANN_FONT_SIZE,
           ]);
           w.text(LAYER_ANNOTATIONS, p, e.label, ANN_FONT_SIZE, 0, false);
+        }
+        break;
+      }
+      case 'enclosure': {
+        const en = ann as EnclosureAnnotation;
+        const [x, y] = en.at;
+        const [ew, eh] = en.size;
+        w.polyline(
+          LAYER_ENCLOSURES,
+          (
+            [
+              [x, y],
+              [x + ew, y],
+              [x + ew, y + eh],
+              [x, y + eh],
+            ] as [number, number][]
+          ).map(worldToDxf),
+          true,
+        );
+        const name = enclosureNamePlacement(en);
+        if (name) {
+          w.text(
+            LAYER_ENCLOSURES,
+            worldToDxf([name.x, name.y]),
+            name.text,
+            name.fontSize,
+            0,
+            false,
+          );
         }
         break;
       }

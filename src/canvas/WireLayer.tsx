@@ -9,7 +9,9 @@
  *
  * Crossing ≠ connecting: where two wires of *different* electrical nodes
  * cross with no junction, the deterministically-chosen "under" wire is drawn
- * with a small gap at the crossing so it's unambiguous they aren't joined.
+ * with a small gap at the crossing so it's unambiguous they aren't joined —
+ * or, when the document has `meta.wireHops`, one of them hops the other with
+ * a small arc (geometry from the compiler, identical in every export).
  * A junction dot (rendered separately) remains the only "connected" signal.
  * The hit polyline is never gapped, so selection still spans the whole wire.
  *
@@ -17,32 +19,20 @@
  * colour over its green base — the IEC 60445 look of the conductor itself.
  */
 
+import { useMemo } from 'react';
 import { useCanvasStore } from '../store';
+import { findWireCrossings } from '../lib/wire-hops';
+import type { WireRender } from '../compiler';
 import { inkClass } from '../lib/colors';
 import { PE_STRIPE_DASHARRAY } from '../lib/circuit-marks';
 import { endOwner } from '../store/group-move';
 import { maxAlarm, useRuntime } from '../runtime/runtime-context';
-import type { AlarmLevel } from '../model';
+import type { AlarmLevel, Wire } from '../model';
 
 type Pt = [number, number];
 
 /** World-space half-width of the break drawn where a wire crosses under. */
 const GAP_HALF = 4;
-
-/** Strictly-interior intersection of two segments, or null. */
-function crossPoint(p1: Pt, p2: Pt, p3: Pt, p4: Pt): Pt | null {
-  const d1x = p2[0] - p1[0];
-  const d1y = p2[1] - p1[1];
-  const d2x = p4[0] - p3[0];
-  const d2y = p4[1] - p3[1];
-  const den = d1x * d2y - d1y * d2x;
-  if (Math.abs(den) < 1e-9) return null; // parallel / collinear
-  const t = ((p3[0] - p1[0]) * d2y - (p3[1] - p1[1]) * d2x) / den;
-  const u = ((p3[0] - p1[0]) * d1y - (p3[1] - p1[1]) * d1x) / den;
-  const eps = 1e-6;
-  if (t <= eps || t >= 1 - eps || u <= eps || u >= 1 - eps) return null;
-  return [p1[0] + t * d1x, p1[1] + t * d1y];
-}
 
 /** Split a polyline into sub-polylines, opening a 2·GAP_HALF gap at each cut. */
 function gapPath(path: Pt[], cutsBySeg: Map<number, Pt[]>): Pt[][] {
@@ -77,12 +67,47 @@ function gapPath(path: Pt[], cutsBySeg: Map<number, Pt[]>): Pt[][] {
   return out.filter((s) => s.length >= 2);
 }
 
+/** Cut points of the legacy crossing break, per "under" wire and segment. */
+function gapCuts(
+  renders: readonly WireRender[],
+  wires: readonly Wire[] | undefined,
+  terminalToNode: ReadonlyMap<string, string>,
+): Map<string, Map<number, Pt[]>> {
+  const cuts = new Map<string, Map<number, Pt[]>>();
+  const wireToNode = new Map<string, string>();
+  for (const w of wires ?? []) {
+    const node = terminalToNode.get(w.ends[0]);
+    if (node) wireToNode.set(w.id, node);
+  }
+  const runs = renders.map((r) => ({ id: r.wireId, path: r.path }));
+  for (const x of findWireCrossings(runs)) {
+    const a = renders[x.a.run].wireId;
+    const b = renders[x.b.run].wireId;
+    // Only gap genuinely different electrical nodes (same node = connected).
+    const na = wireToNode.get(a);
+    const nb = wireToNode.get(b);
+    if (!(na && nb && na !== nb)) continue;
+    const under = a < b ? x.a : x.b;
+    const id = renders[under.run].wireId;
+    let bySeg = cuts.get(id);
+    if (!bySeg) {
+      bySeg = new Map();
+      cuts.set(id, bySeg);
+    }
+    const arr = bySeg.get(under.seg) ?? [];
+    arr.push(x.at);
+    bySeg.set(under.seg, arr);
+  }
+  return cuts;
+}
+
 export function WireLayer() {
   const wireRenders = useCanvasStore((s) => s.internal.wireRenders);
   const terminalToNode = useCanvasStore((s) => s.internal.terminalToNode);
   const wires = useCanvasStore((s) => s.diagram.wires);
   const selectedWire = useCanvasStore((s) => s.selectedWire);
   const selectedNode = useCanvasStore((s) => s.selectedNode);
+  const hops = useCanvasStore((s) => s.diagram.meta?.wireHops === true);
   const runtime = useRuntime().props;
 
   // Build a quick wireId → nodeId lookup so each rendered polyline knows
@@ -103,38 +128,22 @@ export function WireLayer() {
     if (level !== 'none') wireAlarm.set(w.id, level);
   }
 
-  // ---- Crossing gaps: for each different-net segment crossing, gap the
-  // "under" wire (the one with the smaller wire id, deterministic). Collect
-  // cut points per wireId, grouped by which segment they fall on.
-  const renders = Array.from(wireRenders.values()).filter((r) => r.path.length >= 2);
-  const segs: { wireId: string; node?: string; i: number; a: Pt; b: Pt }[] = [];
-  for (const r of renders) {
-    const node = wireToNode.get(r.wireId);
-    for (let i = 0; i < r.path.length - 1; i++) {
-      segs.push({ wireId: r.wireId, node, i, a: r.path[i] as Pt, b: r.path[i + 1] as Pt });
-    }
-  }
-  const cuts = new Map<string, Map<number, Pt[]>>();
-  for (let x = 0; x < segs.length; x++) {
-    for (let y = x + 1; y < segs.length; y++) {
-      const s1 = segs[x];
-      const s2 = segs[y];
-      if (s1.wireId === s2.wireId) continue;
-      // Only gap genuinely different electrical nodes (same node = connected).
-      if (!(s1.node && s2.node && s1.node !== s2.node)) continue;
-      const pt = crossPoint(s1.a, s1.b, s2.a, s2.b);
-      if (!pt) continue;
-      const under = s1.wireId < s2.wireId ? s1 : s2;
-      let bySeg = cuts.get(under.wireId);
-      if (!bySeg) {
-        bySeg = new Map();
-        cuts.set(under.wireId, bySeg);
-      }
-      const arr = bySeg.get(under.i) ?? [];
-      arr.push(pt);
-      bySeg.set(under.i, arr);
-    }
-  }
+  // ---- Crossings. A document with `meta.wireHops` draws the compiled
+  // `drawn` polyline (arcs already sampled in by the compiler). Otherwise the
+  // legacy break: for each different-net crossing, gap the "under" wire (the
+  // one with the smaller wire id, deterministic). Memoised — the crossing scan
+  // used to run all-pairs on every render, selection changes included.
+  const renders = useMemo(
+    () => Array.from(wireRenders.values()).filter((r) => r.path.length >= 2),
+    [wireRenders],
+  );
+  const cuts = useMemo(
+    () =>
+      hops
+        ? new Map<string, Map<number, Pt[]>>()
+        : gapCuts(renders, wires, terminalToNode),
+    [renders, hops, terminalToNode, wires],
+  );
 
   return (
     <g className="ole-wire-layer" fill="none" stroke="currentColor" strokeWidth={1}>
@@ -148,7 +157,11 @@ export function WireLayer() {
         const bySeg = cuts.get(r.wireId);
         // Visible geometry: a single polyline, or gapped sub-polylines where
         // this wire crosses under another net.
-        const visibleSegments = bySeg ? gapPath(path, bySeg) : [path];
+        const visibleSegments = r.drawn
+          ? [r.drawn]
+          : bySeg
+            ? gapPath(path, bySeg)
+            : [path];
         return [
           <polyline
             key={`hit-${r.wireId}`}

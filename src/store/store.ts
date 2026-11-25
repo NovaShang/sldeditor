@@ -40,6 +40,7 @@ import type {
   Element,
   ElementId,
   EllipseAnnotation,
+  EnclosureAnnotation,
   Junction,
   JunctionId,
   LineAnnotation,
@@ -142,6 +143,7 @@ export type ToolId =
   | 'text'
   | 'rect'
   | 'ellipse'
+  | 'enclosure'
   | 'line'
   | 'table';
 
@@ -150,6 +152,7 @@ export type NewAnnotation =
   | Omit<TextAnnotation, 'id'>
   | Omit<RectAnnotation, 'id'>
   | Omit<EllipseAnnotation, 'id'>
+  | Omit<EnclosureAnnotation, 'id'>
   | Omit<LineAnnotation, 'id'>
   | Omit<TableAnnotation, 'id'>;
 

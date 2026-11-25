@@ -80,9 +80,14 @@ export function hitsInRect(
   const annotationHits: AnnotationId[] = [];
   for (const a of annotations ?? []) {
     const bb = annotationBBox(a);
-    if (overlaps(rect, bb.minX, bb.minY, bb.maxX, bb.maxY)) {
-      annotationHits.push(a.id);
-    }
+    // An enclosure is caught only when the marquee swallows it whole. It
+    // surrounds the very devices a user rubber-bands, so "touching" would
+    // drag the panel outline along with every partial selection inside it.
+    const hit =
+      a.type === 'enclosure'
+        ? contains(rect, bb.minX, bb.minY, bb.maxX, bb.maxY)
+        : overlaps(rect, bb.minX, bb.minY, bb.maxX, bb.maxY);
+    if (hit) annotationHits.push(a.id);
   }
 
   return { elements, annotations: annotationHits };
@@ -131,4 +136,19 @@ function parseViewBox(s: string) {
   const parts = s.trim().split(/\s+/).map(Number);
   if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return null;
   return { x: parts[0], y: parts[1], w: parts[2], h: parts[3] };
+}
+
+function contains(
+  rect: MarqueeRect,
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number,
+): boolean {
+  return (
+    minX >= rect.x &&
+    maxX <= rect.x + rect.w &&
+    minY >= rect.y &&
+    maxY <= rect.y + rect.h
+  );
 }

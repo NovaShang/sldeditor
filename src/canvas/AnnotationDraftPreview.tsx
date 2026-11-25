@@ -22,7 +22,7 @@ export function AnnotationDraftPreview() {
   const draft = useEditorStore((s) => s.annotationDraft);
   if (!draft) return null;
 
-  if (draft.kind === 'rect') {
+  if (draft.kind === 'rect' || draft.kind === 'enclosure') {
     const { at, size } = draftRect(draft);
     return (
       <g className="ole-ann-draft" pointerEvents="none">

@@ -12,7 +12,12 @@
 
 import type { InternalModel } from '../compiler';
 import { targetBox } from '../health/present';
-import type { AnnotationId, DiagramFile, ElementId } from '../model';
+import type {
+  AnnotationId,
+  DiagramFile,
+  ElementId,
+  EnclosureAnnotation,
+} from '../model';
 import { sheetRect, type Sheet } from '../model/sheet';
 
 /** The sheet whose border / title-block hit area is under the pointer. */
@@ -41,7 +46,29 @@ export function sheetContentIds(
   internal: InternalModel,
   sheet: Sheet,
 ): { elements: ElementId[]; annotations: AnnotationId[] } {
-  const r = sheetRect(sheet);
+  return rectContentIds(d, internal, sheetRect(sheet));
+}
+
+/**
+ * Ids an enclosure carries when it is Alt-dragged — the same containment rule
+ * as a sheet (device/bus/junction box centre, annotation anchor), so "inside"
+ * means one thing everywhere. The enclosure itself is never its own content.
+ */
+export function enclosureContentIds(
+  d: DiagramFile,
+  internal: InternalModel,
+  enc: EnclosureAnnotation,
+): { elements: ElementId[]; annotations: AnnotationId[] } {
+  const r = { x: enc.at[0], y: enc.at[1], w: enc.size[0], h: enc.size[1] };
+  const out = rectContentIds(d, internal, r);
+  return { ...out, annotations: out.annotations.filter((id) => id !== enc.id) };
+}
+
+function rectContentIds(
+  d: DiagramFile,
+  internal: InternalModel,
+  r: { x: number; y: number; w: number; h: number },
+): { elements: ElementId[]; annotations: AnnotationId[] } {
   const inside = (p: readonly [number, number]) =>
     p[0] >= r.x && p[0] <= r.x + r.w && p[1] >= r.y && p[1] <= r.y + r.h;
   const elements: ElementId[] = [];
