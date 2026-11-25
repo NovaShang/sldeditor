@@ -10,15 +10,13 @@ import {
   TITLE_COLS_MM,
   TITLE_LABEL_FONT_MM,
   TITLE_ROW_MM,
-  TITLE_ROWS,
   TITLE_VALUE_FONT_MM,
   TITLE_W_MM,
   UNITS_PER_MM,
   clampSheetScale,
   sheetRect,
   type Sheet,
-  type SheetOwnField,
-  type SheetSharedField,
+  type TitleBlockField,
   type TitleBlockShared,
 } from './sheet';
 
@@ -59,10 +57,10 @@ export interface SheetPrimitives {
 }
 
 /** Field names, already translated by the caller. */
-export type SheetFieldLabels = Record<SheetOwnField | SheetSharedField | 'sheetNo', string>;
+export type SheetFieldLabels = Record<TitleBlockField, string>;
 
 /** Title-block rows: [left field, right field]; `sheetNo` spans the last row. */
-const ROWS: [SheetOwnField | SheetSharedField | 'sheetNo', SheetOwnField | SheetSharedField | null][] = [
+const ROWS: [TitleBlockField, TitleBlockField | null][] = [
   ['project', 'client'],
   ['title', 'number'],
   ['designer', 'checker'],
@@ -71,6 +69,8 @@ const ROWS: [SheetOwnField | SheetSharedField | 'sheetNo', SheetOwnField | Sheet
 ];
 
 /**
+ * @param labels   built-in field names, translated by the caller; the
+ *                 document's own captions (`shared.labels`) win over them.
  * @param sheetOf  the "sheet n of N" text, already formatted by the caller.
  */
 export function sheetPrimitives(
@@ -90,45 +90,64 @@ export function sheetPrimitives(
     { x: r.x + m, y: r.y + m, w: r.w - 2 * m, h: r.h - 2 * m, stroke: thick },
   ];
 
+  // The rows that print: hidden fields drop out, a row left with one field
+  // gives it the whole row (as `sheetNo` always has), an empty row goes and
+  // the block shrinks towards the bottom border. With nothing hidden this is
+  // ROWS unchanged, and the primitives below come out exactly as they did
+  // before fields could be hidden.
+  const hidden = new Set(shared?.hidden ?? []);
+  const rows = ROWS.map((row) => row.filter((f): f is TitleBlockField => !!f && !hidden.has(f))).filter(
+    (row) => row.length > 0,
+  );
+
   const tw = TITLE_W_MM * k;
   const rh = TITLE_ROW_MM * k;
-  const th = rh * TITLE_ROWS;
+  const th = rh * rows.length;
   const tx = r.x + r.w - m - tw;
   const ty = r.y + r.h - m - th;
   const cols = TITLE_COLS_MM.map((c) => c * k);
   const colX = [tx, tx + cols[0], tx + cols[0] + cols[1], tx + cols[0] + cols[1] + cols[2]];
 
   const lines: SheetLinePrim[] = [];
-  // Outline (top and left; right/bottom are the inner border).
-  lines.push({ x1: tx, y1: ty, x2: tx + tw, y2: ty, stroke: thick });
-  lines.push({ x1: tx, y1: ty, x2: tx, y2: ty + th, stroke: thick });
-  for (let i = 1; i < TITLE_ROWS; i++) {
+  if (rows.length > 0) {
+    // Outline (top and left; right/bottom are the inner border).
+    lines.push({ x1: tx, y1: ty, x2: tx + tw, y2: ty, stroke: thick });
+    lines.push({ x1: tx, y1: ty, x2: tx, y2: ty + th, stroke: thick });
+  }
+  for (let i = 1; i < rows.length; i++) {
     lines.push({ x1: tx, y1: ty + i * rh, x2: tx + tw, y2: ty + i * rh, stroke: thin });
   }
-  // Column rules; the last row has one label and a value spanning the rest.
+  // Column rules, one line per run of rows that has the column: the label
+  // rule runs the full height; the two right-hand rules only through rows
+  // with two fields (a one-field row's value spans the rest).
   for (let c = 1; c < 4; c++) {
-    const bottom = c === 1 ? ty + th : ty + (TITLE_ROWS - 1) * rh;
-    lines.push({ x1: colX[c], y1: ty, x2: colX[c], y2: bottom, stroke: thin });
+    const has = (row: TitleBlockField[]) => c === 1 || row.length === 2;
+    for (let i = 0; i < rows.length; i++) {
+      if (!has(rows[i]) || (i > 0 && has(rows[i - 1]))) continue;
+      let end = i;
+      while (end + 1 < rows.length && has(rows[end + 1])) end++;
+      lines.push({ x1: colX[c], y1: ty + i * rh, x2: colX[c], y2: ty + (end + 1) * rh, stroke: thin });
+    }
   }
 
-  const value = (f: SheetOwnField | SheetSharedField | 'sheetNo'): string => {
+  const value = (f: TitleBlockField): string => {
     if (f === 'sheetNo') return sheetOf;
     if (f === 'project' || f === 'client' || f === 'designer' || f === 'checker') return shared?.[f] ?? '';
     return sheet[f] ?? '';
   };
+  const caption = (f: TitleBlockField): string => shared?.labels?.[f]?.trim() || labels[f];
   const pad = 1.5 * k;
   const labelSize = TITLE_LABEL_FONT_MM * k;
   const valueSize = TITLE_VALUE_FONT_MM * k;
   const texts: SheetTextPrim[] = [];
-  ROWS.forEach(([left, right], i) => {
+  rows.forEach((row, i) => {
     const base = ty + i * rh + rh / 2 + valueSize * 0.35;
-    const cells: [typeof left, number][] = [[left, 0]];
-    if (right) cells.push([right, 2]);
-    for (const [f, c] of cells) {
-      texts.push({ x: colX[c] + pad, y: base, text: labels[f], size: labelSize, role: 'label' });
+    row.forEach((f, j) => {
+      const c = j * 2;
+      texts.push({ x: colX[c] + pad, y: base, text: caption(f), size: labelSize, role: 'label' });
       const v = value(f);
       if (v) texts.push({ x: colX[c + 1] + pad, y: base, text: v, size: valueSize, role: 'value' });
-    }
+    });
   });
 
   return { rects, lines, texts, titleBlock: { x: tx, y: ty, w: tw, h: th } };

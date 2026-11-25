@@ -1,0 +1,86 @@
+{
+  "id": "contactor-2p",
+  "name": "接触器主触点（两极）",
+  "category": "motor-control",
+  "description": "两极接触器 / 两极继电器的主触点，端子 1-2、3-4（相线和零线同时通断）。线圈用\"继电器线圈\"并取相同代号。",
+  "keywords": [
+    "DP contactor",
+    "double pole contactor",
+    "double pole relay",
+    "DP relay",
+    "2-pole",
+    "2P",
+    "two-pole",
+    "KM",
+    "contactor",
+    "双极接触器",
+    "两极接触器",
+    "Schütz 2-polig",
+    "Schütz",
+    "contactor bipolar",
+    "contacteur bipolaire",
+    "contator bipolar",
+    "двухполюсный контактор",
+    "контактор",
+    "2極電磁接触器",
+    "کنتاکتور دو پل",
+    "كونتاكتور ثنائي القطب",
+    "מגען דו-קוטבי"
+  ],
+  "viewBox": "-27 -22 32 44",
+  "width": 32,
+  "height": 44,
+  "svg": "<polyline points=\"-25,-10 -20,10 -20,20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-5,-10 0,10 0,20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-20\" x2=\"-20\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M -20 -14.5 A 2.5 2.5 0 0 0 -20 -9.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><path d=\"M 0 -14.5 A 2.5 2.5 0 0 0 0 -9.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": -20,
+      "y": -20,
+      "orientation": "n",
+      "label": "1"
+    },
+    {
+      "id": "t2",
+      "x": -20,
+      "y": 20,
+      "orientation": "s",
+      "label": "2"
+    },
+    {
+      "id": "t3",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "3"
+    },
+    {
+      "id": "t4",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "4"
+    }
+  ],
+  "series": true,
+  "state": [
+    {
+      "name": "open",
+      "type": "boolean",
+      "default": true,
+      "label": "断开"
+    }
+  ],
+  "label": {
+    "x": 6,
+    "y": -2,
+    "anchor": "start"
+  },
+  "diagramTypes": [
+    "circuit"
+  ],
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/310_relays_contactors_contacts/02_contacts_cross_referencing/02_power_contacts/contact_puissance_2ph.elmt",
+    "qetEnglishName": "Contact power contactor"
+  }
+}

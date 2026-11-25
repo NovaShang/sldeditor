@@ -30,10 +30,12 @@ import {
   SHEET_SHARED_FIELDS,
   sheetContentArea,
   sheetRect,
+  TITLE_BLOCK_FIELDS,
   type DiagramFile,
   type PaperId,
   type Sheet,
   type SheetOrientation,
+  type TitleBlockField,
 } from '../model';
 import { useEditorStore } from '../store';
 import { Field, SegRow, TextRow } from './PropertyPanel';
@@ -120,6 +122,8 @@ export function SheetInspector({ sheetId }: { sheetId: string }) {
 
   const shared = diagram.meta?.titleBlock ?? {};
   const count = sheets?.length ?? 0;
+  const shown = (k: TitleBlockField) => !shared.hidden?.includes(k);
+  const caption = (k: TitleBlockField) => shared.labels?.[k] || t(`sheet.field.${k}`);
 
   return (
     <div className="flex flex-col gap-2.5 overflow-y-auto px-3 py-3 text-xs">
@@ -176,23 +180,55 @@ export function SheetInspector({ sheetId }: { sheetId: string }) {
       </div>
 
       <Section title={t('sheet.own')}>
-        {SHEET_OWN_FIELDS.map((k) => (
+        {SHEET_OWN_FIELDS.filter(shown).map((k) => (
           <TextRow
             key={k}
-            label={t(`sheet.field.${k}`)}
+            label={caption(k)}
             value={sheet[k] ?? ''}
             onCommit={(v) => st().updateSheet(sheet.id, { [k]: v.trim() })}
           />
         ))}
       </Section>
       <Section title={t('sheet.shared')}>
-        {SHEET_SHARED_FIELDS.map((k) => (
+        {SHEET_SHARED_FIELDS.filter(shown).map((k) => (
           <TextRow
             key={k}
-            label={t(`sheet.field.${k}`)}
+            label={caption(k)}
             value={shared[k] ?? ''}
             onCommit={(v) => st().updateTitleBlock({ [k]: v.trim() })}
           />
+        ))}
+      </Section>
+      {/* What the title block calls each field, and which ones it prints —
+          for every sheet at once (users asked to drop "Designed" and to word
+          the fields their own way). A row: whether it prints, the built-in
+          name, the document's own caption (empty = built-in). */}
+      <Section title={t('sheet.fields')}>
+        <Note tone="quiet">{t('sheet.fieldsHint')}</Note>
+        {TITLE_BLOCK_FIELDS.map((k) => (
+          <div key={k} className={cn('flex items-center gap-1.5', !shown(k) && 'opacity-60')}>
+            <input
+              type="checkbox"
+              checked={shown(k)}
+              aria-label={t('sheet.fieldShow', { field: caption(k) })}
+              title={t('sheet.fieldShow', { field: caption(k) })}
+              onChange={(e) => {
+                const next = new Set(shared.hidden ?? []);
+                if (e.target.checked) next.delete(k);
+                else next.add(k);
+                st().updateTitleBlock({ hidden: [...next] });
+              }}
+              className="size-3.5 shrink-0 accent-primary"
+            />
+            <div className="min-w-0 flex-1">
+              <TextRow
+                label={t(`sheet.field.${k}`)}
+                value={shared.labels?.[k] ?? ''}
+                placeholder={t(`sheet.field.${k}`)}
+                onCommit={(v) => st().updateTitleBlock({ labels: { ...shared.labels, [k]: v } })}
+              />
+            </div>
+          </div>
         ))}
       </Section>
 

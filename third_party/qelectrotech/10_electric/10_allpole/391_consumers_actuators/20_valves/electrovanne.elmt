@@ -1,0 +1,51 @@
+<definition version="0.100.0" type="element" link_type="simple" width="70" height="60" hotspot_x="25" hotspot_y="30">
+    <uuid uuid="{ef5f180f-16f9-24c6-b0f7-9982f768c938}"/>
+    <names>
+        <name lang="ar">صمّام كهربائي</name>
+        <name lang="ca">Vàlvula solenoide</name>
+        <name lang="cs">Elektroventil</name>
+        <name lang="da">Magnetventil</name>
+        <name lang="de">Magnetventil</name>
+        <name lang="el">Ηλεκτροβαλβίδα</name>
+        <name lang="en">Solenoid valve</name>
+        <name lang="lv">Solenoīda vārsts</name>
+        <name lang="es">Electroválvula</name>
+        <name lang="fi">Magneettiventtiili</name>
+        <name lang="fr">Electrovanne</name>
+        <name lang="hr">Elektromagnetski ventil</name>
+        <name lang="hu">Mágnesszelep</name>
+        <name lang="it">Elettrovalvola</name>
+        <name lang="ja">電磁弁</name>
+        <name lang="ko">솔레노이드 밸브</name>
+        <name lang="mn">Соленоид хавхлага</name>
+        <name lang="nb">Magnetventil</name>
+        <name lang="nl">Elektrische afsluiter</name>
+        <name lang="nl_BE">Magneetklep</name>
+        <name lang="pl">Elektrozawór</name>
+        <name lang="pt">Eletroválvula</name>
+        <name lang="pt_BR">Válvula solenoide</name>
+        <name lang="ro">Electrovalvă</name>
+        <name lang="ru">Электромагнитный клапан</name>
+        <name lang="sk">Elektromagnetický ventil</name>
+        <name lang="sl">Magnetni ventil</name>
+        <name lang="sr">Соленоидни вентил</name>
+        <name lang="sv">Magnetventil</name>
+        <name lang="tr">Selenoid valf</name>
+        <name lang="uk">Електромагнітний клапан</name>
+        <name lang="zh">电动阀</name>
+    </names>
+    <informations>edited with "QET_ElementScaler"</informations>
+    <description>
+        <line x1="0" y1="20" x2="0" y2="-20" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <rect x="-20" y="-10" width="40" height="20" rx="0" ry="0" style="line-style:normal;line-weight:normal;filling:white;color:black" antialias="false"/>
+        <dynamic_text x="-16" y="-5.17" z="3" text_width="-1" Halignment="AlignLeft" Valignment="AlignTop" frame="false" rotation="0" keep_visual_rotation="false" text_from="ElementInfo" uuid="{012a4f20-7aa5-4076-b8f8-3de4c9446245}" font="Liberation Sans,5,-1,5,50,0,0,0,0,0,Regular">
+            <text></text>
+            <info_name>label</info_name>
+        </dynamic_text>
+        <line x1="23" y1="0" x2="32" y2="0" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <line x1="-10" y1="-9.5" x2="10" y2="9.5" end1="none" end2="none" length1="1.5" length2="1.5" style="line-style:normal;line-weight:normal;filling:none;color:black" antialias="false"/>
+        <polygon x1="30" y1="-10" x2="40" y2="-10" x3="30" y3="10" x4="40" y4="10" antialias="false" style="line-style:normal;line-weight:normal;filling:none;color:black"/>
+        <terminal uuid="{73291e07-f385-4632-8637-0c5eca70f275}" name="A2" x="0" y="20" orientation="s" type="Generic"/>
+        <terminal uuid="{56c0388a-7c22-43db-8299-ee17ad234593}" name="A1" x="0" y="-20" orientation="n" type="Generic"/>
+    </description>
+</definition>

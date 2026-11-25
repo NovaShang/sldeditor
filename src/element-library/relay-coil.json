@@ -15,7 +15,11 @@
     "Schützspule",
     "bobina",
     "bobine",
-    "катушка"
+    "катушка",
+    "DP relay",
+    "double pole relay",
+    "DPDT relay",
+    "中间继电器"
   ],
   "viewBox": "-22 -22 44 44",
   "width": 44,

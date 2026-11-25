@@ -1,0 +1,73 @@
+{
+  "id": "changeover-contact",
+  "name": "转换触点 (CO)",
+  "category": "control",
+  "description": "转换触点（先断后合）：公共端 11 在下，常闭 12、常开 14 在上。双刀双掷继电器 = 线圈 + 两个转换触点（11-12-14、21-22-24），取相同代号。",
+  "keywords": [
+    "changeover",
+    "change-over",
+    "CO",
+    "C/O",
+    "SPDT",
+    "DPDT",
+    "NO/NC",
+    "relay contact",
+    "double pole relay",
+    "DP relay",
+    "two way",
+    "转换触点",
+    "切换触点",
+    "中间继电器",
+    "Wechsler",
+    "Wechselkontakt",
+    "contacto conmutado",
+    "conmutado",
+    "inverseur",
+    "contact inverseur",
+    "contato reversível",
+    "contato comutador",
+    "переключающий контакт",
+    "切替接点",
+    "c接点",
+    "کنتاکت تبدیل",
+    "تلامس تحويل",
+    "מגע מחליף"
+  ],
+  "viewBox": "-22 -42 24 64",
+  "width": 24,
+  "height": 64,
+  "svg": "<line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-40\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"0\" y2=\"20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"-8\" y2=\"-23\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-40\" x2=\"-20\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"-20\" x2=\"-5\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "11"
+    },
+    {
+      "id": "t3",
+      "x": -20,
+      "y": -40,
+      "orientation": "n",
+      "label": "12"
+    },
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -40,
+      "orientation": "n",
+      "label": "14"
+    }
+  ],
+  "label": {
+    "x": 6,
+    "y": -10,
+    "anchor": "start"
+  },
+  "source": {
+    "kind": "elmt",
+    "path": "91_en_60617/en_60617_07/en_60617_07_02/en_60617_07_02_04.elmt",
+    "qetEnglishName": "Change-over break before make contact"
+  }
+}
