@@ -18,6 +18,7 @@ export type {
   Element,
   ElementId,
   EllipseAnnotation,
+  EnclosureAnnotation,
   Junction,
   JunctionId,
   JunctionLayout,

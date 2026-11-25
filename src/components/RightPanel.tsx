@@ -57,6 +57,7 @@ export function RightPanel() {
     const ANN_TITLE = {
       rect: 'props.annRect',
       ellipse: 'props.annEllipse',
+      enclosure: 'props.annEnclosure',
       line: 'props.annLine',
       table: 'props.annTable',
       text: 'props.annText',

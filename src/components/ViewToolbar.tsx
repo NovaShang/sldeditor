@@ -484,6 +484,62 @@ function StandardControls() {
 }
 
 /**
+ * Write the document's crossing style. Off drops the field, so a drawing that
+ * never touched the setting is saved exactly as before the setting existed.
+ */
+function setWireHops(on: boolean): void {
+  useEditorStore.getState().dispatch((d) => {
+    const meta = { ...(d.meta ?? {}) };
+    if (on) meta.wireHops = true;
+    else delete meta.wireHops;
+    return { ...d, meta };
+  });
+}
+
+/**
+ * How unconnected wire crossings are drawn: the legacy break, or a hop arc
+ * (canvas and every export). Per document — see `DiagramMeta.wireHops`.
+ */
+function WireCrossingControls() {
+  const t = useT();
+  const hops = useEditorStore((s) => s.diagram.meta?.wireHops === true);
+  const options: { value: boolean; label: string }[] = [
+    { value: false, label: t('view.wireCrossingGap') },
+    { value: true, label: t('view.wireCrossingHop') },
+  ];
+  return (
+    <div className="flex flex-col gap-1.5 px-1.5 py-1">
+      <div className="text-[11px] font-medium text-muted-foreground">
+        {t('view.wireCrossing')}
+      </div>
+      <div className="flex overflow-hidden rounded-md border border-border/60">
+        {options.map((o) => (
+          <button
+            key={String(o.value)}
+            type="button"
+            aria-pressed={hops === o.value}
+            onClick={() => {
+              if (hops !== o.value) setWireHops(o.value);
+            }}
+            className={cn(
+              'h-7 flex-1 whitespace-nowrap px-1.5 text-[11px] transition-colors',
+              hops === o.value
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            )}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <div className="max-w-[210px] text-[10px] leading-snug text-muted-foreground">
+        {t('view.wireCrossingHint')}
+      </div>
+    </div>
+  );
+}
+
+/**
  * Drawing-type picker for the whole document: single-line diagram or circuit
  * diagram. Same pattern as `StandardControls`, and the hint does the same job
  * — a user switching the type of a drawing they have worked on needs to hear
@@ -567,6 +623,8 @@ function LabelMenuBtn() {
       <DiagramTypeControls />
       <div aria-hidden className="my-1 h-px bg-border" />
       <StandardControls />
+      <div aria-hidden className="my-1 h-px bg-border" />
+      <WireCrossingControls />
     </UpwardPopover>
   );
 }
@@ -646,6 +704,8 @@ export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
         <DiagramTypeControls />
         <div aria-hidden className="my-1 h-px bg-border" />
         <StandardControls />
+        <div aria-hidden className="my-1 h-px bg-border" />
+        <WireCrossingControls />
         <div aria-hidden className="my-1 h-px bg-border" />
         <HealthControls />
       </div>

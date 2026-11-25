@@ -38,7 +38,7 @@ import {
   hitWire,
 } from '../hit-test';
 import { hitsInRect } from '../marquee-hit';
-import { hitSheet, sheetContentIds } from '../sheet-hit';
+import { enclosureContentIds, hitSheet, sheetContentIds } from '../sheet-hit';
 import { publishMarquee, type MarqueeRect } from '../marquee-bus';
 import {
   resolveDragTarget,
@@ -271,6 +271,15 @@ export const SelectTool: Tool = {
         store.selection.length + store.selectedAnnotations.length > 1
       ) {
         beginGroupDrag(e, ctx, store.selection, store.selectedAnnotations);
+        return;
+      }
+      // Alt-drag on an enclosure carries what is inside it. A plain drag
+      // moves only the frame — fitting a box around a finished drawing must
+      // never disturb the drawing — so carrying the contents is the opt-in.
+      if (e.altKey && ann.type === 'enclosure') {
+        store.setSelectedAnnotation(annId);
+        const contents = enclosureContentIds(store.diagram, store.internal, ann);
+        beginGroupDrag(e, ctx, contents.elements, [annId, ...contents.annotations]);
         return;
       }
       const wasSelected = soleSelectedAnnotation(store) === annId;

@@ -57,6 +57,7 @@ export function AnnotationHandles() {
     // grips drives both — no ellipse-specific resize maths.
     case 'rect':
     case 'ellipse':
+    case 'enclosure':
       return <BoxHandles ann={ann as BoxAnnotation} model={model} />;
     case 'table':
       return <TableHandles ann={ann as TableAnnotation} model={model} />;

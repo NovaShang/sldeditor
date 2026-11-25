@@ -43,7 +43,7 @@ import {
   placeLabel,
   resolveLabelFontSize,
 } from '../lib/element-labels';
-import { placeWireLabel } from '../lib/wire-labels';
+import { placeWireLabels } from '../lib/wire-labels';
 import { inkClass } from '../lib/colors';
 import { useRuntime } from '../runtime/runtime-context';
 
@@ -62,6 +62,11 @@ export function AnnotationLayer() {
   const sheetRefs = useMemo(
     () => continuationSheetRefs(elements.values(), layout, sheets),
     [elements, layout, sheets],
+  );
+  // Wire labels, wrapped where a long one would reach the next feeder.
+  const wireLabels = useMemo(
+    () => placeWireLabels(wireRenders, fontSize),
+    [wireRenders, fontSize],
   );
   // Live data (viewer only): a `label.text` binding replaces the whole block,
   // a hidden element takes its label with it.
@@ -153,9 +158,7 @@ export function AnnotationLayer() {
       })}
       {mode !== 'off' &&
         Array.from(wireRenders.values()).map((r) => {
-          const label = r.label?.trim();
-          if (!label) return null;
-          const placed = placeWireLabel(r.path, fontSize);
+          const placed = wireLabels.get(r.wireId);
           if (!placed) return null;
           return (
             <text
@@ -178,7 +181,17 @@ export function AnnotationLayer() {
                 .filter(Boolean)
                 .join(' ')}
             >
-              {label}
+              {placed.lines.length === 1
+                ? placed.lines[0]
+                : placed.lines.map((line, i) => (
+                    <tspan
+                      key={i}
+                      x={placed.world[0]}
+                      y={placed.world[1] + i * placed.lineHeight}
+                    >
+                      {line}
+                    </tspan>
+                  ))}
             </text>
           );
         })}

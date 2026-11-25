@@ -106,6 +106,13 @@ export interface WireRender {
    *  the canvas and the exporters both read the compiled model, so copying it
    *  here keeps them from disagreeing about a wire's colour. */
   color?: import('../model').DiagramColor;
+  /**
+   * What to DRAW when it differs from `path`: the path with wire-crossing
+   * hops sampled in. Present only when the document has `meta.wireHops` on
+   * and this wire hops somewhere. `path` stays the logical route — hit
+   * testing, labels, editing and connectivity never see the arcs.
+   */
+  drawn?: [number, number][];
 }
 
 export interface InternalModel {

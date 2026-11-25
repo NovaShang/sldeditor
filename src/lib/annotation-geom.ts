@@ -9,6 +9,7 @@ import type {
   AnnotationStroke,
   AnnotationStrokeWidth,
   BoxAnnotation,
+  EnclosureAnnotation,
   LineAnnotation,
   TableAnnotation,
   TextAnnotation,
@@ -124,6 +125,32 @@ function arrowTriangle(
   ];
 }
 
+// ---- Enclosure -----------------------------------------------------------
+
+/** Type size of an enclosure's name tag — a step above a rect caption. */
+export const ENCLOSURE_NAME_FONT_SIZE = 9;
+/** Clearance between the frame's top edge and the name's baseline. */
+export const ENCLOSURE_NAME_GAP = 3;
+
+/**
+ * Where an enclosure's name tag goes: left-aligned with the frame, baseline
+ * just above its top edge — outside the box, so a device placed against the
+ * top of the enclosure never collides with the tag. Null when there is no
+ * name. Every renderer (canvas, SVG, DXF) reads this one placement.
+ */
+export function enclosureNamePlacement(
+  ann: EnclosureAnnotation,
+): { x: number; y: number; fontSize: number; text: string } | null {
+  const text = ann.name?.trim();
+  if (!text) return null;
+  return {
+    x: ann.at[0],
+    y: ann.at[1] - ENCLOSURE_NAME_GAP,
+    fontSize: ENCLOSURE_NAME_FONT_SIZE,
+    text,
+  };
+}
+
 // ---- Ellipse -------------------------------------------------------------
 
 /**
@@ -222,7 +249,7 @@ function sum(xs: number[]): number {
 
 /** In-progress drag published by the rect/line/table tools. */
 export interface AnnotationDraft {
-  kind: 'rect' | 'ellipse' | 'line' | 'table';
+  kind: 'rect' | 'ellipse' | 'enclosure' | 'line' | 'table';
   start: [number, number];
   current: [number, number];
   /** Shift held: square rects / 45°-stepped lines. */
@@ -314,6 +341,24 @@ export function annotationBBox(a: Annotation): AnnBBox {
     // An ellipse is anchored by the same bounding box as a rect, so the two
     // share this branch — that equivalence is why resize grips and marquee
     // hit-testing needed no ellipse-specific code at all.
+    case 'enclosure': {
+      // The frame plus its name tag, which sits above the top edge.
+      const e = a as EnclosureAnnotation;
+      const name = enclosureNamePlacement(e);
+      const box = {
+        minX: e.at[0],
+        minY: e.at[1],
+        maxX: e.at[0] + e.size[0],
+        maxY: e.at[1] + e.size[1],
+      };
+      if (!name) return box;
+      const [tw] = textBlockSize(name.text, name.fontSize);
+      return {
+        ...box,
+        minY: name.y - name.fontSize,
+        maxX: Math.max(box.maxX, name.x + tw),
+      };
+    }
     case 'rect':
     case 'ellipse': {
       const r = a as BoxAnnotation;

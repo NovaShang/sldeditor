@@ -8,6 +8,7 @@ import { JunctionTool } from './JunctionTool';
 import { TextTool } from './TextTool';
 import { RectTool } from './RectTool';
 import { EllipseTool } from './EllipseTool';
+import { EnclosureTool } from './EnclosureTool';
 import { LineTool } from './LineTool';
 import { TableTool } from './TableTool';
 
@@ -21,6 +22,7 @@ export const TOOLS: Record<ToolId, Tool> = {
   text: TextTool,
   rect: RectTool,
   ellipse: EllipseTool,
+  enclosure: EnclosureTool,
   line: LineTool,
   table: TableTool,
 };

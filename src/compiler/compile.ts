@@ -31,6 +31,7 @@ import { normalizePath } from '../model/wire-path';
 import { autoLayout } from './auto-layout';
 import { gridLayout } from './grid-layout';
 import { diagramTypeOf, isCircuitDiagram } from '../model/diagram-type';
+import { computeWireHops, hoppedPath } from '../lib/wire-hops';
 import { routeWire, wireEndWorld } from './auto-route';
 import { applySymbolStandard, mergeCustomKinds } from './library-index';
 import {
@@ -461,5 +462,18 @@ export function compile(diagram: DiagramFile): InternalModel {
     }
   }
 
+  // ---- 8. Wire-crossing hops (document setting; absent = off) ------------
+  if (diagram.meta?.wireHops === true) applyWireHops(m);
+
   return m;
+}
+
+/** Give every hopping wire its `drawn` polyline (see `lib/wire-hops`). */
+function applyWireHops(m: InternalModel): void {
+  const runs = [...m.wireRenders.values()].map((r) => ({ id: r.wireId, path: r.path }));
+  const dots = [...m.junctions.values()].map((j) => j.world);
+  for (const [id, bySeg] of computeWireHops(runs, dots)) {
+    const r = m.wireRenders.get(id);
+    if (r) r.drawn = hoppedPath(r.path, bySeg);
+  }
 }

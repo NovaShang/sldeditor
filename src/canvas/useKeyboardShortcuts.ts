@@ -40,6 +40,7 @@ export function exitDrawingState(): void {
     tool === 'text' ||
     tool === 'rect' ||
     tool === 'ellipse' ||
+    tool === 'enclosure' ||
     tool === 'line' ||
     tool === 'table' ||
     tool === 'pan'
@@ -167,6 +168,10 @@ export function useKeyboardShortcuts(): void {
         case 'o':
         case 'O':
           store.setActiveTool('ellipse');
+          return;
+        case 'e':
+        case 'E':
+          store.setActiveTool('enclosure');
           return;
         case 'l':
         case 'L':

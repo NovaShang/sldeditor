@@ -448,6 +448,9 @@
   pointer-events: auto;
   cursor: move;
 }
+.ole-ann-enclosure-name {
+  font-weight: 600;
+}
 .ole-ann-table-bg {
   fill: var(--canvas-bg);
   pointer-events: auto;
@@ -475,6 +478,9 @@
 .ole-ann[data-selected='true'] .ole-ann-line,
 .ole-ann[data-selected='true'] .ole-ann-table-border {
   stroke: var(--selection);
+}
+.ole-ann[data-selected='true'] .ole-ann-enclosure-name {
+  fill: var(--selection);
 }
 .ole-ann[data-selected='true'] .ole-ann-arrow {
   fill: var(--selection);

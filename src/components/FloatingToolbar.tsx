@@ -6,6 +6,7 @@ import {
   Clipboard,
   Copy,
   Equal,
+  Group,
   Hand,
   Hash,
   LayoutGrid,
@@ -137,6 +138,16 @@ const TOOLS: ToolDef[] = [
     drawing: true,
   },
   {
+    id: 'enclosure',
+    labelKey: 'tool.enclosure',
+    hotkey: 'E',
+    descriptionKey: 'tool.enclosureHint',
+    icon: Group,
+    switchTo: 'enclosure',
+    iconOnly: true,
+    drawing: true,
+  },
+  {
     id: 'ellipse',
     labelKey: 'tool.ellipse',
     hotkey: 'O',
@@ -245,7 +256,9 @@ function ToolHint() {
             ? t('mode.annTableSel')
             : annSelKind === 'text'
               ? t('mode.annTextSel')
-              : t('mode.annShapeSel');
+              : annSelKind === 'enclosure'
+                ? t('mode.annEnclosureSel')
+                : t('mode.annShapeSel');
         cancelHint = true;
         break;
       }
@@ -285,6 +298,10 @@ function ToolHint() {
       break;
     case 'ellipse':
       text = t('mode.ellipse');
+      cancelHint = true;
+      break;
+    case 'enclosure':
+      text = t('mode.enclosure');
       cancelHint = true;
       break;
     case 'line':

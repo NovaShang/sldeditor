@@ -448,18 +448,30 @@ function AnnotationPanel({ annId }: { annId: AnnotationId }) {
     // Rect and ellipse expose the same controls; only the stroke default
     // differs (a rect is a group frame, an ellipse is a drawn shape).
     case 'rect':
-    case 'ellipse': {
+    case 'ellipse':
+    case 'enclosure': {
       const r = ann as BoxAnnotation;
       return (
         <div className="flex flex-col gap-2.5 px-3 py-3 text-xs">
-          <TextRow
-            label={t('props.annLabel')}
-            value={r.label ?? ''}
-            placeholder={t('props.annLabelPlaceholder')}
-            onCommit={(v) =>
-              patch({ label: v.trim() === '' ? undefined : v.trim() })
-            }
-          />
+          {r.type === 'enclosure' ? (
+            <TextRow
+              label={t('props.annEnclosureName')}
+              value={r.name ?? ''}
+              placeholder={t('props.annEnclosureNamePlaceholder')}
+              onCommit={(v) =>
+                patch({ name: v.trim() === '' ? undefined : v.trim() })
+              }
+            />
+          ) : (
+            <TextRow
+              label={t('props.annLabel')}
+              value={r.label ?? ''}
+              placeholder={t('props.annLabelPlaceholder')}
+              onCommit={(v) =>
+                patch({ label: v.trim() === '' ? undefined : v.trim() })
+              }
+            />
+          )}
           <ColorRow
             label={t('props.color')}
             value={r.color}
@@ -468,7 +480,7 @@ function AnnotationPanel({ annId }: { annId: AnnotationId }) {
           <StrokeRows
             stroke={r.stroke}
             strokeWidth={r.strokeWidth}
-            defaultStroke={kind === 'rect' ? 'dashed' : 'solid'}
+            defaultStroke={kind === 'ellipse' ? 'solid' : 'dashed'}
             patch={patch}
           />
           <SegRow
@@ -480,6 +492,11 @@ function AnnotationPanel({ annId }: { annId: AnnotationId }) {
             ]}
             onChange={(v) => patch({ fill: v === 'none' ? undefined : v })}
           />
+          {r.type === 'enclosure' && (
+            <div className="text-[10px] leading-snug text-muted-foreground">
+              {t('props.annEnclosureHint')}
+            </div>
+          )}
         </div>
       );
     }

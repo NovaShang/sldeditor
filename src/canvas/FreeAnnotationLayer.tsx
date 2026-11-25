@@ -24,8 +24,8 @@ import { useCanvasStore, useEditorStore } from '../store';
 import {
   annotationKind,
   type Annotation,
-  type BoxAnnotation,
   type EllipseAnnotation,
+  type EnclosureAnnotation,
   type LineAnnotation,
   type RectAnnotation,
   type TableAnnotation,
@@ -34,6 +34,7 @@ import {
 import {
   ANNOTATION_FONT_SIZE,
   ellipseGeom,
+  enclosureNamePlacement,
   lineAbsPoints,
   lineArrowHeads,
   RECT_LABEL_PAD,
@@ -79,6 +80,14 @@ export function FreeAnnotationLayer() {
               <EllipseView
                 key={a.id}
                 ann={eff as EllipseAnnotation}
+                isSelected={isSelected}
+              />
+            );
+          case 'enclosure':
+            return (
+              <EnclosureView
+                key={a.id}
+                ann={eff as EnclosureAnnotation}
                 isSelected={isSelected}
               />
             );
@@ -199,8 +208,57 @@ function EllipseView({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Enclosure — a tagged frame. Same border-only hit as a rect, so the devices
+// inside stay clickable; the name tag is also a grab target, because on a
+// dense drawing it is often the easiest part of the frame to hit.
+// ---------------------------------------------------------------------------
+
+function EnclosureView({
+  ann,
+  isSelected,
+}: {
+  ann: EnclosureAnnotation;
+  isSelected: boolean;
+}) {
+  const [x, y] = ann.at;
+  const [w, h] = ann.size;
+  const name = enclosureNamePlacement(ann);
+  return (
+    <g
+      data-annotation-id={ann.id}
+      className={cx('ole-ann ole-ann-rect ole-ann-enclosure', inkClass(ann.color))}
+      data-selected={isSelected ? 'true' : undefined}
+    >
+      {ann.fill === 'tint' && (
+        <rect className="ole-ann-fill" x={x} y={y} width={w} height={h} />
+      )}
+      <rect className="ole-ann-shape-hit" x={x} y={y} width={w} height={h} />
+      <rect
+        className="ole-ann-rect-border"
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        strokeDasharray={strokeDash(ann.stroke ?? 'dashed')}
+        strokeWidth={strokeW(ann.strokeWidth)}
+      />
+      {name && (
+        <text
+          className="ole-ann-label ole-ann-enclosure-name"
+          x={name.x}
+          y={name.y}
+          fontSize={name.fontSize}
+        >
+          {name.text}
+        </text>
+      )}
+    </g>
+  );
+}
+
 /** Caption inside the top-left of a box shape's bounding box. */
-function BoxLabel({ ann }: { ann: BoxAnnotation }) {
+function BoxLabel({ ann }: { ann: RectAnnotation | EllipseAnnotation }) {
   if (!ann.label) return null;
   return (
     <text

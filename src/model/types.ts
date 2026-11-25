@@ -165,6 +165,18 @@ export interface DiagramMeta {
    * number, date) live on each `Sheet`.
    */
   titleBlock?: TitleBlockShared;
+  /**
+   * Draw a small arc ("hop") where two wires cross without connecting.
+   * Absent / false → the look every drawing had before this setting existed:
+   * the canvas breaks the "under" wire at a crossing and exports draw a plain
+   * cross. A per-DOCUMENT choice because a sheet that hops some crossings and
+   * not others reads as two conventions at once.
+   *
+   * Which wire hops: the vertical one at a horizontal/vertical crossing; for
+   * any other pair, the one later in `wires`. Junction dots and tees (a wire
+   * ending on another) never hop — only strictly interior crossings do.
+   */
+  wireHops?: boolean;
 }
 
 export interface Element {
@@ -430,21 +442,59 @@ export interface TableAnnotation {
   color?: DiagramColor;
 }
 
+/**
+ * Enclosure — a panel, cabinet, junction box or any other physical housing,
+ * drawn as a frame around the devices it contains and tagged with its name /
+ * designation ("ADU panel", "=+A1"). The name sits just above the top-left
+ * corner, outside the frame, so it never collides with what is inside.
+ *
+ * Membership is never stored. The frame owns nothing: dragging it moves only
+ * the frame (so it can be fitted around a finished drawing without disturbing
+ * it), and Alt-dragging it carries along whatever lies inside it at that
+ * moment. Containment is geometric and decided at the start of the gesture,
+ * so there is no membership list to fall out of date.
+ */
+export interface EnclosureAnnotation {
+  id: AnnotationId;
+  /** Who created it (see `Provenance`). Absent = the user. */
+  by?: Provenance;
+  type: 'enclosure';
+  at: [number, number];
+  size: [number, number];
+  /** Name / designation tag. */
+  name?: string;
+  /** Default `dashed` — the enclosure convention. */
+  stroke?: AnnotationStroke;
+  /** Default 1. */
+  strokeWidth?: AnnotationStrokeWidth;
+  /** Default `none`. */
+  fill?: AnnotationFill;
+  /** Default `default` (theme ink). */
+  color?: DiagramColor;
+}
+
 export type Annotation =
   | TextAnnotation
   | RectAnnotation
   | EllipseAnnotation
+  | EnclosureAnnotation
   | LineAnnotation
   | TableAnnotation;
 
 /** `type` of an annotation with the text default applied. */
-export type AnnotationKind = 'text' | 'rect' | 'ellipse' | 'line' | 'table';
+export type AnnotationKind =
+  | 'text'
+  | 'rect'
+  | 'ellipse'
+  | 'enclosure'
+  | 'line'
+  | 'table';
 
 /**
  * The box-anchored shapes. They share `at` + `size`, which is the whole reason
  * the resize grips and bbox code can treat them as one thing.
  */
-export type BoxAnnotation = RectAnnotation | EllipseAnnotation;
+export type BoxAnnotation = RectAnnotation | EllipseAnnotation | EnclosureAnnotation;
 
 export function annotationKind(a: Annotation): AnnotationKind {
   return a.type ?? 'text';
@@ -463,6 +513,7 @@ export type AnnotationPatch = Partial<
   Omit<TextAnnotation, 'id' | 'type'> &
     Omit<RectAnnotation, 'id' | 'type'> &
     Omit<EllipseAnnotation, 'id' | 'type'> &
+    Omit<EnclosureAnnotation, 'id' | 'type'> &
     Omit<LineAnnotation, 'id' | 'type'> &
     Omit<TableAnnotation, 'id' | 'type'>
 >;

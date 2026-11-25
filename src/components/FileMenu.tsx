@@ -144,7 +144,9 @@ function useFileActions() {
       const ok = confirm(t('topbar.file.newConfirm'));
       if (!ok) return;
     }
-    setDiagram({ version: '1', elements: [] });
+    // A new drawing hops its wire crossings; a drawing that predates the
+    // setting keeps the look it was made with (absent = off).
+    setDiagram({ version: '1', meta: { wireHops: true }, elements: [] });
     setFileSession(null);
   };
 
