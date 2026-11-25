@@ -53,7 +53,7 @@ export function UpwardPopover({
         <div
           role="menu"
           className={cn(
-            'ole-glass ole-upward-popover absolute bottom-full right-0 mb-1.5 min-w-52 rounded-md border border-border p-1 shadow-md',
+            'ole-glass ole-upward-popover absolute bottom-full end-0 mb-1.5 min-w-52 rounded-md border border-border p-1 shadow-md',
             className,
           )}
           style={style}

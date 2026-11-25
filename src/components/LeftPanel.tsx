@@ -24,8 +24,8 @@ export function LeftPanel() {
       <div
         className="absolute z-10"
         style={{
-          left: 'calc(0.75rem + var(--ole-left-inset, 0px) + var(--ole-safe-left, 0px))',
-          right: 'calc(0.75rem + var(--ole-right-inset, 0px) + var(--ole-safe-right, 0px))',
+          insetInlineStart: 'calc(0.75rem + var(--ole-edge-start))',
+          insetInlineEnd: 'calc(0.75rem + var(--ole-edge-end))',
           bottom: 'calc(4rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px) + 0.75rem)',
         }}
       >
@@ -37,7 +37,8 @@ export function LeftPanel() {
   return <BottomLeft open={open} setOpen={setOpen} />;
 }
 
-/** The outline tab (or open outline panel) at the left end of the bottom row.
+/** The outline tab (or open outline panel) at the start end of the bottom row
+ *  (the left in LTR, the right under `dir=rtl`).
  *  Its own component so the width it reports to the row is observed from
  *  mount, whichever layout came before. */
 function BottomLeft({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
@@ -49,7 +50,7 @@ function BottomLeft({ open, setOpen }: { open: boolean; setOpen: (open: boolean)
       className="absolute z-10 flex flex-col items-start"
       style={{
         bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))',
-        left: 'calc(0.75rem + var(--ole-left-inset, 0px) + var(--ole-safe-left, 0px))',
+        insetInlineStart: 'calc(0.75rem + var(--ole-edge-start))',
         maxHeight: 'calc(100% - 1.5rem)',
       }}
     >
@@ -118,7 +119,7 @@ function OutlinePanel({
         onClick={onClose}
         aria-label={t('outline.collapseAria')}
         title={t('outline.collapse')}
-        className="flex items-center gap-1.5 border-b border-border/40 px-3 py-2 text-left transition-colors hover:bg-muted/40"
+        className="flex items-center gap-1.5 border-b border-border/40 px-3 py-2 text-start transition-colors hover:bg-muted/40"
       >
         <span className="flex-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           {t('outline.title')}

@@ -138,8 +138,8 @@ function HealthMenuPopover({
 }) {
   const t = useT();
   // The panel stays open while the user edits, and the properties panel
-  // (selection) sits right above it on the same edge: slide left of it rather
-  // than cover the fields the user is about to type in. Where there is no
+  // (selection) sits right above it on the same edge: slide clear of it (to
+  // the left; to the right under `dir=rtl`) rather than cover the fields the user is about to type in. Where there is no
   // room (narrow windows) it stays put.
   const selection = useEditorStore((s) => s.selection);
   const selectedAnnotations = useEditorStore((s) => s.selectedAnnotations);
@@ -150,9 +150,17 @@ function HealthMenuPopover({
   useLayoutEffect(() => {
     if (!open) return;
     const measure = () => {
-      const anchor = anchorRef.current?.getBoundingClientRect();
+      const el = anchorRef.current;
+      const anchor = el?.getBoundingClientRect();
       const props = document.querySelector('.ole-right-panel')?.getBoundingClientRect();
-      if (!anchor || !props || props.width === 0) return setShift(0);
+      if (!el || !anchor || !props || props.width === 0) return setShift(0);
+      // Under `dir=rtl` the toolbar and the properties panel sit on the left
+      // edge and the panel slides right, away from them.
+      if (getComputedStyle(el).direction === 'rtl') {
+        const need = props.right + GAP - anchor.left;
+        const room = window.innerWidth - (props.right + GAP) - PANEL_W > GAP;
+        return setShift(need > 0 && room ? need : 0);
+      }
       const need = anchor.right - (props.left - GAP);
       setShift(need > 0 && props.left - GAP - PANEL_W > GAP ? need : 0);
     };
@@ -168,7 +176,7 @@ function HealthMenuPopover({
       // a property field used to close it (10-25 walkthrough).
       persistent
       className="ole-health-panel"
-      style={shift ? { right: shift } : undefined}
+      style={shift ? { insetInlineEnd: shift } : undefined}
       trigger={
         <Tooltip
           content={
@@ -190,7 +198,7 @@ function HealthMenuPopover({
           >
             <Stethoscope />
             {count > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-semibold leading-none text-white">
+              <span className="absolute -end-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-semibold leading-none text-white">
                 {count > 99 ? '99+' : count}
               </span>
             )}

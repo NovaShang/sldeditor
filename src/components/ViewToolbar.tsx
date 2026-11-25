@@ -306,7 +306,7 @@ function GridBtn({
             <span className="font-medium">
               {grid ? t('view.gridHide') : t('view.gridShow')}
             </span>
-            <span className="ml-1.5 text-muted-foreground">
+            <span className="ms-1.5 text-muted-foreground">
               {t('view.gridHotkey')}
             </span>
           </div>
@@ -692,7 +692,7 @@ function ViewToolbarExpanded({ mode }: { mode: BarMode }) {
       className="absolute z-50"
       style={{
         bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))',
-        right: 'calc(0.75rem + env(safe-area-inset-right, 0px))',
+        insetInlineEnd: 'calc(0.75rem + var(--ole-safe-end))',
       }}
     >
       <div className="ole-glass flex items-center gap-0.5 rounded-2xl border border-border p-1.5 shadow-sm">

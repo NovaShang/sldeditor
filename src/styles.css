@@ -22,6 +22,20 @@
     --ole-safe-bottom: env(safe-area-inset-bottom, 0px);
     --ole-safe-left: env(safe-area-inset-left, 0px);
 
+    /* The two INLINE edges the side chrome anchors to, resolved once here:
+       host inset + safe area. Start/end, not left/right, so the chrome
+       mirrors under `dir=rtl` (the library panel, outline and the bottom row
+       swap sides; the properties panel and the view toolbar move to the
+       left). Hosts may reserve room with the logical `--ole-start-inset` /
+       `--ole-end-inset`; the older `--ole-left-inset` / `--ole-right-inset`
+       stay PHYSICAL — a host panel on the right is on the right in either
+       direction — which is why the RTL rule below swaps them. These names do
+       not match `--ole-*-inset`, so they never shadow the host contract. */
+    --ole-safe-start: var(--ole-safe-left);
+    --ole-safe-end: var(--ole-safe-right);
+    --ole-edge-start: calc(var(--ole-start-inset, var(--ole-left-inset, 0px)) + var(--ole-safe-left));
+    --ole-edge-end: calc(var(--ole-end-inset, var(--ole-right-inset, 0px)) + var(--ole-safe-right));
+
     --background: #f5f5f5;
     --foreground: #171717;
     --card: #ffffff;
@@ -61,6 +75,13 @@
     --ole-alarm-warn-default: #faad14;
     --ole-alarm-alarm-default: #fa8c16;
     --ole-alarm-fault-default: #f5222d;
+  }
+
+  .ole-root:dir(rtl) {
+    --ole-safe-start: var(--ole-safe-right);
+    --ole-safe-end: var(--ole-safe-left);
+    --ole-edge-start: calc(var(--ole-start-inset, var(--ole-right-inset, 0px)) + var(--ole-safe-right));
+    --ole-edge-end: calc(var(--ole-end-inset, var(--ole-left-inset, 0px)) + var(--ole-safe-left));
   }
 
   .dark .ole-root,
@@ -210,10 +231,16 @@
   fill: currentColor;
 }
 
-/* Canvas SVG. The grid lives in <pattern>; this just paints the canvas surface. */
+/* Canvas SVG. The grid lives in <pattern>; this just paints the canvas surface.
+   `direction: ltr` because the drawing never mirrors: SVG text inherits
+   `direction`, and under a `dir=rtl` page every `text-anchor="start"` label
+   would hang off the other side of its anchor — on screen only, since the
+   exports render outside the page and would no longer match. The chrome
+   around the canvas mirrors; the drawing is the same in every language. */
 .ole-canvas-svg {
   background-color: var(--canvas-bg);
   touch-action: none;
+  direction: ltr;
 }
 
 /* Grid toggle: hide the dot-grid background while keeping the surface. The

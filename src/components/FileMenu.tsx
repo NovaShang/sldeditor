@@ -82,7 +82,7 @@ export function FileMenu() {
       {open && (
         <div
           role="menu"
-          className="ole-glass absolute left-0 top-full mt-1.5 min-w-44 rounded-md border border-border p-1 shadow-md"
+          className="ole-glass absolute start-0 top-full mt-1.5 min-w-44 rounded-md border border-border p-1 shadow-md"
         >
           <div className="border-b border-border px-2 pb-1.5 pt-1 text-xs text-muted-foreground">
             {fileLabel}

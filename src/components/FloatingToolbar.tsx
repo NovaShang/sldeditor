@@ -356,12 +356,15 @@ export function FloatingToolbar() {
   return (
     <div
       className={cn(
-        'pointer-events-none absolute z-20 flex w-max -translate-x-1/2 flex-col items-center gap-1.5',
-        center == null && 'left-1/2',
+        // `center` is measured from the START edge (the outline tab's side),
+        // so under `dir=rtl` it is an offset from the right and the
+        // half-width shift that centres the bar on it flips sign.
+        'pointer-events-none absolute z-20 flex w-max -translate-x-1/2 rtl:translate-x-1/2 flex-col items-center gap-1.5',
+        center == null && 'start-1/2',
       )}
       style={{
         bottom: 'calc(0.75rem + var(--ole-bottom-inset, 0px) + var(--ole-safe-bottom, 0px))',
-        left: center == null ? undefined : center,
+        insetInlineStart: center == null ? undefined : center,
       }}
     >
       {notice ? (
@@ -532,7 +535,7 @@ function ToolbarButton({
       <div>
         <span className="font-medium">{label}</span>
         {hotkey && (
-          <span className="ml-1.5 text-muted-foreground">{hotkey}</span>
+          <span className="ms-1.5 text-muted-foreground">{hotkey}</span>
         )}
       </div>
       {description && <div className="text-muted-foreground">{description}</div>}
@@ -564,7 +567,7 @@ function ToolbarButton({
             <span
               aria-hidden
               className={cn(
-                'pointer-events-none absolute -bottom-[3px] -right-[3px] border-b-[3px] border-l-[3px] border-b-current border-l-transparent',
+                'pointer-events-none absolute -bottom-[3px] -end-[3px] border-b-[3px] border-s-[3px] border-b-current border-s-transparent',
                 active ? 'text-primary-foreground/70' : 'text-muted-foreground/60',
               )}
             />
@@ -573,7 +576,7 @@ function ToolbarButton({
             <span
               aria-hidden
               className={cn(
-                'pointer-events-none absolute -right-1.5 -top-1.5 rounded-sm px-1 font-mono text-[8px] leading-[1.1]',
+                'pointer-events-none absolute -end-1.5 -top-1.5 rounded-sm px-1 font-mono text-[8px] leading-[1.1]',
                 active
                   ? 'bg-primary-foreground/20 text-primary-foreground/85'
                   : 'bg-foreground/10 text-muted-foreground',
@@ -593,7 +596,7 @@ function ToolbarButton({
                 <ChevronDown
                   aria-hidden
                   className={cn(
-                    '-ml-0.5 size-3 shrink-0',
+                    '-ms-0.5 size-3 shrink-0',
                     active ? 'opacity-70' : 'opacity-50',
                   )}
                 />
@@ -949,7 +952,7 @@ function PopoverItem({
       {icon}
       <span className="flex-1">{children}</span>
       {hotkey && (
-        <kbd className="ml-2 shrink-0 font-mono text-[10px] text-muted-foreground">
+        <kbd className="ms-2 shrink-0 font-mono text-[10px] text-muted-foreground">
           {hotkey}
         </kbd>
       )}
