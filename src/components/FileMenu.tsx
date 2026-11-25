@@ -6,6 +6,10 @@
  *
  * Exported from the library so that embedding apps that want a "local file"
  * mode without backend can drop it into their own toolbar.
+ *
+ * `iconOnly` drops the visible label (the button keeps it as its accessible
+ * name and tooltip) so a host toolbar that runs out of width — a phone — can
+ * collapse it like its own buttons.
  */
 
 import {
@@ -20,8 +24,14 @@ import { useT } from '../i18n';
 import { openDiagram, saveDiagram } from '../lib/file-io';
 import { useEditorStore } from '../store';
 
-export function FileMenu() {
+export interface FileMenuProps {
+  /** Render the trigger as an icon-only button; the label stays its accessible name. */
+  iconOnly?: boolean;
+}
+
+export function FileMenu({ iconOnly = false }: FileMenuProps = {}) {
   const t = useT();
+  const label = t('topbar.file.label');
   const fileSession = useEditorStore((s) => s.fileSession);
   const fileLabel = fileSession?.name ?? t('common.unnamed');
   const { onNew, onOpen, onSave, onSaveAs } = useFileActions();
@@ -71,13 +81,15 @@ export function FileMenu() {
       <Button
         variant="ghost"
         size="sm"
-        className="gap-1.5"
+        className={iconOnly ? 'w-8 px-0' : 'gap-1.5'}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label={iconOnly ? label : undefined}
+        title={iconOnly ? label : undefined}
         onClick={() => setOpen((v) => !v)}
       >
         <FolderOpen />
-        {t('topbar.file.label')}
+        {!iconOnly && label}
       </Button>
       {open && (
         <div
