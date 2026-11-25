@@ -221,7 +221,7 @@ export type { Theme } from './hooks/use-theme';
 
 // Optional toolbar widgets — file ops + image export. For embedding apps that
 // want a "local file" mode without their own persistence layer.
-export { FileMenu } from './components/FileMenu';
+export { FileMenu, type FileMenuProps } from './components/FileMenu';
 export { ExportMenu } from './components/ExportMenu';
 
 // Viewport helpers — embedders that perform programmatic edits (AI tool
