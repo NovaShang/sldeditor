@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.40.0
+
+### Minor Changes
+
+- [#74](https://github.com/NovaShang/sldeditor/pull/74) [`8fde426`](https://github.com/NovaShang/sldeditor/commit/8fde426ef997ab46cd6b20fcb7337d9cc1dab552) Thanks [@NovaShang](https://github.com/NovaShang)! - `FileMenu` takes an `iconOnly` prop: the trigger drops its visible label (kept as the accessible name and tooltip) so a host toolbar that runs out of width on a phone can collapse it like its own buttons.
+
 ## 0.39.1
 
 ### Patch Changes
