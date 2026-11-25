@@ -72,6 +72,7 @@ import {
   labelFontForPrint,
   migrateLegacyFrame,
   nextSheetId,
+  normalizeTitleBlockFields,
   sheetAroundBox,
   sheetRect,
   type PaperId,
@@ -1748,7 +1749,8 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
 
   updateTitleBlock: (patch) => {
     get().dispatch((d) => {
-      const tb: TitleBlockShared = { ...d.meta?.titleBlock, ...patch };
+      // `labels` / `hidden` in a patch replace the whole setting, not merge.
+      const tb: TitleBlockShared = normalizeTitleBlockFields({ ...d.meta?.titleBlock, ...patch });
       for (const k of Object.keys(tb) as (keyof TitleBlockShared)[]) {
         if (!tb[k]) delete tb[k];
       }

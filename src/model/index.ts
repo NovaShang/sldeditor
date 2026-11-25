@@ -78,6 +78,7 @@ export type {
   PaperId,
   SheetOrientation,
   TitleBlockShared,
+  TitleBlockField,
   SheetOwnField,
   SheetSharedField,
 } from './sheet';
@@ -94,6 +95,9 @@ export {
   NICE_SCALES,
   SHEET_OWN_FIELDS,
   SHEET_SHARED_FIELDS,
+  TITLE_BLOCK_FIELDS,
+  isTitleBlockField,
+  normalizeTitleBlockFields,
   DEFAULT_LABEL_FONT,
   PRINT_TEXT_MIN_MM,
   PRINT_TEXT_TARGET_MM,

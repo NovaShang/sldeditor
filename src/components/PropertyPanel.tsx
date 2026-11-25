@@ -1209,6 +1209,8 @@ function DeviceContactsSection({ id, element }: { id: string; element: Element }
     const labels = (entry?.terminals ?? [])
       .map((lt) => pinLabelOf(m, entry, lt.id))
       .filter((l): l is string => !!l);
+    // A changeover is one contact with three pins: "11-12-14".
+    if (labels.length === 3) return labels.join('-');
     // In pairs, one per pole: "13-14", "1-2 3-4 5-6".
     const pairs: string[] = [];
     for (let i = 0; i < labels.length; i += 2) pairs.push(labels.slice(i, i + 2).join('-'));

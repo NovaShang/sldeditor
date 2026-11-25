@@ -1,0 +1,77 @@
+{
+  "id": "photocell",
+  "name": "光控开关 (B)",
+  "category": "control",
+  "description": "光控（光敏）开关：按亮度动作的常开触点，用于路灯 / 照明天黑自动开灯，端子 13-14。",
+  "keywords": [
+    "photocell",
+    "photo cell",
+    "light sensor",
+    "daylight switch",
+    "dusk to dawn",
+    "dusk",
+    "twilight switch",
+    "light dependent switch",
+    "LDR",
+    "photo switch",
+    "street light",
+    "光控开关",
+    "光控",
+    "光敏开关",
+    "光电开关",
+    "Dämmerungsschalter",
+    "interruptor crepuscular",
+    "fotocélula",
+    "interrupteur crépusculaire",
+    "cellule photoélectrique",
+    "relé fotoelétrico",
+    "fotorrelé",
+    "фотореле",
+    "сумеречный выключатель",
+    "自動点滅器",
+    "光センサ",
+    "فتوسل",
+    "خلية ضوئية",
+    "פוטוסל",
+    "מפסק דמדומים"
+  ],
+  "viewBox": "-26 -22 28 44",
+  "width": 28,
+  "height": 44,
+  "svg": "<line x1=\"-10\" y1=\"0\" x2=\"-3\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\" stroke-dasharray=\"4 2\"/><line x1=\"-17\" y1=\"2\" x2=\"-17\" y2=\"4\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-17\" y1=\"-2\" x2=\"-17\" y2=\"-4\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-15\" y1=\"0\" x2=\"-13\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-19\" y1=\"0\" x2=\"-21\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><ellipse cx=\"-17\" cy=\"0\" rx=\"2\" ry=\"2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-24\" y=\"-8\" width=\"14\" height=\"16\" rx=\"0\" ry=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-15\" y1=\"-2\" x2=\"-14\" y2=\"-3\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-14\" y1=\"3\" x2=\"-15\" y2=\"2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-19\" y1=\"-2\" x2=\"-20\" y2=\"-3\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"3\" x2=\"-19\" y2=\"2\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polyline points=\"-5,-11 0,9 0,20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"0\" y1=\"-20\" x2=\"0\" y2=\"-11\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "13"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "14"
+    }
+  ],
+  "series": true,
+  "state": [
+    {
+      "name": "closed",
+      "type": "boolean",
+      "default": false,
+      "label": "闭合"
+    }
+  ],
+  "label": {
+    "x": 6,
+    "y": -2,
+    "anchor": "start"
+  },
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/390_sensors_instruments/04_sensors_optical/captlumiere.elmt",
+    "qetEnglishName": "Brightness sensor"
+  }
+}

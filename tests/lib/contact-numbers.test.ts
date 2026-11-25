@@ -87,7 +87,11 @@ describe('contactDeviceOf / contactOptions', () => {
 
   it('offers delayed contacts for timers, main contacts for a -KM without them', () => {
     const kinds = (els: Element[], tag: string) => contactOptions(els, tag).map((o) => o.kind);
-    expect(kinds([{ id: 'K', kind: 'relay-coil', name: '-K1' }], '-K1')).toEqual(['make-contact', 'break-contact']);
+    expect(kinds([{ id: 'K', kind: 'relay-coil', name: '-K1' }], '-K1')).toEqual([
+      'make-contact',
+      'break-contact',
+      'changeover-contact',
+    ]);
     expect(kinds([{ id: 'K', kind: 'relay-coil', name: '-KM1' }], '-KM1')).toContain('contactor-3p');
     expect(
       kinds(
@@ -101,6 +105,7 @@ describe('contactDeviceOf / contactOptions', () => {
     expect(kinds([{ id: 'T', kind: 'time-relay', name: '-KT1' }], '-KT1')).toEqual([
       'make-contact',
       'break-contact',
+      'changeover-contact',
       'on-delay-make-contact',
       'on-delay-break-contact',
       'off-delay-make-contact',

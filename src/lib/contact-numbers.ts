@@ -34,6 +34,7 @@ export const AUX_CONTACT_KINDS: ReadonlySet<string> = new Set([
   'on-delay-break-contact',
   'off-delay-make-contact',
   'off-delay-break-contact',
+  'changeover-contact',
 ]);
 
 /** Operators — the coil end of a device — and its main contacts. */
@@ -41,6 +42,7 @@ const OPERATOR_KINDS: ReadonlySet<string> = new Set([
   'relay-coil',
   'time-relay',
   'contactor',
+  'contactor-2p',
   'contactor-3p',
 ]);
 
@@ -51,6 +53,7 @@ export interface ContactOption {
   labelKey:
     | 'contacts.no'
     | 'contacts.nc'
+    | 'contacts.changeover'
     | 'contacts.onDelayNo'
     | 'contacts.onDelayNc'
     | 'contacts.offDelayNo'
@@ -61,6 +64,7 @@ export interface ContactOption {
 const RELAY_OPTIONS: ContactOption[] = [
   { kind: 'make-contact', labelKey: 'contacts.no' },
   { kind: 'break-contact', labelKey: 'contacts.nc' },
+  { kind: 'changeover-contact', labelKey: 'contacts.changeover' },
 ];
 
 const TIMER_OPTIONS: ContactOption[] = [
@@ -108,7 +112,7 @@ export function contactOptions(members: readonly Element[], tag: string): Contac
   const timer = members.some((m) => m.kind === 'time-relay' || m.kind.includes('delay-'));
   const out = [...RELAY_OPTIONS, ...(timer ? TIMER_OPTIONS : [])];
   const contactor = /^KM\d/.test(normalizeTag(tag)) || members.some((m) => m.kind === 'contactor');
-  if (contactor && !members.some((m) => m.kind === 'contactor-3p')) {
+  if (contactor && !members.some((m) => m.kind === 'contactor-3p' || m.kind === 'contactor-2p')) {
     out.push({ kind: 'contactor-3p', labelKey: 'contacts.main' });
   }
   return out;

@@ -174,8 +174,10 @@ export const OPERATED_KINDS: Readonly<Record<string, readonly OperatorFamily[]>>
   'on-delay-break-contact': ['coil'],
   'off-delay-make-contact': ['coil'],
   'off-delay-break-contact': ['coil'],
+  'changeover-contact': ['coil'],
   // A contactor's main contact: on a circuit diagram its coil is drawn apart.
   contactor: ['coil'],
+  'contactor-2p': ['coil'],
   'contactor-3p': ['coil'],
   'overload-contact-break': ['protection'],
   'overload-contact-make': ['protection'],

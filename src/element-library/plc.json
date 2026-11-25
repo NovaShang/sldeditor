@@ -3,6 +3,16 @@
   "name": "PLC / 控制器",
   "category": "control",
   "description": "可编程逻辑控制器 (PLC)。",
+  "keywords": [
+    "controller",
+    "SPS",
+    "automate",
+    "autómata",
+    "CLP",
+    "ПЛК",
+    "可编程控制器",
+    "シーケンサ"
+  ],
   "viewBox": "-24 -42 48 84",
   "width": 48,
   "height": 84,

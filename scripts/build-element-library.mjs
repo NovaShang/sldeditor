@@ -51,8 +51,13 @@ const TERMINAL_LABEL_RADIUS = 20;
  * moves with the pole its centre is nearest to. A wider one (the coupling
  * line, the RCD's toroid) spans poles: each of its x coordinates moves with
  * the pole nearest to it, so it stretches to the new spacing.
+ *
+ * `{ linesSpan: true }` treats every line as spanning, however short: for a
+ * drawing whose outline is cut into one segment per gap between two pins
+ * (QET's PLC cards), where each segment has to shrink with its gap rather
+ * than move whole.
  */
-function repitch(from, to) {
+function repitch(from, to, { linesSpan = false } = {}) {
   const pitch = Math.min(...from.slice(1).map((x, i) => Math.abs(x - from[i])));
   const shiftAt = (x) => {
     const d = from.map((p) => Math.abs(x - p));
@@ -73,7 +78,7 @@ function repitch(from, to) {
     } else if (p.tag === 'text') xs.push(+a.x);
     if (!xs.length) return p;
     const lo = Math.min(...xs), hi = Math.max(...xs);
-    const unit = hi - lo < pitch ? shiftAt((lo + hi) / 2) : null;
+    const unit = hi - lo < pitch && !(linesSpan && p.tag === 'line') ? shiftAt((lo + hi) / 2) : null;
     const at = (x) => (unit !== null ? unit : shiftAt(x));
     const out = { ...a };
     if (p.tag === 'line') {
@@ -1953,7 +1958,141 @@ const MANIFEST = [
     ],
     diagramTypes: ['circuit'],
   },
+
+  // ---- 控制回路补充：电磁阀、光控开关、转换触点、两极接触器、PLC 输入输出 ----
+  {
+    id: 'solenoid-valve',
+    name: '电磁阀 (YV)',
+    category: 'control',
+    description: '电磁阀线圈（阀体画在线圈旁），端子 A1-A2。',
+    source: { kind: 'elmt', path: '10_allpole/391_consumers_actuators/20_valves/electrovanne.elmt' },
+    // QET lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -20, orientation: 'n', label: 'A1' },
+      { id: 't2', x: 0, y: 20, orientation: 's', label: 'A2' },
+    ],
+    label: { x: 44, y: -2, anchor: 'start' },
+  },
+  {
+    id: 'photocell',
+    name: '光控开关 (B)',
+    category: 'control',
+    description: '光控（光敏）开关：按亮度动作的常开触点，用于路灯 / 照明天黑自动开灯，端子 13-14。',
+    // QET's "brightness sensor": a make contact operated by a light-sensing
+    // actuator (the sun in the box).
+    source: { kind: 'elmt', path: '10_allpole/390_sensors_instruments/04_sensors_optical/captlumiere.elmt' },
+    // QET's lower lead stops one unit short of its pin (y = 19 vs 20); run it
+    // on to the pin, on the grid.
+    transformPrimitive: (p) =>
+      p.tag === 'polygon' && p.attrs.y3 === '19' ? { ...p, attrs: { ...p.attrs, y3: '20' } } : p,
+    // QET lists the bottom terminal first; force convention t1=top, t2=bottom.
+    terminals: [
+      { id: 't1', x: 0, y: -20, orientation: 'n', label: '13' },
+      { id: 't2', x: 0, y: 20, orientation: 's', label: '14' },
+    ],
+    state: [{ name: 'closed', type: 'boolean', default: false, label: '闭合' }],
+    label: { x: 6, y: -2, anchor: 'start' },
+  },
+  {
+    id: 'changeover-contact',
+    name: '转换触点 (CO)',
+    category: 'control',
+    description: '转换触点（先断后合）：公共端 11 在下，常闭 12、常开 14 在上。双刀双掷继电器 = 线圈 + 两个转换触点（11-12-14、21-22-24），取相同代号。',
+    // IEC 60617-07-02-04, the same EN 60617 set as make-contact / break-contact
+    // and drawn the same way up: the blade pivots on the lower pin. t1 / t2
+    // are where make-contact has them (make side on top, pivot below), so a
+    // changeover lines up with the make contacts above and below it.
+    source: { kind: 'elmt', path: '91_en_60617/en_60617_07/en_60617_07_02/en_60617_07_02_04.elmt' },
+    // Common first: the cross-reference lists a contact's numbers in terminal
+    // order, and a changeover reads 11-12-14.
+    terminals: [
+      { id: 't2', x: 0, y: 20, orientation: 's', label: '11' },
+      { id: 't3', x: -20, y: -40, orientation: 'n', label: '12' },
+      { id: 't1', x: 0, y: -40, orientation: 'n', label: '14' },
+    ],
+    label: { x: 6, y: -10, anchor: 'start' },
+  },
+  {
+    id: 'contactor-2p',
+    name: '接触器主触点（两极）',
+    category: 'motor-control',
+    description: '两极接触器 / 两极继电器的主触点，端子 1-2、3-4（相线和零线同时通断）。线圈用"继电器线圈"并取相同代号。',
+    source: { kind: 'elmt', path: '10_allpole/310_relays_contactors_contacts/02_contacts_cross_referencing/02_power_contacts/contact_puissance_2ph.elmt' },
+    // QET prints "1L1" … "4T2" beside the pins; the terminal labels carry the
+    // designations instead. Poles at x = −20 / 0, where L1 / L2 of every
+    // 3-pole symbol sit.
+    dropPrimitive: (p) => p.tag === 'text',
+    terminals: [
+      { id: 't1', x: -20, y: -20, orientation: 'n', label: '1' },
+      { id: 't2', x: -20, y: 20, orientation: 's', label: '2' },
+      { id: 't3', x: 0, y: -20, orientation: 'n', label: '3' },
+      { id: 't4', x: 0, y: 20, orientation: 's', label: '4' },
+    ],
+    state: [{ name: 'open', type: 'boolean', default: true, label: '断开' }],
+    label: { x: 6, y: -2, anchor: 'start' },
+    diagramTypes: ['circuit'],
+  },
+  // PLC digital I/O. The element model gives every placed symbol of a kind
+  // the same pins, so a PLC whose I/O count the user sets is not possible
+  // without per-instance terminals; QET's own answer is the card, and it is
+  // how circuit diagrams draw a PLC anyway — one card per 8 channels, several
+  // cards with the same tag. A 24-in / 16-out PLC is three input cards and
+  // two output cards; the next byte's addresses (I1.0…) are edited per card
+  // in Pin numbers.
+  plcCard({
+    id: 'plc-inputs-8',
+    name: 'PLC 数字量输入（8 路）',
+    description: 'PLC 数字量输入卡：电源 L+ / L-，输入 I0.0…I0.7 在上方。多于 8 路时再放一块并取相同代号，在"端子号"里改成 I1.0…。',
+    source: { kind: 'elmt', path: '10_allpole/395_electronics_semiconductors/41_PLC_controllers/cart_univ_entr.elmt' },
+    side: 'n',
+    prefix: 'I',
+    label: { x: 60, y: 20, anchor: 'start' },
+  }),
+  plcCard({
+    id: 'plc-outputs-8',
+    name: 'PLC 数字量输出（8 路）',
+    description: 'PLC 数字量输出卡：电源 L+ / L-，输出 Q0.0…Q0.7 在下方。多于 8 路时再放一块并取相同代号，在"端子号"里改成 Q1.0…。',
+    source: { kind: 'elmt', path: '10_allpole/395_electronics_semiconductors/41_PLC_controllers/cart_univ_sort.elmt' },
+    side: 's',
+    prefix: 'Q',
+    label: { x: 60, y: 0, anchor: 'start' },
+  }),
 ];
+
+/**
+ * A QET PLC card (`cart_univ_entr` / `cart_univ_sort`): a box whose top (or
+ * bottom) edge carries ten pin circles 80 apart — L+, L−, then eight I/O
+ * channels. The pitch is halved to 40 (the outline segments between the
+ * circles shrink with it; the circles keep their size), so a card is 400
+ * wide, about the width of the control circuit it serves. QET's terminal
+ * points sit on the circles with no lead; a 10-unit lead out to the grid
+ * line beyond each circle carries the pin, like every other labelled pin.
+ */
+function plcCard({ id, name, description, source, side, prefix, label }) {
+  const from = Array.from({ length: 10 }, (_, i) => 10 + 80 * i);
+  const to = Array.from({ length: 10 }, (_, i) => 10 + 40 * i);
+  // Circle edge facing out, and the grid line the lead runs to.
+  const [edge, pinY] = side === 'n' ? [-29.5, -40] : [50.5, 60];
+  const style = 'line-style:normal;line-weight:normal;filling:none;color:black';
+  const ids = ['t_lp', 't_lm', ...Array.from({ length: 8 }, (_, i) => `t_${prefix.toLowerCase()}${i}`)];
+  const labels = ['L+', 'L-', ...Array.from({ length: 8 }, (_, i) => `${prefix}0.${i}`)];
+  return {
+    id,
+    name,
+    category: 'control',
+    description,
+    source,
+    transformPrimitive: repitch(from, to, { linesSpan: true }),
+    extraPrimitives: to.map((x) => ({
+      tag: 'line',
+      attrs: { x1: String(x), y1: String(edge), x2: String(x), y2: String(pinY), style },
+    })),
+    terminals: to.map((x, i) => ({ id: ids[i], x, y: pinY, orientation: side, label: labels[i] })),
+    params: [{ name: 'model', label: '型号', type: 'string', showOnCanvas: true }],
+    label,
+    diagramTypes: ['circuit'],
+  };
+}
 
 // ---------------------------------------------------------------------------
 // .elmt parser. The format is flat XML inside <description>; every primitive
@@ -2227,13 +2366,13 @@ const SERIES_KINDS = new Set([
   'overload-contact-make', 'overload-contact-break',
   // Operated switches.
   'push-button', 'push-button-break', 'emergency-stop', 'selector-switch',
-  'limit-switch', 'limit-switch-break', 'proximity-switch',
+  'limit-switch', 'limit-switch-break', 'proximity-switch', 'photocell',
   // Power switching / protection poles.
   'breaker', 'breaker-3p', 'motor-breaker-3p', 'mcb-1pn', 'rcd', 'rcd-4p',
   'gfci-breaker', 'recloser',
   'disconnector', 'dc-disconnector', 'load-switch', 'switch-disconnector-3p',
   'fuse', 'fuse-3p', 'fuse-switch-disconnector',
-  'contactor', 'contactor-3p', 'overload-relay-3p', 'thermal-overload', 'motor-starter',
+  'contactor', 'contactor-2p', 'contactor-3p', 'overload-relay-3p', 'thermal-overload', 'motor-starter',
   // Terminals.
   'terminal', 'terminal-block',
 ]);
@@ -2262,7 +2401,46 @@ const SEARCH_KEYWORDS = {
   'relay-coil': [
     'coil', 'contactor coil', 'relay', 'operating coil', 'A1 A2', '接触器线圈', '线圈',
     'Spule', 'Schützspule', 'bobina', 'bobine', 'катушка',
+    'DP relay', 'double pole relay', 'DPDT relay', '中间继电器',
   ],
+  'solenoid-valve': [
+    'solenoid', 'solenoid valve', 'valve', 'solenoid coil', 'SV', 'YV', 'MB',
+    '电磁阀', '电磁线圈', 'Magnetventil', 'electroválvula', 'válvula solenoide', 'électrovanne',
+    'electrovanne', 'válvula solenóide', 'электромагнитный клапан', 'соленоид', '電磁弁', 'ソレノイド',
+    'شیر برقی', 'سلونوئید', 'صمام كهربائي', 'ملف لولبي', 'שסתום', 'סולנואיד',
+  ],
+  photocell: [
+    'photocell', 'photo cell', 'light sensor', 'daylight switch', 'dusk to dawn', 'dusk',
+    'twilight switch', 'light dependent switch', 'LDR', 'photo switch', 'street light',
+    '光控开关', '光控', '光敏开关', '光电开关', 'Dämmerungsschalter', 'interruptor crepuscular',
+    'fotocélula', 'interrupteur crépusculaire', 'cellule photoélectrique', 'relé fotoelétrico',
+    'fotorrelé', 'фотореле', 'сумеречный выключатель', '自動点滅器', '光センサ',
+    'فتوسل', 'خلية ضوئية', 'פוטוסל', 'מפסק דמדומים',
+  ],
+  'changeover-contact': [
+    'changeover', 'change-over', 'CO', 'C/O', 'SPDT', 'DPDT', 'NO/NC', 'relay contact',
+    'double pole relay', 'DP relay', 'two way', '转换触点', '切换触点', '中间继电器',
+    'Wechsler', 'Wechselkontakt', 'contacto conmutado', 'conmutado', 'inverseur', 'contact inverseur',
+    'contato reversível', 'contato comutador', 'переключающий контакт', '切替接点', 'c接点',
+    'کنتاکت تبدیل', 'تلامس تحويل', 'מגע מחליף',
+  ],
+  'contactor-2p': [
+    'DP contactor', 'double pole contactor', 'double pole relay', 'DP relay', '2-pole', '2P',
+    'two-pole', 'KM', 'contactor', '双极接触器', '两极接触器', 'Schütz 2-polig', 'Schütz',
+    'contactor bipolar', 'contacteur bipolaire', 'contator bipolar', 'двухполюсный контактор',
+    'контактор', '2極電磁接触器', 'کنتاکتور دو پل', 'كونتاكتور ثنائي القطب', 'מגען דו-קוטבי',
+  ],
+  'plc-inputs-8': [
+    'PLC', 'DI', 'digital input', 'input card', 'input module', 'I/O', 'controller', 'SPS',
+    'automate', 'autómata', 'CLP', 'ПЛК', 'контроллер', '可编程控制器', '输入模块', 'シーケンサ',
+    'کنترلر', 'وحدة تحكم', 'בקר',
+  ],
+  'plc-outputs-8': [
+    'PLC', 'DO', 'digital output', 'output card', 'output module', 'I/O', 'controller', 'SPS',
+    'automate', 'autómata', 'CLP', 'ПЛК', 'контроллер', '可编程控制器', '输出模块', 'シーケンサ',
+    'کنترلر', 'وحدة تحكم', 'בקר',
+  ],
+  plc: ['controller', 'SPS', 'automate', 'autómata', 'CLP', 'ПЛК', '可编程控制器', 'シーケンサ'],
   'push-button': [
     'pushbutton', 'push button', 'button', 'start button', 'start', 'PB', 'NO',
     '启动按钮', '按钮', 'Taster', 'Drucktaster', 'pulsador', 'bouton-poussoir', 'botão', 'botoeira',

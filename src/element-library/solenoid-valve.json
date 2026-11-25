@@ -1,0 +1,63 @@
+{
+  "id": "solenoid-valve",
+  "name": "电磁阀 (YV)",
+  "category": "control",
+  "description": "电磁阀线圈（阀体画在线圈旁），端子 A1-A2。",
+  "keywords": [
+    "solenoid",
+    "solenoid valve",
+    "valve",
+    "solenoid coil",
+    "SV",
+    "YV",
+    "MB",
+    "电磁阀",
+    "电磁线圈",
+    "Magnetventil",
+    "electroválvula",
+    "válvula solenoide",
+    "électrovanne",
+    "electrovanne",
+    "válvula solenóide",
+    "электромагнитный клапан",
+    "соленоид",
+    "電磁弁",
+    "ソレノイド",
+    "شیر برقی",
+    "سلونوئید",
+    "صمام كهربائي",
+    "ملف لولبي",
+    "שסתום",
+    "סולנואיד"
+  ],
+  "viewBox": "-22 -22 64 44",
+  "width": 64,
+  "height": 44,
+  "svg": "<line x1=\"0\" y1=\"20\" x2=\"0\" y2=\"-20\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><rect x=\"-20\" y=\"-10\" width=\"40\" height=\"20\" rx=\"0\" ry=\"0\" fill=\"white\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"23\" y1=\"0\" x2=\"32\" y2=\"0\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"-10\" y1=\"-9.5\" x2=\"10\" y2=\"9.5\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"30,-10 40,-10 30,10 40,10\" fill=\"none\" stroke=\"black\" stroke-width=\"1\"/>",
+  "terminals": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -20,
+      "orientation": "n",
+      "label": "A1"
+    },
+    {
+      "id": "t2",
+      "x": 0,
+      "y": 20,
+      "orientation": "s",
+      "label": "A2"
+    }
+  ],
+  "label": {
+    "x": 44,
+    "y": -2,
+    "anchor": "start"
+  },
+  "source": {
+    "kind": "elmt",
+    "path": "10_allpole/391_consumers_actuators/20_valves/electrovanne.elmt",
+    "qetEnglishName": "Solenoid valve"
+  }
+}

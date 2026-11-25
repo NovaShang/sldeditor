@@ -468,6 +468,22 @@ const en: Table = {
   'overload-contact-break.desc': 'Normally-closed auxiliary contact of a thermal overload relay (opens on trip); wire it in series with the coil. Same tag as the overload relay.',
   'overload-contact-make.name': 'Overload relay NO contact 97-98',
   'overload-contact-make.desc': 'Normally-open auxiliary contact of a thermal overload relay (closes on trip), typically for a fault lamp. Same tag as the overload relay.',
+  'solenoid-valve.name': 'Solenoid valve (MB)',
+  'solenoid-valve.desc': 'Solenoid valve coil, valve drawn beside it, pins A1-A2.',
+  'photocell.name': 'Photocell switch (B)',
+  'photocell.desc': 'Light-operated (photocell / dusk-to-dawn) make contact that switches lighting on at dusk, pins 13-14.',
+  'photocell.state.closed': 'Closed',
+  'changeover-contact.name': 'Changeover contact (CO)',
+  'changeover-contact.desc': 'Changeover contact, break before make: common 11 below, NC 12 and NO 14 above. A DPDT relay is a relay coil plus two changeovers (11-12-14, 21-22-24) with the same tag.',
+  'contactor-2p.name': 'Contactor main contacts, 2-pole',
+  'contactor-2p.desc': 'Main poles of a double-pole contactor or relay, pins 1-2, 3-4 (switches line and neutral together). Draw its coil with "Relay coil" and give it the same tag.',
+  'contactor-2p.state.open': 'Open',
+  'plc-inputs-8.name': 'PLC digital inputs (8)',
+  'plc-inputs-8.desc': 'PLC digital input card: supply L+ / L-, inputs I0.0…I0.7 along the top. For more than 8, add another card with the same tag and change its pins to I1.0… under Pin numbers.',
+  'plc-inputs-8.param.model': 'Model',
+  'plc-outputs-8.name': 'PLC digital outputs (8)',
+  'plc-outputs-8.desc': 'PLC digital output card: supply L+ / L-, outputs Q0.0…Q0.7 along the bottom. For more than 8, add another card with the same tag and change its pins to Q1.0… under Pin numbers.',
+  'plc-outputs-8.param.model': 'Model',
 };
 
 const tables: Record<Locale, Table> = {

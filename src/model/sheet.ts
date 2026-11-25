@@ -53,6 +53,17 @@ export interface TitleBlockShared {
   client?: string;
   designer?: string;
   checker?: string;
+  /**
+   * Captions that replace the built-in, translated field names on every
+   * sheet — "Elaborado por" for "Designed". Absent or empty = built-in.
+   */
+  labels?: Partial<Record<TitleBlockField, string>>;
+  /**
+   * Fields left off every sheet's title block. A field whose row partner is
+   * hidden takes the whole row; a row with both hidden is dropped and the
+   * block gets shorter. Absent = every field shown.
+   */
+  hidden?: TitleBlockField[];
 }
 
 /** Per-sheet title-block field names (on `Sheet`). */
@@ -61,6 +72,44 @@ export const SHEET_OWN_FIELDS = ['title', 'number', 'date', 'scaleText'] as cons
 export const SHEET_SHARED_FIELDS = ['project', 'client', 'designer', 'checker'] as const;
 export type SheetOwnField = (typeof SHEET_OWN_FIELDS)[number];
 export type SheetSharedField = (typeof SHEET_SHARED_FIELDS)[number];
+/** Every field of the title block, in the order it prints (row by row). */
+export const TITLE_BLOCK_FIELDS = [
+  'project',
+  'client',
+  'title',
+  'number',
+  'designer',
+  'checker',
+  'date',
+  'scaleText',
+  'sheetNo',
+] as const;
+/** A title-block field: the typed ones plus the automatic "sheet n of N". */
+export type TitleBlockField = (typeof TITLE_BLOCK_FIELDS)[number];
+
+export function isTitleBlockField(v: unknown): v is TitleBlockField {
+  return typeof v === 'string' && (TITLE_BLOCK_FIELDS as readonly string[]).includes(v);
+}
+
+/**
+ * `tb` with its field settings cleaned: captions trimmed, empty ones and
+ * unknown field names dropped, `hidden` de-duplicated in print order, and
+ * both left out when nothing remains — so a document that never used them
+ * keeps no trace of them.
+ */
+export function normalizeTitleBlockFields(tb: TitleBlockShared): TitleBlockShared {
+  const out: TitleBlockShared = { ...tb };
+  const labels: Partial<Record<TitleBlockField, string>> = {};
+  for (const [k, v] of Object.entries(tb.labels ?? {})) {
+    if (isTitleBlockField(k) && typeof v === 'string' && v.trim()) labels[k] = v.trim();
+  }
+  if (Object.keys(labels).length) out.labels = labels;
+  else delete out.labels;
+  const hidden = TITLE_BLOCK_FIELDS.filter((f) => (tb.hidden ?? []).includes(f));
+  if (hidden.length) out.hidden = hidden;
+  else delete out.hidden;
+  return out;
+}
 
 // ── paper ────────────────────────────────────────────────────────────────
 
