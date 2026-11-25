@@ -50,6 +50,7 @@ export const ui: UiTable = {
   'props.multi': '{n} مورد انتخاب شده',
   'props.name': 'نام',
   'props.defaultHint': 'پیش‌فرض {v}',
+  'props.unit': 'واحد',
   'props.note': 'یادداشت',
   'props.label': 'برچسب',
   'props.labelPlaceholder': 'L1 / L2 / L3 / N / PE',

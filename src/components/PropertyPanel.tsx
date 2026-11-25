@@ -5,6 +5,7 @@
  * lives in the panel header.
  */
 
+import { convertPower, displayPowerUnit, parsePowerInput, powerUnitChoices } from '../lib/power-units';
 import { useEffect, useRef, useState } from 'react';
 import { libraryById } from '../element-library';
 import { useT, type LocaleKey } from '../i18n';
@@ -268,19 +269,30 @@ function SchemaParamField({
   }
   if (field.type === 'number') {
     const implied = IMPLIED_DEFAULTS[field.name];
+    const value = typeof cur === 'number' ? cur : undefined;
+    const choices = powerUnitChoices(field.unit);
+    if (field.unit && choices) {
+      // The generic load's P is stored in MW while motors, sockets and lights
+      // are in kW: show and take a rating in any unit of its family, stored
+      // in the library's unit as always.
+      return (
+        <PowerRow
+          key={`${id}:${field.name}`}
+          label={label}
+          value={value}
+          storedUnit={field.unit}
+          choices={choices}
+          unitLabel={t('props.unit')}
+          onCommit={onCommit}
+        />
+      );
+    }
     return (
       <NumberRow
         label={label}
-        value={typeof cur === 'number' ? cur : undefined}
+        value={value}
         unit={field.unit}
         placeholder={implied !== undefined ? t('props.defaultHint', { v: implied }) : undefined}
-        // The generic load's P is in MW while motors, sockets and lights are
-        // in kW (10-25 walkthrough): spell the MW value out in kW.
-        hint={
-          field.unit === 'MW' && typeof cur === 'number' && cur > 0
-            ? `= ${(cur * 1000).toLocaleString(undefined, { maximumFractionDigits: 3 })} kW`
-            : undefined
-        }
         onCommit={onCommit}
       />
     );
@@ -1842,6 +1854,84 @@ function NumberRow({
         )}
       </div>
       {hint && <div className="mt-0.5 text-[10px] text-muted-foreground">{hint}</div>}
+    </Field>
+  );
+}
+
+/**
+ * A power rating (W/kW/MW, VA/kVA/MVA, var/kvar/Mvar). Stored in the
+ * library's unit; shown in the unit the canvas label uses (a 0.006 MW load
+ * reads 6 kW) unless the user picks another one, and typed in the picked unit
+ * or with a suffix (`6 kW`).
+ */
+function PowerRow({
+  label,
+  value,
+  storedUnit,
+  choices,
+  unitLabel,
+  onCommit,
+}: {
+  label: string;
+  value: number | undefined;
+  storedUnit: string;
+  choices: readonly string[];
+  unitLabel: string;
+  onCommit: (v: number | undefined) => void;
+}) {
+  const [picked, setPicked] = useState<string | null>(null);
+  const unit = picked ?? displayPowerUnit(value, storedUnit);
+  const shown = value === undefined ? '' : String(convertPower(value, storedUnit, unit));
+  const draft = useDraft(shown, (text) => {
+    if (text.trim() === '') {
+      if (value !== undefined) onCommit(undefined);
+      return;
+    }
+    const n = parsePowerInput(text, unit, storedUnit);
+    if (n === null) {
+      draft.revert();
+      return;
+    }
+    const suffix = /[a-zA-Z]+\s*$/.exec(text)?.[0].trim().toLowerCase();
+    if (suffix) setPicked(choices.find((c) => c.toLowerCase() === suffix) ?? null);
+    if (n !== value) onCommit(n);
+    else draft.revert();
+  });
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <Field label={label}>
+      <div className="flex gap-1">
+        <input
+          ref={ref}
+          type="text"
+          inputMode="decimal"
+          value={draft.text}
+          onChange={(e) => draft.set(e.target.value)}
+          onFocus={draft.onFocus}
+          onBlur={draft.onBlur}
+          onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return;
+            if (e.key === 'Enter') ref.current?.blur();
+            if (e.key === 'Escape') {
+              draft.revert();
+              ref.current?.blur();
+            }
+          }}
+          className="h-7 w-full min-w-0 rounded-md border border-border/60 bg-background/50 px-2 font-mono text-[11px] tabular-nums focus:border-border focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+        <select
+          aria-label={unitLabel}
+          value={unit}
+          onChange={(e) => setPicked(e.target.value)}
+          className="h-7 w-16 shrink-0 rounded-md border border-border/60 bg-transparent px-1 text-[11px]"
+        >
+          {choices.map((u) => (
+            <option key={u} value={u}>
+              {u}
+            </option>
+          ))}
+        </select>
+      </div>
     </Field>
   );
 }

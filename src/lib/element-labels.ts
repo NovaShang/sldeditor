@@ -5,6 +5,7 @@
  * exported file.
  */
 
+import { formatParamValue } from './power-units';
 import type { ResolvedElement, ResolvedPlacement } from '../compiler';
 import type { ElementId, LabelMode, LibraryEntry, LibraryLabelAnchor } from '../model';
 import { sheetIndexAt, type Sheet } from '../model/sheet';
@@ -79,7 +80,7 @@ export function labelLines(re: ResolvedElement, mode: LabelMode, sheetRef?: stri
     if (!p.showOnCanvas) continue;
     const v = params[p.name];
     if (v === undefined || v === null || v === '') continue;
-    lines.push(`${v}${p.unit ?? ''}`);
+    lines.push(formatParamValue(v, p.unit));
   }
   if (sheetRef) lines.push(sheetRef);
   return lines;

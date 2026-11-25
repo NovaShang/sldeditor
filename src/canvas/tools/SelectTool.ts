@@ -53,6 +53,7 @@ import { transformAttr } from '../transform-attr';
 import { publishWireTarget } from '../wire-target-bus';
 import { resolveWireTarget } from '../resolve-wire-target';
 import { railBranchPath } from '../rail-branch';
+import { emitGesture } from '../../store/gesture-events';
 import {
   applyInsert,
   insertTol,
@@ -689,9 +690,11 @@ export const SelectTool: Tool = {
           store.setSelection([from]);
           return;
         }
+        const before = store.diagram;
         store.connectWire({ end: from }, to.spec, {
           path: branchRoute(rail, to),
         });
+        if (useEditorStore.getState().diagram !== before) emitGesture('rail_branch');
         return;
       }
       if (sameLanding(fromTarget, to)) return;
@@ -734,6 +737,7 @@ export const SelectTool: Tool = {
           const store = useEditorStore.getState();
           const m = store.internal;
           store.dispatch((d) => applyInsert(d, m, id, inLine));
+          emitGesture('insert_on_wire');
         } else if (soloJunction && landing) {
           useEditorStore.getState().mergeJunctionInto(soloJunction[0], landing);
         } else if (drag.sheetId) {

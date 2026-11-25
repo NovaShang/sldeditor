@@ -231,11 +231,22 @@ export { buildExportSvg, downloadSvg, downloadPng } from './lib/export-image';
 export { buildExportDxf, downloadDxf } from './lib/export-dxf';
 export type { DxfExportOptions } from './lib/export-dxf';
 
+// Power ratings (W/kW/MW, VA/kVA/MVA, var/kvar/Mvar): what a canvas label
+// prints for a param, and conversions to the library's stored unit — for
+// hosts that read or write params outside the property panel.
+export {
+  convertPower,
+  displayPowerUnit,
+  formatParamValue,
+  parsePowerInput,
+  powerUnitChoices,
+} from './lib/power-units';
+
 // Drawing health check — the same report the canvas markers and checks panel
 // show, for hosts that want it elsewhere (an AI agent reading the drawing,
 // analytics). Pure: pass the document and its compiled model.
 export { checkHealth, parseRatio, sameVoltageLevel } from './health';
 export type { HealthCode, HealthIssue, HealthReport, HealthSeverity, LoadSummary } from './health';
 export type { HealthEvent } from './hooks/use-host-actions';
-export type { ToolUseEvent } from './hooks/use-tool-use';
+export type { GestureId, ToolUseEvent } from './hooks/use-tool-use';
 export { sheetExportRegion, sheetMinStroke, sheetExportOptions } from './lib/export-sheets';

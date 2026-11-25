@@ -51,6 +51,8 @@ export interface OneLineEditorProps {
    * text, rect, …), for host analytics. Once per activation — switching to a
    * tool, not every stroke drawn with it; `select`/`pan` are not reported, and
    * nothing is in `readOnly` mode. Throwing from it is swallowed.
+   * Completed circuit gestures (add contact, quick insert, drop on a wire,
+   * rail branch / hang) are reported through it too, with `kind: 'gesture'`.
    */
   onToolUse?: (e: ToolUseEvent) => void;
 }

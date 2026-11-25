@@ -37,6 +37,7 @@
  * would be worse than an overhang past the border.
  */
 
+import { symbolTextUpsideDown } from './symbol-text';
 import {
   transformPoint,
   type InternalModel,
@@ -647,9 +648,17 @@ function emitText(
   // glyphs are NOT written backwards (no group-71 flag).
   // Unmirrored text keeps its historical left justification: single-line
   // DXF output is pinned byte-for-byte (tests/lib/sld-export-identity).
-  const halign = place.mirror
-    ? ({ start: 'end', end: 'start', middle: 'middle' } as const)[anchor]
-    : 'start';
+  const swap = { start: 'end', end: 'start', middle: 'middle' } as const;
+  if (symbolTextUpsideDown(place.rot)) {
+    // Turned 180° (also with a mirror): written upright instead, again as
+    // the canvas does. The authored box now runs the other way from the
+    // anchor and hangs below it, so the text is top-aligned there and its
+    // justification swapped — unless a mirror already swapped it back.
+    const halign = place.mirror ? anchor : swap[anchor];
+    w.text(LAYER_ELEMENTS, p, txt, fs * (place.scale ?? 1), 0, false, halign, 'top');
+    return;
+  }
+  const halign = place.mirror ? swap[anchor] : 'start';
   // place.rot is CCW in math frame (see transforms.ts); after flipping Y we
   // are in DXF's CCW frame, so the same numeric angle maps directly.
   w.text(LAYER_ELEMENTS, p, txt, fs * (place.scale ?? 1), place.rot, false, halign);
@@ -1101,6 +1110,8 @@ class DxfWriter {
     rotationDeg: number,
     mirrorX: boolean,
     halign: 'start' | 'middle' | 'end' = 'start',
+    /** `top`: the text hangs below `p` (group 73 = 3) instead of standing on it. */
+    valign: 'baseline' | 'top' = 'baseline',
   ): void {
     this.g(0, 'TEXT');
     this.g(8, layer);
@@ -1111,13 +1122,16 @@ class DxfWriter {
     this.g(40, height);
     this.g(1, sanitizeText(text));
     this.track(p[0], p[1]);
-    this.track(p[0], p[1] + height);
+    this.track(p[0], valign === 'top' ? p[1] - height : p[1] + height);
     if (rotationDeg !== 0) this.g(50, rotationDeg);
     if (mirrorX) this.g(71, 2);
     if (halign !== 'start') {
-      // Horizontal justification (group 72: 1 = center, 2 = right); the
-      // anchor for justified text is the second alignment point (11/21).
+      // Horizontal justification (group 72: 1 = center, 2 = right).
       this.g(72, halign === 'middle' ? 1 : 2);
+    }
+    if (valign === 'top') this.g(73, 3);
+    if (halign !== 'start' || valign !== 'baseline') {
+      // The anchor for justified text is the second alignment point (11/21).
       this.g(11, p[0]);
       this.g(21, p[1]);
       this.g(31, 0);

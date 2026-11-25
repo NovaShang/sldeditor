@@ -14,6 +14,7 @@
  * ref to avoid React re-renders during gesture loops.
  */
 
+import { emitGesture } from './gesture-events';
 import { create, type StateCreator } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { persist, createJSONStorage } from 'zustand/middleware';
@@ -775,6 +776,7 @@ const createEditorState: StateCreator<EditorState> = (set, get) => ({
     else delete stamped.pinLabels;
     const next = { ...diagram, elements: diagram.elements.map((e) => (e.id === id ? stamped : e)) };
     set({ diagram: next, internal: compile(next) });
+    emitGesture('add_contact');
   },
   setWireFromTerminal: (ref) => set({ wireFromTerminal: ref }),
   setWireDragFrom: (from) => set({ wireDragFrom: from }),

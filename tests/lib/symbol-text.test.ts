@@ -202,3 +202,142 @@ describe('custom-symbol text paint (print readability)', () => {
     expect(lib.svg).not.toContain('stroke="none"');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Rotation: a symbol turned 180° (or turned and mirrored so the net turn is
+// 180°) used to print its own text upside down.
+// ---------------------------------------------------------------------------
+
+type Mat = [number, number, number, number, number, number]; // a b c d e f
+const I: Mat = [1, 0, 0, 1, 0, 0];
+const mul = (m: Mat, n: Mat): Mat => [
+  m[0] * n[0] + m[2] * n[1],
+  m[1] * n[0] + m[3] * n[1],
+  m[0] * n[2] + m[2] * n[3],
+  m[1] * n[2] + m[3] * n[3],
+  m[0] * n[4] + m[2] * n[5] + m[4],
+  m[1] * n[4] + m[3] * n[5] + m[5],
+];
+function parseTransform(t: string): Mat {
+  let m = I;
+  for (const [, op, args] of t.matchAll(/(\w+)\(([^)]*)\)/g)) {
+    const a = args.trim().split(/[\s,]+/).map(Number);
+    if (op === 'translate') m = mul(m, [1, 0, 0, 1, a[0], a[1] ?? 0]);
+    else if (op === 'scale') m = mul(m, [a[0], 0, 0, a[1] ?? a[0], 0, 0]);
+    else if (op === 'rotate') {
+      const rad = (a[0] * Math.PI) / 180;
+      const [cx, cy] = [a[1] ?? 0, a[2] ?? 0];
+      m = mul(m, [1, 0, 0, 1, cx, cy]);
+      m = mul(m, [Math.cos(rad), Math.sin(rad), -Math.sin(rad), Math.cos(rad), 0, 0]);
+      m = mul(m, [1, 0, 0, 1, -cx, -cy]);
+    }
+  }
+  return m;
+}
+/** Every transform from the root down to the first `<text>`, composed. */
+function textCtm(svg: string): { m: Mat; text: Element } {
+  const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
+  const text = doc.querySelector('text')!;
+  const chain: Element[] = [];
+  for (let el: Element | null = text; el; el = el.parentElement) chain.unshift(el);
+  let m = I;
+  for (const el of chain) m = mul(m, parseTransform(el.getAttribute('transform') ?? ''));
+  return { m, text };
+}
+const r3 = (n: number) => Math.round(n * 1000) / 1000 + 0;
+const linear = (m: Mat) => [m[0], m[1], m[2], m[3]].map(r3);
+const apply = (m: Mat, p: [number, number]): [number, number] => [
+  r3(m[0] * p[0] + m[2] * p[1] + m[4]),
+  r3(m[1] * p[0] + m[3] * p[1] + m[5]),
+];
+const inSvg = (frag: string, rot: number) =>
+  `<svg xmlns="http://www.w3.org/2000/svg"><g transform="rotate(${rot})">${frag}</g></svg>`;
+
+const placed = (rot: 0 | 90 | 180 | 270, mirror = false): DiagramFile => ({
+  version: '1',
+  customKinds: [rcd],
+  elements: [{ id: 'RCD1', kind: 'custom:rcd-light' }],
+  layout: { RCD1: { at: [100, 100], rot, ...(mirror ? { mirror: true } : {}) } },
+});
+
+describe('rotated symbol text', () => {
+  it('reproduces the bug: at 180° the glyphs are upside down', () => {
+    expect(linear(textCtm(inSvg(rcd.svg, 180)).m)).toEqual([-1, 0, 0, -1]);
+  });
+
+  it('SVG export at 180° draws the glyphs upright', () => {
+    const { m } = textCtm(buildExportSvg(compile(placed(180))));
+    expect(linear(m)).toEqual([1, 0, 0, 1]);
+  });
+
+  it('…in the box the turned symbol gives its text', () => {
+    // Authored "IΔn" at (-8, 4), start-anchored, 16px: its box runs right
+    // from x −8 with the caps above y 4. Turned 180° about (100, 100) that
+    // box runs LEFT from x 108 and hangs DOWN from y 96: so the upright text
+    // is end-anchored at x 108, baseline one cap height below 96.
+    const { m, text } = textCtm(buildExportSvg(compile(placed(180))));
+    expect(text.getAttribute('text-anchor')).toBe('end');
+    const [x, y] = apply(m, [-8, 4]);
+    expect(x).toBe(108);
+    expect(y).toBeCloseTo(96 + 0.716 * SYMBOL_TEXT_DEFAULT_FONT_SIZE, 0);
+  });
+
+  it('rotate + mirror (net 180°) is upright too, keeping its alignment', () => {
+    // Mirror then 180° is a vertical flip: the box stays start-anchored.
+    const { m, text } = textCtm(buildExportSvg(compile(placed(180, true))));
+    expect(linear(m)).toEqual([1, 0, 0, 1]);
+    expect(text.getAttribute('text-anchor') ?? 'start').toBe('start');
+    expect(apply(m, [-8, 4])[0]).toBe(92);
+    // Written as one vertical flip: svg2pdf.js (PDF export) misplaces text
+    // under the equivalent composed `scale(-1 1) rotate(180 …)`.
+    expect(text.getAttribute('transform')).toMatch(/^translate\(0 [-\d.]+\) scale\(1 -1\)$/);
+  });
+
+  it('90° and 270° stay turned (read from the side), never mirrored', () => {
+    for (const mirror of [false, true]) {
+      expect(linear(textCtm(buildExportSvg(compile(placed(90, mirror)))).m)).toEqual([0, 1, -1, 0]);
+      expect(linear(textCtm(buildExportSvg(compile(placed(270, mirror)))).m)).toEqual([0, -1, 1, 0]);
+    }
+  });
+
+  it('is the identity when nothing needs turning', () => {
+    expect(uprightSymbolText(rcd.svg, false, 0)).toBe(rcd.svg);
+    expect(uprightSymbolText(rcd.svg, false, 90)).toBe(rcd.svg);
+    expect(uprightSymbolText(rcd.svg, false)).toBe(rcd.svg);
+  });
+
+  it('keeps the line order of a multi-line text', () => {
+    const svg =
+      '<text x="0" y="0" font-size="10"><tspan x="0" y="0">A</tspan><tspan x="0" y="12">B</tspan></text>';
+    const { m } = textCtm(inSvg(uprightSymbolText(svg, false, 180), 180));
+    expect(linear(m)).toEqual([1, 0, 0, 1]);
+    // A rigid move: line B still sits 12 below line A.
+    expect(apply(m, [0, 12])[1] - apply(m, [0, 0])[1]).toBe(12);
+  });
+
+  it('a centred (dominant-baseline middle) label turns about its own centre', () => {
+    const svg =
+      '<text x="5" y="3" text-anchor="middle" dominant-baseline="middle" font-size="10">V</text>';
+    const { m } = textCtm(inSvg(uprightSymbolText(svg, false, 180), 180));
+    expect(linear(m)).toEqual([1, 0, 0, 1]);
+    expect(apply(m, [5, 3])).toEqual([-5, -3]);
+  });
+
+  it('DXF writes 180° symbol text upright, hanging from the turned baseline', () => {
+    const t = elementText(buildExportDxf(compile(placed(180))));
+    expect(t.has(50)).toBe(false); // no rotation
+    expect(t.get(72)).toBe('2'); // start → right-justified
+    expect(t.get(73)).toBe('3'); // top-aligned: the text hangs below the anchor
+    expect(Number(t.get(11))).toBe(108);
+    // World y 96 → DXF y −96 (DXF y points up).
+    expect(Number(t.get(21))).toBe(-96);
+  });
+
+  it('DXF rotate + mirror (net 180°) is upright and keeps its justification', () => {
+    const t = elementText(buildExportDxf(compile(placed(180, true))));
+    expect(t.has(50)).toBe(false);
+    expect(t.has(72)).toBe(false);
+    expect(t.get(73)).toBe('3');
+    expect(Number(t.get(11))).toBe(92);
+  });
+});

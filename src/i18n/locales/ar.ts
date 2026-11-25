@@ -50,6 +50,7 @@ export const ui: UiTable = {
   'props.multi': 'تم تحديد {n} كائن',
   'props.name': 'الاسم',
   'props.defaultHint': 'الافتراضي {v}',
+  'props.unit': 'الوحدة',
   'props.note': 'ملاحظة',
   'props.label': 'التسمية',
   'props.labelPlaceholder': 'L1 / L2 / L3 / N / PE',
