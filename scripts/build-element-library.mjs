@@ -693,6 +693,12 @@ const MANIFEST = [
       { id: 't_dc', x: -20, y: -40, orientation: 'n' },
       { id: 't_ac', x: -20, y: 0, orientation: 's' },
     ],
+    // Rated AC output. Its own key (not `P`) on purpose: inverters had no
+    // params before, so drawings may carry free-form keys of any name here,
+    // and a key that was never defined is the only one that can start showing
+    // on the label without changing what an existing drawing displays. MW so
+    // the label scales: 0.005 -> "5kW", 2.5 -> "2.5MW".
+    params: [{ name: 'Prated', label: '额定功率', type: 'number', unit: 'MW', showOnCanvas: true }],
   },
   {
     id: 'converter-bidir',

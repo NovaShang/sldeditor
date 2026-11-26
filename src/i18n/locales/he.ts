@@ -511,6 +511,7 @@ export const library: Record<string, string> = {
   'battery.param.E': 'קיבולת',
   'busbar.param.Un': 'מתח נקוב',
   'converter-bidir.param.S': 'הספק נקוב',
+  'inverter.param.Prated': 'הספק נקוב',
   'dc-dc-converter.param.P': 'הספק',
   'mppt.param.I': 'זרם נקוב',
   'load.param.P': 'הספק פעיל',

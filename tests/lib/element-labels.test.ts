@@ -14,6 +14,7 @@ import {
   LABEL_FONT_SIZE_MAX,
   LABEL_FONT_SIZE_MIN,
   LABEL_LINE_HEIGHT,
+  elementLabelBoxes,
   fallbackAnchor,
   labelLineHeight,
   placeLabel,
@@ -237,5 +238,45 @@ describe('terminal-number glyphs (pin digits)', () => {
     expect(motor?.svg).toContain('>M</text>');
     expect(motor?.svg).toContain('>3</text>');
     expect(motor?.terminalLabelsSvg).toBeUndefined();
+  });
+});
+
+describe('elementLabelBoxes', () => {
+  const d: DiagramFile = {
+    version: '1',
+    elements: [
+      { id: 'QF1', kind: 'breaker', name: 'A long feeder name' },
+      { id: 'QF2', kind: 'breaker', labelHidden: true },
+    ],
+    layout: { QF1: { at: [0, 0] }, QF2: { at: [200, 0] } },
+  };
+
+  it('boxes the ink of each drawn label where the canvas places it', () => {
+    const boxes = elementLabelBoxes(compile(d));
+    expect([...boxes.keys()]).toEqual(['QF1']);
+    const b = boxes.get('QF1')!;
+    const p = placeLabel(anchor, breaker, { at: [0, 0], rot: 0, mirror: false }, 1);
+    expect(b.x1).toBeCloseTo(p.world[0]);
+    expect(b.x2 - b.x1).toBeCloseTo('A long feeder name'.length * LABEL_FONT_SIZE * 0.55);
+    expect(b.y1).toBeCloseTo(p.world[1] - 0.8 * LABEL_FONT_SIZE);
+    expect(b.y2).toBeCloseTo(p.world[1] + 0.25 * LABEL_FONT_SIZE);
+  });
+
+  it('counts full-width CJK characters as one em, and stacks lines', () => {
+    const cjk: DiagramFile = {
+      version: '1',
+      elements: [{ id: 'QF1', kind: 'breaker', name: '主变高压侧\nQF1' }],
+      layout: { QF1: { at: [0, 0] } },
+    };
+    const b = elementLabelBoxes(compile(cjk)).get('QF1')!;
+    expect(b.x2 - b.x1).toBeCloseTo(5 * LABEL_FONT_SIZE);
+    expect(b.y2 - b.y1).toBeCloseTo(LABEL_LINE_HEIGHT + 1.05 * LABEL_FONT_SIZE);
+  });
+
+  it('is empty with labels off, and scales with the label font size', () => {
+    expect(elementLabelBoxes(compile(d), { labelMode: 'off' }).size).toBe(0);
+    const small = elementLabelBoxes(compile(d)).get('QF1')!;
+    const big = elementLabelBoxes(compile(d), { labelFontSize: 14 }).get('QF1')!;
+    expect(big.x2 - big.x1).toBeCloseTo(2 * (small.x2 - small.x1));
   });
 });

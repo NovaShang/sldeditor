@@ -538,6 +538,7 @@ export const library: Record<string, string> = {
   'battery.param.E': '容量',
   'busbar.param.Un': '定格電圧',
   'converter-bidir.param.S': '容量',
+  'inverter.param.Prated': '定格出力',
   'dc-dc-converter.param.P': '電力',
   'mppt.param.I': '定格電流',
   'load.param.P': '有効電力',

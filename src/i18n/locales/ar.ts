@@ -537,6 +537,7 @@ export const library: Record<string, string> = {
   'battery.param.E': 'السعة',
   'busbar.param.Un': 'الجهد الاسمي',
   'converter-bidir.param.S': 'السعة',
+  'inverter.param.Prated': 'القدرة المقننة',
   'dc-dc-converter.param.P': 'القدرة',
   'mppt.param.I': 'التيار الاسمي',
   'load.param.P': 'القدرة الفعالة',

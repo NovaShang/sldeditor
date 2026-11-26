@@ -533,6 +533,7 @@ export const library: Record<string, string> = {
   'battery.param.E': 'Kapazität',
   'busbar.param.Un': 'Bemessungsspannung',
   'converter-bidir.param.S': 'Nennleistung',
+  'inverter.param.Prated': 'Nennleistung',
   'dc-dc-converter.param.P': 'Leistung',
   'mppt.param.I': 'Bemessungsstrom',
   'load.param.P': 'Wirkleistung',
