@@ -236,6 +236,10 @@ export { sheetFieldLabels, sheetOfText } from './i18n/sheet-labels';
 export { buildExportSvg, downloadSvg, downloadPng } from './lib/export-image';
 export { buildExportDxf, downloadDxf } from './lib/export-dxf';
 export type { DxfExportOptions } from './lib/export-dxf';
+// Where each element's label block is drawn (world rectangles, the extents the
+// exporters frame) — for hosts checking labels for collisions.
+export { elementLabelBoxes } from './lib/element-labels';
+export type { LabelBox } from './lib/element-labels';
 
 // Power ratings (W/kW/MW, VA/kVA/MVA, var/kvar/Mvar): what a canvas label
 // prints for a param, and conversions to the library's stored unit — for

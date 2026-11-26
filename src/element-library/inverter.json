@@ -20,6 +20,15 @@
       "orientation": "n"
     }
   ],
+  "params": [
+    {
+      "name": "Prated",
+      "label": "额定功率",
+      "type": "number",
+      "unit": "MW",
+      "showOnCanvas": true
+    }
+  ],
   "source": {
     "kind": "elmt",
     "path": "91_en_60617/en_60617_06/en_60617_06_14/en_60617_06_14_05.elmt",

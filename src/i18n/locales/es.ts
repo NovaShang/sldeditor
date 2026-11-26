@@ -511,6 +511,7 @@ export const library: Record<string, string> = {
   'battery.param.E': 'Capacidad',
   'busbar.param.Un': 'Tensión nominal',
   'converter-bidir.param.S': 'Capacidad',
+  'inverter.param.Prated': 'Potencia nominal',
   'dc-dc-converter.param.P': 'Potencia',
   'mppt.param.I': 'Corriente nominal',
   'load.param.P': 'Potencia activa',

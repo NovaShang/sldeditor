@@ -296,6 +296,77 @@ export function labelBlockWidth(lines: string[], fontSize: number): number {
   return Math.max(20, max);
 }
 
+/** World-space rectangle of one rendered element label block. */
+export interface LabelBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+/**
+ * Full-width characters (CJK ideographs, kana, hangul, full-width forms) set
+ * about one em wide — nearly twice the 0.55em `labelBlockWidth` assumes, so a
+ * Chinese name measured that way comes out at half its drawn length.
+ */
+const WIDE_CHAR =
+  /[ᄀ-ᅟ⺀-〾ぁ-㏿㐀-䶿一-鿿ꥠ-꥿가-힣豈-﫿︰-﹏＀-｠￠-￦]/;
+
+/** Drawn width of a label block, counting full-width characters as 1em. */
+function labelTextWidth(lines: string[], fontSize: number): number {
+  let max = 0;
+  for (const l of lines) {
+    let em = 0;
+    for (const ch of l) em += WIDE_CHAR.test(ch) ? 1 : 0.55;
+    if (em * fontSize > max) max = em * fontSize;
+  }
+  return max;
+}
+
+/**
+ * Where every element's label text is drawn, as world rectangles — anchored
+ * exactly as the canvas and the exporters place it, so a host checking for
+ * label collisions sees the text the user sees. Elements with no label
+ * (hidden, or `mode: 'off'`) are absent. Width is a per-character estimate
+ * (no DOM), counting full-width CJK characters as one em; unlike
+ * `labelBlockWidth` there is no 20-unit minimum, which is a click target
+ * rather than ink.
+ */
+export function elementLabelBoxes(
+  model: {
+    elements: ReadonlyMap<ElementId, ResolvedElement>;
+    layout: ReadonlyMap<ElementId, ResolvedPlacement>;
+  },
+  opts: { labelMode?: LabelMode; labelFontSize?: number; sheets?: readonly Sheet[] } = {},
+): Map<ElementId, LabelBox> {
+  const out = new Map<ElementId, LabelBox>();
+  const mode = opts.labelMode ?? 'all';
+  if (mode === 'off') return out;
+  const fs = resolveLabelFontSize(opts.labelFontSize);
+  const lineHeight = labelLineHeight(fs);
+  const sheetRefs = continuationSheetRefs(model.elements.values(), model.layout, opts.sheets);
+  for (const re of model.elements.values()) {
+    const place = model.layout.get(re.element.id);
+    if (!place || !re.libraryDef) continue;
+    const lines = labelLines(re, mode, sheetRefs.get(re.element.id));
+    if (lines.length === 0) continue;
+    const anchor = re.libraryDef.label ?? fallbackAnchor(re.libraryDef, fs);
+    const {
+      world: [ax, ay],
+      textAnchor: align,
+      dy,
+    } = placeLabel(anchor, re.libraryDef, place, lines.length, fs, re.element.labelOffset);
+    const w = labelTextWidth(lines, fs);
+    const x1 = align === 'middle' ? ax - w / 2 : align === 'end' ? ax - w : ax;
+    // Ink, not line boxes: ascender above the first baseline, descender below
+    // the last — the space between stacked blocks is not a collision.
+    const top = ay + dy - 0.8 * fs;
+    const bottom = ay + dy + (lines.length - 1) * lineHeight + 0.25 * fs;
+    out.set(re.element.id, { x1, y1: top, x2: x1 + w, y2: bottom });
+  }
+  return out;
+}
+
 function parseViewBox(
   s: string,
 ): { x: number; y: number; w: number; h: number } | null {
