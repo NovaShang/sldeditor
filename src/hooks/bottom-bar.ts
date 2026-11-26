@@ -146,3 +146,68 @@ export function useReportBarWidth(part: BarPart, ref: RefObject<HTMLElement | nu
     if (el) report(part, mode, el.offsetWidth);
   }, [part, ref, report, mode]);
 }
+
+/**
+ * The unified (`dense`) bar is one row of fixed-size buttons, so whether it
+ * fits is arithmetic rather than measurement. It never scrolls: a strip that
+ * scrolls sideways on a phone hides tools behind an edge nobody thinks to
+ * swipe. Instead, as the editor narrows, it gives things up in this order —
+ *
+ *  1. the outline toggle moves into the More menu,
+ *  2. so does the Junction tool (on a phone a wire dragged into empty space
+ *     drops a junction anyway, so it is the least-needed tool on the bar),
+ *  3. the buttons narrow down to `DENSE_LABEL_MIN`, labels still underneath,
+ *  4. the labels go (icon-only buttons, still a full-height touch target).
+ *
+ * Everything folded stays one tap away in More, so every tool is reachable at
+ * every width.
+ */
+export const DENSE_BUTTON = 48;
+/** Narrowest button that still carries its label underneath. */
+export const DENSE_LABEL_MIN = 44;
+/** Narrowest icon-only button. */
+export const DENSE_ICON_MIN = 32;
+/** The bar's own padding + border (`p-1`, 1px border), both sides, px. */
+export const DENSE_PAD = 10;
+export const DENSE_GAP = 2;
+/** How many items the dense bar can fold into its More menu. */
+export const DENSE_MAX_FOLD = 2;
+
+export interface DenseFit {
+  /** Items folded into More: 1 = the outline toggle, 2 = + the Junction tool. */
+  fold: number;
+  /** Button width, px. */
+  button: number;
+  /** Labels shown under the icons. */
+  labels: boolean;
+}
+
+/** Width of a dense bar of `n` buttons, each `button` px wide. */
+export function denseBarWidth(n: number, button: number): number {
+  return n * button + Math.max(0, n - 1) * DENSE_GAP + DENSE_PAD;
+}
+
+/**
+ * How the dense bar fits an editor `width` px wide, given `items` buttons on
+ * it when nothing is folded.
+ */
+export function denseBarFit(items: number, width: number | null): DenseFit {
+  if (width == null) return { fold: 0, button: DENSE_BUTTON, labels: true };
+  const avail = width - 2 * BAR_EDGE;
+  const widest = (n: number) =>
+    Math.floor((avail - DENSE_PAD - Math.max(0, n - 1) * DENSE_GAP) / n);
+  for (let fold = 0; fold <= DENSE_MAX_FOLD; fold++) {
+    if (widest(items - fold) >= DENSE_BUTTON) {
+      return { fold, button: DENSE_BUTTON, labels: true };
+    }
+  }
+  const b = widest(items - DENSE_MAX_FOLD);
+  if (b >= DENSE_LABEL_MIN) return { fold: DENSE_MAX_FOLD, button: b, labels: true };
+  return { fold: DENSE_MAX_FOLD, button: Math.max(DENSE_ICON_MIN, b), labels: false };
+}
+
+/** The dense bar's button geometry, read by every button on it. */
+export const DenseSlotContext = createContext<{ button: number; labels: boolean }>({
+  button: DENSE_BUTTON,
+  labels: true,
+});
