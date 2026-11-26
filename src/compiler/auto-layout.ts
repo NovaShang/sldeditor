@@ -1682,8 +1682,13 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
   };
 
   // Device adjacency (no passthrough, no bus crossing) for feed grouping.
+  // Topology only, so memoised: the overlap resolver below walks it a lot.
+  const deviceNeighborsMemo = new Map<ElementId, Set<ElementId>>();
   const deviceNeighbors = (elId: ElementId): Set<ElementId> => {
-    const out = new Set<ElementId>();
+    let out = deviceNeighborsMemo.get(elId);
+    if (out) return out;
+    out = new Set<ElementId>();
+    deviceNeighborsMemo.set(elId, out);
     const lib = libOf(elId);
     if (!lib) return out;
     for (const t of lib.terminals) {
@@ -1787,69 +1792,325 @@ export function autoLayout(input: AutoLayoutInput): AutoLayoutOutput {
   // Resolve symbol overlaps within `members` by shifting the smaller
   // exclusive sub-branch of each colliding pair sideways. `region` bounds the
   // sub-branch search so shifts stay local. Returns whether anything moved.
+  //
+  // Each pass shifts at the FIRST pair (i, j), in index order, that overlaps
+  // and can be split, then starts over; at most n² + 8 passes. Done literally
+  // that is O(n⁴) box computations plus two graph walks per overlapping pair
+  // per pass — minutes on a ~100-device drawing. The shifts below are the
+  // same ones in the same order, found cheaper:
+  //  - boxes are cached per member and refreshed only for members that moved;
+  //  - a pair's split (its two exclusive sides, which may move) depends on
+  //    topology alone, so it is worked out once per pair;
+  //  - a pair's status depends only on its own two boxes, so after a shift at
+  //    pair P every pair before P is still not actionable unless it involves
+  //    a member that just moved. The next pass rechecks the pairs before P
+  //    only where they touch a moved member, and scans fully from P on.
   const resolveOverlaps = (
     members: ElementId[],
     region: Set<ElementId>,
   ): boolean => {
-    let iter = members.length * members.length + 8;
-    let anyShift = false;
-    let collided = true;
-    while (collided && iter-- > 0) {
-      collided = false;
-      for (let i = 0; i < members.length && !collided; i++) {
-        for (let j = i + 1; j < members.length; j++) {
-          const a = members[i];
-          const b = members[j];
-          const ax = worldXRange(a);
-          const bx = worldXRange(b);
-          const ay = worldYRange(a);
-          const by = worldYRange(b);
-          if (!ax || !bx || !ay || !by) continue;
-          const oxOverlap =
-            Math.min(ax.max, bx.max) - Math.max(ax.min, bx.min);
-          const oyOverlap =
-            Math.min(ay.max, by.max) - Math.max(ay.min, by.min);
-          if (oxOverlap <= 0 || oyOverlap <= 0) continue;
+    const n = members.length;
+    type Range = { min: number; max: number };
+    type Box = { x: Range; y: Range } | null;
+    const boxOf = (id: ElementId): Box => {
+      const x = worldXRange(id);
+      const y = worldYRange(id);
+      return x && y ? { x, y } : null;
+    };
+    const boxes: Box[] = members.map(boxOf);
+    const indicesOf = new Map<ElementId, number[]>();
+    members.forEach((id, i) => {
+      const list = indicesOf.get(id);
+      if (list) list.push(i);
+      else indicesOf.set(id, [i]);
+    });
 
-          // Shift the smaller exclusive sub-branch sideways to clear.
-          const sideA = exclusiveSide(a, b, region);
-          const sideB = exclusiveSide(b, a, region);
-          // If removing the partner doesn't separate them, they're on a cycle
-          // / shared rake — skip (can't cleanly split).
-          if (sideA.has(b) || sideB.has(a)) continue;
-          // Never move a sub-branch containing an explicitly-placed element.
-          const aMovable = ![...sideA].some((id) => userPlaced.has(id));
-          const bMovable = ![...sideB].some((id) => userPlaced.has(id));
-          if (!aMovable && !bMovable) continue;
-          const aCenter = (ax.min + ax.max) / 2;
-          const bCenter = (bx.min + bx.max) / 2;
-          // Move the smaller movable side; ties → move the right-hand one
-          // rightward.
-          let moveSet: Set<ElementId>;
-          let dir: 1 | -1;
-          if (aMovable && (!bMovable || sideA.size <= sideB.size)) {
-            moveSet = sideA;
-            dir = aCenter <= bCenter ? -1 : 1;
-          } else {
-            moveSet = sideB;
-            dir = bCenter <= aCenter ? -1 : 1;
+    type Split = {
+      sideA: Set<ElementId>;
+      sideB: Set<ElementId>;
+      aMovable: boolean;
+      bMovable: boolean;
+    } | null;
+    const splits = new Map<number, Split>();
+    const splitOf = (i: number, j: number): Split => {
+      const key = i * n + j;
+      const cached = splits.get(key);
+      if (cached !== undefined) return cached;
+      const a = members[i];
+      const b = members[j];
+      const sideA = exclusiveSide(a, b, region);
+      const sideB = exclusiveSide(b, a, region);
+      let split: Split = null;
+      // If removing the partner doesn't separate them, they're on a cycle
+      // / shared rake — skip (can't cleanly split).
+      if (!sideA.has(b) && !sideB.has(a)) {
+        // Never move a sub-branch containing an explicitly-placed element.
+        const aMovable = ![...sideA].some((id) => userPlaced.has(id));
+        const bMovable = ![...sideB].some((id) => userPlaced.has(id));
+        if (aMovable || bMovable) split = { sideA, sideB, aMovable, bMovable };
+      }
+      splits.set(key, split);
+      return split;
+    };
+
+    // Shift at pair (i, j) if it is actionable; returns the moved set.
+    let lastDx = 0;
+    const tryPair = (i: number, j: number): Set<ElementId> | null => {
+      const A = boxes[i];
+      const B = boxes[j];
+      if (!A || !B) return null;
+      const ax = A.x;
+      const bx = B.x;
+      const oxOverlap = Math.min(ax.max, bx.max) - Math.max(ax.min, bx.min);
+      const oyOverlap =
+        Math.min(A.y.max, B.y.max) - Math.max(A.y.min, B.y.min);
+      if (oxOverlap <= 0 || oyOverlap <= 0) return null;
+
+      // Shift the smaller exclusive sub-branch sideways to clear.
+      const split = splitOf(i, j);
+      if (!split) return null;
+      const { sideA, sideB, aMovable, bMovable } = split;
+      const aCenter = (ax.min + ax.max) / 2;
+      const bCenter = (bx.min + bx.max) / 2;
+      // Move the smaller movable side; ties → move the right-hand one
+      // rightward.
+      let moveSet: Set<ElementId>;
+      let dir: 1 | -1;
+      if (aMovable && (!bMovable || sideA.size <= sideB.size)) {
+        moveSet = sideA;
+        dir = aCenter <= bCenter ? -1 : 1;
+      } else {
+        moveSet = sideB;
+        dir = bCenter <= aCenter ? -1 : 1;
+      }
+      // Shift just far enough to clear the overlap, not by the whole
+      // union width — overshooting compounds across pairs and bulldozes
+      // dense layouts thousands of px sideways.
+      const dx = snap(dir * (oxOverlap + FEED_GAP));
+      if (dx === 0) return null;
+      lastDx = dx;
+      for (const elId of moveSet) {
+        const place = layout.get(elId);
+        if (!place) continue;
+        layout.set(elId, {
+          ...place,
+          at: [place.at[0] + dx, place.at[1]],
+        });
+      }
+      return moveSet;
+    };
+
+    // Pairs before (ri, rj) in index order are known not actionable, except
+    // those touching a member flagged in `moved`.
+    let ri = 0;
+    let rj = 0;
+    let moved = new Uint8Array(n);
+    let movedList: number[] = [];
+    let iter = n * n + 8;
+    let anyShift = false;
+
+    // Dense fans can ping-pong two branches until the pass cap — and when
+    // the two branches overlap only in part, every round trip walks both of
+    // them sideways, thousands of passes and hundreds of thousands of px.
+    // Such a loop is detected (the last λ shifts repeat the λ before them:
+    // same pair, same dx, same moved set) and fast-forwarded by whole
+    // rounds, exactly: a round moves each member by a fixed D[k], and it
+    // replays unchanged for as long as no pair that comes before a round's
+    // chosen pair starts to overlap — which, positions drifting linearly,
+    // is computed rather than simulated. Only attempted on integer
+    // coordinates, where every sum below is exact.
+    const LOOP_MAX = 16;
+    const SAFE = 2 ** 40;
+    const isInt = (v: number) => Number.isInteger(v) && Math.abs(v) < SAFE;
+    const xsNow = (): Float64Array =>
+      Float64Array.from(members, (id) => layout.get(id)?.at[0] ?? NaN);
+    type Shift = { i: number; j: number; dx: number; set: Set<ElementId> };
+    let shifts: Shift[] = [];
+    // snaps[p] = member x positions before shifts[p]; one more than shifts.
+    let snaps: Float64Array[] = [xsNow()];
+    let passNo = 0;
+    let nextAttempt = 0;
+    let backoff = 1;
+
+    const loopLength = (): number => {
+      const P = shifts.length;
+      for (let lam = 1; lam <= LOOP_MAX && 2 * lam <= P; lam++) {
+        let same = true;
+        for (let t = 1; t <= lam && same; t++) {
+          const p = shifts[P - t];
+          const q = shifts[P - t - lam];
+          same = p.i === q.i && p.j === q.j && p.dx === q.dx && p.set === q.set;
+        }
+        if (same) return lam;
+      }
+      return 0;
+    };
+
+    // How many whole rounds of the last `lam` shifts can be skipped; 0 when
+    // the loop can't be proven to replay.
+    const roundsToSkip = (lam: number, D: Float64Array): number => {
+      const P = shifts.length;
+      const cur = snaps[P];
+      const base = snaps[P - lam];
+      for (let k = 0; k < n; k++) {
+        if (!isInt(cur[k]) || !isInt(base[k])) return 0;
+        D[k] = cur[k] - base[k];
+        const b = boxes[k];
+        if (b && !(isInt(b.x.min) && isInt(b.x.max) && isInt(b.y.min) && isInt(b.y.max))) return 0;
+      }
+      const cap = Math.floor(iter / lam);
+      if (cap <= 0) return 0;
+      // First round (1 = the one starting now) at which some step's
+      // preceding pairs would no longer all be idle.
+      let T = Infinity;
+      for (let s = 0; s < lam; s++) {
+        const step = shifts[P - lam + s];
+        const S = snaps[P - lam + s];
+        // The chosen pair keeps its relative position, so its overlap, dx
+        // and side are those of the round just seen.
+        if (D[step.i] !== D[step.j]) return 0;
+        for (let i = 0; i <= step.i; i++) {
+          const A = boxes[i];
+          if (!A) continue;
+          const jEnd = i < step.i ? n : step.j;
+          for (let j = i + 1; j < jEnd; j++) {
+            const B = boxes[j];
+            if (!B) continue;
+            if (Math.min(A.y.max, B.y.max) - Math.max(A.y.min, B.y.min) <= 0) continue;
+            const sa = S[i] - cur[i];
+            const sb = S[j] - cur[j];
+            const aMin = A.x.min + sa;
+            const aMax = A.x.max + sa;
+            const bMin = B.x.min + sb;
+            const bMax = B.x.max + sb;
+            const d = D[i] - D[j];
+            const overlapAt = (m: number) =>
+              Math.min(aMax + m * d, bMax) - Math.max(aMin + m * d, bMin) > 0;
+            if (overlapAt(0)) {
+              // Idle while overlapping: unsplittable (static) — or a dx of 0,
+              // which only holds at this exact offset.
+              if (d !== 0 && splitOf(i, j)) return 0;
+              continue;
+            }
+            if (d === 0) continue;
+            const lo = d > 0 ? (bMin - aMax) / d : (bMax - aMin) / d;
+            const est = Math.max(1, Math.floor(lo) + 1);
+            if (est - 1 > T || est - 1 > cap + 1) continue;
+            let m = Infinity;
+            for (const c of [est - 1, est, est + 1]) {
+              if (c >= 1 && overlapAt(c)) {
+                m = c;
+                break;
+              }
+            }
+            if (m < T && splitOf(i, j)) T = m;
           }
-          // Shift just far enough to clear the overlap, not by the whole
-          // union width — overshooting compounds across pairs and bulldozes
-          // dense layouts thousands of px sideways.
-          const dx = snap(dir * (oxOverlap + FEED_GAP));
-          if (dx === 0) continue;
-          for (const elId of moveSet) {
-            const place = layout.get(elId);
-            if (!place) continue;
-            layout.set(elId, {
-              ...place,
-              at: [place.at[0] + dx, place.at[1]],
-            });
+        }
+      }
+      return Math.min(T - 1, cap);
+    };
+
+    const skipRounds = (): boolean => {
+      const lam = loopLength();
+      if (!lam) return false;
+      const D = new Float64Array(n);
+      const rounds = roundsToSkip(lam, D);
+      if (rounds <= 0) return false;
+      const done = new Set<ElementId>();
+      for (let k = 0; k < n; k++) {
+        if (D[k] === 0) continue;
+        const id = members[k];
+        if (done.has(id)) continue;
+        done.add(id);
+        const place = layout.get(id)!;
+        layout.set(id, {
+          ...place,
+          at: [place.at[0] + rounds * D[k], place.at[1]],
+        });
+        const box = boxOf(id);
+        for (const q of indicesOf.get(id) ?? []) boxes[q] = box;
+      }
+      iter -= rounds * lam;
+      return true;
+    };
+
+    while (iter-- > 0) {
+      let shifted: Set<ElementId> | null = null;
+      let fi = -1;
+      let fj = -1;
+      scan: for (let i = 0; i < n; i++) {
+        const fromJ = i < ri ? n : i === ri ? Math.max(rj, i + 1) : i + 1;
+        if (fromJ > i + 1 && !moved[i]) {
+          // Row i starts inside the known-clean prefix: only partners that
+          // moved can have changed status there.
+          for (const j of movedList) {
+            if (j <= i || j >= fromJ) continue;
+            shifted = tryPair(i, j);
+            if (shifted) {
+              fi = i;
+              fj = j;
+              break scan;
+            }
           }
-          anyShift = true;
-          collided = true;
-          break;
+        } else if (fromJ > i + 1) {
+          for (let j = i + 1; j < fromJ; j++) {
+            shifted = tryPair(i, j);
+            if (shifted) {
+              fi = i;
+              fj = j;
+              break scan;
+            }
+          }
+        }
+        for (let j = fromJ; j < n; j++) {
+          shifted = tryPair(i, j);
+          if (shifted) {
+            fi = i;
+            fj = j;
+            break scan;
+          }
+        }
+      }
+      if (!shifted) break;
+      anyShift = true;
+      ri = fi;
+      rj = fj;
+      moved = new Uint8Array(n);
+      movedList = [];
+      for (const id of shifted) {
+        const box = boxOf(id);
+        for (const k of indicesOf.get(id) ?? []) {
+          boxes[k] = box;
+          if (!moved[k]) {
+            moved[k] = 1;
+            movedList.push(k);
+          }
+        }
+      }
+      movedList.sort((p, q) => p - q);
+
+      shifts.push({ i: fi, j: fj, dx: lastDx, set: shifted });
+      snaps.push(xsNow());
+      if (shifts.length > 4 * LOOP_MAX) {
+        shifts = shifts.slice(-2 * LOOP_MAX);
+        snaps = snaps.slice(-2 * LOOP_MAX - 1);
+      }
+      passNo++;
+      if (passNo >= nextAttempt) {
+        if (skipRounds()) {
+          // Rescan from scratch after a skip rather than carry the resume
+          // point across it.
+          ri = 0;
+          rj = 0;
+          moved = new Uint8Array(n);
+          movedList = [];
+          shifts = [];
+          snaps = [xsNow()];
+          backoff = 1;
+        } else if (loopLength()) {
+          // A loop that can't be skipped yet: don't re-prove it every pass.
+          nextAttempt = passNo + backoff;
+          backoff = Math.min(backoff * 2, LOOP_MAX);
         }
       }
     }
