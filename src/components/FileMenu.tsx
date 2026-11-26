@@ -10,19 +10,21 @@
  * `iconOnly` drops the visible label (the button keeps it as its accessible
  * name and tooltip) so a host toolbar that runs out of width — a phone — can
  * collapse it like its own buttons.
+ *
+ * Mounted in a host toolbar it sits OUTSIDE the editor's `.ole-root`, where
+ * none of the library's scoped utilities reach (its icon fell back to
+ * lucide's 24px default, in the host's text colour). So it carries its own
+ * scope: an `ole-root ole-inline` wrapper that takes no box of its own.
+ *
+ * A host that wants the menu in its own design system instead (its own
+ * dropdown, its own icon size) builds it from `useFileActions` — the same
+ * actions and localized labels — plus `useFileShortcuts` for ⌘O / ⌘S / ⌘⇧S.
  */
 
-import {
-  FilePlus,
-  FolderOpen,
-  Save,
-} from 'lucide-react';
+import { FilePlus, FolderOpen, Save } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { fitToContentSoon } from '../canvas';
 import { Button } from './ui/button';
-import { useT } from '../i18n';
-import { openDiagram, saveDiagram } from '../lib/file-io';
-import { useEditorStore } from '../store';
+import { useFileActions, useFileShortcuts } from '../hooks/use-file-actions';
 
 export interface FileMenuProps {
   /** Render the trigger as an icon-only button; the label stays its accessible name. */
@@ -30,30 +32,13 @@ export interface FileMenuProps {
 }
 
 export function FileMenu({ iconOnly = false }: FileMenuProps = {}) {
-  const t = useT();
-  const label = t('topbar.file.label');
-  const fileSession = useEditorStore((s) => s.fileSession);
-  const fileLabel = fileSession?.name ?? t('common.unnamed');
-  const { onNew, onOpen, onSave, onSaveAs } = useFileActions();
+  const actions = useFileActions();
+  const { labels, onNew, onOpen, onSave, onSaveAs } = actions;
+  const label = labels.file;
+  const fileLabel = actions.fileName;
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey)) return;
-      const k = e.key.toLowerCase();
-      if (k === 'o') {
-        e.preventDefault();
-        onOpen();
-      } else if (k === 's') {
-        e.preventDefault();
-        if (e.shiftKey) onSaveAs();
-        else onSave();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [onOpen, onSave, onSaveAs]);
+  useFileShortcuts(actions);
 
   useEffect(() => {
     if (!open) return;
@@ -77,42 +62,44 @@ export function FileMenu({ iconOnly = false }: FileMenuProps = {}) {
   };
 
   return (
-    <div ref={ref} className="relative">
-      <Button
-        variant="ghost"
-        size="sm"
-        className={iconOnly ? 'w-8 px-0' : 'gap-1.5'}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label={iconOnly ? label : undefined}
-        title={iconOnly ? label : undefined}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <FolderOpen />
-        {!iconOnly && label}
-      </Button>
-      {open && (
-        <div
-          role="menu"
-          className="ole-glass absolute start-0 top-full mt-1.5 min-w-44 rounded-md border border-border p-1 shadow-md"
+    <div className="ole-root ole-inline">
+      <div ref={ref} className="relative">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={iconOnly ? 'w-8 px-0' : 'gap-1.5'}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label={iconOnly ? label : undefined}
+          title={iconOnly ? label : undefined}
+          onClick={() => setOpen((v) => !v)}
         >
-          <div className="border-b border-border px-2 pb-1.5 pt-1 text-xs text-muted-foreground">
-            {fileLabel}
+          <FolderOpen />
+          {!iconOnly && label}
+        </Button>
+        {open && (
+          <div
+            role="menu"
+            className="ole-glass absolute start-0 top-full mt-1.5 min-w-44 rounded-md border border-border p-1 shadow-md"
+          >
+            <div className="border-b border-border px-2 pb-1.5 pt-1 text-xs text-muted-foreground">
+              {fileLabel}
+            </div>
+            <MenuItem onClick={run(onNew)} icon={<FilePlus />}>
+              {labels.new}
+            </MenuItem>
+            <MenuItem onClick={run(onOpen)} icon={<FolderOpen />} hint="⌘O">
+              {labels.open}
+            </MenuItem>
+            <MenuItem onClick={run(onSave)} icon={<Save />} hint="⌘S">
+              {labels.save}
+            </MenuItem>
+            <MenuItem onClick={run(onSaveAs)} icon={<Save />} hint="⌘⇧S">
+              {labels.saveAs}
+            </MenuItem>
           </div>
-          <MenuItem onClick={run(onNew)} icon={<FilePlus />}>
-            {t('topbar.file.new')}
-          </MenuItem>
-          <MenuItem onClick={run(onOpen)} icon={<FolderOpen />} hint="⌘O">
-            {t('topbar.file.open')}
-          </MenuItem>
-          <MenuItem onClick={run(onSave)} icon={<Save />} hint="⌘S">
-            {t('topbar.file.save')}
-          </MenuItem>
-          <MenuItem onClick={run(onSaveAs)} icon={<Save />} hint="⌘⇧S">
-            {t('topbar.file.saveAs')}
-          </MenuItem>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -137,62 +124,7 @@ function MenuItem({
     >
       {icon}
       <span className="flex-1">{children}</span>
-      {hint && (
-        <span className="text-xs tabular-nums text-muted-foreground">{hint}</span>
-      )}
+      {hint && <span className="text-xs tabular-nums text-muted-foreground">{hint}</span>}
     </button>
   );
-}
-
-function useFileActions() {
-  const t = useT();
-  const loadDiagramFromFile = useEditorStore((s) => s.loadDiagramFromFile);
-  const setFileSession = useEditorStore((s) => s.setFileSession);
-  const setDiagram = useEditorStore((s) => s.setDiagram);
-
-  const onNew = () => {
-    const { diagram } = useEditorStore.getState();
-    if (diagram.elements.length > 0) {
-      const ok = confirm(t('topbar.file.newConfirm'));
-      if (!ok) return;
-    }
-    // A new drawing hops its wire crossings; a drawing that predates the
-    // setting keeps the look it was made with (absent = off).
-    setDiagram({ version: '1', meta: { wireHops: true }, elements: [] });
-    setFileSession(null);
-  };
-
-  const onOpen = async () => {
-    try {
-      const result = await openDiagram();
-      if (result) {
-        loadDiagramFromFile(result.diagram, result.session);
-        fitToContentSoon();
-      }
-    } catch (e) {
-      alert(t('topbar.file.openFailed', { err: (e as Error).message }));
-    }
-  };
-
-  const onSave = async () => {
-    try {
-      const { diagram, fileSession } = useEditorStore.getState();
-      const session = await saveDiagram(diagram, fileSession);
-      if (session) setFileSession(session);
-    } catch (e) {
-      alert(t('topbar.file.saveFailed', { err: (e as Error).message }));
-    }
-  };
-
-  const onSaveAs = async () => {
-    try {
-      const { diagram, fileSession } = useEditorStore.getState();
-      const session = await saveDiagram(diagram, fileSession, { saveAs: true });
-      if (session) setFileSession(session);
-    } catch (e) {
-      alert(t('topbar.file.saveFailed', { err: (e as Error).message }));
-    }
-  };
-
-  return { onNew, onOpen, onSave, onSaveAs };
 }

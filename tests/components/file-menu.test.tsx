@@ -44,4 +44,12 @@ describe('FileMenu', () => {
     expect(btn.getAttribute('title')).toBe('File');
     expect(btn.getAttribute('aria-haspopup')).toBe('menu');
   });
+
+  it('carries its own style scope, so it renders right inside a host toolbar', () => {
+    const btn = mount(<FileMenu iconOnly />);
+    const scope = btn.closest('.ole-root');
+    expect(scope).not.toBeNull();
+    expect(scope!.classList.contains('ole-inline')).toBe(true);
+    expect(host!.contains(scope)).toBe(true);
+  });
 });

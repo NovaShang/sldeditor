@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import {
   Grid2x2,
   Maximize2,
@@ -17,7 +17,13 @@ import {
   getScale,
   subscribeScale,
 } from '../canvas';
-import { barAtLeast, useBottomBar, useReportBarWidth, type BarMode } from '../hooks/bottom-bar';
+import {
+  barAtLeast,
+  DenseSlotContext,
+  useBottomBar,
+  useReportBarWidth,
+  type BarMode,
+} from '../hooks/bottom-bar';
 import { useT } from '../i18n';
 import {
   LABEL_FONT_SIZE,
@@ -641,6 +647,7 @@ export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
   const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const [grid, setGrid] = useGridState();
+  const slot = useContext(DenseSlotContext);
   const tipContent = (
     <div className="space-y-0.5">
       <div className="font-medium">{t('view.menu')}</div>
@@ -654,15 +661,17 @@ export function ViewMenuButton({ stacked }: { stacked?: boolean } = {}) {
         onClick={() => setMenuOpen((v) => !v)}
         aria-label={t('view.menu')}
         aria-pressed={menuOpen}
+        style={{ width: slot.button }}
         className={cn(
-          'flex h-12 w-12 flex-col items-center justify-center gap-0.5 rounded-md text-[10px] font-medium leading-tight transition-colors',
+          'flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-md text-[10px] font-medium leading-tight transition-colors',
+          slot.labels ? 'h-12' : 'h-11',
           menuOpen
             ? 'bg-primary text-primary-foreground'
             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
         )}
       >
         <MoreHorizontal className="size-4" />
-        <span className="max-w-full truncate">{t('view.menu')}</span>
+        {slot.labels && <span className="max-w-full truncate">{t('view.menu')}</span>}
       </button>
     </Tooltip>
   ) : (

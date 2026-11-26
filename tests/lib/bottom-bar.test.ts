@@ -5,7 +5,17 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { barCenter, pickBarMode, rowFits, type BarMode, type BarWidths } from '../../src/hooks/bottom-bar';
+import {
+  barCenter,
+  denseBarFit,
+  denseBarWidth,
+  pickBarMode,
+  rowFits,
+  BAR_EDGE,
+  DENSE_MAX_FOLD,
+  type BarMode,
+  type BarWidths,
+} from '../../src/hooks/bottom-bar';
 
 // The English single-line row as measured on smartsld.com, 2026-11-04.
 const FULL: BarWidths = { left: 92, bar: 649, right: 303 };
@@ -74,5 +84,40 @@ describe('barCenter', () => {
     const c = barCenter(FULL, 1100);
     expect(c + FULL.bar! / 2).toBeLessThanOrEqual(1100 - 12 - FULL.right! - 8);
     expect(c - FULL.bar! / 2).toBeGreaterThanOrEqual(12 + FULL.left! + 8);
+  });
+});
+
+describe('denseBarFit', () => {
+  // Single-line phone bar: outline + Pan, Busbar, Junction, Place, Wire + Draw, More, View.
+  const ITEMS = 9;
+
+  it('keeps every item, labelled, when the editor is roomy', () => {
+    expect(denseBarFit(ITEMS, 519)).toEqual({ fold: 0, button: 48, labels: true });
+  });
+
+  it('never runs past the editor edges, at any phone width', () => {
+    for (let w = 300; w <= 520; w++) {
+      const f = denseBarFit(ITEMS, w);
+      expect(denseBarWidth(ITEMS - f.fold, f.button)).toBeLessThanOrEqual(w - 2 * BAR_EDGE);
+    }
+  });
+
+  it('folds before it shrinks, and shrinks before it drops the labels', () => {
+    const at390 = denseBarFit(ITEMS, 390);
+    expect(at390).toEqual({ fold: DENSE_MAX_FOLD, button: 48, labels: true });
+    const at360 = denseBarFit(ITEMS, 360);
+    expect(at360.fold).toBe(DENSE_MAX_FOLD);
+    expect(at360.labels).toBe(true);
+    expect(at360.button).toBeLessThan(48);
+    expect(denseBarFit(ITEMS, 320).labels).toBe(false);
+  });
+
+  it('is monotonic: a wider editor never folds more', () => {
+    let prev = denseBarFit(ITEMS, 300);
+    for (let w = 301; w <= 600; w++) {
+      const f = denseBarFit(ITEMS, w);
+      expect(f.fold).toBeLessThanOrEqual(prev.fold);
+      prev = f;
+    }
   });
 });

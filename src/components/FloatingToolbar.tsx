@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useContext, useRef, useState } from 'react';
 import {
   Cable,
   Circle,
@@ -27,7 +27,14 @@ import {
 } from 'lucide-react';
 import { Tooltip } from './ui/tooltip';
 import { UpwardPopover } from './ui/upward-popover';
-import { barAtLeast, barCenter, useBottomBar, useReportBarWidth } from '../hooks/bottom-bar';
+import {
+  barAtLeast,
+  barCenter,
+  DenseSlotContext,
+  denseBarFit,
+  useBottomBar,
+  useReportBarWidth,
+} from '../hooks/bottom-bar';
 import { usePanels } from '../hooks/use-panels';
 import { useNotice } from '../hooks/use-notice';
 import { useT, type LocaleKey } from '../i18n';
@@ -354,7 +361,19 @@ export function FloatingToolbar() {
   // drawing is rare enough on a phone to hide.
   const unifiedBar = barAtLeast(mode, 'dense');
   // A circuit diagram keeps the busbar tool, presented as the Rail tool.
-  const visibleTools = barTools(circuit, unifiedBar);
+  const barToolList = barTools(circuit, unifiedBar);
+  // The unified bar never scrolls and never spills past the editor's edges:
+  // on a narrow phone the outline toggle and then the Junction tool fold into
+  // More, then the buttons narrow, then the labels go (see `denseBarFit`).
+  // Its items: outline + tools + Draw + More + View.
+  const dense = denseBarFit(barToolList.length + 4, unifiedBar ? width : null);
+  const foldOutline = unifiedBar && dense.fold >= 1;
+  const foldedTool = unifiedBar && dense.fold >= 2
+    ? (barToolList.find((d) => d.id === 'junction') ?? null)
+    : null;
+  const visibleTools = foldedTool
+    ? barToolList.filter((d) => d !== foldedTool)
+    : barToolList;
   // Centred in the editor when that clears both side pieces, otherwise slid
   // towards the roomier side.
   const center = width == null || unifiedBar ? null : barCenter(widths, width);
@@ -404,6 +423,7 @@ export function FloatingToolbar() {
           </div>
         )
       )}
+      <DenseSlotContext.Provider value={{ button: dense.button, labels: dense.labels }}>
       <div
         ref={barRef}
         onPointerEnter={() => setBarHover(true)}
@@ -413,7 +433,7 @@ export function FloatingToolbar() {
           unifiedBar ? 'gap-0.5 p-1' : 'gap-0.5 p-1.5',
         )}
       >
-        {unifiedBar && <OutlineToggleButton stacked />}
+        {unifiedBar && !foldOutline && <OutlineToggleButton stacked />}
         {visibleTools.map((def) => {
           const Icon = def.icon;
           const isActive = isToolActive(def);
@@ -449,7 +469,11 @@ export function FloatingToolbar() {
           <div aria-hidden className="mx-1 h-5 w-px bg-border" />
         )}
         {unifiedBar ? (
-          <OverflowMenuButton stacked />
+          <OverflowMenuButton
+            stacked
+            foldOutline={foldOutline}
+            foldedTool={foldedTool}
+          />
         ) : (
           <>
             <ToolbarButton
@@ -482,6 +506,7 @@ export function FloatingToolbar() {
         )}
         {unifiedBar && <ViewMenuButton stacked />}
       </div>
+      </DenseSlotContext.Provider>
     </div>
   );
 }
@@ -547,6 +572,7 @@ function ToolbarButton({
    *  items you are trying to read. */
   suppressTooltip?: boolean;
 }) {
+  const slot = useContext(DenseSlotContext);
   const tipContent = (
     <div className="space-y-0.5">
       <div>
@@ -566,10 +592,14 @@ function ToolbarButton({
         disabled={disabled}
         aria-label={label}
         aria-pressed={active}
+        style={stacked ? { width: slot.button } : undefined}
         className={cn(
           'rounded-md font-medium transition-colors',
           stacked
-            ? 'flex h-12 w-12 flex-col items-center justify-center gap-0.5 text-[10px] leading-tight'
+            ? cn(
+                'flex shrink-0 flex-col items-center justify-center gap-0.5 text-[10px] leading-tight',
+                slot.labels ? 'h-12' : 'h-11',
+              )
             : 'flex h-9 items-center gap-1.5 text-xs',
           !stacked && (iconOnly ? 'w-9 justify-center' : 'px-2.5'),
           active
@@ -604,7 +634,7 @@ function ToolbarButton({
           )}
         </span>
         {stacked ? (
-          <span className="max-w-full truncate">{label}</span>
+          slot.labels && <span className="max-w-full truncate">{label}</span>
         ) : (
           !iconOnly && (
             <>
@@ -821,9 +851,27 @@ function DrawingMenuButton({ stacked }: { stacked?: boolean }) {
   );
 }
 
-function OverflowMenuButton({ stacked }: { stacked?: boolean }) {
+function OverflowMenuButton({
+  stacked,
+  foldOutline = false,
+  foldedTool = null,
+}: {
+  stacked?: boolean;
+  /** The outline toggle did not fit on the bar; offer it here. */
+  foldOutline?: boolean;
+  /** A bar tool that did not fit on the bar; offer it here. */
+  foldedTool?: ToolDef | null;
+}) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  const activeTool = useEditorStore((s) => s.activeTool);
+  const setTool = useEditorStore((s) => s.setActiveTool);
+  const outlineOpen = usePanels((s) => s.outlineOpen);
+  const toggleOutline = usePanels((s) => s.toggleOutline);
+  // Holding the folded tool lights More up and wears that tool's icon — the
+  // same cue as Draw — so the bar still answers "what am I holding?".
+  const holdingFolded = foldedTool != null && activeTool === foldedTool.switchTo;
+  const FoldedIcon = foldedTool?.icon;
   const past = useEditorStore((s) => s.past.length);
   const future = useEditorStore((s) => s.future.length);
   const undo = useEditorStore((s) => s.undo);
@@ -843,16 +891,34 @@ function OverflowMenuButton({ stacked }: { stacked?: boolean }) {
       onOpenChange={setOpen}
       trigger={
         <ToolbarButton
-          icon={MoreHorizontal}
+          icon={holdingFolded && FoldedIcon ? FoldedIcon : MoreHorizontal}
           label={t('tool.more')}
           description={t('tool.moreHint')}
-          active={open}
+          active={open || holdingFolded}
           iconOnly
+          hasMenu={holdingFolded}
+          suppressTooltip={open}
           stacked={stacked}
           onClick={() => setOpen((v) => !v)}
         />
       }
     >
+      {foldedTool && FoldedIcon && (
+        <PopoverItem
+          onClick={run(() => setTool(foldedTool.switchTo))}
+          icon={<FoldedIcon />}
+          active={holdingFolded}
+          hotkey={foldedTool.hotkey}
+        >
+          {t(foldedTool.labelKey)}
+        </PopoverItem>
+      )}
+      {foldOutline && (
+        <PopoverItem onClick={run(toggleOutline)} icon={<ListTree />} active={outlineOpen}>
+          {t('outline.title')}
+        </PopoverItem>
+      )}
+      {(foldedTool || foldOutline) && <div aria-hidden className="my-1 h-px bg-border" />}
       <PopoverItem
         onClick={run(undo)}
         icon={<Undo2 />}

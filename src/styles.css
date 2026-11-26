@@ -166,6 +166,14 @@
   z-index: 100;
 }
 
+/* An inline scope for a library component a host mounts in its OWN chrome
+   (e.g. `FileMenu` in a host toolbar): it gives the scoped utilities and
+   tokens an ancestor to match, but takes no box, so it neither stretches
+   (the rule above) nor disturbs the host's flex layout. */
+.ole-root.ole-inline {
+  display: contents;
+}
+
 /* iOS: disable pull-to-refresh + over-scroll bounce so canvas pans don't
    flash the browser chrome. Also kill the iOS tap-highlight rectangle and
    the system text-selection callout that fires on long-press. Scoped to the
