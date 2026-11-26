@@ -1,5 +1,11 @@
 # sldeditor
 
+## 0.42.1
+
+### Patch Changes
+
+- [#80](https://github.com/NovaShang/sldeditor/pull/80) [`11c2722`](https://github.com/NovaShang/sldeditor/commit/11c2722c11f2c69252d550c7b520e46788d5a278) Thanks [@NovaShang](https://github.com/NovaShang)! - Auto-layout: the symbol-overlap resolver no longer takes tens of seconds to minutes on large auto-placed drawings (~100+ devices). It now caches symbol boxes and pair splits, rescans only the pairs a shift can have changed, and fast-forwards branches that ping-pong until the pass cap, arriving at exactly the same shifts as before. Layouts are unchanged.
+
 ## 0.42.0
 
 ### Minor Changes
